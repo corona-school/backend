@@ -23,7 +23,7 @@ export default async function execute() {
     );
 
     let redactedPupilsCount = 0;
-    for (let pupil of persons.pupils) {
+    for (const pupil of persons.pupils) {
         await prisma.pupil.update({
             where: {
                 id: pupil.id,
@@ -43,7 +43,7 @@ export default async function execute() {
     }
 
     let redactedStudentsCount = 0;
-    for (let student of persons.students) {
+    for (const student of persons.students) {
         await prisma.student.update({
             where: {
                 id: student.id,
@@ -64,7 +64,7 @@ export default async function execute() {
     }
 
     let redactedScreenersCount = 0;
-    for (let screener of persons.screener) {
+    for (const screener of persons.screener) {
         await prisma.screener.update({
             where: {
                 id: screener.id,
@@ -81,7 +81,7 @@ export default async function execute() {
     }
 
     let redactedMentorsCount = 0;
-    for (let mentor of persons.mentors) {
+    for (const mentor of persons.mentors) {
         await prisma.mentor.update({
             where: {
                 id: mentor.id,
@@ -158,7 +158,7 @@ export default async function execute() {
         },
     });
 
-    for (let attachment of attachmentsToBeDeleted) {
+    for (const attachment of attachmentsToBeDeleted) {
         await deleteAttachment(attachment);
     }
 

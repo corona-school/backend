@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { InstructorScreening } from '../entity/InstructorScreening';
 import { ProjectCoachingScreening } from '../entity/ProjectCoachingScreening';
 import { Screening } from '../entity/Screening';

@@ -7,6 +7,7 @@ import { NotificationSender } from '../../entity/Notification';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
+// eslint-disable-next-line import/no-cycle
 import { createSecretEmailToken } from '../../secret';
 import moment from 'moment';
 
@@ -90,7 +91,7 @@ export const mailjetChannel: Channel = {
             throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
         }
 
-        let requestOptions: mailjet.SendParams = {
+        const requestOptions: mailjet.SendParams = {
             SandboxMode: sandboxMode,
             Messages: [message],
         };

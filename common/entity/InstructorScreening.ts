@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, UpdateDateColumn, CreateDateColumn, ManyToOne } from 'typeorm';
 import { ScreeningInfo } from '../util/screening';
 import { Screener } from './Screener';
@@ -43,7 +44,7 @@ export class InstructorScreening {
     @JoinColumn()
     student: Student;
 
-    async updateScreeningInfo(screeningInfo: ScreeningInfo, screener?: Screener) {
+    updateScreeningInfo(screeningInfo: ScreeningInfo, screener?: Screener) {
         this.success = screeningInfo.verified ?? this.success;
         this.comment = screeningInfo.comment ?? this.comment;
         this.knowsCoronaSchoolFrom = screeningInfo.knowsCoronaSchoolFrom ?? this.knowsCoronaSchoolFrom;

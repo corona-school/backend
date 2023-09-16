@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Student } from './Student';
 import { Screener } from './Screener';
@@ -26,7 +27,7 @@ export class CertificateOfConduct {
     @Column({
         nullable: false,
     })
-    criminalRecords: Boolean;
+    criminalRecords: boolean;
 
     @OneToOne((type) => Student, (student) => student.certificateOfConduct, {
         eager: true,

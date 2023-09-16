@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { MessageTranslation } from './MessageTranslation';
 

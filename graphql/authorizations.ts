@@ -251,6 +251,7 @@ const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = 
      so always make sure to apply proper authorizations to those
 */
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
+    Cooperation: allAdmin,
     Course: allAdmin,
     Pupil: allAdmin,
     Match: allAdmin,
@@ -485,6 +486,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             _count: nobody,
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
+            cooperation: everyone,
+            cooperationID: nobody,
         }),
     },
     Subcourse: {

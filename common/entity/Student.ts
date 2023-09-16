@@ -1,4 +1,5 @@
-import { Column, Entity, EntityManager, Index, ManyToMany, OneToMany, OneToOne } from 'typeorm';
+/* eslint-disable import/no-cycle */
+import { Column, Entity, Index, ManyToMany, OneToMany, OneToOne } from 'typeorm';
 import { Match } from './Match';
 import { Screening } from './Screening';
 import { Person, RegistrationSource } from './Person';
@@ -9,14 +10,11 @@ import { Subcourse } from './Subcourse';
 import { InstructorScreening } from './InstructorScreening';
 import { ProjectFieldWithGradeRestriction } from './ProjectFieldWithGradeRestriction';
 import { ProjectCoachingScreening } from './ProjectCoachingScreening';
-import { ScreeningInfo } from '../util/screening';
-import { Screener } from './Screener';
 import { JufoVerificationTransmission } from './JufoVerificationTransmission';
 import { ProjectMatch } from './ProjectMatch';
 import { ExpertData } from './ExpertData';
 import { CourseGuest } from './CourseGuest';
 import { Language } from '../daz/language';
-import * as Notification from '../notification';
 import { RemissionRequest } from './RemissionRequest';
 import { CertificateOfConduct } from './CertificateOfConduct';
 

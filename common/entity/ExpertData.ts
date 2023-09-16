@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Student } from './Student';
 import { ExpertiseTag } from './ExpertiseTag';

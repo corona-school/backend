@@ -29,6 +29,8 @@ export interface RegisterStudentData {
     /* After registration, the user receives an email to verify their account.
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
+    // Associates the student with a cooperation
+    cooperationTag?: string;
 }
 
 export interface BecomeInstructorData {
@@ -50,11 +52,20 @@ export interface ProjectFieldWithGradeData {
     max: number;
 }
 
-export async function registerStudent(data: RegisterStudentData, noEmail: boolean = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
+export async function registerStudent(data: RegisterStudentData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
+    let cooperationID: number | null = null;
+    if (data.cooperationTag) {
+        const cooperation = await prisma.cooperation.findFirst({ where: { tag: data.cooperationTag } });
+        if (!cooperation) {
+            throw new PrerequisiteError(`Unknown Cooperation Tag`);
+        }
+
+        cooperationID = cooperation.id;
+    }
     const student = await prismaInstance.student.create({
         data: {
             email: data.email.toLowerCase(),
@@ -73,6 +84,8 @@ export async function registerStudent(data: RegisterStudentData, noEmail: boolea
 
             openMatchRequestCount: 0,
             notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,
+
+            cooperationID,
         },
     });
 

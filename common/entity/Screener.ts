@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Entity, Column, OneToMany, EntityManager } from 'typeorm';
 import { Screening } from './Screening';
 import { Person } from './Person';

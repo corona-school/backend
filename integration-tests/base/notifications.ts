@@ -1,4 +1,5 @@
 import assert from "assert";
+// eslint-disable-next-line import/no-cycle
 import { adminClient } from ".";
 
 interface MockNotification {
@@ -10,6 +11,8 @@ interface ConcreteNotification {
     context: any;
     error?: string;
 }
+
+let currentMockedNotifications: number[] = [];
 
 export async function createMockNotification(action: string, description: string, delay?: number, interval?: number, cancelAction?: string): Promise<MockNotification> {
     const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
@@ -26,7 +29,17 @@ export async function createMockNotification(action: string, description: string
 
     await adminClient.request(`mutation Activate${description} { notificationActivate(notificationId: ${id}, active: true)}`);
 
+    currentMockedNotifications.push(id);
+
     return { id };
+}
+
+export async function cleanupMockedNotifications() {
+    for (const id of currentMockedNotifications) {
+        await adminClient.request(`mutation Cleanup${id} { notificationActivate(notificationId: ${id}, active: false)}`);
+    }
+
+    currentMockedNotifications = [];
 }
 
 export async function assertUserReceivedNotification(notification: MockNotification, userID: string): Promise<ConcreteNotification> {

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Notification } from './Notification';
 import { TranslationTemplate } from '../notification/types';

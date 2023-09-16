@@ -24,7 +24,7 @@ if (isZoomFeatureActive()) {
     assert(secret, 'Missing ZOOM_MEETING_SDK_CLIENT_SECRET in ENV');
 }
 
-const generateMeetingSDKJWT = async (meetingNumber: number, role: MeetingRole) => {
+const generateMeetingSDKJWT = (meetingNumber: number, role: MeetingRole) => {
     const iat = Math.round(new Date().getTime() / 1000) - 30;
     const exp = iat + 60 * 60 * 2;
 
@@ -52,4 +52,24 @@ function assureZoomFeatureActive() {
     }
 }
 
-export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive };
+function removeHost(existingHosts: string, hostToRemove: string): string {
+    const hostsArray = existingHosts.split(';');
+    const indexToRemove = hostsArray.indexOf(hostToRemove);
+
+    if (indexToRemove !== -1) {
+        hostsArray.splice(indexToRemove, 1);
+        return hostsArray.join(';');
+    } else {
+        return existingHosts;
+    }
+}
+
+function addHost(existingHosts: string, newHost: string): string {
+    if (existingHosts === '') {
+        return newHost;
+    } else {
+        return existingHosts + (existingHosts.endsWith(';') ? '' : ';') + newHost;
+    }
+}
+
+export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive, addHost, removeHost };

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, Entity, Index, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ExpertData } from './ExpertData';
 

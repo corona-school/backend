@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore The matching algorithm is optional, to allow for slim local setups
 import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
 import { createMatch } from './create';
@@ -362,6 +363,7 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const startMatching = Date.now();
 
     // To run the matching we need the C++ Part, if it is not installed this will fail at runtime
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { match } = await import('corona-school-matching');
 

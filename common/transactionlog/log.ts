@@ -13,8 +13,8 @@ import { prisma } from '../prisma';
   the JSON data in the log is validated against this schema */
 type LogData<Type extends LogType> = {
     misc: never;
-    verificationRequets: {};
-    verified: {};
+    verificationRequets: object;
+    verified: object;
     matchDissolve: { matchId: number };
     projectMatchDissolve: { projectMatchId: number };
     fetchedFromWix: never;

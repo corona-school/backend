@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Pupil } from './Pupil';
 

@@ -55,7 +55,7 @@ export function strictUserSearch(search?: string): Prisma.pupilWhereInput & Pris
     };
 }
 
-export async function findUsers(search: string, only?: 'student' | 'pupil' | 'screener', take: number = 20, strict = false) {
+export async function findUsers(search: string, only?: 'student' | 'pupil' | 'screener', take = 20, strict = false) {
     const result: User[] = [];
 
     async function find(where: Prisma.studentWhereInput & Prisma.pupilWhereInput & Prisma.screenerWhereInput) {

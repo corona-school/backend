@@ -48,7 +48,7 @@ export default async function flagInactiveConversationsAsReadonly() {
     const conversationsToFlag: conversationsToDeactivate[] = [];
 
     for (const conversation of conversations.data) {
-        let shouldMarkAsReadonly: boolean = true;
+        let shouldMarkAsReadonly = true;
 
         // to prevent to flag already deactivated chats we check if the conversation is already readonly (only readMembers)
         const countParticipants = countChatParticipants(conversation);

@@ -2,3 +2,4 @@
 graphql/generated/**
 # Do not lint linters
 linter/**
+node_modules/**

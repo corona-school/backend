@@ -14,7 +14,7 @@ export default async function execute() {
 
     const updatedLectures = await Promise.all(
         lectures.map(async (lecture) => {
-            if (Boolean(lecture.subcourseId)) {
+            if (lecture.subcourseId) {
                 const participants = (
                     await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: lecture.subcourseId }, select: { pupilId: true } })
                 ).map((participant) => `pupil/${participant.pupilId}`);
@@ -76,7 +76,7 @@ export default async function execute() {
             const studentIds = lecture.organizerIds.map((organizer) => parseInt(organizer.split('/')[1], 10));
             const organizers = await prisma.student.findMany({ where: { id: { in: studentIds } } });
             const zoomUsers = [];
-            for (let organizer of organizers) {
+            for (const organizer of organizers) {
                 if (!organizer.zoomUserId) {
                     const zoomUser = await createZoomUser(organizer);
                     zoomUsers.push(zoomUser);

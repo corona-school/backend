@@ -3,6 +3,7 @@ import { getUser, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
+// eslint-disable-next-line import/no-cycle
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
