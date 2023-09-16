@@ -23,11 +23,11 @@
     "web:watch": "concurrently -c auto -n 'tsc,web' -P 'npm run ts:watch' 'npm run web:dev:watch -- {@}' --",
     "ts:watch": "tsc -w",
     "linter": "eslint . --ext .ts",
+    "prettier": "prettier",
+    "lint-staged": "lint-staged",
     "heroku:release": "./release.sh",
     "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
     "integration-tests:debug": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests.debug",
-    "prettier": "./prettier-commits.sh",
-    "prettier-on": "prettier --write",
     "test": "jest",
     "db:setup": "dotenv npm run db:setup:run",
     "db:setup:run": "psql \"$DATABASE_URL?sslmode=prefer\" -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";'",
@@ -115,6 +115,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-lernfair-lint": "./linter/",
     "jest": "^29.5.0",
+    "lint-staged": "^14.0.1",
     "nodemon": "^3.0.1",
     "pre-commit": "^1.2.2",
     "prettier": "^2.7.1",
@@ -138,7 +139,7 @@
   ],
   "license": "MIT",
   "pre-commit": [
-    "prettier"
+    "lint-staged"
   ],
   "jest": {
     "moduleFileExtensions": [
@@ -175,5 +176,9 @@
       "node_modules/**/node_modules"
     ],
     "ext": "js,json"
+  },
+  "lint-staged": {
+    "*.ts": ["eslint --fix", "prettier --write"],
+    "*.md": ["prettier --write"]
   }
 }
