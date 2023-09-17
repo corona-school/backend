@@ -50,22 +50,6 @@ export async function sendSubcourseCancelNotifications(course: Prisma.course, su
     }
 }
 
-export async function sendCourseUpcomingReminderInstructor(instructor: Prisma.student, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
-        participantFirstname: instructor.firstname,
-        courseName: course.name,
-        courseId: course.id,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
-    await sendTemplateMail(mail, instructor.email);
-    await Notification.actionTaken(userForStudent(instructor), 'instructor_course_reminder', await getNotificationContextForSubcourse(course, subcourse));
-}
-
-export async function sendCourseUpcomingReminderParticipant(participant: Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    await Notification.actionTaken(userForPupil(participant), 'participant_subcourse_reminder', await getNotificationContextForSubcourse(course, subcourse));
-}
-
 export async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
     const { start } = await getFirstLecture(subcourse);
 
