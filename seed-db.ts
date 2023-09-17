@@ -19,6 +19,7 @@ import { create as createCoC } from './common/certificate-of-conduct/certificate
 import { addCourseInstructor, addSubcourseInstructor } from './common/courses/states';
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
 import { createCourseTag } from './common/courses/tags';
+import { _setSilenceNotificationSystem } from './common/notification';
 import {
     course_category_enum as CourseCategory,
     course_coursestate_enum as CourseState,
@@ -38,6 +39,8 @@ void (async function setupDevDB() {
     }
 
     logger.info('Starting to Seed DB');
+
+    _setSilenceNotificationSystem(true);
 
     await prisma.cooperation.create({
         data: {
@@ -762,6 +765,8 @@ void (async function setupDevDB() {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
+
+    _setSilenceNotificationSystem(false);
 
     logger.info(`Successfully seeded the DB`);
 })();
