@@ -4,8 +4,6 @@ import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
-import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
-import migrateNotificationPreferencesStringToJson from './migrate-notification-preferences-string-to-json';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import { postStatisticsToSlack } from './slack-statistics';
 import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
@@ -43,11 +41,8 @@ export const executeJob = async (job) => {
             await anonymiseAttendanceLog();
             break;
         }
-        case 'syncToWebflow':
+        case 'syncToWebflow': {
             await syncToWebflow();
-            break;
-        case 'migrateLecturesToAppointment': {
-            await migrateLecturesToAppointment();
             break;
         }
         case 'flagOldConversations': {
@@ -56,10 +51,6 @@ export const executeJob = async (job) => {
         }
         case 'sendSlackStatistics': {
             await postStatisticsToSlack();
-            break;
-        }
-        case 'migrateNotificationPreferencesStringToJson': {
-            await migrateNotificationPreferencesStringToJson();
             break;
         }
         default: {
