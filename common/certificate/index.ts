@@ -3,7 +3,6 @@ import path from 'path';
 import moment from 'moment';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
-import { mailjetTemplates, sendTemplateMail } from '../mails';
 import * as Notification from '../notification';
 import { pupil as Pupil, student as Student, match as Match, participation_certificate as ParticipationCertificate } from '@prisma/client';
 import assert from 'assert';
@@ -94,12 +93,6 @@ export async function issueCertificateRequest(pc: CertWithUsers) {
     const authToken = await createSecretEmailToken(userForPupil(pc.pupil));
     // We show an important message on the dashboard, where pupils can sign the certificate:
     const certificateLink = USER_APP_DOMAIN;
-    const mail = mailjetTemplates.CERTIFICATEREQUEST({
-        certificateLink,
-        pupilFirstname: pc.pupil.firstname,
-        studentFirstname: pc.student.firstname,
-    });
-    await sendTemplateMail(mail, pc.pupil.email);
     await Notification.actionTaken(userForPupil(pc.pupil), 'pupil_certificate_approval', {
         uniqueId: `${pc.id}`,
         certificateLink,
@@ -229,15 +222,6 @@ export async function signCertificate(
 
     const authToken = await createSecretEmailToken(userForStudent(signedCert.student));
     const certificateLink = `${USER_APP_DOMAIN}/profile`;
-    const mail = mailjetTemplates.CERTIFICATESIGNED(
-        {
-            certificateLink,
-            pupilFirstname: signedCert.pupil.firstname,
-            studentFirstname: signedCert.student.firstname,
-        },
-        rendered.toString('base64')
-    );
-    await sendTemplateMail(mail, signedCert.student.email);
     await Notification.actionTaken(userForStudent(signedCert.student), 'student_certificate_sign', {
         uniqueId: `${certificate.id}`,
         certificateLink,
