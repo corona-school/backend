@@ -1,7 +1,6 @@
 import { CSCronJob } from './types';
 
 //import the jobs
-import courseReminderJob from './periodic/course-reminder';
 import * as Notification from '../common/notification';
 import { cleanupSecrets } from '../common/secret';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
@@ -19,8 +18,6 @@ export const allJobs: CSCronJob[] = [
     // { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
     { cronTime: '00 55 07 * * 1,4', jobFunction: runInterestConfirmations, name: 'runInterestConfirmations' },
     // { cronTime: "00 56 08 * * *", jobFunction: tutoringMatchMaking}, // only scheduled manually, at the moment
-    // every morning, but a little later
-    // { cronTime: '00 15 09 * * *', jobFunction: courseReminderJob, name: 'courseReminderJob' },
     // every morning, but a little bit later
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', jobFunction: Notification.checkReminders, name: 'checkReminders' },

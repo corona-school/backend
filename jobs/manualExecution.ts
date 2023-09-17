@@ -1,4 +1,3 @@
-import courseReminderJob from './periodic/course-reminder';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
@@ -16,10 +15,6 @@ import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/
 // Run inside the Job Dyno via npm run jobs --execute <jobName
 export const executeJob = async (job) => {
     switch (job) {
-        case 'courseReminderJob': {
-            await courseReminderJob();
-            break;
-        }
         case 'InterestConfirmation': {
             await runInterestConfirmations();
             break;
