@@ -45,6 +45,8 @@ export class MutateAppointmentResolver {
         const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true } });
         await hasAccess(context, 'Match', match);
         await createMatchAppointments(match.id, [appointment]);
+
+        return true;
     }
 
     @Mutation(() => Boolean)
