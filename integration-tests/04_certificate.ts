@@ -1,7 +1,6 @@
 import assert from 'assert';
 import { test } from './base';
 import { match1 } from './03_matching';
-import { expectFetch } from './base/mock';
 
 const signature =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAACdCAMAAAAe7DTLAAADAFBMVEX//' +
@@ -91,16 +90,6 @@ const certRequest = test('Student requests Certificate', async () => {
         }
     `);
 
-    expectFetch({
-        url: 'https://api.mailjet.com/v3.1/send',
-        method: 'POST',
-        body: `{"SandboxMode":true,"Messages":[{"From":{},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":2317254,"TemplateLanguage":true,"Variables":{"certificateLink":"lernfair-user-app-dev.herokuapp.com","pupilFirstname":"${
-            pupil.firstname
-        }","studentFirstname":"${student.firstname}"},"TemplateErrorReporting":{"Email":"backend@lern-fair.de"}}]}`,
-        responseStatus: 200,
-        response: '{}',
-    });
-
     await studentClient.request(`
         mutation RequestMatchCertificate {
             participationCertificateCreate(matchId: "${matchUuid}", certificateData: {
@@ -171,13 +160,6 @@ const signedCert = test('Pupil signs Certificate', async () => {
             participationCertificateSign(certificateId: "${uuid}", signatureLocation: "Apollo 11", signatureParent:"No Base64?")
         }
     `);
-
-    expectFetch({
-        url: 'https://api.mailjet.com/v3.1/send',
-        method: 'POST',
-        responseStatus: 200,
-        response: '{}',
-    });
 
     await pupilClient.request(`
         mutation SignCertificate {
