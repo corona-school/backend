@@ -2,7 +2,6 @@ import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prism
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
@@ -239,18 +238,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
             const courseStart = moment(firstLecture[0].start);
             const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
-
-            /* TODO: Deprecate usage of old mailjet templates */
-            const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
-                participantFirstname: pupil.firstname,
-                courseName: course.name,
-                courseId: String(course.id),
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
-                authToken,
-            });
-
-            await sendTemplateMail(mail, pupil.email);
 
             await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
                 course,
