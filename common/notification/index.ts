@@ -8,7 +8,7 @@ import { getLogger } from '../logger/logger';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
 import { triggerHook } from './hook';
-import { USER_APP_DOMAIN } from '../util/environment';
+import { USER_APP_DOMAIN, isDev } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
@@ -410,7 +410,7 @@ export async function actionTakenAt<ID extends ActionID>(
     noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
-    if (SILENCE_NOTIFICATION_SYTEM) {
+    if (SILENCE_NOTIFICATION_SYTEM && isDev) {
         logger.debug(`No Action taken as Notification System is silenced`);
         return;
     }
