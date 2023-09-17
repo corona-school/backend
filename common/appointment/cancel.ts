@@ -4,9 +4,9 @@ import { getStudent, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
-import { getNotificationContextForSubcourse } from '../mails/courses';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError, RedundantError } from '../util/error';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const logger = getLogger('Appointment');
 

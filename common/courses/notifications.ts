@@ -1,15 +1,15 @@
-import { prisma } from '../../prisma';
-import { getLogger } from '../../logger/logger';
-import * as Notification from '../../../common/notification';
-import { getFullName, userForPupil, userForStudent } from '../../user';
+import { prisma } from '../prisma';
+import { getLogger } from '../logger/logger';
+import * as Notification from '../../common/notification';
+import { getFullName, userForPupil, userForStudent } from '../user';
 import * as Prisma from '@prisma/client';
-import { getFirstLecture } from '../../courses/lectures';
-import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity, getCourseFreePlaces, isParticipant } from '../../courses/participants';
-import { getCourseImageURL } from '../../courses/util';
-import { getCourse } from '../../../graphql/util';
-import { shuffleArray } from '../../../common/util/basic';
-import { NotificationContext } from '../../notification/types';
+import { getFirstLecture } from './lectures';
+import { parseSubjectString } from '../util/subjectsutils';
+import { getCourseCapacity, getCourseFreePlaces, isParticipant } from './participants';
+import { getCourseImageURL } from './util';
+import { getCourse } from '../../graphql/util';
+import { shuffleArray } from '../../common/util/basic';
+import { NotificationContext } from '../notification/types';
 
 const logger = getLogger('Course Notification');
 

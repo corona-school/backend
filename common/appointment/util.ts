@@ -1,5 +1,5 @@
 import { lecture as Appointment, subcourse as Subcourse } from '@prisma/client';
-import { getNotificationContextForSubcourse } from '../mails/courses';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const language = 'de-DE';
 
