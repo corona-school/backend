@@ -20,7 +20,12 @@ import { addCourseInstructor, addSubcourseInstructor } from './common/courses/st
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
 import { createCourseTag } from './common/courses/tags';
 import { _setSilenceNotificationSystem } from './common/notification';
-import { course_category_enum as CourseCategory, course_coursestate_enum as CourseState, course_subject_enum as CourseSubject, lecture_appointmenttype_enum as AppointmentType } from "@prisma/client";
+import {
+    course_category_enum as CourseCategory,
+    course_coursestate_enum as CourseState,
+    course_subject_enum as CourseSubject,
+    lecture_appointmenttype_enum as AppointmentType,
+} from '@prisma/client';
 
 const logger = getLogger('DevSetup');
 
@@ -39,12 +44,12 @@ void (async function setupDevDB() {
 
     await prisma.cooperation.create({
         data: {
-            name: "Lern-Fair e.V.",
-            tag: "self",
+            name: 'Lern-Fair e.V.',
+            tag: 'self',
 
-            welcomeTitle: "Wilkommen im Userbereich",
-            welcomeMessage: "Als Lern-Fairer kennst du dich ja hier aus :)",
-        }
+            welcomeTitle: 'Wilkommen im Userbereich',
+            welcomeMessage: 'Als Lern-Fairer kennst du dich ja hier aus :)',
+        },
     });
 
     const pupil1 = await registerPupil({
@@ -54,7 +59,7 @@ void (async function setupDevDB() {
         aboutMe: "I'm Pupil1",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bb'
+        state: 'bb',
     });
     await verifyEmail(userForPupil(pupil1));
     await _createFixedToken(userForPupil(pupil1), `authtokenP1`);
@@ -63,21 +68,20 @@ void (async function setupDevDB() {
         where: { id: pupil1.id },
         data: {
             languages: ['Bulgarisch', 'Italienisch'],
-            subjects: JSON.stringify([{ name: "Deutsch" }, { name: 'Mathematik' }, { name: 'Englisch' }]),
+            subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             learningGermanSince: 'less_than_one',
-            grade: '3. Klasse'
-        }
+            grade: '3. Klasse',
+        },
     });
 
-
     const pupil2 = await registerPupil({
-        firstname: "Tom",
-        lastname: "Müller",
+        firstname: 'Tom',
+        lastname: 'Müller',
         email: 'test+dev+p2@lern-fair.de',
         aboutMe: "I'm Pupil 2",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil2));
     await _createFixedToken(userForPupil(pupil2), `authtokenP2`);
@@ -85,11 +89,10 @@ void (async function setupDevDB() {
         where: { id: pupil2.id },
         data: {
             languages: [],
-            subjects: JSON.stringify([{ name: "Spanisch" }, { name: "Deutsch" }]),
-            grade: `6. Klasse`
-        }
+            subjects: JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]),
+            grade: `6. Klasse`,
+        },
     });
-
 
     const pupil3 = await registerPupil({
         firstname: 'Tom',
@@ -98,7 +101,7 @@ void (async function setupDevDB() {
         aboutMe: "I'm Pupil 3",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil3));
     await _createFixedToken(userForPupil(pupil3), `authtokenP3`);
@@ -107,8 +110,8 @@ void (async function setupDevDB() {
         where: { id: pupil3.id },
         data: {
             subjects: JSON.stringify([{ name: 'Spanisch' }, { name: 'Deutsch' }]),
-            grade: '6. Klasse'
-        }
+            grade: '6. Klasse',
+        },
     });
 
     const pupil4 = await registerPupil({
@@ -118,7 +121,7 @@ void (async function setupDevDB() {
         aboutMe: 'Im Pupil 4',
         newsletter: false,
         state: 'bw',
-        registrationSource: 'normal'
+        registrationSource: 'normal',
     });
     await verifyEmail(userForPupil(pupil4));
     await _createFixedToken(userForPupil(pupil4), `authtokenP4`);
@@ -128,7 +131,7 @@ void (async function setupDevDB() {
         data: {
             subjects: JSON.stringify([]),
             grade: '6. Klasse',
-        }
+        },
     });
 
     const pupil5 = await registerPupil({
@@ -138,7 +141,7 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil 5`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil5));
     await _createFixedToken(userForPupil(pupil5), `authtokenP5`);
@@ -147,8 +150,8 @@ void (async function setupDevDB() {
         where: { id: pupil5.id },
         data: {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Geschichte' }]),
-            grade: '13. Klasse'
-        }
+            grade: '13. Klasse',
+        },
     });
 
     const pupil6 = await registerPupil({
@@ -158,7 +161,7 @@ void (async function setupDevDB() {
         newsletter: false,
         aboutMe: `I'm Pupil6`,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil6));
     await _createFixedToken(userForPupil(pupil6), `authtokenP6`);
@@ -166,8 +169,8 @@ void (async function setupDevDB() {
         where: { id: pupil6.id },
         data: {
             subjects: JSON.stringify([{ name: 'Englisch' }, { name: 'Latein' }]),
-            grade: '10. Klasse'
-        }
+            grade: '10. Klasse',
+        },
     });
 
     const pupil7 = await registerPupil({
@@ -177,7 +180,7 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil7`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil7));
     await _createFixedToken(userForPupil(pupil7), `authtokenP7`);
@@ -186,8 +189,8 @@ void (async function setupDevDB() {
         where: { id: pupil7.id },
         data: {
             subjects: JSON.stringify([{ name: 'Musik' }, { name: 'Latein' }]),
-            grade: '7. Klasse'
-        }
+            grade: '7. Klasse',
+        },
     });
 
     const pupil8 = await registerPupil({
@@ -197,7 +200,7 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil 8`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil8));
     await _createFixedToken(userForPupil(pupil8), `authtokenP8`);
@@ -207,7 +210,7 @@ void (async function setupDevDB() {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             grade: '3. Klasse',
             languages: ['Bulgarisch', 'Italienisch'],
-            learningGermanSince: 'less_than_one'
+            learningGermanSince: 'less_than_one',
         },
     });
 
@@ -218,7 +221,7 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil9`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw'
+        state: 'bw',
     });
     await verifyEmail(userForPupil(pupil9));
     await _createFixedToken(userForPupil(pupil9), `authtokenP9`);
@@ -229,8 +232,8 @@ void (async function setupDevDB() {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             grade: '3. Klasse',
             languages: ['Bulgarisch', 'Italienisch'],
-            learningGermanSince: 'less_than_one'
-        }
+            learningGermanSince: 'less_than_one',
+        },
     });
 
     const pupil10 = await registerPupil({
@@ -250,24 +253,22 @@ void (async function setupDevDB() {
             subjects: JSON.stringify([{ name: 'Deutsch' }, { name: 'Mathematik' }, { name: 'Englisch' }]),
             grade: '3. Klasse',
             languages: ['Bulgarisch', 'Italienisch'],
-            learningGermanSince: 'less_than_one'
-        }
+            learningGermanSince: 'less_than_one',
+        },
     });
-
 
     const screener1 = await prisma.screener.create({
         data: {
             firstname: 'Maxi',
             lastname: 'Screenerfrau',
             email: 'test+dev+sc1@lern-fair.de',
-            password: "LEGACY",
+            password: 'LEGACY',
             verified: true,
-            active: true
-        }
+            active: true,
+        },
     });
     await _createFixedToken(userForScreener(screener1), `authtokenSC1`);
     await createPassword(userForScreener(screener1), `test`);
-
 
     const student1 = await registerStudent({
         firstname: 'Leon',
@@ -285,15 +286,15 @@ void (async function setupDevDB() {
     await becomeTutor(student1, {
         languages: ['Bulgarisch', 'Italienisch'],
         subjects: [
-            { name: 'Englisch', grade: { min: 1, max: 8 }},
-            { name: 'Spanisch', grade: { min: 6, max: 10 }},
-        ]
+            { name: 'Englisch', grade: { min: 1, max: 8 } },
+            { name: 'Spanisch', grade: { min: 6, max: 10 } },
+        ],
     });
     await addTutorScreening(screener1, student1, { success: true });
-    await becomeInstructor(student1, { });
+    await becomeInstructor(student1, {});
     await addInstructorScreening(screener1, student1, {
         success: true,
-        comment: "success"
+        comment: 'success',
     });
 
     const student2 = await registerStudent({
@@ -302,7 +303,7 @@ void (async function setupDevDB() {
         aboutMe: `Im Student 2`,
         email: 'test+dev+s2@lern-fair.de',
         newsletter: false,
-        registrationSource: 'normal'
+        registrationSource: 'normal',
     });
     await verifyEmail(userForStudent(student2));
     await _createFixedToken(userForStudent(student2), `authtokenS2`);
@@ -312,14 +313,14 @@ void (async function setupDevDB() {
         subjects: [
             { name: 'Deutsch', grade: { min: 3, max: 5 } },
             { name: 'Mathematik', grade: { min: 4, max: 6 } },
-        ]
+        ],
     });
     await addTutorScreening(screener1, student2, { success: true });
-    await becomeInstructor(student2, { });
+    await becomeInstructor(student2, {});
     await addInstructorScreening(screener1, student2, { success: true });
     await prisma.student.update({
         where: { id: student2.id },
-        data: { zoomUserId: 'kLKyaiAyTNC-MWjiWCFFFF' }
+        data: { zoomUserId: 'kLKyaiAyTNC-MWjiWCFFFF' },
     });
 
     const student3 = await registerStudent({
@@ -328,7 +329,7 @@ void (async function setupDevDB() {
         email: 'test+dev+s3@lern-fair.de',
         aboutMe: `I'm Student 3`,
         newsletter: false,
-        registrationSource: 'normal'
+        registrationSource: 'normal',
     });
     await verifyEmail(userForStudent(student3));
     await _createFixedToken(userForStudent(student3), `authtokenS3`);
@@ -338,7 +339,7 @@ void (async function setupDevDB() {
         subjects: [
             { name: 'Englisch', grade: { min: 1, max: 8 } },
             { name: 'Spanisch', grade: { min: 6, max: 10 } },
-        ]
+        ],
     });
     await addTutorScreening(screener1, student3, { success: true });
 
@@ -435,7 +436,7 @@ void (async function setupDevDB() {
             medium: 'PC',
             hoursPerWeek: 8,
             // state: old, before automatic process, shall default to "manual"
-        }
+        },
     });
 
     await prisma.participation_certificate.create({
@@ -452,7 +453,7 @@ void (async function setupDevDB() {
             medium: 'PC',
             hoursPerWeek: 8,
             state: 'awaiting-approval',
-        }
+        },
     });
 
     await prisma.participation_certificate.create({
@@ -469,7 +470,7 @@ void (async function setupDevDB() {
             medium: 'PC',
             hoursPerWeek: 8,
             state: 'awaiting-approval',
-        }
+        },
     });
 
     await prisma.participation_certificate.create({
@@ -487,7 +488,7 @@ void (async function setupDevDB() {
             hoursPerWeek: 8,
             state: 'approved',
             signatureParent: signature,
-        }
+        },
     });
 
     await prisma.participation_certificate.create({
@@ -504,7 +505,7 @@ void (async function setupDevDB() {
             medium: 'PC',
             hoursPerWeek: 8,
             state: 'awaiting-approval',
-        }
+        },
     });
 
     const mint = await createCourseTag(null, 'MINT', CourseCategory.focus);
@@ -517,9 +518,9 @@ void (async function setupDevDB() {
             description:
                 'Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.',
             category: CourseCategory.focus,
-            course_tags_course_tag: { create: { courseTagId: mint.id }},
-            courseState: CourseState.submitted
-        }
+            course_tags_course_tag: { create: { courseTagId: mint.id } },
+            courseState: CourseState.submitted,
+        },
     });
     await addCourseInstructor(null, course1, student1);
     await addCourseInstructor(null, course1, student2);
@@ -530,10 +531,10 @@ void (async function setupDevDB() {
             outline: 'Mit lebenden Exemplaren zum anschauen',
             description: 'COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.',
             category: CourseCategory.club,
-            course_tags_course_tag: { create: { courseTagId: mint.id }},
+            course_tags_course_tag: { create: { courseTagId: mint.id } },
             courseState: CourseState.allowed,
-            allowContact: true
-        }
+            allowContact: true,
+        },
     });
     await addCourseInstructor(null, course2, student1);
 
@@ -543,10 +544,10 @@ void (async function setupDevDB() {
             outline: '(0 + 1) * a = a * 0 + 1 * a => a * 0 = 0',
             description: 'Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...',
             category: CourseCategory.revision,
-            course_tags_course_tag: { create: { courseTagId: mint.id }},
+            course_tags_course_tag: { create: { courseTagId: mint.id } },
             courseState: CourseState.denied,
-            subject: CourseSubject.Mathematik
-        }
+            subject: CourseSubject.Mathematik,
+        },
     });
     await addCourseInstructor(null, course3, student1);
     await addCourseInstructor(null, course3, student2);
@@ -557,10 +558,10 @@ void (async function setupDevDB() {
             outline: 'Die Musik des neuen Jahrtausends',
             description: 'Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.',
             category: CourseCategory.revision,
-            course_tags_course_tag: { create: { courseTagId: music.id }},
+            course_tags_course_tag: { create: { courseTagId: music.id } },
             courseState: CourseState.cancelled,
-            subject: CourseSubject.Musik
-        }
+            subject: CourseSubject.Musik,
+        },
     });
     await addCourseInstructor(null, course4, student1);
 
@@ -570,10 +571,10 @@ void (async function setupDevDB() {
             outline: 'Mit 3 Akkorden zum ersten Song',
             description: 'In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!',
             category: CourseCategory.club,
-            course_tags_course_tag: { create: { courseTagId: music.id }},
+            course_tags_course_tag: { create: { courseTagId: music.id } },
             courseState: CourseState.allowed,
-            subject: CourseSubject.Musik
-        }
+            subject: CourseSubject.Musik,
+        },
     });
     await addCourseInstructor(null, course5, student1);
     await addCourseInstructor(null, course5, student2);
@@ -585,8 +586,8 @@ void (async function setupDevDB() {
             minGrade: 1,
             maxGrade: 13,
             maxParticipants: 4,
-            published: false
-        }
+            published: false,
+        },
     });
 
     const subcourse2 = await prisma.subcourse.create({
@@ -596,8 +597,8 @@ void (async function setupDevDB() {
             minGrade: 3,
             maxGrade: 10,
             maxParticipants: 5,
-            published: true
-        }
+            published: true,
+        },
     });
 
     const subcourse3 = await prisma.subcourse.create({
@@ -607,10 +608,9 @@ void (async function setupDevDB() {
             minGrade: 10,
             maxGrade: 11,
             maxParticipants: 3,
-            published: true
-        }
+            published: true,
+        },
     });
-
 
     const subcourse4 = await prisma.subcourse.create({
         data: {
@@ -619,8 +619,8 @@ void (async function setupDevDB() {
             minGrade: 8,
             maxGrade: 11,
             maxParticipants: 10,
-            published: true
-        }
+            published: true,
+        },
     });
 
     const subcourse5 = await prisma.subcourse.create({
@@ -630,8 +630,8 @@ void (async function setupDevDB() {
             minGrade: 3,
             maxGrade: 10,
             maxParticipants: 10,
-            published: true
-        }
+            published: true,
+        },
     });
 
     const now = new Date();
@@ -654,7 +654,7 @@ void (async function setupDevDB() {
                     organizerIds: [],
                     participantIds: [],
                     appointmentType: AppointmentType.group,
-                }
+                },
             });
 
             currentLecture += 60 * 60 * 1000;
@@ -668,8 +668,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date + 10, 19, 0, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     await prisma.lecture.create({
@@ -679,8 +679,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date + 14, 21, 0, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     await prisma.lecture.create({
@@ -690,8 +690,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date, 4, 0, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     await prisma.lecture.create({
@@ -701,8 +701,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date, hours, minutes - 1, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     await prisma.lecture.create({
@@ -712,8 +712,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date + 5, 10, 0, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     await prisma.lecture.create({
@@ -723,8 +723,8 @@ void (async function setupDevDB() {
             start: new Date(year, month, date + 15, 11, 0, 0, 0),
             organizerIds: [],
             participantIds: [],
-            appointmentType: AppointmentType.group
-        }
+            appointmentType: AppointmentType.group,
+        },
     });
 
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:

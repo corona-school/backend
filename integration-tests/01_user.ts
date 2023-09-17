@@ -287,9 +287,11 @@ export async function createNewStudent() {
 export const studentOne = test('Register Student', createNewStudent);
 
 const cooperationOne = test('Admin Creates Cooperation', async () => {
-    await adminClient.request(`mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "" })}`);
+    await adminClient.request(
+        `mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "" })}`
+    );
 
-    return { cooperationTag: "evil-corp" };
+    return { cooperationTag: 'evil-corp' };
 });
 
 export const instructorOne = test('Register Instructor', async () => {
@@ -306,7 +308,7 @@ export const instructorOne = test('Register Instructor', async () => {
         }
     `);
 
-    assert.ok(cooperations.some(it => it.tag === cooperationTag));
+    assert.ok(cooperations.some((it) => it.tag === cooperationTag));
 
     await client.request(`
         mutation RegisterStudent {

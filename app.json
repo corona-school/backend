@@ -1,11 +1,7 @@
 {
     "name": "Corona School Backend",
     "description": "The backend of Corona School",
-    "keywords": [
-        "coronaschool",
-        "node",
-        "typescript"
-    ],
+    "keywords": ["coronaschool", "node", "typescript"],
     "website": "https://lern-fair.de/",
     "repository": "https://github.com/corona-school/backend/",
     "formation": {
@@ -33,20 +29,18 @@
                 "DD_AGENT_MAJOR_VERSION": "7",
                 "DD_ENABLE_HEROKU_POSTGRES": "false"
             },
-            "addons": [
-                "heroku-postgresql:mini"
-            ]
+            "addons": ["heroku-postgresql:mini"]
         }
     },
     "buildpacks": [
         {
-          "url": "jontewks/puppeteer"
+            "url": "jontewks/puppeteer"
         },
         {
-          "url": "https://github.com/DataDog/heroku-buildpack-datadog.git"
+            "url": "https://github.com/DataDog/heroku-buildpack-datadog.git"
         },
         {
-          "url": "heroku/nodejs"
+            "url": "heroku/nodejs"
         }
     ]
 }
