@@ -264,7 +264,7 @@ export function validateContext(notification: Notification, context: Notificatio
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
-    const unexpected = actualKeys.filter((it) => expectedKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
@@ -281,7 +281,7 @@ export function validateContextForAction(action: ActionID, context: Notification
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
-    const unexpected = actualKeys.filter((it) => expectedKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
