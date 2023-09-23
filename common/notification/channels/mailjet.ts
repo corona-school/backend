@@ -51,6 +51,21 @@ export const mailjetChannel: Channel = {
         // Create a new login token
         const authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
 
+        // For campaigns, support notifications with a custom mailjet template for each campaign
+        // This feature is restricted to Notifications that provide a sample_context (= Campaign Notifications),
+        //  which specifies the mailjet template id
+        let TemplateID = notification.mailjetTemplateId;
+        if (context.overrideMailjetTemplateID) {
+            assert.ok(context.campaign, 'Concrete Notification must be part of a campaign to override the mailjet template');
+            assert.ok(notification.sample_context, 'Concrete Notification must belong to a Campaign Notification to override the mailjet template');
+            assert.ok(
+                (notification.sample_context as any).overrideMailjetTemplateID,
+                'Concrete Notification must belong to a Campaign Notification that allows overriding the mailjet template to override the mailjet template'
+            );
+
+            TemplateID = parseInt(context.overrideMailjetTemplateID, 10);
+        }
+
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: sender,
@@ -59,7 +74,7 @@ export const mailjetChannel: Channel = {
                     Email: receiverEmail,
                 },
             ],
-            TemplateID: notification.mailjetTemplateId,
+            TemplateID,
             TemplateLanguage: true,
             Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '', authToken },
             Attachments: context.attachments,
