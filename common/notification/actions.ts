@@ -558,6 +558,10 @@ const _notificationActions = {
             appointment: sampleAppointment,
         },
     },
+    screening_suggestion: {
+        description: 'Screener suggests a Ressource for a User',
+        sampleContext: {},
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
