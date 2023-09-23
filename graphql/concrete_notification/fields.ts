@@ -72,7 +72,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
         const byCampaign: { [key: string]: Campaign } = {};
 
         for (const { _count, contextID, notificationID, state } of aggregated) {
-            if (!contextID) continue;
+            if (!contextID) {
+                continue;
+            }
 
             const key = notificationID + '/' + contextID;
             if (!byCampaign[key]) {
