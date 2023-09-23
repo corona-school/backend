@@ -147,9 +147,7 @@ export class UserFieldsResolver {
         @Arg('only', { nullable: true }) only?: 'pupil' | 'student' | 'screener',
         @Arg('take', () => Int, { nullable: true }) take?: number
     ) {
-        // "Needs to know" principle: Screeners should only find users they are supposed to screen
-        // Admins sometimes need to investigate, and thus are allowed to fuzzy search:
-        const strict = !(context.user.roles?.includes(Role.ADMIN) ?? false);
+        const strict = false; // !(context.user.roles?.includes(Role.ADMIN) ?? false);
         return await findUsers(query, only, take, strict);
     }
 
