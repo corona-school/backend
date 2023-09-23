@@ -138,6 +138,6 @@ export const mailjetChannel: Channel = {
     },
 
     canSend: (notification: Notification, _user: User) => {
-        return notification.mailjetTemplateId != null;
+        return notification.mailjetTemplateId != null || (notification.sample_context && 'overrideMailjetTemplateID' in (notification.sample_context as any));
     },
 };
