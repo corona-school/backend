@@ -9,7 +9,6 @@ import {
     cancelNotification,
     publishDrafted,
     rescheduleNotification,
-    sendNotification,
     validateContext,
     validateContextForAction,
 } from '../../common/notification';

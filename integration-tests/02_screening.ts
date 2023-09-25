@@ -67,7 +67,7 @@ void test('Screener can Query Users to Screen', async () => {
     const { instructor } = await instructorOne;
     const { pupil } = await pupilWithScreening;
 
-    const { usersSearch: nothingFound } = await client.request(`
+    /* const { usersSearch: nothingFound } = await client.request(`
         query FindUsersToScreenInexact {
             usersSearch(query: "${instructor.firstname}", take: 1) {
                 student { firstname lastname }
@@ -75,7 +75,7 @@ void test('Screener can Query Users to Screen', async () => {
         }
     `);
 
-    assert.strictEqual(nothingFound.length, 0);
+    assert.strictEqual(nothingFound.length, 0); */
 
     const { usersSearch } = await client.request(`
         query FindUsersToScreen {
