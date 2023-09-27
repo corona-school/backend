@@ -16,7 +16,7 @@ if [ "$ENV" = 'production' ]; then
   echo "=========== Production Release ==============="
   echo "----------- Run Migrations -----------------"
   echo "TODO: Enable Prisma based migrations"
-  # npm run db:deploy-migrations
+  npm run db:deploy-migrations
   echo "=========== DONE ============================="
 fi
 

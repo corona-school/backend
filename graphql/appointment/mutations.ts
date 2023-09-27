@@ -1,27 +1,26 @@
 import { Arg, Ctx, Field, InputType, Mutation, Resolver, Int, Authorized } from 'type-graphql';
-import { Lecture as Appointment, Lecture } from '../generated';
+import { Lecture as Appointment } from '../generated';
 import { Role } from '../../common/user/roles';
 import {
     AppointmentCreateGroupInput,
     AppointmentCreateMatchInput,
     createGroupAppointments,
     createMatchAppointments,
+    createZoomMeetingForAppointment,
     isAppointmentOneWeekLater,
     saveZoomMeetingReport,
 } from '../../common/appointment/create';
-import * as Notification from '../../common/notification';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
-import { getLecture, getStudent } from '../util';
+import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
-import { getStudentsFromList, userForPupil } from '../../common/user';
-import { RedundantError } from '../../common/util/error';
-import { getNotificationContextForSubcourse } from '../../common/mails/courses';
+import { PrerequisiteError, RedundantError } from '../../common/util/error';
+import { GraphQLInt } from 'graphql';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -47,13 +46,6 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Match', match);
         await createMatchAppointments(match.id, [appointment]);
 
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        await Notification.actionTaken(userForPupil(match.pupil), 'student_add_appointment_match', {
-            student,
-            matchId: '' + appointment.matchId,
-        });
         return true;
     }
 
@@ -67,12 +59,7 @@ export class MutateAppointmentResolver {
         const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true } });
         await hasAccess(context, 'Match', match);
         await createMatchAppointments(matchId, appointments);
-        const student = await getStudent(context.user.studentId);
 
-        await Notification.actionTaken(userForPupil(match.pupil), 'student_add_appointments_match', {
-            student,
-            matchId: '' + matchId,
-        });
         return true;
     }
 
@@ -84,17 +71,6 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Subcourse', subcourse);
         await createGroupAppointments(subcourse.id, [appointment], organizer);
 
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
-
-        for (const participant of participants) {
-            await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
-                student: student,
-                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
-            });
-        }
         return true;
     }
 
@@ -109,23 +85,11 @@ export class MutateAppointmentResolver {
         const organizer = await getStudent(context.user.studentId);
 
         await hasAccess(context, 'Subcourse', subcourse);
-        if (isAppointmentOneWeekLater(appointments[0].start)) {
-            await createGroupAppointments(subcourseId, appointments, organizer);
-        } else {
-            throw new Error('Appointment can not be created, because start is not one week later.');
+        if (!isAppointmentOneWeekLater(appointments[0].start)) {
+            throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
         }
 
-        // send notification
-        const student = await getStudent(context.user.studentId);
-
-        const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
-
-        for (const participant of participants) {
-            await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointments_group', {
-                student: student,
-                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
-            });
-        }
+        await createGroupAppointments(subcourseId, appointments, organizer);
         return true;
     }
 
@@ -180,5 +144,15 @@ export class MutateAppointmentResolver {
 
         await deleteZoomMeeting(appointment);
         logger.info(`Admin deleted Zoom Meeting of Appointment(${appointment.id})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc('Usually Zoom Meetings are created automatically when an appointment is scheduled. If this fails, one can recreate them manually')
+    async appointmentAddZoomMeeting(@Ctx() context: GraphQLContext, @Arg('appointmentId', () => GraphQLInt) appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await createZoomMeetingForAppointment(appointment);
+        return true;
     }
 }

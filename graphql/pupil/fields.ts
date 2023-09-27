@@ -22,6 +22,7 @@ import { canJoinSubcourses } from '../../common/courses/participants';
 import { UserType } from '../types/user';
 import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
+import { GraphQLBoolean } from 'graphql';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -94,7 +95,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => [Subject])
     @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
-    async subjectsFormatted(@Root() pupil: Required<Pupil>) {
+    subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
 
@@ -140,7 +141,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
+    canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
     }
 
@@ -154,7 +155,7 @@ export class ExtendFieldsPupilResolver {
 
     @Query((returns) => [Pupil])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
+    async pupilsToBeScreened(@Arg('onlyDisputed', () => GraphQLBoolean, { nullable: true }) onlyDisputed = false) {
         return await prisma.pupil.findMany({
             where: {
                 active: true,

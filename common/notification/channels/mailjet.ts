@@ -1,12 +1,12 @@
-import { Channel, Context, Notification } from '../types';
+import { Channel, Context, Notification, NotificationSender } from '../types';
 import * as mailjet from '../../mails/mailjetTypes';
 import { mailjetSmtp } from '../../mails/config';
 import { getLogger } from '../../../common/logger/logger';
-import { assert } from 'console';
-import { NotificationSender } from '../../entity/Notification';
+import * as assert from 'assert';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
+// eslint-disable-next-line import/no-cycle
 import { createSecretEmailToken } from '../../secret';
 import moment from 'moment';
 
@@ -27,10 +27,10 @@ const senders: { [sender in NotificationSender]: { Name: string; Email: string }
 export const mailjetChannel: Channel = {
     type: 'email',
     async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
-        assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
+        assert.ok(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
         const sender = senders[notification.sender ?? NotificationSender.SUPPORT];
-        assert(sender !== undefined, 'Unknown sender');
+        assert.ok(sender !== undefined, 'Unknown sender');
 
         let receiverEmail = to.email;
         if (context.overrideReceiverEmail) {
@@ -90,7 +90,7 @@ export const mailjetChannel: Channel = {
             throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
         }
 
-        let requestOptions: mailjet.SendParams = {
+        const requestOptions: mailjet.SendParams = {
             SandboxMode: sandboxMode,
             Messages: [message],
         };

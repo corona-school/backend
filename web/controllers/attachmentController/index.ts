@@ -1,6 +1,6 @@
 import { getLogger } from '../../../common/logger/logger';
-import {Request, Response, Router} from "express";
-import {getAttachmentURL} from "../../../common/attachments";
+import { Request, Response, Router } from 'express';
+import { getAttachmentURL } from '../../../common/attachments';
 
 const logger = getLogger();
 
@@ -46,16 +46,15 @@ async function getAttachmentUrlEndpoint(req: Request, res: Response) {
     try {
         const { attachmentId, filename } = req.params;
 
-        if (typeof attachmentId !== "string" || typeof filename !== "string") {
-            return res.status(400).send("Missing/invalid parameters");
+        if (typeof attachmentId !== 'string' || typeof filename !== 'string') {
+            return res.status(400).send('Missing/invalid parameters');
         }
 
-
-        let s3url = await getAttachmentURL(attachmentId, filename);
+        const s3url = await getAttachmentURL(attachmentId, filename);
 
         return res.redirect(s3url);
     } catch (error) {
-        logger.error("Failed to generate attachment URL", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Failed to generate attachment URL', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }

@@ -1,9 +1,10 @@
-/* eslint-disable camelcase */
 import dotenv from 'dotenv';
+// eslint-disable-next-line import/no-cycle
 import { checkResponseStatus, userIdToTalkJsId } from './helper';
 import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
 import assert from 'assert';
+import chatRetry from './retry';
 
 dotenv.config();
 
@@ -30,18 +31,23 @@ const createChatUser = async (user: User): Promise<void> => {
     const userId = userIdToTalkJsId(user.userID);
     const userName = getChatName(user);
     try {
-        const response = await fetch(`${TALKJS_USER_API_URL}/${userId}`, {
-            method: 'PUT',
-            headers: {
-                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                name: userName,
-                email: [user.email],
-                role: user.studentId ? 'student' : 'pupil',
-            }),
-        });
+        const response = await chatRetry(
+            async () =>
+                await fetch(`${TALKJS_USER_API_URL}/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: userName,
+                        email: [user.email],
+                        role: user.studentId ? 'student' : 'pupil',
+                    }),
+                }),
+            3,
+            1000
+        );
         await checkResponseStatus(response);
     } catch (error) {
         throw new Error(error);

@@ -1,8 +1,7 @@
-import { Prisma, subcourse } from '@prisma/client';
+import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
 import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
-import { CourseState } from '../../common/entity/Course';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { Role } from '../authorizations';
@@ -50,7 +49,7 @@ export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
         cancelled: { equals: false },
         course: {
             is: {
-                courseState: { equals: CourseState.ALLOWED },
+                courseState: { equals: CourseState.allowed },
             },
         },
         lecture: { some: { start: { gt: new Date() }, isCanceled: false } },
@@ -101,12 +100,12 @@ export class ExtendedFieldsSubcourseResolver {
         if (excludeKnown) {
             if (isSessionStudent(context)) {
                 filters.push({
-                    subcourse_instructors_student: { none: { studentId: context.user!.studentId! } },
+                    subcourse_instructors_student: { none: { studentId: context.user.studentId } },
                 });
             } else if (isSessionPupil(context)) {
                 filters.push({
-                    subcourse_participants_pupil: { none: { pupilId: context.user!.pupilId! } },
-                    waiting_list_enrollment: { none: { pupilId: context.user!.pupilId! } },
+                    subcourse_participants_pupil: { none: { pupilId: context.user.pupilId } },
+                    waiting_list_enrollment: { none: { pupilId: context.user.pupilId } },
                 });
             } /* else ignore */
         }
@@ -142,14 +141,14 @@ export class ExtendedFieldsSubcourseResolver {
             // A pupil has access to unpublished subcourses if they are a participant ...
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
 
             // ... or on the waiting list
             accessGrantFilters.push({
                 subcourse_participants_pupil: {
-                    some: { pupilId: context.user!.pupilId! },
+                    some: { pupilId: context.user.pupilId },
                 },
             });
         }
@@ -158,7 +157,7 @@ export class ExtendedFieldsSubcourseResolver {
             // Students have access to all subcourses they own
             accessGrantFilters.push({
                 subcourse_instructors_student: {
-                    some: { studentId: context.user!.studentId },
+                    some: { studentId: context.user.studentId },
                 },
             });
         }
@@ -460,7 +459,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Number)
     @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async capacity(@Root() subcourse: Required<Subcourse>) {
-        return getCourseCapacity(subcourse);
+        return await getCourseCapacity(subcourse);
     }
 
     @FieldResolver((returns) => [Lecture])

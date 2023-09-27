@@ -1,7 +1,7 @@
 import { getUser, getUserByEmail, User } from '../user';
 import { prisma } from '../prisma';
 import { verifyPassword, hashPassword } from '../util/hashing';
-import { SecretType } from '../entity/Secret';
+import { secret_type_enum as SecretType } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 
 const logger = getLogger('Password');

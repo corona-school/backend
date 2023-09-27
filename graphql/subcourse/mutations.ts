@@ -116,7 +116,7 @@ export class MutateSubcourseResolver {
 
         const newInstructor = await getStudent(studentId);
 
-        await addSubcourseInstructor(context.user!, subcourse, newInstructor);
+        await addSubcourseInstructor(context.user, subcourse, newInstructor);
         return true;
     }
 
@@ -133,17 +133,17 @@ export class MutateSubcourseResolver {
         const instructorToBeRemoved = await getStudent(studentId);
         const instructorUser = userForStudent(instructorToBeRemoved);
         await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID);
+        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }
-        logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user!.userID})`);
+        logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+    async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         await publishSubcourse(subcourse);
@@ -152,12 +152,12 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseFill(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+    async subcourseFill(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
         await fillSubcourse(subcourse);
-        logger.info(`Subcourse(${subcourseId}) was filled by User(${context.user!.userID})`);
+        logger.info(`Subcourse(${subcourseId}) was filled by User(${context.user.userID})`);
         return true;
     }
 
@@ -171,13 +171,13 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId, true);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        logger.info(`Subcourse(${subcourseId}) was edited by User(${context.user!.userID})`);
+        logger.info(`Subcourse(${subcourseId}) was edited by User(${context.user.userID})`);
         return await editSubcourse(subcourse, data);
     }
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+    async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
@@ -186,7 +186,7 @@ export class MutateSubcourseResolver {
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
-        logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user!.userID})`);
+        logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user.userID})`);
         return true;
     }
 
@@ -352,13 +352,13 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.INSTRUCTOR)
-    async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+    async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
 
         await hasAccess(context, 'Subcourse', subcourse);
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
-        logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user!.userID})`);
+        logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
         return true;
     }
 }

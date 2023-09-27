@@ -171,12 +171,11 @@ void test('Admin Login', async () => {
 });
 
 void test('Change Email', async () => {
-    const {
-        client,
-        pupil,
-    } = await pupilOne;
+    const { client, pupil } = await pupilOne;
 
-    const { pupil: { id } } = pupil;
+    const {
+        pupil: { id },
+    } = pupil;
     const changedEmailNotification = await createMockNotification('user-email-change', 'EmailChangeNotification');
 
     const newEmail = `test+${randomBytes(5).toString('base64')}@lern-fair.de`;

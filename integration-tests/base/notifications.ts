@@ -1,5 +1,6 @@
-import assert from "assert";
-import { adminClient } from ".";
+import assert from 'assert';
+// eslint-disable-next-line import/no-cycle
+import { adminClient } from '.';
 
 interface MockNotification {
     id: number;
@@ -11,22 +12,42 @@ interface ConcreteNotification {
     error?: string;
 }
 
-export async function createMockNotification(action: string, description: string, delay?: number, interval?: number, cancelAction?: string): Promise<MockNotification> {
-    const { notificationCreate: { id } } = await adminClient.request(`mutation Create${description} {
+let currentMockedNotifications: number[] = [];
+
+export async function createMockNotification(
+    action: string,
+    description: string,
+    delay?: number,
+    interval?: number,
+    cancelAction?: string
+): Promise<MockNotification> {
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation Create${description} {
         notificationCreate(notification: { 
             description: "MOCK ${description}"
             active: false
             recipient: 0
             onActions: { set: ["${action}"]}
-            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ""}]}
-            ${delay ? "delay: " + delay : ""}
-            ${interval ? "interval: " + interval : ""}
+            cancelledOnAction: { set: [${cancelAction ? '"' + cancelAction + '"' : ''}]}
+            ${delay ? 'delay: ' + delay : ''}
+            ${interval ? 'interval: ' + interval : ''}
         }) { id }
     }`);
 
     await adminClient.request(`mutation Activate${description} { notificationActivate(notificationId: ${id}, active: true)}`);
 
+    currentMockedNotifications.push(id);
+
     return { id };
+}
+
+export async function cleanupMockedNotifications() {
+    for (const id of currentMockedNotifications) {
+        await adminClient.request(`mutation Cleanup${id} { notificationActivate(notificationId: ${id}, active: false)}`);
+    }
+
+    currentMockedNotifications = [];
 }
 
 export async function assertUserReceivedNotification(notification: MockNotification, userID: string): Promise<ConcreteNotification> {
@@ -41,7 +62,7 @@ export async function assertUserReceivedNotification(notification: MockNotificat
       }
     }`);
 
-    assert.strictEqual(result.concrete_notifications.length, 1, "Expected user to receive exactly one concrete notification");
+    assert.strictEqual(result.concrete_notifications.length, 1, 'Expected user to receive exactly one concrete notification');
 
     return result.concrete_notifications[0];
 }

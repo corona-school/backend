@@ -1,7 +1,3 @@
 {
-    "recommendations": [
-        "prisma.prisma",
-        "dbaeumer.vscode-eslint",
-        "graphql.vscode-graphql-syntax"
-    ]
+    "recommendations": ["prisma.prisma", "dbaeumer.vscode-eslint", "graphql.vscode-graphql-syntax"]
 }

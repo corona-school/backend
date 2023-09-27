@@ -2,10 +2,10 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Context, Notification, NotificationID, NotificationMessage } from './types';
-import { NotificationRecipient } from '../entity/Notification';
+import { Context, Notification, NotificationID, NotificationMessage, NotificationRecipient } from './types';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
+// eslint-disable-next-line import/no-cycle
 import { hookExists } from './hook';
 import { ActionID, getNotificationActions, sampleUser } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';
@@ -23,7 +23,7 @@ type MessageTranslationFromDb = {
     navigateTo: string;
 };
 
-type NotificationsPerAction = Map<String, { toSend: Readonly<Notification>[]; toCancel: Readonly<Notification>[] }>;
+type NotificationsPerAction = Map<string, { toSend: Readonly<Notification>[]; toCancel: Readonly<Notification>[] }>;
 let _notificationsPerAction: Promise<NotificationsPerAction>;
 
 const logger = getLogger('Notification Management');

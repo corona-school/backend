@@ -13,6 +13,7 @@ import { userForPupil } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
+import { isChatFeatureActive } from '../chat/util';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -208,7 +209,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         const pupilUser = userForPupil(pupil);
         await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
-        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
 
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
@@ -230,8 +230,10 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             take: 1,
         });
 
-        await addGroupAppointmentsParticipant(subcourse.id, userForPupil(pupil).userID);
-        await addParticipant(userForPupil(pupil), subcourse.conversationId, subcourse.groupChatType as ChatType);
+        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
+        if (isChatFeatureActive() && subcourse.conversationId) {
+            await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
+        }
 
         try {
             const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });

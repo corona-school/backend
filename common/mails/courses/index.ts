@@ -1,13 +1,8 @@
-import { Subcourse } from '../../entity/Subcourse';
-import { Course } from '../../entity/Course';
 import { prisma } from '../../prisma';
 import { mailjetTemplates, sendTemplateMail, sendTextEmail } from '../index';
 import moment from 'moment-timezone';
 import { getLogger } from '../../logger/logger';
-import { Student } from '../../entity/Student';
-import { Pupil } from '../../entity/Pupil';
 import { DEFAULTSENDERS } from '../config';
-import { CourseGuest, getCourseGuestLink } from '../../entity/CourseGuest';
 import * as Notification from '../../../common/notification';
 import { getFullName, userForPupil, userForStudent } from '../../user';
 import * as Prisma from '@prisma/client';
@@ -22,24 +17,8 @@ import { NotificationContext } from '../../notification/types';
 
 const logger = getLogger('Course Notification');
 
-const dropCourseRelations = (course: Course | Prisma.course) => ({
-    ...course,
-    instructors: undefined,
-    guests: undefined,
-    correspondent: undefined,
-    subcourses: undefined,
-});
-
-const dropSubcourseRelations = (subcourse: Subcourse | Prisma.subcourse) => ({
-    ...subcourse,
-    instructors: undefined,
-    participants: undefined,
-    waitingList: undefined,
-    course: undefined,
-});
-
 export async function sendSubcourseCancelNotifications(course: Prisma.course, subcourse: Prisma.subcourse) {
-    let lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     if (lectures.length == 0) {
         logger.info('No lectures found: no cancellation mails sent for subcourse ' + subcourse.id + ' of course ' + course.name);
         return;
@@ -53,10 +32,10 @@ export async function sendSubcourseCancelNotifications(course: Prisma.course, su
         }
     }
 
-    let participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, select: { pupil: true } });
+    const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, select: { pupil: true } });
     // Send mail or this lecture to each participant
     logger.info('Sending cancellation mails for subcourse ' + subcourse.id + ' of course ' + course.name + ' to ' + participants.length + ' participants');
-    for (let participant of participants) {
+    for (const participant of participants) {
         const mail = mailjetTemplates.COURSESCANCELLED({
             participantFirstname: participant.pupil.firstname,
             courseName: course.name,
@@ -69,22 +48,6 @@ export async function sendSubcourseCancelNotifications(course: Prisma.course, su
             ...(await getNotificationContextForSubcourse(course, subcourse)),
         });
     }
-}
-
-export async function sendCourseUpcomingReminderInstructor(instructor: Prisma.student, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    const mail = mailjetTemplates.COURSESUPCOMINGREMINDERINSTRUCTOR({
-        participantFirstname: instructor.firstname,
-        courseName: course.name,
-        courseId: course.id,
-        firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-        firstLectureTime: moment(firstLecture).format('HH:mm'),
-    });
-    await sendTemplateMail(mail, instructor.email);
-    await Notification.actionTaken(userForStudent(instructor), 'instructor_course_reminder', await getNotificationContextForSubcourse(course, subcourse));
-}
-
-export async function sendCourseUpcomingReminderParticipant(participant: Prisma.pupil, course: Prisma.course, subcourse: Prisma.subcourse, firstLecture: Date) {
-    await Notification.actionTaken(userForPupil(participant), 'participant_subcourse_reminder', await getNotificationContextForSubcourse(course, subcourse));
 }
 
 export async function getNotificationContextForSubcourse(course: { name: string; description: string; imageKey: string }, subcourse: Prisma.subcourse) {
@@ -152,7 +115,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
         grades.push(`${grade}. Klasse`);
     }
 
-    let pupils = await prisma.pupil.findMany({
+    const pupils = await prisma.pupil.findMany({
         where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
     });
 

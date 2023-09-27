@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>[TEST] Corona School Bescheinigung</title>
-</head>
-<body>
-    <h2>Kurs-Zertifikat</h2>
-    Voller Name: <%=FULLNAME%> <br/>
-    Kursname: <%=COURSENAME%> <br/>
-    Gesamtaufwand: <%=0.25 * Math.ceil(TOTALWORKLOAD/0.25)%> h <br/>
-    Lektionen: <ul>
-        <%_ for(const {start, duration} of LECTURES) {_%>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+        <title>[TEST] Corona School Bescheinigung</title>
+    </head>
+    <body>
+        <h2>Kurs-Zertifikat</h2>
+        Voller Name: <%=FULLNAME%> <br />
+        Kursname: <%=COURSENAME%> <br />
+        Gesamtaufwand: <%=0.25 * Math.ceil(TOTALWORKLOAD/0.25)%> h <br />
+        Lektionen:
+        <ul>
+            <%_ for(const {start, duration} of LECTURES) {_%>
             <li><%=`${moment(start).format("DD. MMMM YYYY [von] hh.mm")} - ${moment(start).add(duration, "minutes").format("hh.mm [Uhr]")}`%></li>
-        <%_ } _%>
-    </ul>
-</body>
+            <%_ } _%>
+        </ul>
+    </body>
 </html>

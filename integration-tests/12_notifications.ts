@@ -1,9 +1,8 @@
-import assert from "assert";
-import { prisma } from "../common/prisma";
-import { pupilOne } from "./01_user";
-import { adminClient, test } from "./base";
-import { createMockNotification } from "./base/notifications";
-
+import assert from 'assert';
+import { prisma } from '../common/prisma';
+import { pupilOne } from './01_user';
+import { adminClient, test } from './base';
+import { createMockNotification } from './base/notifications';
 
 void test('Action Notification Timing (Dry Run)', async () => {
     const { pupil } = await pupilOne;
@@ -14,12 +13,10 @@ void test('Action Notification Timing (Dry Run)', async () => {
     const after = await createMockNotification('TEST', 'After', 1);
     const afterInterval = await createMockNotification('TEST', 'AfterInterval', 1, 1);
 
-    const isSent = (result, notification) => assert.ok(result.directSends.some(it => it.id === notification.id));
-    const isReminder = (result, notification) => assert.ok(result.reminders.some(it => it.notification.id === notification.id));
-    const isIgnored = (result, notification) => assert.ok(
-        !result.directSends.some(it => it.id === notification.id) &&
-        !result.reminders.some(it => it.notification.id === notification.id)
-    );
+    const isSent = (result, notification) => assert.ok(result.directSends.some((it) => it.id === notification.id));
+    const isReminder = (result, notification) => assert.ok(result.reminders.some((it) => it.notification.id === notification.id));
+    const isIgnored = (result, notification) =>
+        assert.ok(!result.directSends.some((it) => it.id === notification.id) && !result.reminders.some((it) => it.notification.id === notification.id));
 
     // -------- NOW -----------------
 
@@ -46,7 +43,6 @@ void test('Action Notification Timing (Dry Run)', async () => {
     isSent(actionBefore1, beforeInterval);
     isSent(actionBefore1, after);
     isSent(actionBefore1, afterInterval);
-
 
     // -------- 2 HOURS BEFORE ---
     const before2Hours = new Date();
@@ -76,7 +72,6 @@ void test('Action Notification Timing (Dry Run)', async () => {
     isReminder(actionAfter1, after);
     isReminder(actionAfter1, afterInterval);
 
-
     // -------- 2 HOURS AFTER ---
     const after2Hours = new Date();
     after2Hours.setHours(after2Hours.getHours() + 2);
@@ -93,11 +88,11 @@ void test('Action Notification Timing (Dry Run)', async () => {
 
     const sentNotifications = await prisma.concrete_notification.count({
         where: {
-            notificationID: { in: [before.id, beforeInterval.id, instant.id, after.id, afterInterval.id ]}
-        }
+            notificationID: { in: [before.id, beforeInterval.id, instant.id, after.id, afterInterval.id] },
+        },
     });
 
-    assert.strictEqual(sentNotifications, 0, "Expected no notification to be sent in dryRun");
+    assert.strictEqual(sentNotifications, 0, 'Expected no notification to be sent in dryRun');
 });
 
 void test('Action Notification Timing', async () => {
@@ -109,12 +104,10 @@ void test('Action Notification Timing', async () => {
     const after = await createMockNotification('TEST', 'After', 1);
     const afterInterval = await createMockNotification('TEST', 'AfterInterval', 1, 1);
 
-    const isSent = (result, notification) => assert.ok(result.directSends.some(it => it.id === notification.id));
-    const isReminder = (result, notification) => assert.ok(result.reminders.some(it => it.notification.id === notification.id));
-    const isIgnored = (result, notification) => assert.ok(
-        !result.directSends.some(it => it.id === notification.id) &&
-        !result.reminders.some(it => it.notification.id === notification.id)
-    );
+    const isSent = (result, notification) => assert.ok(result.directSends.some((it) => it.id === notification.id));
+    const isReminder = (result, notification) => assert.ok(result.reminders.some((it) => it.notification.id === notification.id));
+    const isIgnored = (result, notification) =>
+        assert.ok(!result.directSends.some((it) => it.id === notification.id) && !result.reminders.some((it) => it.notification.id === notification.id));
 
     // -------- NOW -----------------
 
@@ -141,7 +134,6 @@ void test('Action Notification Timing', async () => {
     isSent(actionBefore1, beforeInterval);
     isSent(actionBefore1, after);
     isSent(actionBefore1, afterInterval);
-
 
     // -------- 2 HOURS BEFORE ---
     const before2Hours = new Date();
@@ -171,7 +163,6 @@ void test('Action Notification Timing', async () => {
     isReminder(actionAfter1, after);
     isReminder(actionAfter1, afterInterval);
 
-
     // -------- 2 HOURS AFTER ---
     const after2Hours = new Date();
     after2Hours.setHours(after2Hours.getHours() + 2);
@@ -189,88 +180,87 @@ void test('Action Notification Timing', async () => {
     const delayedBeforeNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: before.id,
-            state: 0 /* DELAYED */
-        }
+            state: 0 /* DELAYED */,
+        },
     });
 
     const sentBeforeNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: before.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(delayedBeforeNotifications, 1, "Expected before notification to be in delayed state once");
-    assert.strictEqual(sentBeforeNotifications, 1, "Expected before notification to be in sent state once");
+    assert.strictEqual(delayedBeforeNotifications, 1, 'Expected before notification to be in delayed state once');
+    assert.strictEqual(sentBeforeNotifications, 1, 'Expected before notification to be in sent state once');
 
     const delayedBeforeIntervalNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: beforeInterval.id,
-            state: 0 /* DELAYED */
-        }
+            state: 0 /* DELAYED */,
+        },
     });
 
     const sentBeforeIntervalNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: beforeInterval.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(delayedBeforeIntervalNotifications, 1, "Expected beforeInterval notification to be in delayed state once");
-    assert.strictEqual(sentBeforeIntervalNotifications, 4, "Expected beforeInterval notification to be in sent state four times");
+    assert.strictEqual(delayedBeforeIntervalNotifications, 1, 'Expected beforeInterval notification to be in delayed state once');
+    assert.strictEqual(sentBeforeIntervalNotifications, 4, 'Expected beforeInterval notification to be in sent state four times');
 
     const delayedInstantNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: instant.id,
-            state: 0 /* DELAYED */
-        }
+            state: 0 /* DELAYED */,
+        },
     });
 
     const sentInstantNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: instant.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(delayedInstantNotifications, 2, "Expected instant notification to be in delayed state twice");
-    assert.strictEqual(sentInstantNotifications, 1, "Expected instant notification to be in sent state once");
+    assert.strictEqual(delayedInstantNotifications, 2, 'Expected instant notification to be in delayed state twice');
+    assert.strictEqual(sentInstantNotifications, 1, 'Expected instant notification to be in sent state once');
 
     const delayedAfterNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: after.id,
-            state: 0 /* DELAYED */
-        }
+            state: 0 /* DELAYED */,
+        },
     });
 
     const sentAfterNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: after.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(delayedAfterNotifications, 3, "Expected after notification to be in delayed state three times");
-    assert.strictEqual(sentAfterNotifications, 1, "Expected after notification to be in sent state once");
+    assert.strictEqual(delayedAfterNotifications, 3, 'Expected after notification to be in delayed state three times');
+    assert.strictEqual(sentAfterNotifications, 1, 'Expected after notification to be in sent state once');
 
     const delayedAfterIntervalNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: afterInterval.id,
-            state: 0 /* DELAYED */
-        }
+            state: 0 /* DELAYED */,
+        },
     });
 
     const sentAfterIntervalNotifications = await prisma.concrete_notification.count({
         where: {
             notificationID: afterInterval.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(delayedAfterIntervalNotifications, 3, "Expected afterInterval notification to be in delayed three times");
-    assert.strictEqual(sentAfterIntervalNotifications, 2, "Expected afterInterval notification to be in sent state two times");
-
+    assert.strictEqual(delayedAfterIntervalNotifications, 3, 'Expected afterInterval notification to be in delayed three times');
+    assert.strictEqual(sentAfterIntervalNotifications, 2, 'Expected afterInterval notification to be in sent state two times');
 });
 
 void test('Reminder Cancellation', async () => {
@@ -286,7 +276,7 @@ void test('Reminder Cancellation', async () => {
         where: { notificationID: notification.id, state: 0 /* DELAYED */ },
     });
 
-    assert.strictEqual(delayedNotifications, 1, "Expected notification to be delayed");
+    assert.strictEqual(delayedNotifications, 1, 'Expected notification to be delayed');
 
     const { _actionTakenAt: second } = await adminClient.request(`mutation TriggerAction {
         _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${pupil.userID}")
@@ -300,8 +290,8 @@ void test('Reminder Cancellation', async () => {
         where: { notificationID: notification.id, state: 4 /* ACTION_TAKEN */ },
     });
 
-    assert.strictEqual(delayedNotifications2, 1, "Expected notification to be delayed");
-    assert.strictEqual(cancelledNotifications, 1, "Expected notification to be cancelled");
+    assert.strictEqual(delayedNotifications2, 1, 'Expected notification to be delayed');
+    assert.strictEqual(cancelledNotifications, 1, 'Expected notification to be cancelled');
 });
 
 void test('Reminder Cancellation with UniqueID', async () => {
@@ -321,19 +311,13 @@ void test('Reminder Cancellation with UniqueID', async () => {
         where: { notificationID: notification.id, state: 0 /* DELAYED */ },
     });
 
-    assert.strictEqual(delayedNotifications, 2, "Expected notifications to be delayed");
-
-    console.log(
-        await prisma.concrete_notification.findMany({ where: { notificationID: notification.id }})
-    );
+    assert.strictEqual(delayedNotifications, 2, 'Expected notifications to be delayed');
 
     const { _actionTakenAt: third } = await adminClient.request(`mutation TriggerAction {
         _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, userID: "${pupil.userID}")
     }`);
 
-    console.log(
-        await prisma.concrete_notification.findMany({ where: { notificationID: notification.id }})
-    );
+    console.log(await prisma.concrete_notification.findMany({ where: { notificationID: notification.id } }));
 
     const delayedNotifications2 = await prisma.concrete_notification.count({
         where: { notificationID: notification.id, state: 0 /* DELAYED */ },
@@ -343,8 +327,8 @@ void test('Reminder Cancellation with UniqueID', async () => {
         where: { notificationID: notification.id, state: 4 /* ACTION_TAKEN */ },
     });
 
-    assert.strictEqual(delayedNotifications2, 2, "Expected notifications to be delayed");
-    assert.strictEqual(cancelledNotifications, 1, "Expected notification to be cancelled");
+    assert.strictEqual(delayedNotifications2, 2, 'Expected notifications to be delayed');
+    assert.strictEqual(cancelledNotifications, 1, 'Expected notification to be cancelled');
 });
 
 void test('Duplicate Prevention', async () => {
@@ -365,39 +349,43 @@ void test('Duplicate Prevention', async () => {
     const sentWithDuplicates = await prisma.concrete_notification.count({
         where: {
             notificationID: notification.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(sentWithDuplicates, 2, "Expected Notification to be sent out twice with duplicate prevention");
+    assert.strictEqual(sentWithDuplicates, 2, 'Expected Notification to be sent out twice with duplicate prevention');
 
     // With Duplicate Prevention we still send out if the uniqueId is different:
 
     await adminClient.request(`mutation TriggerAction {
-        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2" } dryRun: false, noDuplicates: true, userID: "${pupil.userID}")
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
     }`);
 
     const sentWithDifferentUniqueId = await prisma.concrete_notification.count({
         where: {
             notificationID: notification.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(sentWithDifferentUniqueId, 3, "Expected Notification to be sent out three times");
+    assert.strictEqual(sentWithDifferentUniqueId, 3, 'Expected Notification to be sent out three times');
 
     // With Duplicate Prevention but different uniqueId sending out the notification is prevented:
 
     await adminClient.request(`mutation TriggerAction {
-        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, noDuplicates: true, userID: "${pupil.userID}")
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "1" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
     }`);
 
     const sentWithSameUniqueId = await prisma.concrete_notification.count({
         where: {
             notificationID: notification.id,
-            state: 2 /* SENT */
-        }
+            state: 2 /* SENT */,
+        },
     });
 
-    assert.strictEqual(sentWithSameUniqueId, 3, "Expected that no additional notification is sent out");
+    assert.strictEqual(sentWithSameUniqueId, 3, 'Expected that no additional notification is sent out');
 });

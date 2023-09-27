@@ -144,7 +144,9 @@ void test('Admin Search Users', async () => {
 void test('Admin Manage Notifications', async () => {
     const { client: pupilClient, pupil } = await pupilOne;
 
-    const { notificationCreate: { id } } = await adminClient.request(`mutation CreateNotification {
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateNotification {
         notificationCreate(notification: { 
             description: "MOCK"
             active: false
@@ -154,7 +156,6 @@ void test('Admin Manage Notifications', async () => {
             sample_context: { test: "test" }
         }) { id }
     }`);
-
 
     await adminClient.requestShallFail(`mutation SetMessageWithInvalidTemplate {
         notificationSetMessageTranslation(
@@ -180,7 +181,6 @@ void test('Admin Manage Notifications', async () => {
 
     await adminClient.request(`mutation Activate { notificationActivate(notificationId: ${id}, active: true)}`);
 
-    
     await adminClient.requestShallFail(`mutation SendOutWithMissingContext { 
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
@@ -190,7 +190,6 @@ void test('Admin Manage Notifications', async () => {
         notificationId: ${id}
       )
     }`);
-
 
     await adminClient.request(`mutation SendOut { 
         concreteNotificationBulkCreate(
@@ -202,7 +201,9 @@ void test('Admin Manage Notifications', async () => {
       )
     }`);
 
-    const { me: { concreteNotifications: scheduled }} = await pupilClient.request(`query NotificationScheduled { 
+    const {
+        me: { concreteNotifications: scheduled },
+    } = await pupilClient.request(`query NotificationScheduled { 
         me { 
           concreteNotifications(take:100) { 
             notificationID
@@ -218,11 +219,13 @@ void test('Admin Manage Notifications', async () => {
       }
     }`);
 
-    assert.ok(!scheduled.find(it => it.notificationID === id), "Concrete notification already visible?");
+    assert.ok(!scheduled.find((it) => it.notificationID === id), 'Concrete notification already visible?');
 
     await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
 
-    const { me: { concreteNotifications: sent }} = await pupilClient.request(`query NotificationSent { 
+    const {
+        me: { concreteNotifications: sent },
+    } = await pupilClient.request(`query NotificationSent { 
         me { 
           concreteNotifications(take:100) { 
             notificationID
@@ -238,11 +241,11 @@ void test('Admin Manage Notifications', async () => {
       }
     }`);
 
-    const notification = sent.find(it => it.notificationID === id);
+    const notification = sent.find((it) => it.notificationID === id);
     assert.strictEqual(notification.state, 2);
     assert.strictEqual(notification.message.headline, pupil.firstname);
-    assert.strictEqual(notification.message.body, pupil.firstname + " " + pupil.lastname);
-    assert.strictEqual(notification.message.navigateTo, "/test2");
+    assert.strictEqual(notification.message.body, pupil.firstname + ' ' + pupil.lastname);
+    assert.strictEqual(notification.message.navigateTo, '/test2');
 
     // Ensure the cache is properly invalidated:
     await adminClient.request(`mutation SetMessage {
@@ -256,7 +259,9 @@ void test('Admin Manage Notifications', async () => {
         )
     }`);
 
-    const { me: { concreteNotifications: sent2 }} = await pupilClient.request(`query NotificationSent2 { 
+    const {
+        me: { concreteNotifications: sent2 },
+    } = await pupilClient.request(`query NotificationSent2 { 
         me { 
           concreteNotifications(take:100) { 
             notificationID
@@ -272,11 +277,9 @@ void test('Admin Manage Notifications', async () => {
       }
     }`);
 
-    const notification2 = sent2.find(it => it.notificationID === id);
+    const notification2 = sent2.find((it) => it.notificationID === id);
     assert.strictEqual(notification2.state, 2);
     assert.strictEqual(notification2.message.headline, pupil.firstname);
-    assert.strictEqual(notification2.message.body, "TEST");
+    assert.strictEqual(notification2.message.body, 'TEST');
     assert.strictEqual(notification2.message.navigateTo, null);
-
-
-}) 
+});
