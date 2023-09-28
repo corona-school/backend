@@ -362,7 +362,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             matchReason: everyone,
 
-            email: adminOrOwner,
+            email: adminOrOwnerOrScreener,
             verification: nobody,
             verifiedAt: adminOrOwner,
             wix_id: adminOrOwner,
