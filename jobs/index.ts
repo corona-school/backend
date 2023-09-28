@@ -1,4 +1,7 @@
 import '../common/logger/tracing';
+// This is needed for prisma in combination with type graphql
+// https://typegraphql.com/docs/installation.html
+import 'reflect-metadata';
 import moment from 'moment-timezone';
 import { getLogger } from '../common/logger/logger';
 import { scheduleJobs } from './scheduler';
