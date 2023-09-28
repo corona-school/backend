@@ -59,23 +59,11 @@ export async function postStatisticsToSlack() {
             createdAt: { gte: begin, lte: end },
             knowsCoronaSchoolFrom: { notIn: [''] },
         },
-        _count: {
-            createdAt: true,
-        },
+        _count: true,
     });
 
-    const tutorKnowsCoronaSchoolFromValue = tutorKnowsCoronaSchoolFrom.map(function (item) {
-        return item['knowsCoronaSchoolFrom'];
-    });
-
-    const tutorKnowsCoronaSchoolFromCount = tutorKnowsCoronaSchoolFrom.map(function (item) {
-        return String(item['_count']['createdAt']);
-    });
-
-    const tutorKnowsCoronaSchoolFromTable: [string, string][] = [];
-    for (let i = 0; i < tutorKnowsCoronaSchoolFromValue.length; i++) {
-        tutorKnowsCoronaSchoolFromTable[i] = [tutorKnowsCoronaSchoolFromValue[i], tutorKnowsCoronaSchoolFromCount[i]];
-    }
+    let tutorKnowsCoronaSchoolFromTable: [string, string][] = [];
+    tutorKnowsCoronaSchoolFromTable = tutorKnowsCoronaSchoolFrom.map((item) => [item['knowsCoronaSchoolFrom'], item['_count'].toString()]);
 
     // Instructor screening - total
     const instructorScreeningCount = await prisma.instructor_screening.count({
@@ -104,18 +92,8 @@ export async function postStatisticsToSlack() {
         },
     });
 
-    const instructorKnowsCoronaSchoolFromValue = instructorKnowsCoronaSchoolFrom.map(function (item) {
-        return item['knowsCoronaSchoolFrom'];
-    });
-
-    const instructorKnowsCoronaSchoolFromCount = instructorKnowsCoronaSchoolFrom.map(function (item) {
-        return String(item['_count']['createdAt']);
-    });
-
-    const instructorKnowsCoronaSchoolFromTable: [string, string][] = [];
-    for (let i = 0; i < instructorKnowsCoronaSchoolFromValue.length; i++) {
-        instructorKnowsCoronaSchoolFromTable[i] = [instructorKnowsCoronaSchoolFromValue[i], instructorKnowsCoronaSchoolFromCount[i]];
-    }
+    let instructorKnowsCoronaSchoolFromTable: [string, string][] = [];
+    instructorKnowsCoronaSchoolFromTable = instructorKnowsCoronaSchoolFrom.map((item) => [item['knowsCoronaSchoolFrom'], item['_count'].toString()]);
 
     // Matches
     const matchCount = await prisma.match.count({
@@ -131,55 +109,37 @@ export async function postStatisticsToSlack() {
         },
     });
 
-    // Number of current subcourses
-    const subcourseCurrentCount = await prisma.subcourse.count();
-
-    // TODO: number of free / taken seats of current public subcourses
-    const subcourseSeats = await prisma.course.findMany({
+    // Number of free / taken seats of current public subcourses
+    const subcourseSeats = await prisma.subcourse.findMany({
         select: {
-            id: true,
-            name: true,
-            subcourse: {
+            course: {
                 select: {
-                    maxParticipants: true,
-                    // eslint-disable-next-line camelcase
-                    subcourse_participants_pupil: {
-                        select: {
-                            pupilId: true,
-                        },
-                    },
+                    name: true,
                 },
+            },
+            maxParticipants: true,
+            subcourse_participants_pupil: {
+                select: {
+                    pupilId: true,
+                },
+            },
+        },
+        where: {
+            lecture: {
+                every: { start: { lt: end } },
+                some: { start: { gte: begin, lt: end } },
             },
         },
     });
 
-    const subcourseSeatsCount = subcourseSeats.map((course) => {
-        const subcourses = course.subcourse;
-        const totalSeats = subcourses.reduce((acc, subcourse) => acc + subcourse.maxParticipants, 0);
-        const takenSeats = subcourses.reduce((acc, subcourse) => acc + subcourse.subcourse_participants_pupil.length, 0);
-        const availableSeats = totalSeats - takenSeats;
-
-        return {
-            courseName: course.name,
-            totalSeats,
-            takenSeats,
-            availableSeats,
-        };
-    });
-
-    const subcourseSeatsTakenTable: [string, string][] = [];
-    for (let i = 0; i < subcourseSeatsCount.length; i++) {
-        subcourseSeatsTakenTable[i] = [
-            subcourseSeatsCount[i].courseName,
-            String(subcourseSeatsCount[i].takenSeats + ' von ' + subcourseSeatsCount[i].totalSeats),
-        ];
-    }
+    let subcourseSeatsTakenTable: [string, string][] = [];
+    subcourseSeatsTakenTable = subcourseSeats.map((item) => [item.course.name, item.subcourse_participants_pupil.length + ' von ' + item.maxParticipants]);
 
     // Match appointments
     const matchAppointmentCount = await prisma.lecture.count({
         where: {
             createdAt: { gte: begin, lte: end },
-            matchId: { notIn: 0 },
+            matchId: { not: { equals: null } },
         },
     });
 
@@ -190,14 +150,13 @@ export async function postStatisticsToSlack() {
                 ['Anzahl registrierter Helfer*innen', '' + studentsRegisteredCount],
                 ['Anzahl erfolgreicher Screenings Schüler*innen', '' + pupilScreeningSuccessCount + ' von ' + pupilScreeningCount],
                 ['Anzahl erfolgreicher Screenings Helfer*innen', '' + tutorScreeningSuccessCount + ' von ' + tutorScreeningCount],
-                ['Anzahl erfolgreicher Screenings Lehrer*innen', '' + instructorScreeningSuccessCount + ' von ' + instructorScreeningCount],
+                ['Anzahl erfolgreicher Screenings Kursleiter*innen', '' + instructorScreeningSuccessCount + ' von ' + instructorScreeningCount],
                 ['Anzahl erstellter Matches', '' + matchCount],
                 ['Anzahl erstellter Kurse', '' + subcourseCreatedCount],
-                ['Anzahl aktueller Kurse', '' + subcourseCurrentCount],
                 ['Anzahl Match-Termine', '' + matchAppointmentCount],
             ]),
             table('Von uns gehört durch... (Helfer*innen)', 'Name', 'Wert', tutorKnowsCoronaSchoolFromTable),
-            table('Von uns gehört durch... (Lehrer*innen)', 'Name', 'Wert', instructorKnowsCoronaSchoolFromTable),
+            table('Von uns gehört durch... (Kursleiter*innen)', 'Name', 'Wert', instructorKnowsCoronaSchoolFromTable),
             table('Anzahl der belegten Plätze in den aktuellen Kursen', 'Name', 'Wert', subcourseSeatsTakenTable),
         ],
     });
