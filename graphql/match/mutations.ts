@@ -1,5 +1,5 @@
-import { prisma } from '../../common/prisma';
-import { Arg, Authorized, Ctx, Int, Mutation, Resolver } from 'type-graphql';
+import * as TypeGraphQL from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
@@ -14,6 +14,15 @@ import { JSONResolver } from 'graphql-scalars';
 import { createAdHocMeeting } from '../../common/appointment/create';
 import { AuthenticationError } from '../error';
 import { dissolved_by_enum } from '@prisma/client';
+import { dissolve_reason } from '../generated';
+
+@InputType()
+class MatchDissolveInput {
+    @TypeGraphQL.Field((_type) => Int)
+    matchId!: number;
+    @TypeGraphQL.Field((_type) => dissolve_reason)
+    dissolveReason!: dissolve_reason;
+}
 
 @Resolver((of) => GraphQLModel.Match)
 export class MutateMatchResolver {
@@ -35,8 +44,8 @@ export class MutateMatchResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async matchDissolve(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number, @Arg('dissolveReason') dissolveReason: number): Promise<boolean> {
-        const match = await getMatch(matchId);
+    async matchDissolve(@Ctx() context: GraphQLContext, @Arg('info') info: MatchDissolveInput): Promise<boolean> {
+        const match = await getMatch(info.matchId);
         await hasAccess(context, 'Match', match);
         let dissolvedBy: dissolved_by_enum;
         if (context.user.pupilId != null) {
@@ -47,7 +56,7 @@ export class MutateMatchResolver {
             dissolvedBy = dissolved_by_enum.admin;
         }
 
-        await dissolveMatch(match, dissolveReason, /* dissolver:*/ null, dissolvedBy);
+        await dissolveMatch(match, info.dissolveReason, /* dissolver:*/ null, dissolvedBy);
         return true;
     }
 
@@ -57,7 +66,10 @@ export class MutateMatchResolver {
         const match = await getMatch(matchId);
         await hasAccess(context, 'Match', match);
         await reactivateMatch(match);
-        const { conversation, conversationId } = await getMatcheeConversation({ studentId: match.studentId, pupilId: match.pupilId });
+        const { conversation, conversationId } = await getMatcheeConversation({
+            studentId: match.studentId,
+            pupilId: match.pupilId,
+        });
 
         if (conversation) {
             await markConversationAsWriteable(conversationId);
