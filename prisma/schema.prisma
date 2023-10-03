@@ -1262,4 +1262,5 @@ enum dissolve_reason {
   technicalIssues // "Wir hatten technische Schwierigkeiten"
   languageIssues // "Wir hatten sprachliche Schwierigkeiten"
   other // "Sonstiges"
+  unknown // legacy data which we can't map anymore
 }
