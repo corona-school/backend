@@ -1,4 +1,4 @@
-import { dissolved_by_enum, match as Match, pupil as Pupil, student as Student } from '@prisma/client';
+import { dissolve_reason, dissolved_by_enum, match as Match, pupil as Pupil, student as Student } from '@prisma/client';
 import { sendTemplateMail, mailjetTemplates } from '../mails';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
@@ -14,7 +14,7 @@ import { deleteZoomUser } from '../zoom/user';
 
 const logger = getLogger('Match');
 
-export async function dissolveMatch(match: Match, dissolveReason: number, dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
+export async function dissolveMatch(match: Match, dissolveReason: dissolve_reason, dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
@@ -23,7 +23,7 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
         where: { id: match.id },
         data: {
             dissolved: true,
-            dissolveReason,
+            dissolveReasonEnum: dissolveReason,
             dissolvedAt: new Date(),
             dissolvedBy,
         },
