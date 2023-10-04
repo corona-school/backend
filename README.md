@@ -72,7 +72,7 @@ The following configuration can be done via ENV variables:
 | Name       | Value   | Description                                                               |
 | ---------- | ------- | ------------------------------------------------------------------------- |
 | LOG_FORMAT | (unset) | Every log prefixed by session and transaction id, also log HTTP requests  |
-|            | json    | Log as JSON, used in deployed environemnts to pass rich info to Datadog   |
+|            | json    | Log as JSON, used in deployed environments to pass rich info to Datadog   |
 |            | brief   | Only log category and message (omitting session prefix and HTTP requests) |
 
 #### Command line arguments
