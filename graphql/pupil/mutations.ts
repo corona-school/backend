@@ -253,7 +253,7 @@ export class MutatePupilResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.SCREENER)
-    async pupilUpdateSubjects(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId') pupilId: number) {
+    async pupilUpdateSubjects(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateSubjectsInput, @Arg('pupilId') pupilId: number) {
         const pupil = await getPupil(pupilId);
         await updatePupil(context, pupil, { subjects: data.subjects });
         return true;
