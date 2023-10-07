@@ -13,4 +13,6 @@ export const stats = new StatsD({
 export const metrics = {
     GRAPHQL_REQUESTS: 'graphql.requests',
     JOB_COUNT_EXECUTED: 'jobs.executed',
+    FILE_STORAGE_SIZE: 'file.storage.size',
+    FILE_STORAGE_MAX_SIZE: 'file.storage.max_size',
 };
