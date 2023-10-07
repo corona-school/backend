@@ -1,7 +1,5 @@
--- MANUAL:
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- GENERATED:
+-- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "public";
 
 -- CreateEnum
 CREATE TYPE "course_category_enum" AS ENUM ('language', 'focus', 'revision', 'club', 'coaching');

@@ -9,7 +9,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls", "postgresqlExtensions"]
+  previewFeatures = ["orderByNulls"]
 }
 
 // 'prisma generate' also generates GraphQL Resolvers:
@@ -21,7 +21,6 @@ generator typegraphql {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-	extensions = [uuidOssp(map: "uuid-ossp")]
 }
 
 // An attachment is a file uploaded to an object storage and attached to a notification
