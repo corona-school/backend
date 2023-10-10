@@ -1,7 +1,7 @@
+init_config:
+    service: '%%env_SERVICE_NAME%%'
 instances:
-    # The prometheus endpoint to query from
     - openmetrics_endpoint: http://127.0.0.1:%%env_PORT%%/metrics
       namespace: 'lern_fair'
       metrics: ['.*']
       min_collection_interval: 30
-      # service: '%%env_DD_SERVICE%%'
