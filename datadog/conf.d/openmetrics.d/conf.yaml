@@ -1,0 +1,5 @@
+instances:
+    # The prometheus endpoint to query from
+    - openmetrics_endpoint: http://127.0.0.1:%%env_PORT%%/metrics
+      namespace: 'lern_fair'
+      metrics: ['.*']

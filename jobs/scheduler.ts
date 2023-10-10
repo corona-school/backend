@@ -2,7 +2,7 @@ import cron from 'cron';
 import { getLogger } from '../common/logger/logger';
 import tracer from '../common/logger/tracing';
 import { CSCronJob } from './types';
-import { metrics, stats } from '../common/logger/metrics';
+import { metrics } from '../common/logger/metrics';
 
 const logger = getLogger();
 
@@ -24,7 +24,7 @@ function executeJob(name: string, job: () => Promise<void>): () => Promise<void>
                 hasError = true;
             }
 
-            stats.increment(metrics.JOB_COUNT_EXECUTED, 1, { hasError: `${hasError}`, name: name });
+            metrics.JOB_COUNT_EXECUTED.inc({ hasError: `${hasError}`, name: name });
 
             this.start();
             span.finish();

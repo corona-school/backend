@@ -1,7 +1,7 @@
 import { GraphQLRequestContext } from 'apollo-server-plugin-base';
 import { isDev } from '../common/util/environment';
 import { getLogger } from '../common/logger/logger';
-import { stats, metrics } from '../common/logger/metrics';
+import { metrics } from '../common/logger/metrics';
 import { v4 as uuidv4 } from 'uuid';
 
 const logger = getLogger('GraphQL Query');
@@ -36,7 +36,7 @@ export const GraphQLLogger: any = {
                 }
 
                 const errorCount = requestContext.response?.errors?.length || 0;
-                stats.increment(metrics.GRAPHQL_REQUESTS, { operation: requestContext?.operation?.operation, hasErrors: `${errorCount > 0}` });
+                metrics.GRAPHQL_REQUESTS.inc({ operation: requestContext?.operation?.operation, hasErrors: `${errorCount > 0}` });
             },
         };
 

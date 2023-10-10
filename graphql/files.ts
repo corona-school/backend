@@ -49,8 +49,8 @@ export interface File {
 export type FileID = string;
 
 const fileStore = new Map<FileID, File>();
-stats.set(metrics.FILE_STORAGE_SIZE, 0);
-stats.set(metrics.FILE_STORAGE_MAX_SIZE, FILE_STORAGE_MAX_SIZE);
+metrics.FILE_STORAGE_SIZE.set(0);
+metrics.FILE_STORAGE_MAX_SIZE.set(FILE_STORAGE_MAX_SIZE);
 
 export function addFile(file: File): FileID {
     if (fileStore.size >= FILE_STORAGE_MAX_SIZE) {
@@ -66,7 +66,7 @@ export function addFile(file: File): FileID {
     }, FILE_STORAGE_DURATION);
 
     log.info(`Added file '${fileID}' to file store with name ${file.originalname}, type ${file.mimetype} and size ${file.buffer.length}`);
-    stats.increment(metrics.FILE_STORAGE_SIZE, {});
+    metrics.FILE_STORAGE_SIZE.inc();
 
     return fileID;
 }
@@ -87,12 +87,12 @@ export function getFileURL(fileID: FileID): string {
 
 export function removeFile(fileID: FileID) {
     fileStore.delete(fileID);
+    metrics.FILE_STORAGE_SIZE.dec();
     log.info(`Removed file '${fileID}' from file store`);
-    stats.decrement(metrics.FILE_STORAGE_SIZE, {});
 }
 
 export function clearFilestore() {
     fileStore.clear();
-    stats.set(metrics.FILE_STORAGE_SIZE, 0);
+    metrics.FILE_STORAGE_SIZE.set(0);
     log.info(`Cleared file store`);
 }
