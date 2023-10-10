@@ -4,3 +4,4 @@ instances:
       namespace: 'lern_fair'
       metrics: ['.*']
       min_collection_interval: 30
+      service: '%%env_DD_SERVICE%%'

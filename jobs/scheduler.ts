@@ -1,8 +1,10 @@
+import express from 'express';
+import http from 'http';
 import cron from 'cron';
 import { getLogger } from '../common/logger/logger';
 import tracer from '../common/logger/tracing';
 import { CSCronJob } from './types';
-import { metrics } from '../common/logger/metrics';
+import { metrics, metricsRouter } from '../common/logger/metrics';
 
 const logger = getLogger();
 
@@ -36,6 +38,11 @@ const scheduledJobs: cron.CronJob[] = [];
 
 ///Schedules a given set of Corona School Cron Jobs
 export function scheduleJobs(jobs: CSCronJob[]) {
+    // This flag will help us to disable the metrics server in case it's needed
+    if (process.env.METRICS_SERVER_ENABLED === 'true') {
+        startMetricsServer().catch((e) => logger.error('Failed to setup metrics server', e));
+    }
+
     //create actual cron jobs
     const cronJobs = jobs.map((j) => {
         return cron.job({
@@ -57,4 +64,17 @@ export function scheduleJobs(jobs: CSCronJob[]) {
 
 export function unscheduleAllJobs() {
     scheduledJobs.forEach((j) => j.stop());
+}
+
+async function startMetricsServer() {
+    const app = express();
+    app.use('/metrics', metricsRouter);
+
+    const port = process.env.PORT || 5100;
+
+    const server = http.createServer(app);
+
+    // Start listening
+    await new Promise<void>((res) => server.listen(port, res));
+    logger.info(`Server listening on port ${port}`);
 }
