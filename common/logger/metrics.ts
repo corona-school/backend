@@ -29,6 +29,7 @@ export const metrics = {
         name: 'file_storage_size',
         help: 'Amount of files in storage cache',
         registers: [regirstry],
+        labelNames: ['type'],
     }),
     FileStorageMaxSize: new promClient.Gauge({
         name: 'file_storage_max_size',
