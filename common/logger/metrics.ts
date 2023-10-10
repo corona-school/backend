@@ -1,5 +1,3 @@
-import { StatsD } from 'hot-shots';
-import { getDDEnvironment, getServiceName, getVersion } from '../../utils/environment';
 import * as promClient from 'prom-client';
 import { Request, Response, Router } from 'express';
 
@@ -13,15 +11,6 @@ export async function handleMetrics(_req: Request, res: Response) {
         .header('Content-Type:text')
         .send(await regirstry.metrics());
 }
-
-export const stats = new StatsD({
-    prefix: 'lern_fair.',
-    globalTags: {
-        env: getDDEnvironment(),
-        service: getServiceName(),
-        version: getVersion(),
-    },
-});
 
 export const metrics = {
     GRAPHQL_REQUESTS: new promClient.Counter({ name: 'graphql_requests', help: 'isso', registers: [regirstry], labelNames: ['operation', 'hasErrors'] }),

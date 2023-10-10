@@ -30,7 +30,7 @@
   ensuring availability of the overall system while sacrificing availability of file handling.
 */
 
-import { metrics, stats } from '../common/logger/metrics';
+import { metrics } from '../common/logger/metrics';
 import { v4 as uuid } from 'uuid';
 import { getLogger } from '../common/logger/logger';
 

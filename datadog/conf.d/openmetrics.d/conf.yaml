@@ -3,3 +3,4 @@ instances:
     - openmetrics_endpoint: http://127.0.0.1:%%env_PORT%%/metrics
       namespace: 'lern_fair'
       metrics: ['.*']
+      min_collection_interval: 30
