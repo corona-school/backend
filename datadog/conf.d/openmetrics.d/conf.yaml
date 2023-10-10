@@ -4,4 +4,4 @@ instances:
       metrics: ['.*']
       min_collection_interval: 30
       tags:
-          - 'service:%%env_DD_SERVICE%%'
+          - 'service:%%env_SERVICE_NAME%%'
