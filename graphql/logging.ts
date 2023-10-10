@@ -36,7 +36,7 @@ export const GraphQLLogger: any = {
                 }
 
                 const errorCount = requestContext.response?.errors?.length || 0;
-                metrics.GRAPHQL_REQUESTS.inc({ operation: requestContext?.operation?.operation, hasErrors: `${errorCount > 0}` });
+                metrics.GraphqlRequests.inc({ operation: requestContext?.operation?.operation, hasErrors: `${errorCount > 0}` });
             },
         };
 

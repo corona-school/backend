@@ -24,7 +24,7 @@ function executeJob(name: string, job: () => Promise<void>): () => Promise<void>
                 hasError = true;
             }
 
-            metrics.JOB_COUNT_EXECUTED.inc({ hasError: `${hasError}`, name: name });
+            metrics.JobCountExecuted.inc({ hasError: `${hasError}`, name: name });
 
             this.start();
             span.finish();

@@ -13,8 +13,26 @@ export async function handleMetrics(_req: Request, res: Response) {
 }
 
 export const metrics = {
-    GRAPHQL_REQUESTS: new promClient.Counter({ name: 'graphql_requests', help: 'isso', registers: [regirstry], labelNames: ['operation', 'hasErrors'] }),
-    JOB_COUNT_EXECUTED: new promClient.Counter({ name: 'jobs_executed', help: 'isso', registers: [regirstry], labelNames: ['hasError', 'name'] }),
-    FILE_STORAGE_SIZE: new promClient.Gauge({ name: 'file_storage_size', help: 'isso', registers: [regirstry] }),
-    FILE_STORAGE_MAX_SIZE: new promClient.Gauge({ name: 'file_storage_max_size', help: 'isso', registers: [regirstry] }),
+    GraphqlRequests: new promClient.Counter({
+        name: 'graphql_requests',
+        help: 'Amount of graphql requests',
+        registers: [regirstry],
+        labelNames: ['operation', 'hasErrors'],
+    }),
+    JobCountExecuted: new promClient.Counter({
+        name: 'jobs_executed',
+        help: 'Amount of jobs executed',
+        registers: [regirstry],
+        labelNames: ['hasError', 'name'],
+    }),
+    FileStorageSize: new promClient.Gauge({
+        name: 'file_storage_size',
+        help: 'Amount of files in storage cache',
+        registers: [regirstry],
+    }),
+    FileStorageMaxSize: new promClient.Gauge({
+        name: 'file_storage_max_size',
+        help: 'Max amount of files in storage cache',
+        registers: [regirstry],
+    }),
 };
