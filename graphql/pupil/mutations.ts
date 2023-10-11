@@ -55,7 +55,7 @@ export class PupilUpdateInput {
     subjects?: Subject[];
 
     @Field((type) => [ProjectField], { nullable: true })
-    projectFields: ProjectField[];
+    projectFields?: ProjectField[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -121,6 +121,12 @@ class PupilRegisterPlusManyOutput {
 class PupilRegisterPlusManyInput {
     @Field((type) => [PupilRegisterPlusInput])
     entries: PupilRegisterPlusInput[];
+}
+
+@InputType()
+class PupilUpdateSubjectsInput {
+    @Field((type) => [Subject], { nullable: true })
+    subjects?: Subject[];
 }
 
 export async function updatePupil(
@@ -242,6 +248,14 @@ export class MutatePupilResolver {
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.SCREENER)
+    async pupilUpdateSubjects(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateSubjectsInput, @Arg('pupilId') pupilId: number) {
+        const pupil = await getPupil(pupilId);
+        await updatePupil(context, pupil, { subjects: data.subjects });
         return true;
     }
 
