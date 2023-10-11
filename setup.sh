@@ -36,7 +36,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
 	whoami
 	echo ~
 	ls -al ~/.ssh
-  ssh-agent bash -c 'whoami;echo ~;ls -al ~/.ssh; ssh-add - <<< "${SECRET_ASSETS_KEY}"; git clone "${SECRET_ASSETS_REPOSITORY}" ./assets' || { echo 'Failed to pull repository'; exit 1; }
+  ssh-agent bash -c 'whoami;echo ~;ls -al ~/.ssh; ssh-add - <<< "${SECRET_ASSETS_KEY}";echo "hier"; git clone "${SECRET_ASSETS_REPOSITORY}" ./assets' || { echo 'Failed to pull repository'; exit 1; }
 
   version=$( cat .certificate-version )
   echo "> Checking out version ${version}"
