@@ -18,6 +18,7 @@ import { certificateRouter } from './controllers/certificateController';
 import { convertCertificateLinkToApiLink } from '../common/certificate';
 import { chatNotificationRouter } from './controllers/chatNotificationController';
 import { WithRawBody } from './controllers/chatNotificationController/types';
+import { metricsRouter } from '../common/logger/metrics';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -101,6 +102,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/certificate', certificateRouter);
     app.use('/api/files', fileRouter);
     app.use('/api/chat', chatNotificationRouter);
+    app.use('/metrics', metricsRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {
