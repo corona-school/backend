@@ -75,4 +75,21 @@ export class MutateScreenerResolver {
 
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async screenerTrust(@Arg('screenerId') screenerId: number, @Arg('trusted') trusted: boolean) {
+        const screener = await getScreener(screenerId);
+        await prisma.screener.update({
+            where: {
+                id: screener.id,
+            },
+            data: {
+                is_trusted: trusted,
+            },
+        });
+        log.info(`Screener(${screener.id}) was ${trusted ? `trusted` : `untrusted`} by an admin`);
+
+        return true;
+    }
 }

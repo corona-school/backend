@@ -5,6 +5,8 @@ export enum Role {
     USER = 'USER',
     /* Elevated Access via Screener Admin Interface */
     SCREENER = 'SCREENER',
+    /* A screener who is additionally able to log in with users' accounts */
+    TRUSTED_SCREENER = 'TRUSTED_SCREENER',
     /* Access via User Interface, not yet E-Mail verified */
     PUPIL = 'PUPIL',
     STUDENT = 'STUDENT',

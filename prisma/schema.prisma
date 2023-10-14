@@ -604,6 +604,7 @@ model screener {
   instructor_screening         instructor_screening[]
   project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
+  is_trusted                   Boolean                      @default(false)
 }
 
 // A Screening for Students that want to tutor pupils
