@@ -258,15 +258,22 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
+const allowedExtensions = ['uniqueId'];
+
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
 
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -276,9 +283,14 @@ export function validateContextForAction(action: ActionID, context: Notification
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -339,11 +351,19 @@ export * from './hook';
 
 /* sends one specific notification with a very specific notification context to the user.
    Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
-export async function sendNotification(id: NotificationID, user: User, notificationContext: NotificationContext): Promise<void> {
+export async function sendNotification<ID extends ActionID>(
+    id: NotificationID,
+    user: User,
+    forAction: ActionID,
+    notificationContext: SpecificNotificationContext<ActionID>
+): Promise<void> {
     const notification = await getNotification(id);
 
-    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
+    if (!notification.onActions.includes(forAction)) {
+        throw new Error(`Notification(${notification.id}) does not belong to Action '${forAction}`);
+    }
 
+    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
     await deliverNotification(concreteNotification, notification, user, notificationContext);
 }
 

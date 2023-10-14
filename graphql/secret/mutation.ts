@@ -22,14 +22,14 @@ export class MutateSecretResolver {
     }
 
     @Mutation((returns) => String)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER)
     async tokenCreateAdmin(@Arg('userId') userId: string, @Arg('description', { nullable: true }) description?: string) {
         const inOneWeek = new Date();
         inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
         const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`);
-        logger.info(`Admin created a login token for User(${userId})`);
+        logger.info(`Admin/trusted screener created a login token for User(${userId})`);
         return token;
     }
 

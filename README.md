@@ -31,6 +31,25 @@ backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningCon
 
 To run the backend, compile it first using `npm run build`. Make sure to have all dependencies installed before building by using `npm ci`.
 You also need to set your environment accordingly in the `.env` file (for further details see [.env.example](.env.example)) and set up a local PostgreSQL database server.
+
+You can either use docker or setup the database locally.
+
+#### Using Docker:
+
+```bash
+docker-compose up -d
+```
+
+The database and user will automatically setup with all needed permissions. You can use the following `DATABASE_URL` in your .env file:
+
+```bash
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/lernfair_dev
+```
+
+Then run `npm run db:reset` to apply the Prisma Schema to the Database. You can additionally use `npm run db:seed` to fill the database with some test content.
+
+#### Installed on host
+
 To set up the database, create a database and user and set the `DATABASE_URL` in your .env file. Grant the user the rights to create databases:
 
 ```psql
@@ -45,7 +64,9 @@ GRANT ALL ON SCHEMA public TO lernfair_dev;
 ALTER USER lernfair_dev CREATEDB;
 ```
 
-Then run `npm run db:setup` to configure Postgres correctly, then `npm run db:reset` to apply the Prisma Schema to the Database. You can additionally use `npm run db:seed` to fill the database with some test content.
+Then run `npm run db:reset` to apply the Prisma Schema to the Database. You can additionally use `npm run db:seed` to fill the database with some test content.
+
+#### Development
 
 To run the development configuration of the web server handling the API requests run `npm run web:dev`.
 The development version of the jobs can be run using `npm run jobs:dev`.
@@ -72,7 +93,7 @@ The following configuration can be done via ENV variables:
 | Name       | Value   | Description                                                               |
 | ---------- | ------- | ------------------------------------------------------------------------- |
 | LOG_FORMAT | (unset) | Every log prefixed by session and transaction id, also log HTTP requests  |
-|            | json    | Log as JSON, used in deployed environemnts to pass rich info to Datadog   |
+|            | json    | Log as JSON, used in deployed environments to pass rich info to Datadog   |
 |            | brief   | Only log category and message (omitting session prefix and HTTP requests) |
 
 #### Command line arguments

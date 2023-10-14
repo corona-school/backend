@@ -30,6 +30,7 @@
   ensuring availability of the overall system while sacrificing availability of file handling.
 */
 
+import { metrics } from '../common/logger/metrics';
 import { v4 as uuid } from 'uuid';
 import { getLogger } from '../common/logger/logger';
 
@@ -48,6 +49,7 @@ export interface File {
 export type FileID = string;
 
 const fileStore = new Map<FileID, File>();
+metrics.FileStorageMaxSize.set(FILE_STORAGE_MAX_SIZE);
 
 export function addFile(file: File): FileID {
     if (fileStore.size >= FILE_STORAGE_MAX_SIZE) {
@@ -63,6 +65,7 @@ export function addFile(file: File): FileID {
     }, FILE_STORAGE_DURATION);
 
     log.info(`Added file '${fileID}' to file store with name ${file.originalname}, type ${file.mimetype} and size ${file.buffer.length}`);
+    metrics.FileStorageSize.inc({ type: file.mimetype });
 
     return fileID;
 }
@@ -82,11 +85,14 @@ export function getFileURL(fileID: FileID): string {
 }
 
 export function removeFile(fileID: FileID) {
+    const file = fileStore.get(fileID);
+    metrics.FileStorageSize.dec({ type: file.mimetype });
     fileStore.delete(fileID);
     log.info(`Removed file '${fileID}' from file store`);
 }
 
 export function clearFilestore() {
     fileStore.clear();
+    metrics.FileStorageSize.reset();
     log.info(`Cleared file store`);
 }

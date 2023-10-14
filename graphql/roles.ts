@@ -1,9 +1,8 @@
 import { pupil as Pupil, student as Student } from '@prisma/client';
-import { User } from '../common/user';
 import { prisma } from '../common/prisma';
-import type { GraphQLContext } from './context';
 import { Role } from '../common/user/roles';
 import { getLogger } from '../common/logger/logger';
+import { Screener } from './generated';
 
 export { Role } from '../common/user/roles';
 
@@ -91,7 +90,11 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
     }
 }
 
-export function evaluateScreenerRoles(user: User, roles: Role[]) {
+export function evaluateScreenerRoles(screener: Screener, roles: Role[]) {
     roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
-    logger.info(`Screener(${user.screenerId}) was granted SCREENER role`);
+    logger.info(`Screener(${screener.id}) was granted SCREENER role`);
+    if (screener.is_trusted) {
+        roles.push(Role.TRUSTED_SCREENER);
+        logger.info(`Screener(${screener.id}) has TRUSTED_SCREENER role`);
+    }
 }
