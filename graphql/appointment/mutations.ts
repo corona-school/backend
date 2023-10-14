@@ -155,4 +155,24 @@ export class MutateAppointmentResolver {
         await createZoomMeetingForAppointment(appointment);
         return true;
     }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc(
+        'Support may override the zoom meeting if appointment organizers prefer another platform. New appointments then try to infer the link from the last appointment. Provide empty string if override should be removed.'
+    )
+    async appointmentOverrideMeetingLinkMatch(@Arg('matchId') matchId: number, @Arg('overrideLink') overrideLink: string) {
+        await prisma.lecture.updateMany({ where: { matchId }, data: { override_meeting_link: overrideLink.length === 0 ? null : overrideLink } });
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc(
+        'Support may override the zoom meeting if appointment organizers prefer another platform. New appointments then try to infer the link from the last appointment. Provide empty string if override should be removed.'
+    )
+    async appointmentOverrideMeetingLinkSubcourse(@Arg('subcourseId') subcourseId: number, @Arg('overrideLink') overrideLink: string) {
+        await prisma.lecture.updateMany({ where: { subcourseId }, data: { override_meeting_link: overrideLink.length === 0 ? null : overrideLink } });
+        return true;
+    }
 }
