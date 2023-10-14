@@ -259,6 +259,16 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
+        // Make sure that only Admins/Owners can remove other pupils from the course
+        if (context.user.pupilId && pupilId && context.user.pupilId !== pupilId) {
+            logger.warn(`User tried to remove other pupil from course`, {
+                requestedPupilId: pupilId,
+                actualPupilId: context.user.pupilId,
+                user: context.user.userID,
+            });
+            return false;
+        }
+
         const pupil = await getPupil(pupilId || context.user.pupilId);
         const pupilUser = userForPupil(pupil);
 
