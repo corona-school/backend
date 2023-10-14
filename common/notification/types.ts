@@ -33,6 +33,8 @@ export interface NotificationContextExtensions {
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
     campaign?: string;
+    // For Campaigns, support sending custom Mailjet Notifications:
+    overrideMailjetTemplateID?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {
