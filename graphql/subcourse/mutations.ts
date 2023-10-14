@@ -1,6 +1,6 @@
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
-import { addGroupAppointmentsParticipant, removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
+import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
@@ -250,20 +250,30 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT, Role.OWNER)
     async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
-        const { user } = context;
-        const pupil = await getSessionPupil(context, pupilId);
-        const pupilUser = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
+        // Make sure that only Admins/Owners can remove other pupils from the course
+        if (context.user.pupilId && pupilId && context.user.pupilId !== pupilId) {
+            logger.warn(`User tried to remove other pupil from course`, {
+                requestedPupilId: pupilId,
+                actualPupilId: context.user.pupilId,
+                user: context.user.userID,
+            });
+            return false;
+        }
+
+        const pupil = await getPupil(pupilId || context.user.pupilId);
+        const pupilUser = userForPupil(pupil);
+
         await leaveSubcourse(subcourse, pupil);
-        await removeGroupAppointmentsParticipant(subcourse.id, user.userID);
+        await removeGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
         if (subcourse.conversationId) {
             await removeParticipantFromCourseChat(pupilUser, subcourse.conversationId);
         }
