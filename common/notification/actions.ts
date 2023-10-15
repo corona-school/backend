@@ -370,7 +370,10 @@ const _notificationActions = {
         description: 'Student / Certificate of Conduct Cancelled',
         sampleContext: {},
     },
-
+    instructor_course_full: {
+        description: 'Instructor / Course full',
+        sampleContext: sampleCourse,
+    },
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',
         sampleContext: {

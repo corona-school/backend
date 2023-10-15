@@ -9,11 +9,14 @@ import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util
 import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
 import { createSecretEmailToken } from '../secret';
-import { userForPupil } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
+import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
+// eslint-disable-next-line import/no-cycle
+import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -261,6 +264,16 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
     });
+
+    // Notify instructors if the subcourse is full now
+    const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+    if (participantCountAfter == subcourse.maxParticipants) {
+        const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
+
+        for (const instructor of await getSubcourseInstructors(subcourse)) {
+            await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+        }
+    }
 }
 
 export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
