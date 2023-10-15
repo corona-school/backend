@@ -32,7 +32,7 @@ class PublicCourseCreateInput {
     allowContact?: boolean;
 
     @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
-    subject?: CourseSubject;
+    subject!: CourseSubject;
     @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
@@ -51,7 +51,7 @@ class PublicCourseEditInput {
     allowContact?: boolean | undefined;
 
     @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
-    subject?: CourseSubject;
+    subject!: CourseSubject;
     @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
@@ -59,9 +59,9 @@ class PublicCourseEditInput {
 @InputType()
 class CourseTagCreateInput {
     @TypeGraphQL.Field()
-    name: string;
+    name!: string;
     @TypeGraphQL.Field()
-    category: string;
+    category!: string;
 }
 
 const logger = getLogger('MutateCourseResolver');
