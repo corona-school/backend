@@ -150,6 +150,18 @@ const _notificationActions = {
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
+    participant_course_joined_from_waitinglist: {
+        description: 'Participant / Joined Course from Waitinglist',
+        sampleContext: {
+            course: {
+                name: 'Hallo Welt',
+                description: 'Ein Kurs',
+            },
+            firstLectureDate: '12.12.1984',
+            firstLectureTime: '12:00',
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
     participant_course_cancelled: {
         description: 'Participant / Course was cancelled',
         sampleContext: {
