@@ -31,8 +31,8 @@ class PublicCourseCreateInput {
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
 
-    @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
-    subject!: CourseSubject;
+    @TypeGraphQL.Field((_type) => CourseSubject)
+    subject: CourseSubject;
     @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
