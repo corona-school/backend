@@ -260,6 +260,14 @@ const _notificationActions = {
             certificateLink: 'https://...',
         },
     },
+    tutee_match_requested: {
+        description: 'Tutee / Match requested',
+        sampleContext: {},
+    },
+    tutee_match_request_revoked: {
+        description: 'Tutee / Match Request revoked',
+        sampleContext: {},
+    },
     tutee_match_dissolved_other: {
         description: 'Tutee / Match was dissolved by student',
         sampleContext: {
@@ -275,6 +283,14 @@ const _notificationActions = {
             matchHash: '...',
             matchDate: '...',
         },
+    },
+    tutor_match_requested: {
+        description: 'Tutor / Match requested',
+        sampleContext: {},
+    },
+    tutor_match_request_revoked: {
+        description: 'Tutor / Match Request revoked',
+        sampleContext: {},
     },
     tutor_match_dissolved_other: {
         description: 'Tutor / Match was dissolved by pupil',
