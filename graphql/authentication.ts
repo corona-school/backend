@@ -5,10 +5,10 @@ import type { GraphQLContext, GraphQLContextPupil, GraphQLContextScreener, Graph
 import { assert } from 'console';
 import { Deprecated, getPupil, getScreener, getStudent } from './util';
 import { prisma } from '../common/prisma';
-import { hashPassword, hashToken, verifyPassword } from '../common/util/hashing';
+import { verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
-import { getUser, updateLastLogin, User, userForPupil, userForScreener, userForStudent } from '../common/user';
+import { getUser, updateLastLogin, User, userForScreener } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { UserType } from './types/user';
@@ -129,7 +129,8 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
     }
 
     if (user.screenerId) {
-        evaluateScreenerRoles(user, roles);
+        const screener = await getScreener(user.screenerId);
+        evaluateScreenerRoles(screener, roles);
     }
 
     context.user = { ...user, roles };
