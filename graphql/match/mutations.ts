@@ -1,4 +1,3 @@
-import { prisma } from '../../common/prisma';
 import { Arg, Authorized, Ctx, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -7,7 +6,6 @@ import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
 import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
-import { removeInterest } from '../../common/match/interest';
 import { getMatcheeConversation } from '../../common/chat/helper';
 import { markConversationAsWriteable } from '../../common/chat';
 import { JSONResolver } from 'graphql-scalars';
@@ -28,7 +26,6 @@ export class MutateMatchResolver {
 
         await createMatch(pupil, student, pool as ConcreteMatchPool);
 
-        await removeInterest(pupil);
         return true;
     }
 
