@@ -10,7 +10,7 @@ import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
-import { cleanupUnconfirmed, InterestConfirmationStatus, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, InterestConfirmationStatus, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
@@ -386,9 +386,6 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            if (pool.confirmInterest && match.pupil.openMatchRequestCount <= 1) {
-                await removeInterest(match.pupil);
-            }
             await pool.createMatch(match.pupil, match.student, pool);
         }
 
