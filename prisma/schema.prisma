@@ -23,6 +23,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Achhievement
+// A final achievement can consist of several under achievements
+model achievement_template {
+  id                            Int                       @id @default(autoincrement())
+  metrics                       String[]                  @default([])
+  templateFor                   template_for_enum
+  // Groups defines the "final-achievement"
+  group                         String                    @unique @db.VarChar
+  // Group order tells in which place a subordinate step / achievement is
+  groupOrder                    Int                      
+  // the final achievement is marked with isLast 
+  isLast                        Boolean
+  // what type of achievement is it
+  type                          achievement_type_enum
+  name                          String                    @db.VarChar
+  subtitle                      String                    @db.VarChar
+  description                   String                    @db.VarChar
+  image                         String                    @db.VarChar
+  // some achievements show actions that a user can/must perform next 
+  actionDescription             String?                   @db.VarChar
+  actionRedirectLink            String?                   @db.VarChar
+  actionType                    action_type_enum?
+  // defines what value must be reached to receive the achievement 
+  condition                     String                    @db.VarChar
+  // defined how values must be aggregated to evaluate the condition
+  conditionDataAggregations     Json                      @db.Json
+  isActive                      Boolean 
+}
+model user_achievement {
+  id                            Int                       @id @default(autoincrement())
+  metrics                       String[]                  @default([])
+  templateFor                   template_for_enum
+  group                         String                    @unique @db.VarChar
+  groupOrder                    Int                       
+  isLast                        Boolean
+  type                          achievement_type_enum
+  name                          String                    @db.VarChar
+  subtitle                      String                    @db.VarChar
+  description                   String                    @db.VarChar
+  image                         String                    @db.VarChar
+  actionDescription             String                    @db.VarChar
+  actionRedirectLink            String                    @db.VarChar
+  actionType                    action_type_enum
+  condition                     String                    @db.VarChar
+  conditionDataAggregations     Json                      @db.Json
+  isActive                      Boolean 
+  isSeen                        Boolean
+  isAchieved                    Boolean
+  achievedAt                    DateTime                  @db.Timestamp(6)
+}
+
+// Save (tracked) event as raw data in DB and evaluate at runtime
+model event {
+    id                            Int                       @id @default(autoincrement())
+    userId                        String                    @db.VarChar
+    metric                        String                    @db.VarChar
+    eventId                       String                    @db.VarChar
+    name                          String                    @unique @db.VarChar
+    // the value is calculated with the formula given in the metric
+    value                         Int
+    createdAt                     DateTime                  @default(now()) @db.Timestamp(6)
+    updatedAt                     DateTime                  @default(now()) @db.Timestamp(6)
+    // e.g. 'course', 'match',...
+    tags                          Json                      @db.Json
+    // what action triggered the event
+    action                        String                    @db.VarChar
+}
+
 // An attachment is a file uploaded to an object storage and attached to a notification
 // We also store it in the DB to be able to track the file's lifecycle, i.e. delete it when the notification is archived
 model attachment {
@@ -884,6 +952,7 @@ model waiting_list_enrollment {
   pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
 }
 
+
 enum course_category_enum {
   language
   focus
@@ -1152,6 +1221,25 @@ enum student_state_enum {
 enum notification_sender_enum {
   SUPPORT
   CERTIFICATE_OF_CONDUCT
+}
+
+enum template_for_enum {
+  Course
+  Match
+  Universal
+}
+
+enum achievement_type_enum {
+  SEQUENTIAL
+  TIERED
+  STREAK
+}
+
+enum action_type_enum {
+  Appointment
+  Action
+  Wait
+  Info
 }
 
 enum secret_type_enum {
