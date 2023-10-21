@@ -15,6 +15,7 @@ import { canContactInstructors, canContactParticipants } from '../../common/cour
 import { Deprecated, getCourse } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { subcourseSearch } from '../../common/courses/search';
+import { GraphQLInt } from 'graphql';
 
 @ObjectType()
 class Participant {
@@ -123,6 +124,17 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         return courses;
+    }
+
+    @Query((returns) => [Subcourse])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    @LimitedQuery()
+    async subcourseSearch(@Arg('search') search: string, @Arg('take', () => GraphQLInt) take: number, @Arg('skip', () => GraphQLInt) skip: number) {
+        return await prisma.subcourse.findMany({
+            where: await subcourseSearch(search),
+            take,
+            skip,
+        });
     }
 
     @Query((returns) => Subcourse, { nullable: true })
