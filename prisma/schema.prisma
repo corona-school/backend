@@ -533,7 +533,6 @@ model pupil {
   pupil_screening                              pupil_screening[]
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
@@ -743,7 +742,6 @@ model subcourse {
   lecture                          lecture[]
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
   waiting_list_enrollment          waiting_list_enrollment[]
 }
 
@@ -769,18 +767,6 @@ model subcourse_participants_pupil {
   @@id([subcourseId, pupilId], map: "PK_7b8738e08eab7b5bf796f0eaf1b")
   @@index([pupilId], map: "IDX_47d9d98b6496554165e08ff61d")
   @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
-}
-
-// DEPRECATED - Replaced by waiting_list_enrollment
-model subcourse_waiting_list_pupil {
-  subcourseId Int
-  pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3bd25f377afc44f574f7ac3d09b")
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, map: "FK_df9eb9663f8085da35f7ca55471")
-
-  @@id([subcourseId, pupilId], map: "PK_b35d059abbd7f4c4a1147f72ec9")
-  @@index([pupilId], map: "IDX_3bd25f377afc44f574f7ac3d09")
-  @@index([subcourseId], map: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
 // We require a Certifcate of Conduct to be handed in by Students, which is verified by Support
