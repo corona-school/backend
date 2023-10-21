@@ -129,7 +129,11 @@ export class ExtendedFieldsSubcourseResolver {
     @Query((returns) => [Subcourse])
     @Authorized(Role.ADMIN, Role.SCREENER)
     @LimitedQuery()
-    async subcourseSearch(@Arg('search') search: string, @Arg('take', () => GraphQLInt) take: number, @Arg('skip', () => GraphQLInt) skip: number) {
+    async subcourseSearch(
+        @Arg('search') search: string,
+        @Arg('take', () => GraphQLInt, { nullable: true }) take: number = 100,
+        @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
+    ) {
         return await prisma.subcourse.findMany({
             where: await subcourseSearch(search),
             take,
