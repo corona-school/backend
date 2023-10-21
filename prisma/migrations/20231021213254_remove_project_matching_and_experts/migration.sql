@@ -1,5 +1,5 @@
 /* MANUAL */
-DELETE "log" WHERE 
+DELETE FROM "log" WHERE 
  "logtype" IN ('projectMatchDissolve', 'updateProjectFields', 'contactExpert');
 
 /* GENERATED */
