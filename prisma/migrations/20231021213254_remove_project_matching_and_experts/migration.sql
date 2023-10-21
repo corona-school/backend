@@ -1,6 +1,6 @@
 /* MANUAL */
-DELETE log WHERE 
- type IN ('projectMatchDissolve', 'updateProjectFields', 'contactExpert');
+DELETE "log" WHERE 
+ "logtype" IN ('projectMatchDissolve', 'updateProjectFields', 'contactExpert');
 
 /* GENERATED */
 /*
