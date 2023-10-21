@@ -20,7 +20,7 @@ export async function courseSearch(search?: string): Promise<Prisma.courseWhereI
 
     for (const word of search.split(' ')) {
         const sanitizedWord = word.replace(/[öäü]/g, '_');
-        const uppercasedWord = word[0].toUpperCase() + word.slice(1).toLowerCase();
+        const uppercasedWord = sanitizedWord[0].toUpperCase() + sanitizedWord.slice(1).toLowerCase();
         if (uppercasedWord in CourseSubject) {
             relevantSubjects.push(uppercasedWord as CourseSubject);
         }
