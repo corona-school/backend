@@ -17,7 +17,7 @@ export class ExtendedFieldsCourseResolver {
     @LimitedQuery()
     async courseSearch(
         @Arg('search') search: string,
-        @Arg('take', () => GraphQLInt, { nullable: true }) take: number = 100,
+        @Arg('take', () => GraphQLInt) take,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         return await prisma.course.findMany({

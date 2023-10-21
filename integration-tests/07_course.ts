@@ -57,21 +57,21 @@ const courseOne = test('Create Course One', async () => {
     // Admin Course Search
     const { courseSearch } = await adminClient.request(`
         query AdminFindsCourseByName {
-            courseSearch(search: "integrationstest") { id }
+            courseSearch(search: "integrationstest", take: 100) { id }
         }
     `);
     assert.ok(courseSearch.some((it) => it.id === courseId));
 
     const { courseSearch: courseSearch2 } = await adminClient.request(`
         query AdminFindsCourseByOutline {
-            courseSearch(search: "zu viel arbeit") { id }
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
         }
     `);
     assert.ok(courseSearch2.some((it) => it.id === courseId));
 
     const { courseSearch: courseSearch3 } = await adminClient.request(`
         query AdminFindsCourseBySubject {
-            courseSearch(search: "informatik") { id }
+            courseSearch(search: "informatik", take: 100) { id }
         }
     `);
     assert.ok(courseSearch3.some((it) => it.id === courseId));

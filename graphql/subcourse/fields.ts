@@ -131,7 +131,7 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitedQuery()
     async subcourseSearch(
         @Arg('search') search: string,
-        @Arg('take', () => GraphQLInt, { nullable: true }) take: number = 100,
+        @Arg('take', () => GraphQLInt) take: number,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         return await prisma.subcourse.findMany({
