@@ -14,6 +14,7 @@ import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
 import { Deprecated, getCourse } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
+import { subcourseSearch } from '../../common/courses/search';
 
 @ObjectType()
 class Participant {
@@ -74,9 +75,7 @@ export class ExtendedFieldsSubcourseResolver {
         const filters = [IS_PUBLIC_SUBCOURSE()];
 
         if (search) {
-            filters.push({
-                course: { is: { OR: [{ outline: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }] } },
-            });
+            filters.push(await subcourseSearch(search));
         }
 
         if (onlyJoinable) {
