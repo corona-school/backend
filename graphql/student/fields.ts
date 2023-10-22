@@ -28,6 +28,7 @@ import { excludePastSubcourses, instructedBy } from '../../common/courses/filter
 import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { isSessionStudent } from '../authentication';
+import { subcourseSearch } from '../../common/courses/search';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -148,11 +149,19 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
-    async subcoursesInstructing(@Root() student: Required<Student>, @Arg('excludePast', { nullable: true }) excludePast?: boolean) {
+    async subcoursesInstructing(
+        @Root() student: Required<Student>,
+        @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('search', { nullable: true }) search?: string
+    ) {
         const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
         if (excludePast) {
             filters.push(excludePastSubcourses());
+        }
+
+        if (search) {
+            filters.push(await subcourseSearch(search));
         }
 
         return await prisma.subcourse.findMany({ where: { AND: filters } });
