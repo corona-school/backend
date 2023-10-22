@@ -357,8 +357,8 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(100)
     async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
-        return await prisma.pupil.findMany({
-            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true },
+        const pupils = await prisma.pupil.findMany({
+            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
             where: {
                 waiting_list_enrollment: {
                     some: {
@@ -367,6 +367,14 @@ export class ExtendedFieldsSubcourseResolver {
                 },
             },
         });
+
+        pupils.sort(
+            (a, b) =>
+                +a.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt -
+                +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
+        );
+
+        return pupils;
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
