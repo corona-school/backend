@@ -6,9 +6,27 @@ import { accessURLForKey } from '../../common/file-bucket/s3';
 import { GraphQLContext } from '../context';
 import { getSessionStudent } from '../authentication';
 import { getCourseImageURL } from '../../common/courses/util';
+import { courseSearch } from '../../common/courses/search';
+import { LimitedQuery } from '../complexity';
+import { GraphQLInt } from 'graphql';
 
 @Resolver((of) => Course)
 export class ExtendedFieldsCourseResolver {
+    @Query((returns) => [Course])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    @LimitedQuery()
+    async courseSearch(
+        @Arg('search') search: string,
+        @Arg('take', () => GraphQLInt) take,
+        @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
+    ) {
+        return await prisma.course.findMany({
+            where: await courseSearch(search),
+            take,
+            skip,
+        });
+    }
+
     @FieldResolver((returns) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     async subcourses(@Root() course: Course) {
