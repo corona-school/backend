@@ -75,5 +75,5 @@ As we expose a relatively mighty interface through GraphQL, users could potentia
 To prevent this, before running queries, we briefly estimate how large the result set will be and abort queries that exceed a certain threshold.
 For that, annotate one-to-many query resolvers that have a `take` parameter with `@LimitedQuery()`, this will use the limit passed to `take` as an upper estimation for the cardinality,
 for field resolvers use `@LimitEstimated(/* estimation */ 10)` and give a brief estimation. The limits will then be multiplied along all paths in a GraphQL query,
-i.e. `subcoursePublic(take: 100) { id }` might be okay as it only returns a maximum of 100 entries, but `subcoursesPublic(take: 100) { participants { firstname }}` might not be okay,
+i.e. `subcoursesPublic(take: 100) { id }` might be okay as it only returns a maximum of 100 entries, but `subcoursesPublic(take: 100) { participants { firstname }}` might not be okay,
 as for every of the 100 subcourses we again return ~10 participants, resulting in 1000 results.
