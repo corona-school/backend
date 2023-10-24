@@ -70,7 +70,7 @@ model user_achievement {
   conditionDataAggregations     Json                      @db.Json
   isActive                      Boolean                   @default(true) 
   isSeen                        Boolean                   @default(false)
-  isAchieved                    Boolean                   @default(false)
+  // achievedAt == null => not achieved, achievedAt != null => achieved
   achievedAt                    DateTime                  @db.Timestamp(6)
 }
 
