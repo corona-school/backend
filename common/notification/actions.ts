@@ -186,10 +186,7 @@ const _notificationActions = {
     },
     participant_course_ended: {
         description: 'Participant / Course ended',
-        sampleContext: {
-            uniqueId: '1',
-            ...sampleCourse,
-        },
+        sampleContext: sampleCourse,
     },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
@@ -235,10 +232,7 @@ const _notificationActions = {
     },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
-        sampleContext: {
-            uniqueId: '1',
-            ...sampleCourse,
-        },
+        sampleContext: sampleCourse,
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
