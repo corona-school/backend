@@ -1251,6 +1251,7 @@ enum dissolved_by_enum {
   pupil
   student
   admin
+  unknown
 }
 
 enum dissolve_reason {
