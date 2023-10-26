@@ -88,12 +88,13 @@ const getAllConversations = async (): Promise<AllConversations> => {
         },
     });
 
-    if (response.status === 200) {
-        const result = await response.json();
-        logger.info(`Got all conversations`, { result });
-    } else {
-        return undefined;
+    if (response.status !== 200) {
+        throw new Error(`Failed to get all conversations from TalkJS`);
     }
+
+    const result = await response.json();
+    logger.info(`Got all conversations`, { result });
+    return result;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
