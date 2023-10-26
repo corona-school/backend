@@ -9,6 +9,7 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import migrateLecturesToAppointment from './migrate-lectures-to-appointment';
+import migrateDissolveReasonEnum from './migrate-dissolve-reason-enum';
 import migrateNotificationPreferencesStringToJson from './migrate-notification-preferences-string-to-json';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import { postStatisticsToSlack } from './slack-statistics';
@@ -72,6 +73,10 @@ export const executeJob = async (job) => {
         }
         case 'migrateNotificationPreferencesStringToJson': {
             await migrateNotificationPreferencesStringToJson();
+            break;
+        }
+        case 'migrateDissolveReasonEnum': {
+            await migrateDissolveReasonEnum();
             break;
         }
         default: {

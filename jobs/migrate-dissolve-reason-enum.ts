@@ -40,7 +40,7 @@ export default async function execute() {
     let unknownReason = 0;
     let unknownDissolvedBy = 0;
     for (const match of matches) {
-        const reason = dissolveReasonByIndex(match.dissolveReason);
+        const reason = match.dissolveReasonEnum ?? dissolveReasonByIndex(match.dissolveReason);
         logger.info(`Match(${match.id}) has dissolveReason ${reason}`);
         let dissolver: DissolvedBy = DissolvedBy.unknown;
         if (reason == DissolveReason.accountDeactivated) {
@@ -98,15 +98,16 @@ export default async function execute() {
         } else {
             knownDissolvedBy++;
         }
-        await prisma.match.update({
-            where: {
-                id: match.id,
-            },
-            data: {
-                dissolveReasonEnum: reason,
-                dissolvedBy: dissolver,
-            },
-        });
+        logger.info(`Match(${match.id}): Setting reason=${reason}, dissolver=${dissolver}`);
+        // await prisma.match.update({
+        //     where: {
+        //         id: match.id,
+        //     },
+        //     data: {
+        //         dissolveReasonEnum: reason,
+        //         dissolvedBy: dissolver,
+        //     },
+        // });
     }
     logger.info(`Updated ${knownReason + unknownReason} matches in total, of which:
         - ${knownReason} have an unambiguous dissolveReason
