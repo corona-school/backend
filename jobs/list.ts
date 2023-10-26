@@ -11,6 +11,7 @@ import { postStatisticsToSlack } from './slack-statistics';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
 import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
+import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 
 // A list of all jobs that should be scheduled at the moment
 export const allJobs: CSCronJob[] = [
@@ -33,4 +34,6 @@ export const allJobs: CSCronJob[] = [
     { cronTime: '00 */15 * * * *', jobFunction: syncToWebflow, name: 'syncToWebflow' },
     // Send Slack Messages monthly:
     { cronTime: '00 00 10 01 * *', jobFunction: postStatisticsToSlack, name: 'postStatisticsToSlack' },
+    // Every night, trigger actions for courses that ended yesterday
+    { cronTime: '00 00 10 * * *', jobFunction: notificationsEndedYesterday, name: 'notificationsEndedYesterday' },
 ];

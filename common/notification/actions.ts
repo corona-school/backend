@@ -184,6 +184,10 @@ const _notificationActions = {
             },
         },
     },
+    participant_course_ended: {
+        description: 'Participant / Course ended',
+        sampleContext: sampleCourse,
+    },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
         sampleContext: {
@@ -225,6 +229,10 @@ const _notificationActions = {
                 description: 'Ein Kurs',
             },
         },
+    },
+    instructor_course_ended: {
+        description: 'Instructor / Course ended',
+        sampleContext: sampleCourse,
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
