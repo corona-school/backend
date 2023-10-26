@@ -62,18 +62,32 @@ export default async function flagInactiveConversationsAsReadonly() {
         if (conversation.custom.subcourse) {
             const subcourseIds: number[] = JSON.parse(conversation.custom.subcourse);
             const allSubcoursesActive = await Promise.all(subcourseIds.map((id) => isActiveSubcourse(id)));
-            shouldMarkAsReadonly = shouldMarkAsReadonly && allSubcoursesActive.every((active) => active === false);
+            const allInactive = allSubcoursesActive.every((active) => active === false);
+            logger.info(`Conversation ${conversation.id} belongs to subcourses which are ${allInactive ? 'all inactive' : 'active'}`, {
+                conversationId: conversation.id,
+            });
+            shouldMarkAsReadonly &&= allInactive;
         }
+
         if (conversation.custom.prospectSubcourse) {
             const prospectSubcourses: number[] = JSON.parse(conversation.custom.prospectSubcourse);
             const allProspectSubcoursesActive = await Promise.all(prospectSubcourses.map((id) => isActiveSubcourse(id)));
-            shouldMarkAsReadonly = shouldMarkAsReadonly && allProspectSubcoursesActive.every((active) => active === false);
+            const allInactive = allProspectSubcoursesActive.every((active) => active === false);
+            logger.info(`Conversation ${conversation.id} belongs to subcourses which are all ${allInactive ? 'all inactive' : 'active'}`, {
+                conversationId: conversation.id,
+            });
+            shouldMarkAsReadonly &&= allInactive;
         }
+
         if (conversation.custom.match) {
             const match = JSON.parse(conversation.custom.match);
             const matchId = match.matchId;
             const isMatchActive = await isActiveMatch(matchId);
-            shouldMarkAsReadonly = shouldMarkAsReadonly && !isMatchActive;
+            logger.info(`Conversation ${conversation.id} belongs to Match(${matchId}) which is all ${isMatchActive ? 'active' : 'inactive'}`, {
+                conversationId: conversation.id,
+                matchId,
+            });
+            shouldMarkAsReadonly &&= !isMatchActive;
         }
 
         if (shouldMarkAsReadonly) {
