@@ -35,5 +35,5 @@ export const allJobs: CSCronJob[] = [
     // Send Slack Messages monthly:
     { cronTime: '00 00 10 01 * *', jobFunction: postStatisticsToSlack, name: 'postStatisticsToSlack' },
     // Every night, trigger actions for courses that ended yesterday
-    { cronTime: '00 00 03 * * *', jobFunction: notificationsEndedYesterday, name: 'notificationsEndedYesterday' },
+    { cronTime: '00 00 10 * * *', jobFunction: notificationsEndedYesterday, name: 'notificationsEndedYesterday' },
 ];
