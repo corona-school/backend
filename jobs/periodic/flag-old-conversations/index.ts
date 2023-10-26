@@ -65,7 +65,7 @@ export default async function flagInactiveConversationsAsReadonly() {
             shouldMarkAsReadonly = shouldMarkAsReadonly && allSubcoursesActive.every((active) => active === false);
         }
         if (conversation.custom.prospectSubcourse) {
-            const prospectSubcourses: number[] = conversation.custom.prospectSubcourse;
+            const prospectSubcourses: number[] = JSON.parse(conversation.custom.prospectSubcourse);
             const allProspectSubcoursesActive = await Promise.all(prospectSubcourses.map((id) => isActiveSubcourse(id)));
             shouldMarkAsReadonly = shouldMarkAsReadonly && allProspectSubcoursesActive.every((active) => active === false);
         }
