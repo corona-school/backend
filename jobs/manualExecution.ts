@@ -2,6 +2,7 @@ import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import syncToWebflow from './periodic/sync-to-webflow';
+import notificationCoursesEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
@@ -51,6 +52,10 @@ export const executeJob = async (job) => {
         }
         case 'sendSlackStatistics': {
             await postStatisticsToSlack();
+            break;
+        }
+        case 'notificationCoursesEndedYesterday': {
+            await notificationCoursesEndedYesterday();
             break;
         }
         default: {
