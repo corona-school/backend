@@ -89,7 +89,8 @@ const getAllConversations = async (): Promise<AllConversations> => {
     });
 
     if (response.status === 200) {
-        return await response.json();
+        const result = await response.json();
+        logger.info(`Got all conversations`, { result });
     } else {
         return undefined;
     }
