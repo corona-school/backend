@@ -8,7 +8,7 @@
  *
  */
 export interface ApiSubject {
-    name: string,
-    minGrade?: number,
-    maxGrade?: number
+    name: string;
+    minGrade?: number;
+    maxGrade?: number;
 }

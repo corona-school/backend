@@ -1,12 +1,12 @@
-import { Channel, Context, Notification } from '../types';
+import { Channel, Context, Notification, NotificationSender } from '../types';
 import * as mailjet from '../../mails/mailjetTypes';
 import { mailjetSmtp } from '../../mails/config';
 import { getLogger } from '../../../common/logger/logger';
-import { assert } from 'console';
-import { NotificationSender } from '../../entity/Notification';
+import * as assert from 'assert';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
+// eslint-disable-next-line import/no-cycle
 import { createSecretEmailToken } from '../../secret';
 import moment from 'moment';
 
@@ -27,10 +27,10 @@ const senders: { [sender in NotificationSender]: { Name: string; Email: string }
 export const mailjetChannel: Channel = {
     type: 'email',
     async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
-        assert(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
+        assert.ok(notification.mailjetTemplateId !== undefined, "A Notification delivered via Mailjet must have a 'mailjetTemplateId'");
 
         const sender = senders[notification.sender ?? NotificationSender.SUPPORT];
-        assert(sender !== undefined, 'Unknown sender');
+        assert.ok(sender !== undefined, 'Unknown sender');
 
         let receiverEmail = to.email;
         if (context.overrideReceiverEmail) {
@@ -51,6 +51,21 @@ export const mailjetChannel: Channel = {
         // Create a new login token
         const authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
 
+        // For campaigns, support notifications with a custom mailjet template for each campaign
+        // This feature is restricted to Notifications that provide a sample_context (= Campaign Notifications),
+        //  which specifies the mailjet template id
+        let TemplateID = notification.mailjetTemplateId;
+        if (context.overrideMailjetTemplateID) {
+            assert.ok(context.campaign, 'Concrete Notification must be part of a campaign to override the mailjet template');
+            assert.ok(notification.sample_context, 'Concrete Notification must belong to a Campaign Notification to override the mailjet template');
+            assert.ok(
+                (notification.sample_context as any).overrideMailjetTemplateID,
+                'Concrete Notification must belong to a Campaign Notification that allows overriding the mailjet template to override the mailjet template'
+            );
+
+            TemplateID = parseInt(context.overrideMailjetTemplateID, 10);
+        }
+
         const message: any = {
             // c.f. https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
             From: sender,
@@ -59,7 +74,7 @@ export const mailjetChannel: Channel = {
                     Email: receiverEmail,
                 },
             ],
-            TemplateID: notification.mailjetTemplateId,
+            TemplateID,
             TemplateLanguage: true,
             Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '', authToken },
             Attachments: context.attachments,
@@ -90,7 +105,7 @@ export const mailjetChannel: Channel = {
             throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
         }
 
-        let requestOptions: mailjet.SendParams = {
+        const requestOptions: mailjet.SendParams = {
             SandboxMode: sandboxMode,
             Messages: [message],
         };
@@ -123,6 +138,6 @@ export const mailjetChannel: Channel = {
     },
 
     canSend: (notification: Notification, _user: User) => {
-        return notification.mailjetTemplateId != null;
+        return notification.mailjetTemplateId != null || (notification.sample_context && 'overrideMailjetTemplateID' in (notification.sample_context as any));
     },
 };

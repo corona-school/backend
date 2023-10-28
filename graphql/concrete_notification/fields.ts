@@ -1,14 +1,13 @@
-import { Concrete_notification as ConcreteNotification, Notification } from '../generated';
+import { Concrete_notification as ConcreteNotification, Notification, message_translation_language_enum as TranslationLanguage } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
-import { ConcreteNotificationState } from '../../common/entity/ConcreteNotification';
 import { GraphQLContext } from '../context';
 import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
-import { TranslationLanguage } from '../../common/entity/MessageTranslation';
 import { getMessage } from '../../common/notification/messages';
+import { ConcreteNotificationState } from '../../common/notification/types';
 
 @ObjectType()
 class Campaign {
@@ -19,7 +18,7 @@ class Campaign {
     contextID: string;
 
     @Field((type) => JSONResolver)
-    context: {};
+    context: object;
 
     @Field((type) => Int)
     drafted: number;
@@ -45,9 +44,9 @@ export class ExtendedFieldsConcreteNotificationResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async message(
         @Root() concreteNotification: Required<ConcreteNotification>,
-        @Arg('language', { defaultValue: TranslationLanguage.DE }) language: TranslationLanguage
+        @Arg('language', { defaultValue: TranslationLanguage.de }) language: TranslationLanguage
     ): Promise<NotificationMessageType | null> {
-        return getMessage(concreteNotification, language);
+        return await getMessage(concreteNotification, language);
     }
 
     @Query((returns) => ConcreteNotification, { nullable: true })
@@ -73,6 +72,10 @@ export class ExtendedFieldsConcreteNotificationResolver {
         const byCampaign: { [key: string]: Campaign } = {};
 
         for (const { _count, contextID, notificationID, state } of aggregated) {
+            if (!contextID) {
+                continue;
+            }
+
             const key = notificationID + '/' + contextID;
             if (!byCampaign[key]) {
                 const context = await prisma.concrete_notification.findFirst({

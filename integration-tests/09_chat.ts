@@ -115,6 +115,5 @@ void test('Create Chat for Course', async () => {
         }
     `);
 
-    console.log('CONVO ID', conversationID);
     assert.strictEqual(conversationID, 'mocked');
 });

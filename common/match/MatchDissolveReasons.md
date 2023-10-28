@@ -1,6 +1,6 @@
 # Match dissolve reasons
 
-These are the match dissolve reasons broken down by their number. These numbers are e.g. used in the transaction log. 
+These are the match dissolve reasons broken down by their number. These numbers are e.g. used in the transaction log.
 
 Student POV:
 
@@ -13,7 +13,6 @@ Student POV:
 7. Technical difficulties
 8. Miscellaneous/other
 9. Language difficulties
-10. Match partner had criminal record and their account got deactivated*
+10. Match partner had criminal record and their account got deactivated\*
 
-
-*) this is not a choice in the cancel dialog on the frontend.
+\*) this is not a choice in the cancel dialog on the frontend.

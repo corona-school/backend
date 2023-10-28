@@ -12,10 +12,9 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
-import { course_schooltype_enum, course_subject_enum } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
-import { CourseState } from '../../common/entity/Course';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 
@@ -32,9 +31,9 @@ class PublicCourseCreateInput {
     @TypeGraphQL.Field((_type) => Boolean)
     allowContact?: boolean;
 
-    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
-    subject?: course_subject_enum;
-    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
+    subject?: CourseSubject;
+    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 
@@ -51,9 +50,9 @@ class PublicCourseEditInput {
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
 
-    @TypeGraphQL.Field((_type) => course_subject_enum, { nullable: true })
-    subject?: course_subject_enum;
-    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
+    subject?: CourseSubject;
+    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
     schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
 }
 
@@ -135,7 +134,7 @@ export class MutateCourseResolver {
             data: courseTagIds.map((it) => ({ courseId: course.id, courseTagId: it })),
         });
 
-        logger.info(`User(${context.user!.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
+        logger.info(`User(${context.user.userID}) set tags of Course(${course.id}) to (${courseTagIds})`);
         return true;
     }
 
@@ -160,7 +159,7 @@ export class MutateCourseResolver {
             where: { id: course.id },
         });
 
-        logger.info(`User(${context.user!.userID}) uploaded a new course image for Course(${course.id})`);
+        logger.info(`User(${context.user.userID}) uploaded a new course image for Course(${course.id})`);
         return true;
     }
 
@@ -171,7 +170,7 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
 
         const newInstructor = await getStudent(studentId);
-        await addCourseInstructor(context.user!, course, newInstructor);
+        await addCourseInstructor(context.user, course, newInstructor);
         return true;
     }
 
@@ -183,7 +182,7 @@ export class MutateCourseResolver {
         await getStudent(studentId);
 
         await prisma.course_instructors_student.delete({ where: { courseId_studentId: { courseId, studentId } } });
-        logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user!.userID})`);
+        logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user.userID})`);
         return true;
     }
 
@@ -215,7 +214,7 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN, Role.SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
-        const tag = await createCourseTag(context.user!, name, category as course_category_enum);
+        const tag = await createCourseTag(context.user, name, category as course_category_enum);
 
         return tag;
     }
@@ -236,7 +235,7 @@ export class MutateCourseResolver {
             where: { id: courseTagId },
         });
 
-        logger.info(`User(${context.user!.userID}) removed CourseTag(${tag.id})`);
+        logger.info(`User(${context.user.userID}) removed CourseTag(${tag.id})`);
         return tag;
     }
 }

@@ -1,12 +1,16 @@
 import { Role } from '../authorizations';
 import { Screener } from '../generated';
-import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { createToken } from '../../common/secret';
-import { userForScreener } from '../../common/user';
+import { getUser, userForScreener } from '../../common/user';
 import { getLogger } from '../../common/logger/logger';
 import { getScreener } from '../util';
 import { ValidateEmail } from '../validators';
+import { GraphQLContext } from '../context';
+import { getSessionScreener } from '../authentication';
+import { GraphQLInt } from 'graphql';
+import * as Notification from '../../common/notification';
 
 const log = getLogger('ScreenerMutations');
 
@@ -52,6 +56,40 @@ export class MutateScreenerResolver {
         const screener = await getScreener(screenerId);
         await prisma.screener.update({ data: { active }, where: { id: screener.id } });
         log.info(`Admin set Screener(${screener.id}) to ${active ? 'active' : 'inactive'}`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.SCREENER)
+    async screenerSuggest(
+        @Ctx() context: GraphQLContext,
+        @Arg('userID') userID: string,
+        @Arg('suggestionNotificationId', () => GraphQLInt) suggestionNotificationId: number
+    ) {
+        const user = await getUser(userID);
+        const screener = await getSessionScreener(context);
+
+        await Notification.sendNotification(suggestionNotificationId, user, 'screening_suggestion', {});
+
+        log.info(`Screener(${screener.id}) sent custom Notification(${suggestionNotificationId}) to User(${userID})`);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async screenerTrust(@Arg('screenerId') screenerId: number, @Arg('trusted') trusted: boolean) {
+        const screener = await getScreener(screenerId);
+        await prisma.screener.update({
+            where: {
+                id: screener.id,
+            },
+            data: {
+                is_trusted: trusted,
+            },
+        });
+        log.info(`Screener(${screener.id}) was ${trusted ? `trusted` : `untrusted`} by an admin`);
+
         return true;
     }
 }

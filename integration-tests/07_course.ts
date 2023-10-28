@@ -2,9 +2,9 @@ import { adminClient, defaultClient, test } from './base';
 import { pupilOne, pupilUpdated } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
-import { CourseState } from '../common/entity/Course';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
+import { course_coursestate_enum as CourseState } from '@prisma/client';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -53,6 +53,28 @@ const courseOne = test('Create Course One', async () => {
     `);
 
     assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
+
+    // Admin Course Search
+    const { courseSearch } = await adminClient.request(`
+        query AdminFindsCourseByName {
+            courseSearch(search: "integrationstest", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+        query AdminFindsCourseByOutline {
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch3 } = await adminClient.request(`
+        query AdminFindsCourseBySubject {
+            courseSearch(search: "informatik", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch3.some((it) => it.id === courseId));
 
     await adminClient.request(`
         mutation AllowCourse {
@@ -170,7 +192,7 @@ export const addAppointmentToSubcourse = test('Create an appointment for a subco
     return { subcourseId, client, instructor, courseId };
 });
 
-void test('Publish Subcourse', async () => {
+const publishedSubcourse = test('Publish Subcourse', async () => {
     const { client, subcourseId, instructor, courseId } = await addAppointmentToSubcourse;
 
     await client.request(`
@@ -201,8 +223,6 @@ void test('Publish Subcourse', async () => {
     assert.ok(subcourse.course.id === courseId);
     assert.ok(subcourse.published);
 
-    return { subcourseId };
-
     // Different client here as the response is cached ...
     /* const { subcoursesPublic: subcoursesPublicAfter } = await defaultClient.request(`
         query PublicSubcourses {
@@ -212,6 +232,8 @@ void test('Publish Subcourse', async () => {
 
     // Now appears in public subcourses
     assert.ok(subcoursesPublicAfter.some(it => it.id === subcourseId)); */
+
+    return { client, subcourseId, instructor, courseId };
 });
 
 void test('Search further instructors', async () => {
@@ -263,11 +285,107 @@ void test('Public Course Suggestions', async () => {
             (subcourse) =>
                 subcourse.published &&
                 !subcourse.cancelled &&
-                subcourse.course.courseState === CourseState.ALLOWED &&
+                subcourse.course.courseState === CourseState.allowed &&
                 // subcourse.minGrade <= pupilsGrade &&
                 // subcourse.maxGrade >= pupilsGrade &&
                 !subcourse.isParticipant &&
                 subcourse.participantsCount < subcourse.maxParticipants
         )
     );
+});
+
+void test('Add / Remove another instructor', async () => {
+    const { instructor: instructor2 } = await screenedInstructorTwo;
+    const { subcourseId, client } = await publishedSubcourse;
+
+    expectFetch({
+        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
+        method: 'POST',
+        responseStatus: 200,
+        response: { access_token: 'ACCESS_TOKEN', expires_in: 0 },
+    });
+
+    expectFetch({
+        url: `https://api.zoom.us/v2/users/${instructor2.email.toLowerCase()}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {
+            id: '123',
+            first_name: instructor2.firstname,
+            last_name: instructor2.lastname,
+            email: instructor2.email.toLowerCase(),
+            display_name: instructor2.firstname + ' ' + instructor2.lastname,
+            personal_meeting_url: 'https://meet',
+        },
+    });
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/10',
+        method: 'GET',
+        responseStatus: 200,
+        response: {
+            agenda: 'My Meeting',
+            default_password: false,
+            duration: 60,
+            start_time: new Date().toISOString(),
+            timezone: 'Europe/Berlin',
+            type: 2,
+            mute_upon_entry: true,
+            join_before_host: true,
+            waiting_room: true,
+            breakout_room: true,
+            settings: { alternative_hosts: '', alternative_hosts_email_notification: false },
+        },
+    });
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/10',
+        method: 'PATCH',
+        body: `{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":"${instructor2.email.toLowerCase()}"}}`,
+        responseStatus: 200,
+        response: '{}',
+    });
+
+    await client.request(`mutation AddInstructorToSubcourse {
+        subcourseAddInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
+    }`);
+
+    expectFetch({
+        url: 'https://api.zoom.us/oauth/token?grant_type=account_credentials&account_id=ZOOM_ACCOUNT_ID',
+        method: 'POST',
+        responseStatus: 200,
+        response: { access_token: 'ACCESS_TOKEN', expires_in: 0 },
+    });
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/10',
+        method: 'GET',
+        responseStatus: 200,
+        response: {
+            id: 10,
+            agenda: 'My Meeting',
+            default_password: false,
+            duration: 60,
+            start_time: new Date().toISOString(),
+            timezone: 'Europe/Berlin',
+            type: 2,
+            mute_upon_entry: true,
+            join_before_host: true,
+            waiting_room: true,
+            breakout_room: true,
+            settings: { alternative_hosts: instructor2.email.toLowerCase(), alternative_hosts_email_notification: false },
+        },
+    });
+
+    expectFetch({
+        url: 'https://api.zoom.us/v2/meetings/10',
+        method: 'PATCH',
+        body: '{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":""}}',
+        responseStatus: 200,
+        response: '{}',
+    });
+
+    await client.request(`mutation RemoveInstructorFromSubcourse {
+        subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
+    }`);
 });

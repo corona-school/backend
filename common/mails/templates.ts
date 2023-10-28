@@ -15,48 +15,12 @@ export type TemplateMail = {
 };
 
 export const mailjet = {
-    STUDENTSCREENINGREMINDER: (variables: { personFirstname: string; confirmationURL: string }) => {
-        return <TemplateMail>{
-            type: 'studentscreeningreminder',
-            id: 1391548,
-            sender: DEFAULTSENDERS.support,
-            title: 'Erinnerung: Wir möchten dich kennenlernen!',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    INSTRUCTORSCREENINGREMINDER: (variables: { instructorFirstName: string; confirmationURL: string }) => {
-        return <TemplateMail>{
-            type: 'instructorscreeningreminder',
-            id: 1803949,
-            sender: DEFAULTSENDERS.support,
-            title: 'Erinnerung: Wir möchten dich kennenlernen!',
-            disabled: false,
-            variables: variables,
-        };
-    },
     COURSESCANCELLED: (variables: { participantFirstname: string; courseName: string; firstLectureDate: string; firstLectureTime: string }) => {
         return <TemplateMail>{
             type: 'coursecancelledparticipantnotification',
             id: 1498806,
             sender: DEFAULTSENDERS.support,
             title: 'Dein Kurs wurde abgesagt!',
-            disabled: false,
-            variables: variables,
-        };
-    },
-    COURSESUPCOMINGREMINDERINSTRUCTOR: (variables: {
-        participantFirstname: string;
-        courseName: string;
-        courseId: number;
-        firstLectureDate: string;
-        firstLectureTime: string;
-    }) => {
-        return <TemplateMail>{
-            type: 'courseupcomingfirstlecturereminderinstructors',
-            id: 1498911,
-            sender: DEFAULTSENDERS.support,
-            title: 'Dein Kurs startet bald!',
             disabled: false,
             variables: variables,
         };

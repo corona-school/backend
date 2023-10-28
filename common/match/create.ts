@@ -3,6 +3,8 @@ import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
+import { removeInterest } from './interest';
+// eslint-disable-next-line import/no-cycle
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
@@ -49,6 +51,7 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     });
 
     await invalidateAllScreeningsOfPupil(pupil.id);
+    await removeInterest(pupil);
 
     const callURL = getJitsiTutoringLink(match);
     const matchSubjects = getOverlappingSubjects(pupil, student)

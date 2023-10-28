@@ -8,7 +8,6 @@ import cookieParser from 'cookie-parser';
 import favicon from 'express-favicon';
 import { getLogger } from '../common/logger/logger';
 import { startTransaction } from '../common/session';
-import { allStateCooperationSubdomains } from '../common/entity/State';
 
 import { apolloServer } from '../graphql';
 import { WebSocketService } from '../common/websocket';
@@ -19,6 +18,7 @@ import { certificateRouter } from './controllers/certificateController';
 import { convertCertificateLinkToApiLink } from '../common/certificate';
 import { chatNotificationRouter } from './controllers/chatNotificationController';
 import { WithRawBody } from './controllers/chatNotificationController/types';
+import { metricsRouter } from '../common/logger/metrics';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -64,13 +64,13 @@ export const server = (async function setupWebserver() {
 
     let origins: (string | RegExp)[];
 
-    const allowedSubdomains = [...allStateCooperationSubdomains, 'jufo', 'partnerschule', 'drehtuer', 'codu'];
+    const allowedSubdomains = ['jufo', 'partnerschule', 'drehtuer', 'codu'];
     if (process.env.ENV == 'dev') {
         origins = [
             'http://localhost:3000',
             ...allowedSubdomains.map((d) => `http://${d}.localhost:3000`),
             'https://lernfair-user-app-dev.herokuapp.com',
-            /^https:\/\/user-app-[\-a-z0-9]+.herokuapp.com$/,
+            /^https:\/\/user-app-[a-z0-9-]+\.herokuapp\.com$/,
             'https://lern.retool.com',
         ];
     } else {
@@ -102,6 +102,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/certificate', certificateRouter);
     app.use('/api/files', fileRouter);
     app.use('/api/chat', chatNotificationRouter);
+    app.use('/metrics', metricsRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {

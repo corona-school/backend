@@ -3,7 +3,7 @@
 //  however a few other attributes of the action are maintained here to provide admin users with better tooling
 //  for creating notifications for these actions. The ones documented here are incomplete
 
-import { NotificationContextExtensions } from './types';
+import { type NotificationContextExtensions } from './types';
 
 type NestedStringObject = { [key: string]: string | boolean | NestedStringObject };
 
@@ -141,12 +141,21 @@ const _notificationActions = {
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
-            firstLectureDate: '12.12.1984',
-            firstLectureTime: '12:00',
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_from_waitinglist: {
+        description: 'Participant / Joined Course from Waitinglist',
+        sampleContext: {
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_directly: {
+        description: 'Participant / Joined Course directly (not from Waitinglist)',
+        sampleContext: {
+            ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
@@ -183,6 +192,10 @@ const _notificationActions = {
                 description: 'Ein Kurs',
             },
         },
+    },
+    participant_course_ended: {
+        description: 'Participant / Course ended',
+        sampleContext: sampleCourse,
     },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
@@ -226,6 +239,10 @@ const _notificationActions = {
             },
         },
     },
+    instructor_course_ended: {
+        description: 'Instructor / Course ended',
+        sampleContext: sampleCourse,
+    },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
         sampleContext: sampleCourse,
@@ -248,6 +265,14 @@ const _notificationActions = {
             certificateLink: 'https://...',
         },
     },
+    tutee_match_requested: {
+        description: 'Tutee / Match requested',
+        sampleContext: {},
+    },
+    tutee_match_request_revoked: {
+        description: 'Tutee / Match Request revoked',
+        sampleContext: {},
+    },
     tutee_match_dissolved_other: {
         description: 'Tutee / Match was dissolved by student',
         sampleContext: {
@@ -263,6 +288,14 @@ const _notificationActions = {
             matchHash: '...',
             matchDate: '...',
         },
+    },
+    tutor_match_requested: {
+        description: 'Tutor / Match requested',
+        sampleContext: {},
+    },
+    tutor_match_request_revoked: {
+        description: 'Tutor / Match Request revoked',
+        sampleContext: {},
     },
     tutor_match_dissolved_other: {
         description: 'Tutor / Match was dissolved by pupil',
@@ -370,7 +403,10 @@ const _notificationActions = {
         description: 'Student / Certificate of Conduct Cancelled',
         sampleContext: {},
     },
-
+    instructor_course_full: {
+        description: 'Instructor / Course full',
+        sampleContext: sampleCourse,
+    },
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',
         sampleContext: {
@@ -522,7 +558,46 @@ const _notificationActions = {
         description: 'User added a match ad-hoc meeting',
         sampleContext: { student: sampleUser, appointmentId: '1', appointment: { url: '/video-chat/1/match' } },
     },
-
+    pupil_match_appointment_starts: {
+        description: 'Remind pupil of upcoming match appointment',
+        sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
+    },
+    student_match_appointment_starts: {
+        description: 'Remind student of upcoming match appointment',
+        sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
+    },
+    pupil_group_appointment_starts: {
+        description: 'Remind pupil of upcoming group appointment',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: { firstname: 'Student' },
+            ...sampleCourse,
+        },
+    },
+    student_group_appointment_starts: {
+        description: 'Remind student of upcoming group appointment',
+        sampleContext: {
+            appointment: sampleAppointment,
+            student: { firstname: 'Student' },
+            ...sampleCourse,
+        },
+    },
+    cancel_group_appointment_reminder: {
+        description: 'Cancel / group appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
+    cancel_match_appointment_reminder: {
+        description: 'Cancel / match appointment reminder',
+        sampleContext: {
+            appointment: sampleAppointment,
+        },
+    },
+    screening_suggestion: {
+        description: 'Screener suggests a Ressource for a User',
+        sampleContext: {},
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },

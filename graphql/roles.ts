@@ -1,16 +1,15 @@
 import { pupil as Pupil, student as Student } from '@prisma/client';
-import { User } from '../common/user';
 import { prisma } from '../common/prisma';
-import type { GraphQLContext } from './context';
 import { Role } from '../common/user/roles';
 import { getLogger } from '../common/logger/logger';
+import { Screener } from './generated';
 
 export { Role } from '../common/user/roles';
 
 const logger = getLogger('Roles');
 
-export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) {
-    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.PUPIL];
+export function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
+    roles.push(Role.UNAUTHENTICATED, Role.USER, Role.PUPIL);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
     // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
@@ -25,28 +24,28 @@ export async function evaluatePupilRoles(pupil: Pupil, context: GraphQLContext) 
     }
 
     if (pupil.isPupil) {
-        context.user.roles.push(Role.TUTEE);
+        roles.push(Role.TUTEE);
         logger.info(`Pupil(${pupil.id}) has TUTEE role`);
     }
 
     if (pupil.isParticipant) {
-        context.user.roles.push(Role.PARTICIPANT);
+        roles.push(Role.PARTICIPANT);
         logger.info(`Pupil(${pupil.id}) has PARTICIPANT role`);
     }
 
     if (pupil.isProjectCoachee) {
-        context.user.roles.push(Role.PROJECT_COACHEE);
+        roles.push(Role.PROJECT_COACHEE);
         logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
     }
 
     if (pupil.teacherEmailAddress) {
-        context.user.roles.push(Role.STATE_PUPIL);
+        roles.push(Role.STATE_PUPIL);
         logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
     }
 }
 
-export async function evaluateStudentRoles(student: Student, context: GraphQLContext) {
-    context.user.roles = [Role.UNAUTHENTICATED, Role.USER, Role.STUDENT];
+export async function evaluateStudentRoles(student: Student, roles: Role[]) {
+    roles.push(Role.UNAUTHENTICATED, Role.USER, Role.STUDENT);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
     // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
@@ -65,9 +64,9 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
         const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
-            context.user.roles.push(Role.TUTOR);
+            roles.push(Role.TUTOR);
         } else {
-            context.user.roles.push(Role.WANNABE_TUTOR);
+            roles.push(Role.WANNABE_TUTOR);
         }
     }
 
@@ -75,7 +74,7 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
         const wasCoachScreened = (await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasCoachScreened) {
             logger.info(`Student(${student.id}) was screened and has PROJECT_COACH role`);
-            context.user.roles.push(Role.PROJECT_COACH);
+            roles.push(Role.PROJECT_COACH);
         }
     }
 
@@ -84,14 +83,18 @@ export async function evaluateStudentRoles(student: Student, context: GraphQLCon
         const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasInstructorScreened) {
             logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
-            context.user.roles.push(Role.INSTRUCTOR);
+            roles.push(Role.INSTRUCTOR);
         } else {
-            context.user.roles.push(Role.WANNABE_INSTRUCTOR);
+            roles.push(Role.WANNABE_INSTRUCTOR);
         }
     }
 }
 
-export async function evaluateScreenerRoles(user: User, context: GraphQLContext) {
-    context.user.roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
-    logger.info(`Screener(${user.screenerId}) was granted SCREENER role`);
+export function evaluateScreenerRoles(screener: Screener, roles: Role[]) {
+    roles.push(Role.USER, Role.SCREENER, Role.UNAUTHENTICATED);
+    logger.info(`Screener(${screener.id}) was granted SCREENER role`);
+    if (screener.is_trusted) {
+        roles.push(Role.TRUSTED_SCREENER);
+        logger.info(`Screener(${screener.id}) has TRUSTED_SCREENER role`);
+    }
 }

@@ -48,6 +48,18 @@ model bbb_meeting {
   alternativeUrl String?  @db.VarChar
 }
 
+// We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
+model cooperation {
+  id             Int       @id() @default(autoincrement())
+  name           String
+  // This is a short string which can be passed in to the registration to associate users with this
+  tag            String
+  // Text shown to users on the registration page
+  welcomeTitle   String
+  welcomeMessage String
+  student        student[]
+}
+
 // A Concrete Notification represents a Notification sent to one specific user
 model concrete_notification {
   id                Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
@@ -273,7 +285,7 @@ model log {
 }
 
 model match {
-  id                    Int                @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  id                    Int       @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   // DEPRECATED: The uuid was used to generate non-guessable meeting room links, replaced by Appointments/Zoom
   uuid                  String             @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved             Boolean            @default(false)
@@ -283,19 +295,20 @@ model match {
   // and they would write different ids for the same dissolve reason into this field
   // As we do not store who dissolved the match, it is quite hard to interpret this number:
   // (but you can make some weird joins with the log table to find out who dissolved it)
+  // dissolveReason is DEPRECATED, use dissolveReasonEnum instead
   dissolveReason        Int?
   dissolveReasonEnum    dissolve_reason?
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
-  proposedTime          DateTime?          @db.Timestamp(6)
-  createdAt             DateTime           @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime           @default(now()) @db.Timestamp(6)
-  // DEPRECATED: With the Notification System we now use Concrete Notifications to track
+  proposedTime          DateTime? @db.Timestamp(6)
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  // DEPRECATED: With the Notification System we now use Concrete Notifications to track 
   // whether a notification was already sent. These booleans were used a long time ago by some cron jobs:
-  feedbackToPupilMail   Boolean            @default(false)
-  feedbackToStudentMail Boolean            @default(false)
-  followUpToPupilMail   Boolean            @default(false)
-  followUpToStudentMail Boolean            @default(false)
+  feedbackToPupilMail   Boolean   @default(false)
+  feedbackToStudentMail Boolean   @default(false)
+  followUpToPupilMail   Boolean   @default(false)
+  followUpToStudentMail Boolean   @default(false)
 
   // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
   source match_source_enum @default(matchedinternal)
@@ -523,7 +536,6 @@ model pupil {
   pupil_screening                              pupil_screening[]
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil                 subcourse_waiting_list_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
 }
 
@@ -594,6 +606,7 @@ model screener {
   instructor_screening         instructor_screening[]
   project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
+  is_trusted                   Boolean                      @default(false)
 }
 
 // A Screening for Students that want to tutor pupils
@@ -702,6 +715,9 @@ model student {
   remission_request                    remission_request?
   screening                            screening?
   subcourse_instructors_student        subcourse_instructors_student[]
+
+  cooperationID Int?
+  cooperation   cooperation? @relation(fields: [cooperationID], references: [id])
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -729,7 +745,6 @@ model subcourse {
   lecture                          lecture[]
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
-  subcourse_waiting_list_pupil     subcourse_waiting_list_pupil[]
   waiting_list_enrollment          waiting_list_enrollment[]
 }
 
@@ -755,18 +770,6 @@ model subcourse_participants_pupil {
   @@id([subcourseId, pupilId], map: "PK_7b8738e08eab7b5bf796f0eaf1b")
   @@index([pupilId], map: "IDX_47d9d98b6496554165e08ff61d")
   @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
-}
-
-// DEPRECATED - Replaced by waiting_list_enrollment
-model subcourse_waiting_list_pupil {
-  subcourseId Int
-  pupilId     Int
-  pupil       pupil     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_3bd25f377afc44f574f7ac3d09b")
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade, map: "FK_df9eb9663f8085da35f7ca55471")
-
-  @@id([subcourseId, pupilId], map: "PK_b35d059abbd7f4c4a1147f72ec9")
-  @@index([pupilId], map: "IDX_3bd25f377afc44f574f7ac3d09")
-  @@index([subcourseId], map: "IDX_df9eb9663f8085da35f7ca5547")
 }
 
 // We require a Certifcate of Conduct to be handed in by Students, which is verified by Support

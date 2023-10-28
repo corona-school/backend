@@ -1,5 +1,4 @@
-import { Student as TypeORMStudent } from '../entity/Student';
-import { student, student as PrismaStudent } from '@prisma/client';
+import { student, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { randomBytes } from 'crypto';
 import { getLogger } from '../../common/logger/logger';
@@ -17,13 +16,14 @@ const verificationPageName = 'verifiedRemissionRequestPage';
 
 const dateFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const;
 
-export async function createRemissionRequest(student: TypeORMStudent | PrismaStudent) {
+export async function createRemissionRequest(student: Student) {
     const remissionRequest = await prisma.remission_request.findUnique({
         where: { studentId: student.id },
     });
 
     if (!remissionRequest) {
-        while (true) {
+        let done = false;
+        while (!done) {
             try {
                 await prisma.remission_request.create({
                     data: {
@@ -32,7 +32,7 @@ export async function createRemissionRequest(student: TypeORMStudent | PrismaStu
                     },
                 });
                 logger.info(`Created remisson request for student ${student.wix_id}`);
-                break;
+                done = true;
             } catch (e) {
                 if (e.code !== 'P2002') {
                     throw e;
@@ -55,7 +55,7 @@ function loadTemplate(name: string): EJS.ClientFunction {
 
 async function createQRCode(uuid: string): Promise<string> {
     const verificationURL = `https://verify.lern-fair.de/${uuid}?ctype=remission`;
-    return QRCode.toDataURL(verificationURL);
+    return await QRCode.toDataURL(verificationURL);
 }
 
 export async function createRemissionRequestPDF(student: { id: number; firstname: string; lastname: string }): Promise<Buffer> {

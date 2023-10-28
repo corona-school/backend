@@ -3,6 +3,7 @@ import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, R
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { course_category_enum, dissolve_reason, pupil_screening_status_enum } from '@prisma/client';
+import { GraphQLString } from 'graphql';
 
 @ObjectType()
 class ByMonth {
@@ -41,7 +42,10 @@ class Statistics {
 export class StatisticsResolver {
     @Query((returns) => Statistics)
     @Authorized(Role.ADMIN)
-    statistics(@Arg('from', { nullable: true }) from: string = '1970-01-01', @Arg('to', { nullable: true }) to: string = '3000-01-01'): Statistics {
+    statistics(
+        @Arg('from', () => GraphQLString, { nullable: true }) from = '1970-01-01',
+        @Arg('to', () => GraphQLString, { nullable: true }) to = '3000-01-01'
+    ): Statistics {
         return { from, to };
     }
 
@@ -351,7 +355,7 @@ export class StatisticsResolver {
 
             intervals.set(match.studentId, matchDuration + (intervals.get(match.studentId) ?? 0));
         }
-        let buckets: Bucket[] = [
+        const buckets: Bucket[] = [
             {
                 from: 0,
                 to: 14 * 24 * 3600 * 1000,
@@ -617,7 +621,7 @@ export class StatisticsResolver {
     @FieldResolver(() => [Bucket])
     @Authorized(Role.ADMIN)
     async matchesByDuration(@Root() statistics: Statistics) {
-        let buckets: Bucket[] = [
+        const buckets: Bucket[] = [
             {
                 from: 0,
                 to: 14 * 24 * 3600 * 1000,
@@ -667,7 +671,7 @@ export class StatisticsResolver {
             if (match.dissolvedAt == null) {
                 return;
             }
-            let duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
+            const duration = match.dissolvedAt.getTime() - match.createdAt.getTime();
             buckets.find((b) => b.from <= duration && (b.to > duration || b.to === -1)).value += 1;
         });
         return buckets;

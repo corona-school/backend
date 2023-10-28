@@ -1,19 +1,24 @@
 import { prisma } from '../prisma';
 import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore The matching algorithm is optional, to allow for slim local setups
 import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
+// eslint-disable-next-line import/no-cycle
 import { createMatch } from './create';
 import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
-import { DEFAULT_TUTORING_GRADERESTRICTIONS } from '../entity/Student';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
-import { InterestConfirmationStatus } from '../entity/PupilTutoringInterestConfirmationRequest';
-import { cleanupUnconfirmed, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, InterestConfirmationStatus, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
+
+export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13,
+};
 
 const logger = getLogger('MatchingPool');
 
@@ -362,6 +367,7 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const startMatching = Date.now();
 
     // To run the matching we need the C++ Part, if it is not installed this will fail at runtime
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { match } = await import('corona-school-matching');
 
@@ -380,9 +386,6 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            if (pool.confirmInterest && match.pupil.openMatchRequestCount <= 1) {
-                await removeInterest(match.pupil);
-            }
             await pool.createMatch(match.pupil, match.student, pool);
         }
 

@@ -38,5 +38,5 @@ export const suggestToken = () => uuid();
 export const toPublicToken = (token: string) => token.slice(0, -5);
 
 export async function getUserForSession(sessionToken: string) {
-    return userSessions.get(sessionToken);
+    return await userSessions.get(sessionToken);
 }

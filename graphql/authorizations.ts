@@ -251,6 +251,7 @@ const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = 
      so always make sure to apply proper authorizations to those
 */
 export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
+    Cooperation: allAdmin,
     Course: allAdmin,
     Pupil: allAdmin,
     Match: allAdmin,
@@ -307,7 +308,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
-    Subcourse_waiting_list_pupil: allAdmin,
     Concrete_notification: allAdmin,
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
@@ -361,7 +361,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             matchReason: everyone,
 
-            email: adminOrOwner,
+            email: adminOrOwnerOrScreener,
             verification: nobody,
             verifiedAt: adminOrOwner,
             wix_id: adminOrOwner,
@@ -399,7 +399,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_attendance_log: nobody,
             course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
-            subcourse_waiting_list_pupil: nobody,
             match: nobody,
             _count: nobody,
             waiting_list_enrollment: nobody,
@@ -485,6 +484,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             _count: nobody,
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
+            cooperation: everyone,
+            cooperationID: nobody,
         }),
     },
     Subcourse: {
@@ -510,7 +511,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_participants_pupil: nobody,
-            subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,

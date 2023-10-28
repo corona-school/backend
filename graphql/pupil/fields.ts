@@ -22,6 +22,8 @@ import { canJoinSubcourses } from '../../common/courses/participants';
 import { UserType } from '../types/user';
 import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
+import { GraphQLBoolean } from 'graphql';
+import { subcourseSearch } from '../../common/courses/search';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -38,7 +40,8 @@ export class ExtendFieldsPupilResolver {
     async subcoursesJoined(
         @Root() pupil: Required<Pupil>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
-        @Arg('onlyPast', { nullable: true }) onlyPast?: boolean
+        @Arg('onlyPast', { nullable: true }) onlyPast?: boolean,
+        @Arg('search', { nullable: true }) search?: string
     ) {
         const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
 
@@ -50,6 +53,10 @@ export class ExtendFieldsPupilResolver {
             filters.push(onlyPastSubcourses());
         }
 
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
         return await prisma.subcourse.findMany({
             where: { AND: filters },
         });
@@ -58,19 +65,25 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesWaitingList(@Root() pupil: Pupil) {
+    async subcoursesWaitingList(@Root() pupil: Pupil, @Arg('search', { nullable: true }) search?: string) {
+        const filters: Prisma.subcourseWhereInput[] = [
+            {
+                waiting_list_enrollment: {
+                    some: {
+                        pupilId: pupil.id,
+                    },
+                },
+            },
+            excludePastSubcourses(),
+        ];
+
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
         return await prisma.subcourse.findMany({
             where: {
-                AND: [
-                    {
-                        waiting_list_enrollment: {
-                            some: {
-                                pupilId: pupil.id,
-                            },
-                        },
-                    },
-                    excludePastSubcourses(),
-                ],
+                AND: filters,
             },
         });
     }
@@ -94,7 +107,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => [Subject])
     @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
-    async subjectsFormatted(@Root() pupil: Required<Pupil>) {
+    subjectsFormatted(@Root() pupil: Required<Pupil>) {
         return parseSubjectString(pupil.subjects);
     }
 
@@ -140,7 +153,7 @@ export class ExtendFieldsPupilResolver {
 
     @FieldResolver((type) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canJoinSubcourses(@Root() pupil: Required<Pupil>) {
+    canJoinSubcourses(@Root() pupil: Required<Pupil>) {
         return canJoinSubcourses(pupil);
     }
 
@@ -154,7 +167,7 @@ export class ExtendFieldsPupilResolver {
 
     @Query((returns) => [Pupil])
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilsToBeScreened(@Arg('onlyDisputed', { nullable: true }) onlyDisputed: boolean = false) {
+    async pupilsToBeScreened(@Arg('onlyDisputed', () => GraphQLBoolean, { nullable: true }) onlyDisputed = false) {
         return await prisma.pupil.findMany({
             where: {
                 active: true,

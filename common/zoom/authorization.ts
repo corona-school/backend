@@ -19,14 +19,26 @@ if (isZoomFeatureActive()) {
     assert(accountId, 'Missing ZOOM_ACCOUNT_ID in ENV');
 }
 
-let accessToken: string | null = null;
+const accessTokenPerScope = new Map<string, string>();
 
-const getAccessToken = async (scope?: string) => {
+let currentFetch: Promise<any> = Promise.resolve();
+function getAccessToken(scope?: string) {
+    // This synchronizes all access token fetches to be sequential,
+    // so that we only fetch an access token once, and then potentially reuse it
+    return (currentFetch = currentFetch
+        .catch(() => {
+            /* ignore */
+        })
+        .then(() => fetchAccessToken(scope)));
+}
+
+const fetchAccessToken = async (scope?: string) => {
     assureZoomFeatureActive();
 
-    if (accessToken && !scope) {
-        logger.info('Using cached access token');
-        return { access_token: accessToken };
+    const cachedToken = accessTokenPerScope.get(scope ?? '');
+    if (cachedToken) {
+        logger.info(`Using cached access token for scope ${scope ?? '-'}`);
+        return { access_token: cachedToken };
     }
     try {
         const zoomOauthApiUrl = `https://api.zoom.us/oauth/token?grant_type=${grantType}&account_id=${accountId}`;
@@ -57,9 +69,9 @@ const getAccessToken = async (scope?: string) => {
 
         if (data.access_token && !scope) {
             logger.info('Caching access token');
-            accessToken = data.access_token;
+            accessTokenPerScope.set(scope ?? '', data.access_token);
             setTimeout(() => {
-                accessToken = null;
+                accessTokenPerScope.delete(scope ?? '');
             }, data.expires_in * 1000);
         }
 

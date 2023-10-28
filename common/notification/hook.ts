@@ -5,6 +5,7 @@
 
 import { student as Student, pupil as Pupil } from '@prisma/client';
 import { getPupil, getStudent, User } from '../user';
+// eslint-disable-next-line import/no-cycle
 import { getNotifications } from './notification';
 import { prisma } from '../prisma';
 import { ActionID, ConcreteNotificationState } from './types';
@@ -21,7 +22,7 @@ export async function triggerHook(hookID: string, user: User) {
         throw new Error(`Unknown hook ${hookID}`);
     }
 
-    const hook = hooks[hookID]!;
+    const hook = hooks[hookID];
 
     await hook.fn(user);
 }

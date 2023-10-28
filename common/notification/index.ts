@@ -1,16 +1,14 @@
+// eslint-disable-next-line import/no-cycle
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
-import { Concrete_notification as ConcreteNotificationPrisma } from '../../graphql/generated';
 import { prisma } from '../prisma';
-import { getNotification, getNotifications, getSampleContext, getSampleContextExternal } from './notification';
+import { getNotification, getNotifications, getSampleContextExternal } from './notification';
 import { getFullName, User, queryUser, getUser } from '../user';
 import { getLogger } from '../logger/logger';
-import { Student } from '../entity/Student';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
-import { Pupil } from '../entity/Pupil';
 import { triggerHook } from './hook';
-import { USER_APP_DOMAIN } from '../util/environment';
+import { USER_APP_DOMAIN, isDev } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
@@ -31,6 +29,10 @@ const HOURS_TO_MS = 60 * 60 * 1000;
 
 // The time where we consider a Notification to happen "now":
 const SLACK = 1000; /* ms */
+
+// DO NOT USE! Only use in local / test environments
+let SILENCE_NOTIFICATION_SYTEM = false;
+export const _setSilenceNotificationSystem = (value: boolean) => (SILENCE_NOTIFICATION_SYTEM = value);
 
 /* --------------------------- Concrete Notification "Queue" ----------------------------------- */
 
@@ -188,16 +190,16 @@ async function deliverNotification(
  */
 export async function createAttachments(files: File[], uploader: User): Promise<AttachmentGroup | null> {
     if (files.length > 0) {
-        let attachmentGroupId = uuid().toString();
+        const attachmentGroupId = uuid().toString();
 
-        let attachments = await Promise.all(
+        const attachments = await Promise.all(
             files.map(async (f) => {
-                let attachmentId = await createAttachment(f, uploader, attachmentGroupId);
+                const attachmentId = await createAttachment(f, uploader, attachmentGroupId);
                 return { attachmentId, filename: f.originalname, size: f.size };
             })
         );
 
-        const attachmentListHTML = await getAttachmentListHTML(attachments, attachmentGroupId);
+        const attachmentListHTML = getAttachmentListHTML(attachments, attachmentGroupId);
 
         return { attachmentListHTML, attachmentGroupId, attachmentIds: attachments.map((att) => att.attachmentId) };
     }
@@ -256,15 +258,22 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
+const allowedExtensions = ['uniqueId'];
+
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
 
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -274,9 +283,14 @@ export function validateContextForAction(action: ActionID, context: Notification
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -337,11 +351,19 @@ export * from './hook';
 
 /* sends one specific notification with a very specific notification context to the user.
    Using this directly is an intermediate solution, prefer actions ("actionTaken") instead */
-export async function sendNotification(id: NotificationID, user: User, notificationContext: NotificationContext): Promise<void> {
+export async function sendNotification<ID extends ActionID>(
+    id: NotificationID,
+    user: User,
+    forAction: ActionID,
+    notificationContext: SpecificNotificationContext<ActionID>
+): Promise<void> {
     const notification = await getNotification(id);
 
-    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
+    if (!notification.onActions.includes(forAction)) {
+        throw new Error(`Notification(${notification.id}) does not belong to Action '${forAction}`);
+    }
 
+    const concreteNotification = await createConcreteNotification(notification, user, notificationContext);
     await deliverNotification(concreteNotification, notification, user, notificationContext);
 }
 
@@ -353,7 +375,7 @@ export async function actionTaken<ID extends ActionID>(
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
     attachments?: AttachmentGroup,
-    noDuplicates: boolean = false
+    noDuplicates = false
 ) {
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
@@ -404,10 +426,15 @@ export async function actionTakenAt<ID extends ActionID>(
     user: User,
     actionId: ID,
     notificationContext: SpecificNotificationContext<ID>,
-    dryRun: boolean = false,
-    noDuplicates: boolean = false,
+    dryRun = false,
+    noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
+    if (SILENCE_NOTIFICATION_SYTEM && isDev) {
+        logger.debug(`No Action taken as Notification System is silenced`);
+        return;
+    }
+
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
         return;

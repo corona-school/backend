@@ -1,11 +1,9 @@
-import { Student } from '../entity/Student';
-import { Pupil } from '../entity/Pupil';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile } from '../file-bucket';
 import { User } from '../user';
 import { friendlyFileSize } from '../util/basic';
-import { Attachment } from '../entity/Attachment';
+import { attachment as Attachment } from '@prisma/client';
 
 export interface File {
     originalname: string;
@@ -29,7 +27,7 @@ export interface AttachmentGroup {
  * @return  attachmentId       Unique per individual attachment
  */
 export async function createAttachment(file: File, uploader: User, attachmentGroupId: string) {
-    let attachmentId = uuid().toString();
+    const attachmentId = uuid().toString();
     await prisma.attachment.create({
         data: {
             id: attachmentId,
@@ -55,7 +53,7 @@ export async function createAttachment(file: File, uploader: User, attachmentGro
  */
 export async function getAttachmentURL(attachmentId: string, key: string, attachmentGroupId?: string) {
     if (attachmentGroupId == null) {
-        let dbAttachment = await prisma.attachment.findUnique({
+        const dbAttachment = await prisma.attachment.findUnique({
             where: {
                 id: attachmentId,
             },
@@ -74,10 +72,10 @@ export async function getAttachmentURL(attachmentId: string, key: string, attach
  * @param attachmentGroupId
  * @return              HTML of the list.
  */
-export async function getAttachmentListHTML(attachments: { attachmentId: string; filename: string; size: number }[], attachmentGroupId: string) {
+export function getAttachmentListHTML(attachments: { attachmentId: string; filename: string; size: number }[], attachmentGroupId: string) {
     let attachmentListHTML = '<h3>Anhänge</h3>';
 
-    for (let { attachmentId, filename, size } of attachments) {
+    for (const { attachmentId, filename, size } of attachments) {
         attachmentListHTML =
             attachmentListHTML +
             `<p><a href="https://api.lern-fair.de/api/attachments/${attachmentId}/${filename}">${filename}</a> (${friendlyFileSize(size, true)})</p>`;
@@ -100,7 +98,7 @@ export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: s
         },
     });
     const attachmentList = attachments.map((a) => ({ attachmentId: a.id, filename: a.filename, size: a.size }));
-    const attachmentListHTML = await getAttachmentListHTML(attachmentList, attachmentGroupId);
+    const attachmentListHTML = getAttachmentListHTML(attachmentList, attachmentGroupId);
 
     return { attachmentGroupId, attachmentListHTML, attachmentIds: attachments.map((a) => a.id) };
 }

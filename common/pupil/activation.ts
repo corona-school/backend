@@ -32,7 +32,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
     // Setting 'active' to false will not send out any notifications during deactivation
     pupil.active = false;
 
-    let matches = await prisma.match.findMany({
+    const matches = await prisma.match.findMany({
         where: {
             dissolved: false,
             pupilId: pupil.id,

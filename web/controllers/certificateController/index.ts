@@ -1,6 +1,6 @@
 import { getLogger } from '../../../common/logger/logger';
 import express, { Request, Response, Router } from 'express';
-import { createRemissionRequestVerificationPage } from "../../../common/remission-request";
+import { createRemissionRequestVerificationPage } from '../../../common/remission-request';
 import { DefaultLanguage, LANGUAGES, Language, getConfirmationPage, CertificateError } from '../../../common/certificate';
 
 const logger = getLogger();
@@ -13,10 +13,9 @@ certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ get
 certificateRouter.use('/:certificateId/public', express.static('./assets/public'));
 
 // certificate types
-const CERTIFICATETYPES = ["participation", "remission"] as const;
+const CERTIFICATETYPES = ['participation', 'remission'] as const;
 type CertificateType = (typeof CERTIFICATETYPES)[number];
-const DefaultCertificateType = "participation";
-
+const DefaultCertificateType = 'participation';
 
 /**
  * @api {GET} /certificate/:certificateId/confirmation?lang=... getCertificateConfirmation
@@ -55,17 +54,17 @@ async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
         }
 
         if (!LANGUAGES.includes(lang as Language)) {
-            return res.status(400).send("Language not known");
+            return res.status(400).send('Language not known');
         }
 
         if (!CERTIFICATETYPES.includes(ctype as CertificateType)) {
-            return res.status(400).send("Certificate type not known");
+            return res.status(400).send('Certificate type not known');
         }
 
-        if (typeof certificateId !== "string") {
-            return res.status(400).send("Missing parameter certificateId");
+        if (typeof certificateId !== 'string') {
+            return res.status(400).send('Missing parameter certificateId');
         }
-        if (ctype === "participation") {
+        if (ctype === 'participation') {
             const confirmation = await getConfirmationPage(certificateId, lang as Language);
 
             return res.send(confirmation);
@@ -73,7 +72,7 @@ async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
             const remissionRequestVerificationPage = await createRemissionRequestVerificationPage(certificateId.toUpperCase());
 
             if (!remissionRequestVerificationPage) {
-                return res.status(404).send("<h1>Zertifikatslink nicht valide.</h1>");
+                return res.status(404).send('<h1>Zertifikatslink nicht valide.</h1>');
             }
 
             return res.send(remissionRequestVerificationPage);
@@ -83,7 +82,7 @@ async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
             return res.status(400).send(error.message);
         }
 
-        logger.error("Failed to generate certificate confirmation", error);
-        return res.status(500).send("<h1>Ein Fehler ist aufgetreten... 😔</h1>");
+        logger.error('Failed to generate certificate confirmation', error);
+        return res.status(500).send('<h1>Ein Fehler ist aufgetreten... 😔</h1>');
     }
 }

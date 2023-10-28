@@ -13,18 +13,19 @@ import { becomeInstructor, becomeTutor, registerStudent } from './common/student
 import { addInstructorScreening, addTutorScreening } from './common/student/screening';
 import { createMatch } from './common/match/create';
 import { TEST_POOL } from './common/match/pool';
-import { CourseState } from './common/entity/Course';
 import { createRemissionRequest } from './common/remission-request';
-import { Subject } from './common/entity/Subject';
 import { joinSubcourse, joinSubcourseWaitinglist } from './common/courses/participants';
-import { AppointmentType } from './common/entity/Lecture';
 import { create as createCoC } from './common/certificate-of-conduct/certificateOfConduct';
 import { addCourseInstructor, addSubcourseInstructor } from './common/courses/states';
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
-import { createConnection } from 'typeorm';
 import { createCourseTag } from './common/courses/tags';
-import { course_category_enum as CourseCategory } from '@prisma/client';
-import { deactivateStudent } from './common/student/activation';
+import { _setSilenceNotificationSystem } from './common/notification';
+import {
+    course_category_enum as CourseCategory,
+    course_coursestate_enum as CourseState,
+    course_subject_enum as CourseSubject,
+    lecture_appointmenttype_enum as AppointmentType,
+} from '@prisma/client';
 
 const logger = getLogger('DevSetup');
 
@@ -39,7 +40,17 @@ void (async function setupDevDB() {
 
     logger.info('Starting to Seed DB');
 
-    await createConnection();
+    _setSilenceNotificationSystem(true);
+
+    await prisma.cooperation.create({
+        data: {
+            name: 'Lern-Fair e.V.',
+            tag: 'self',
+
+            welcomeTitle: 'Wilkommen im Userbereich',
+            welcomeMessage: 'Als Lern-Fairer kennst du dich ja hier aus :)',
+        },
+    });
 
     const pupil1 = await registerPupil({
         firstname: 'Max',
@@ -508,7 +519,7 @@ void (async function setupDevDB() {
                 'Es gibt zwei Dinge, die sind unendlich. Das Universum und die menschliche Dummheit. Obwohl, bei dem einen bin ich mir nicht so sicher.',
             category: CourseCategory.focus,
             course_tags_course_tag: { create: { courseTagId: mint.id } },
-            courseState: CourseState.SUBMITTED,
+            courseState: CourseState.submitted,
         },
     });
     await addCourseInstructor(null, course1, student1);
@@ -521,7 +532,7 @@ void (async function setupDevDB() {
             description: 'COBOL und ABAP prägen unser Leben wie kaum andere Programmiersprachen - Und doch kennt sie kaum jemand.',
             category: CourseCategory.club,
             course_tags_course_tag: { create: { courseTagId: mint.id } },
-            courseState: CourseState.ALLOWED,
+            courseState: CourseState.allowed,
             allowContact: true,
         },
     });
@@ -534,8 +545,8 @@ void (async function setupDevDB() {
             description: 'Hinter=den einfachsten Aussagen steckt viel mehr Logik, als man eigentlich erwartet ...',
             category: CourseCategory.revision,
             course_tags_course_tag: { create: { courseTagId: mint.id } },
-            courseState: CourseState.DENIED,
-            subject: Subject.MATHEMATIK,
+            courseState: CourseState.denied,
+            subject: CourseSubject.Mathematik,
         },
     });
     await addCourseInstructor(null, course3, student1);
@@ -548,8 +559,8 @@ void (async function setupDevDB() {
             description: 'Eine=musikalische Reise zu den melodischen Klängen der neuen Musikgenres.',
             category: CourseCategory.revision,
             course_tags_course_tag: { create: { courseTagId: music.id } },
-            courseState: CourseState.CANCELLED,
-            subject: Subject.MUSIK,
+            courseState: CourseState.cancelled,
+            subject: CourseSubject.Musik,
         },
     });
     await addCourseInstructor(null, course4, student1);
@@ -561,8 +572,8 @@ void (async function setupDevDB() {
             description: 'In diesem Kurs lernst du das Instrument und 3 einfache Akkorde kennen, mit denen du einen ganzen Song spielen kannst!',
             category: CourseCategory.club,
             course_tags_course_tag: { create: { courseTagId: music.id } },
-            courseState: CourseState.ALLOWED,
-            subject: Subject.MUSIK,
+            courseState: CourseState.allowed,
+            subject: CourseSubject.Musik,
         },
     });
     await addCourseInstructor(null, course5, student1);
@@ -633,7 +644,7 @@ void (async function setupDevDB() {
     {
         // The first course has a lot of lectures to better test joining course meetings
         let currentLecture = Date.now();
-        let endLectures = Date.now() + 24 * 60 * 60 * 1000;
+        const endLectures = Date.now() + 24 * 60 * 60 * 1000;
         while (currentLecture < endLectures) {
             await prisma.lecture.create({
                 data: {
@@ -641,9 +652,8 @@ void (async function setupDevDB() {
                     duration: 15,
                     start: new Date(currentLecture),
                     organizerIds: [],
-                    zoomMeetingId: '123456789',
                     participantIds: [],
-                    appointmentType: AppointmentType.GROUP,
+                    appointmentType: AppointmentType.group,
                 },
             });
 
@@ -657,9 +667,8 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 10, 19, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -669,9 +678,8 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 14, 21, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -681,9 +689,8 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date, 4, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -693,9 +700,8 @@ void (async function setupDevDB() {
             duration: 60,
             start: new Date(year, month, date, hours, minutes - 1, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -705,9 +711,8 @@ void (async function setupDevDB() {
             duration: 90,
             start: new Date(year, month, date + 5, 10, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -717,9 +722,8 @@ void (async function setupDevDB() {
             duration: 120,
             start: new Date(year, month, date + 15, 11, 0, 0, 0),
             organizerIds: [],
-            zoomMeetingId: '123456789',
             participantIds: [],
-            appointmentType: AppointmentType.GROUP,
+            appointmentType: AppointmentType.group,
         },
     });
 
@@ -761,6 +765,8 @@ void (async function setupDevDB() {
         await importNotificationsFromProd();
         await importMessagesTranslationsFromProd();
     }
+
+    _setSilenceNotificationSystem(false);
 
     logger.info(`Successfully seeded the DB`);
 })();

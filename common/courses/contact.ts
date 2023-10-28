@@ -1,8 +1,6 @@
 import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { File } from '../attachments';
-import { Pupil as TypeORMPupil } from '../entity/Pupil';
-import { Student as TypeORMStudent } from '../entity/Student';
 import * as Notification from '../notification';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -44,7 +42,7 @@ export async function contactInstructors(course: Course, subcourse: Subcourse, p
         })
     ).map((it) => it.student);
 
-    let attachmentGroup = await Notification.createAttachments(files, userForPupil(pupil));
+    const attachmentGroup = await Notification.createAttachments(files, userForPupil(pupil));
 
     await Promise.all(
         instructors.map(async (instructor) => {
@@ -81,7 +79,7 @@ export async function contactParticipants(
         throw new Error(`Cannot contact participants as the course is over`);
     }
 
-    let attachmentGroup = await Notification.createAttachments(files, userForStudent(instructor));
+    const attachmentGroup = await Notification.createAttachments(files, userForStudent(instructor));
 
     const selectedParticipants = await prisma.pupil.findMany({
         where: {

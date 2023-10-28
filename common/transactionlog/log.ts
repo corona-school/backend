@@ -5,16 +5,16 @@ import {
     course_attendance_log as CourseAttendanceLog,
     bbb_meeting as BBBMeeting,
 } from '@prisma/client';
-import { InterestConfirmationStatus } from '../../common/entity/PupilTutoringInterestConfirmationRequest';
 import { getLogger } from '../../common/logger/logger';
+import { InterestConfirmationStatus } from '../match/interest';
 import { prisma } from '../prisma';
 
 /* To ensure consistency with existing logs,
   the JSON data in the log is validated against this schema */
 type LogData<Type extends LogType> = {
     misc: never;
-    verificationRequets: {};
-    verified: {};
+    verificationRequets: object;
+    verified: object;
     matchDissolve: { matchId: number };
     projectMatchDissolve: { projectMatchId: number };
     fetchedFromWix: never;

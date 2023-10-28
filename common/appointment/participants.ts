@@ -1,11 +1,13 @@
 import { getLogger } from '../logger/logger';
-import { Lecture } from '../entity/Lecture';
 import { prisma } from '../prisma';
-import { User } from '../user';
+import { User, userForStudent } from '../user';
+import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zoom/scheduled-meeting';
+import { student as Student, lecture as Appointment } from '@prisma/client';
+import { getOrCreateZoomUser } from '../zoom/user';
 
 const logger = getLogger('Appointment Participants');
 
-export async function isAppointmentParticipant(lecture: Lecture, user: User): Promise<boolean> {
+export async function isAppointmentParticipant(lecture: Appointment, user: User): Promise<boolean> {
     return !!(await prisma.lecture.findFirst({
         where: {
             id: lecture.id,
@@ -52,7 +54,9 @@ export async function removeGroupAppointmentsParticipant(subcourseId: number, us
     );
 }
 
-export async function addGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
+export async function addGroupAppointmentsOrganizer(subcourseId: number, organizer: Student) {
+    const organizerId = userForStudent(organizer).userID;
+
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(organizerId)) {
             throw new Error(
@@ -65,12 +69,16 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
             continue;
         }
 
-        await prisma.lecture.update({ where: { id: lecture.id }, data: { participantIds: { push: organizerId } } });
+        await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
         logger.info(`User(${organizerId}) added as organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+        if (lecture.zoomMeetingId) {
+            const zoomUser = await getOrCreateZoomUser(organizer);
+            await addOrganizerToZoomMeeting(lecture, zoomUser);
+        }
     }
 }
 
-export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string) {
+export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail?: string) {
     const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
     await Promise.all(
         appointments.map(async (a) => {
@@ -81,6 +89,9 @@ export async function removeGroupAppointmentsOrganizer(subcourseId: number, orga
                 data: { organizerIds: { set: newOrganizers } },
             });
             logger.info(`Removed User(${organizerId}) as organizer of Appointment(${a.id}) of Subcourse(${subcourseId})`);
+            if (a.zoomMeetingId) {
+                await removeOrganizerFromZoomMeeting(a, organizerEmail);
+            }
         })
     );
 }

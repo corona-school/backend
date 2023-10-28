@@ -1,3 +1,6 @@
+// c.f. https://typegraphql.com/docs/0.17.5/installation.html
+import 'reflect-metadata';
+
 import { FindManyCourseResolver, applyResolversEnhanceMap, applyModelsEnhanceMap, FindManyStudentResolver, FindManyPupil_screeningResolver } from './generated';
 import { buildSchemaSync } from 'type-graphql';
 import {
@@ -66,6 +69,8 @@ import { getCurrentTransaction } from '../common/session';
 import { MutateChatResolver } from './chat/mutations';
 import { playground } from './playground';
 import { ExtendedFieldsScreenerResolver } from './screener/fields';
+import { ExtendedFieldsCooperationResolver } from './cooperation/fields';
+import { MutateCooperationResolver } from './cooperation/mutation';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -174,6 +179,10 @@ const schema = buildSchemaSync({
 
         /* Chat */
         MutateChatResolver,
+
+        /* Cooperation */
+        ExtendedFieldsCooperationResolver,
+        MutateCooperationResolver,
 
         AdminMutationsResolver,
     ],
