@@ -43,7 +43,7 @@ export default async function execute() {
         const reason = match.dissolveReasonEnum ?? dissolveReasonByIndex(match.dissolveReason);
         logger.info(`Match(${match.id}) has dissolveReason ${reason}`);
         let dissolver: DissolvedBy = DissolvedBy.unknown;
-        if (reason == DissolveReason.accountDeactivated) {
+        if (reason == DissolveReason.accountDeactivated && match.dissolvedAt) {
             logger.info(`Match(${match.id}) was dissolved due to account deactivation, figuring out who deactivated their account...`);
             const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId }, select: { active: true, wix_id: true } });
             if (pupil && !pupil.active) {
