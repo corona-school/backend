@@ -2,7 +2,7 @@ import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
-import { course_category_enum, pupil_screening_status_enum } from '@prisma/client';
+import { course_category_enum, dissolve_reason, pupil_screening_status_enum } from '@prisma/client';
 import { GraphQLString } from 'graphql';
 
 @ObjectType()
@@ -609,10 +609,10 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
-    async numDissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: number) {
+    async numDissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: dissolve_reason) {
         return await prisma.match.count({
             where: {
-                dissolveReason: reason,
+                dissolveReasonEnum: reason,
                 AND: [{ dissolvedAt: { gte: new Date(statistics.from) } }, { dissolvedAt: { lt: new Date(statistics.to) } }],
             },
         });
