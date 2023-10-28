@@ -14,6 +14,7 @@ import { createAdHocMeeting } from '../../common/appointment/create';
 import { AuthenticationError } from '../error';
 import { dissolved_by_enum } from '@prisma/client';
 import { dissolve_reason } from '../generated';
+import { prisma } from '../../common/prisma';
 
 @InputType()
 class MatchDissolveInput {
@@ -46,15 +47,18 @@ export class MutateMatchResolver {
         const match = await getMatch(info.matchId);
         await hasAccess(context, 'Match', match);
         let dissolvedBy: dissolved_by_enum;
+        let dissolver = null;
         if (context.user.pupilId != null) {
             dissolvedBy = dissolved_by_enum.pupil;
+            dissolver = await prisma.pupil.findUnique({ where: { id: context.user.pupilId } });
         } else if (context.user.studentId != null) {
             dissolvedBy = dissolved_by_enum.student;
+            dissolver = await prisma.student.findUnique({ where: { id: context.user.studentId } });
         } else {
             dissolvedBy = dissolved_by_enum.admin;
         }
 
-        await dissolveMatch(match, info.dissolveReason, /* dissolver:*/ null, dissolvedBy);
+        await dissolveMatch(match, info.dissolveReason, dissolver, dissolvedBy);
         return true;
     }
 
