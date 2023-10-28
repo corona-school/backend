@@ -4,9 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import './mock';
 
 import * as WebServer from '../../web';
-// eslint-disable-next-line import/no-cycle
 import { clearFetchMocks, expectNoFetchMockLeft } from './mock';
-// eslint-disable-next-line import/no-cycle
 import { cleanupMockedNotifications } from './notifications';
 import { getLogger } from '../../common/logger/logger';
 

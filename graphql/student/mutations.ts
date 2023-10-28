@@ -30,7 +30,6 @@ import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
-// eslint-disable-next-line import/no-cycle
 import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';

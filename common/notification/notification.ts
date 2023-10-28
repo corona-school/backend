@@ -5,7 +5,6 @@ import { prisma } from '../prisma';
 import { Context, Notification, NotificationID, NotificationMessage, NotificationRecipient } from './types';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
-// eslint-disable-next-line import/no-cycle
 import { hookExists } from './hook';
 import { ActionID, getNotificationActions, sampleUser } from './actions';
 import { MessageTemplateType } from '../../graphql/types/notificationMessage';

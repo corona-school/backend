@@ -24,7 +24,6 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
-// eslint-disable-next-line import/no-cycle
 import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';

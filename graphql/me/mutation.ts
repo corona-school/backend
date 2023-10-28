@@ -32,9 +32,7 @@ import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
-// eslint-disable-next-line import/no-cycle
 import { StudentUpdateInput, updateStudent } from '../student/mutations';
-// eslint-disable-next-line import/no-cycle
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';

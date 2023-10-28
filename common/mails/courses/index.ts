@@ -8,7 +8,6 @@ import { getFullName, userForPupil, userForStudent } from '../../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from '../../courses/lectures';
 import { parseSubjectString } from '../../util/subjectsutils';
-// eslint-disable-next-line import/no-cycle
 import { getCourseCapacity, getCourseFreePlaces, isParticipant } from '../../courses/participants';
 import { getCourseImageURL } from '../../courses/util';
 import { createSecretEmailToken } from '../../secret';

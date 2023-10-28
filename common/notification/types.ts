@@ -2,7 +2,6 @@
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
-// eslint-disable-next-line import/no-cycle
 import { ActionID } from './actions';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better

@@ -15,7 +15,6 @@ import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
-// eslint-disable-next-line import/no-cycle
 import { getNotificationContextForSubcourse } from '../mails/courses';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));

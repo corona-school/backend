@@ -4,7 +4,6 @@ import { v4 as generateUUID } from 'uuid';
 import { getPupilGradeAsString } from '../pupil';
 import * as Notification from '../notification';
 import { removeInterest } from './interest';
-// eslint-disable-next-line import/no-cycle
 import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './util';
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';

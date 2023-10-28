@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
 import { prisma } from '../prisma';
