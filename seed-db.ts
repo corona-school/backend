@@ -339,7 +339,6 @@ void (async function setupDevDB() {
     await createPupilMatchRequest(await refetchPupil(pupil2));
     await createStudentMatchRequest(await refetchStudent(student1));
     await createMatch(await refetchPupil(pupil2), await refetchStudent(student1), TEST_POOL);
-    await deactivateStudent(await refetchStudent(student1));
 
     const signature = Buffer.from(
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAACdCAMAAAAe7DTLAAADAFBMVEX//' +

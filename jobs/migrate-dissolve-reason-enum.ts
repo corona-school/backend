@@ -59,7 +59,7 @@ export default async function execute() {
                 });
                 if (pupilDeactivatedCausingDissolve) {
                     dissolver = DissolvedBy.pupil;
-                    logger.info(`...Pupil(${pupilDeactivatedCausingDissolve.id} was deactivated, causing the dissolve`);
+                    logger.info(`...Pupil(${pupilDeactivatedCausingDissolve.id}) was deactivated, causing the dissolve`);
                 }
             }
             if (dissolver === DissolvedBy.unknown) {
@@ -77,7 +77,7 @@ export default async function execute() {
                     });
                     if (studentDeactivatedCausingDissolve) {
                         dissolver = DissolvedBy.student;
-                        logger.info(`...Student(${studentDeactivatedCausingDissolve.id} was deactivated, causing the dissolve`);
+                        logger.info(`...Student(${studentDeactivatedCausingDissolve.id}) was deactivated, causing the dissolve`);
                     }
                 }
             }
@@ -99,15 +99,15 @@ export default async function execute() {
             knownDissolvedBy++;
         }
         logger.info(`Match(${match.id}): Setting reason=${reason}, dissolver=${dissolver}`);
-        // await prisma.match.update({
-        //     where: {
-        //         id: match.id,
-        //     },
-        //     data: {
-        //         dissolveReasonEnum: reason,
-        //         dissolvedBy: dissolver,
-        //     },
-        // });
+        await prisma.match.update({
+            where: {
+                id: match.id,
+            },
+            data: {
+                dissolveReasonEnum: reason,
+                dissolvedBy: dissolver,
+            },
+        });
     }
     logger.info(`Updated ${knownReason + unknownReason} matches in total, of which:
         - ${knownReason} have an unambiguous dissolveReason
