@@ -322,7 +322,7 @@ const _notificationActions = {
         },
     },
     tutor_match_dissolved_quickly: {
-        description: 'Tutor / Match was dissolved quickly',
+        description: 'Tutor / Match was dissolved in less than a month',
         sampleContext: {
             pupil: sampleUser,
             matchHash: '...',
