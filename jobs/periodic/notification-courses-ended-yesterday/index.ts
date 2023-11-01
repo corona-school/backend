@@ -1,7 +1,7 @@
 import { prisma } from '../../../common/prisma';
 import moment from 'moment';
 import { getLogger } from '../../../common/logger/logger';
-import { getNotificationContextForSubcourse } from '../../../common/mails/courses';
+import { getNotificationContextForSubcourse } from '../../../common/courses/notifications';
 import { userForPupil, userForStudent } from '../../../common/user';
 import * as Notification from '../../../common/notification';
 

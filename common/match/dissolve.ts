@@ -1,5 +1,4 @@
 import { dissolve_reason, dissolved_by_enum, match as Match, pupil as Pupil, student as Student } from '@prisma/client';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { userForStudent, userForPupil } from '../user';
