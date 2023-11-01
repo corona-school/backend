@@ -6,6 +6,7 @@ import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { RedundantError } from '../util/error';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { leaveSubcourse } from '../courses/participants';
 
 const logger = getLogger('Appointment');
 
@@ -52,4 +53,12 @@ export async function declineAppointment(user: User, appointment: Appointment) {
     }
 
     logger.info(`User(${user.userID}) declined Appointment(${appointment.id})`);
+
+    if (appointment.subcourseId) {
+        const isOnlyAppointment = (await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId, isCanceled: false } })) === 1;
+        if (isOnlyAppointment) {
+            await leaveSubcourse(await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId } }), pupil);
+            logger.info(`User(${user.userID}) declined the only appointment of a Subcourse, and thus implicitly left the course`);
+        }
+    }
 }
