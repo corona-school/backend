@@ -261,7 +261,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Student: allAdmin,
     Screening: allAdmin,
     Screener: allAdmin,
-    Project_match: allAdmin,
     Bbb_meeting: allAdmin,
     Course_attendance_log: allAdmin,
     Course_instructors_student: allAdmin,
@@ -277,15 +276,9 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     },
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
-    Expert_data: allAdmin,
-    Expert_data_expertise_tags_expertise_tag: allAdmin,
-    Expertise_tag: allAdmin,
     Instructor_screening: allAdmin,
     Jufo_verification_transmission: allAdmin,
-    Mentor: allAdmin,
     Participation_certificate: allAdmin,
-    Project_coaching_screening: allAdmin,
-    Project_field_with_grade_restriction: allAdmin,
     Remission_request: allAdmin,
     School: {
         createOneSchool: adminOrOwner,
@@ -344,20 +337,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Pupil: {
         fields: withPublicFields<
             Pupil,
-            | 'id'
-            | 'firstname'
-            | 'lastname'
-            | 'active'
-            | 'grade'
-            | 'isJufoParticipant'
-            | 'isParticipant'
-            | 'isProjectCoachee'
-            | 'isPupil'
-            | 'languages'
-            | 'projectFields'
-            | 'aboutMe'
-            | 'schooltype'
-            | 'state'
+            'id' | 'firstname' | 'lastname' | 'active' | 'grade' | 'isParticipant' | 'isPupil' | 'languages' | 'aboutMe' | 'schooltype' | 'state'
         >({
             matchReason: everyone,
 
@@ -368,7 +348,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwnerOrScreener,
             firstMatchRequest: adminOrOwnerOrScreener,
-            openProjectMatchRequestCount: adminOrOwner,
             matchingPriority: adminOrOwner,
             learningGermanSince: adminOrOwnerOrScreener,
             createdAt: adminOrOwnerOrScreener,
@@ -383,7 +362,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // by blacklisting them we prevent accidental usage
             lastUpdatedSettingsViaBlocker: nobody,
             msg: nobody,
-            projectMemberCount: nobody,
             updatedAt: nobody,
             wix_creation_date: nobody,
             isRedacted: nobody,
@@ -394,7 +372,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // these are associations which are wrongly in the TypeGraphQL generation
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
             participation_certificate: nobody,
-            project_match: nobody,
             pupil_tutoring_interest_confirmation_request: nobody,
             course_attendance_log: nobody,
             course_participation_certificate: nobody,
@@ -410,17 +387,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            | 'id'
-            | 'firstname'
-            | 'lastname'
-            | 'active'
-            | 'isStudent'
-            | 'isInstructor'
-            | 'isProjectCoach'
-            | 'isUniversityStudent'
-            | 'languages'
-            | 'aboutMe'
-            | 'state'
+            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isUniversityStudent' | 'languages' | 'aboutMe' | 'state'
         >({
             email: adminOrOwner,
             phone: adminOrOwner,
@@ -430,10 +397,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             openMatchRequestCount: adminOrOwnerOrScreener,
             firstMatchRequest: adminOrOwnerOrScreener,
             university: adminOrOwnerOrScreener,
-            module: adminOrOwner,
-            moduleHours: adminOrOwner,
             createdAt: adminOrOwnerOrScreener,
-            openProjectMatchRequestCount: adminOrOwner,
             certificate_of_conduct: adminOrOwnerOrScreener,
             isCodu: adminOrOwner,
             registrationSource: adminOrOwnerOrScreener,
@@ -447,16 +411,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // by blacklisting them we prevent accidental usage
             msg: nobody,
             feedback: nobody,
-            wasJufoParticipant: nobody,
-            hasJufoCertificate: nobody,
-            jufoPastParticipationConfirmed: nobody,
-            jufoPastParticipationInfo: nobody,
             lastSentInstructorScreeningInvitationDate: nobody,
-            lastSentJufoAlumniScreeningInvitationDate: nobody,
             lastSentScreeningInvitationDate: nobody,
             lastUpdatedSettingsViaBlocker: nobody,
             sentInstructorScreeningReminderCount: nobody,
-            sentJufoAlumniScreeningReminderCount: nobody,
             sentScreeningReminderCount: nobody,
             supportsInDaZ: nobody,
             updatedAt: nobody,
@@ -469,16 +427,12 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             match: nobody,
             participation_certificate: nobody,
-            project_coaching_screening: nobody,
-            project_field_with_grade_restriction: nobody,
-            project_match: nobody,
             subcourse_instructors_student: nobody,
             course: nobody,
             course_guest: nobody,
             course_instructors_student: nobody,
             course_participation_certificate: nobody,
             jufo_verification_transmission: nobody,
-            expert_data: nobody,
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
