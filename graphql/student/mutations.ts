@@ -30,10 +30,10 @@ import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
-import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
-import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
+import { GraphQLJSON } from 'graphql-scalars';
+import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,

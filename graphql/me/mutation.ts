@@ -3,29 +3,12 @@ import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 
 import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import {
-    pupil_learninggermansince_enum as LearningGermanSince,
-    pupil_languages_enum as Language,
-    pupil_registrationsource_enum as RegistrationSource,
-    pupil_schooltype_enum as SchoolType,
-    pupil_state_enum as State,
-    student_module_enum as TeacherModule,
-    school as School,
-} from '@prisma/client';
+import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
 import { RateLimit } from '../rate-limit';
-import { becomeInstructor, BecomeInstructorData, becomeTutor, BecomeTutorData, registerStudent, RegisterStudentData } from '../../common/student/registration';
-import {
-    becomeStatePupil,
-    BecomeStatePupilData,
-    becomeTutee,
-    BecomeTuteeData,
-    becomeParticipant,
-    registerPupil,
-    RegisterPupilData,
-} from '../../common/pupil/registration';
+import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } from '../../common/student/registration';
+import { becomeStatePupil, BecomeStatePupilData, becomeTutee, becomeParticipant, registerPupil } from '../../common/pupil/registration';
 import '../types/enums';
-import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
@@ -39,78 +22,7 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
-
-@InputType()
-export class RegisterStudentInput implements RegisterStudentData {
-    @Field((type) => String)
-    @MaxLength(100)
-    firstname: string;
-
-    @Field((type) => String)
-    @MaxLength(100)
-    lastname: string;
-
-    @Field((type) => String)
-    @ValidateEmail()
-    email: string;
-
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
-    @Field((type) => String, { defaultValue: '' })
-    @MaxLength(500)
-    aboutMe: string;
-
-    /* After registration, the user receives an email to verify their account.
-   The user is redirected to this URL afterwards to continue with whatever they're registering for */
-    @Field((type) => String, { nullable: true })
-    redirectTo?: string;
-
-    @Field((type) => String, { nullable: true })
-    cooperationTag?: string;
-}
-
-@InputType()
-export class RegisterPupilInput implements RegisterPupilData {
-    @Field((type) => String)
-    @MaxLength(100)
-    firstname: string;
-
-    @Field((type) => String)
-    @MaxLength(100)
-    lastname: string;
-
-    @Field((type) => String)
-    @ValidateEmail()
-    email: string;
-
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => Int, { nullable: true })
-    schoolId?: School['id'];
-
-    @Field((type) => SchoolType, { nullable: true })
-    schooltype?: SchoolType;
-
-    @Field((type) => State)
-    state: State;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
-    @Field((type) => String, { defaultValue: '' })
-    @MaxLength(500)
-    aboutMe: string;
-
-    /* After registration, the user receives an email to verify their account.
-       The user is redirected to this URL afterwards to continue with whatever they're registering for */
-    @Field((type) => String, { nullable: true })
-    redirectTo?: string;
-}
+import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
 
 @InputType()
 class MeUpdateInput {
@@ -142,33 +54,6 @@ class BecomeInstructorInput implements BecomeInstructorData {
     @Field((type) => String, { nullable: true })
     @MaxLength(3000)
     message?: string;
-}
-
-@InputType()
-export class BecomeTutorInput implements BecomeTutorData {
-    @Field((type) => [Subject], { nullable: true })
-    subjects?: Subject[];
-
-    @Field((type) => [Language], { nullable: true })
-    languages?: Language[];
-
-    @Field((type) => Boolean, { nullable: true })
-    supportsInDaZ?: boolean;
-}
-
-@InputType()
-export class BecomeTuteeInput implements BecomeTuteeData {
-    @Field((type) => [Subject])
-    subjects: Subject[];
-
-    @Field((type) => [Language])
-    languages: Language[];
-
-    @Field((type) => LearningGermanSince, { nullable: true })
-    learningGermanSince?: LearningGermanSince;
-
-    @Field((type) => Int)
-    gradeAsInt: number;
 }
 
 @InputType()
