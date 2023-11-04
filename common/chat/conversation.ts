@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
-import { User } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
+import { getPupil, getStudent } from '../../graphql/util';
 import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
@@ -73,6 +74,16 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     } else {
         return undefined;
     }
+};
+
+const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
+    const student = await getStudent(matchees.studentId);
+    const pupil = await getPupil(matchees.pupilId);
+    const studentUser = userForStudent(student);
+    const pupilUser = userForPupil(pupil);
+    const conversationId = createOneOnOneId(studentUser, pupilUser);
+    const conversation = await getConversation(conversationId);
+    return { conversation, conversationId };
 };
 
 const getAllConversations = async (): Promise<AllConversations> => {
@@ -334,6 +345,7 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getMatcheeConversation,
     getAllConversations,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
