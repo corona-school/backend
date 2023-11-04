@@ -2,7 +2,6 @@ import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prism
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
@@ -15,7 +14,7 @@ import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
-import { getNotificationContextForSubcourse } from '../mails/courses';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -244,18 +243,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             const course = await getCourseOfSubcourse(subcourse);
             const courseStart = moment(firstLecture[0].start);
             const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
-
-            /* TODO: Deprecate usage of old mailjet templates */
-            const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
-                participantFirstname: pupil.firstname,
-                courseName: course.name,
-                courseId: String(course.id),
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
-                authToken,
-            });
-
-            await sendTemplateMail(mail, pupil.email);
 
             const context = await getNotificationContextForSubcourse(course, subcourse);
             if (leftWaitingList) {

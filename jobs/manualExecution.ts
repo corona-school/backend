@@ -5,6 +5,7 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import notificationCoursesEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import * as Notification from '../common/notification';
 import { runInterestConfirmations } from '../common/match/pool';
+import migrateDissolveReasonEnum from './migrate-dissolve-reason-enum';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import { postStatisticsToSlack } from './slack-statistics';
 import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
@@ -56,6 +57,10 @@ export const executeJob = async (job) => {
         }
         case 'notificationCoursesEndedYesterday': {
             await notificationCoursesEndedYesterday();
+            break;
+        }
+        case 'migrateDissolveReasonEnum': {
+            await migrateDissolveReasonEnum();
             break;
         }
         default: {
