@@ -20,41 +20,43 @@ export async function declineAppointment(user: User, appointment: Appointment) {
         where: { id: appointment.id },
     });
 
-    const pupil = await prisma.pupil.findUniqueOrThrow({ where: { id: user.pupilId } });
+    const pupil = user.pupilId ? await prisma.pupil.findUniqueOrThrow({ where: { id: user.pupilId } }) : null;
 
-    switch (appointment.appointmentType) {
-        case AppointmentType.group: {
-            const subCourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { course: true } });
-            for (const organizerId of appointment.organizerIds) {
-                const user = await getUser(organizerId);
-                const organizer = await getStudent(user);
-                await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_group', {
-                    appointment: getAppointmentForNotification(appointment),
-                    pupil,
-                    ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
-                });
+    if (pupil) {
+        switch (appointment.appointmentType) {
+            case AppointmentType.group: {
+                const subCourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { course: true } });
+                for (const organizerId of appointment.organizerIds) {
+                    const user = await getUser(organizerId);
+                    const organizer = await getStudent(user);
+                    await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_group', {
+                        appointment: getAppointmentForNotification(appointment),
+                        pupil,
+                        ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
+                    });
+                }
+                break;
             }
-            break;
+            case AppointmentType.match:
+                for (const organizerId of appointment.organizerIds) {
+                    const user = await getUser(organizerId);
+                    const organizer = await getStudent(user);
+                    await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_match', {
+                        appointment: getAppointmentForNotification(appointment),
+                        pupil,
+                    });
+                }
+                break;
+
+            case AppointmentType.internal:
+            case AppointmentType.legacy:
+                break;
         }
-        case AppointmentType.match:
-            for (const organizerId of appointment.organizerIds) {
-                const user = await getUser(organizerId);
-                const organizer = await getStudent(user);
-                await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_match', {
-                    appointment: getAppointmentForNotification(appointment),
-                    pupil,
-                });
-            }
-            break;
-
-        case AppointmentType.internal:
-        case AppointmentType.legacy:
-            break;
     }
 
     logger.info(`User(${user.userID}) declined Appointment(${appointment.id})`);
 
-    if (appointment.subcourseId) {
+    if (appointment.subcourseId && pupil) {
         const isOnlyAppointment = (await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId, isCanceled: false } })) === 1;
         if (isOnlyAppointment) {
             await leaveSubcourse(await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId } }), pupil);
