@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { adminClient } from '.';
+import { adminClient } from './clients';
 
 interface MockNotification {
     id: number;
