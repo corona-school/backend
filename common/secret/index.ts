@@ -5,6 +5,7 @@ import { secret_type_enum as SecretType } from '@prisma/client';
 
 export * from './password';
 export * from './token';
+export * from './emailToken';
 
 const logger = getLogger('Secret');
 
