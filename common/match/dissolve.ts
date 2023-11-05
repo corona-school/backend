@@ -10,6 +10,7 @@ import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { deleteZoomUser } from '../zoom/user';
+import moment from 'moment';
 
 const logger = getLogger('Match');
 
@@ -55,6 +56,11 @@ export async function dissolveMatch(match: Match, dissolveReason: dissolve_reaso
     }
     await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
+
+    if (new Date() < moment(match.createdAt).add(30, 'days').toDate()) {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_quickly', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_quickly', { student, matchHash, matchDate, uniqueId });
+    }
 
     if (dissolver && dissolver.email === student.email) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
