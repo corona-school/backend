@@ -20,7 +20,7 @@ export async function declineAppointment(user: User, appointment: Appointment) {
         where: { id: appointment.id },
     });
 
-    const pupil = await prisma.pupil.findUnique({ where: { id: user.pupilId } });
+    const pupil = await prisma.pupil.findUniqueOrThrow({ where: { id: user.pupilId } });
 
     switch (appointment.appointmentType) {
         case AppointmentType.group: {
