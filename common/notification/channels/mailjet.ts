@@ -4,8 +4,8 @@ import * as assert from 'assert';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
-import { createSecretEmailToken } from '../../secret';
 import moment from 'moment';
+import { createSecretEmailToken } from '../../secret/emailToken';
 
 // ------------ Mailjet Interface -------------------------------
 
