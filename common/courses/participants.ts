@@ -318,15 +318,3 @@ export async function fillSubcourse(subcourse: Subcourse) {
         }
     }
 }
-
-export async function getCourseParticipantCount(subcourse: Subcourse) {
-    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-}
-
-export async function getCourseCapacity(subcourse: Subcourse) {
-    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
-}
-
-export async function getCourseFreePlaces(subcourse: Subcourse) {
-    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
-}

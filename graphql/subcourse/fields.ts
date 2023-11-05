@@ -1,7 +1,7 @@
 import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
 import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
+import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { Role } from '../authorizations';
@@ -16,6 +16,7 @@ import { Deprecated, getCourse } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
+import { getCourseCapacity } from '../../common/courses/util';
 
 @ObjectType()
 class Participant {
