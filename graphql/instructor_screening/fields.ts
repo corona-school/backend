@@ -6,7 +6,7 @@ import { Role } from '../authorizations';
 @Resolver((of) => InstructorScreening)
 export class ExtendedFieldsInstructorScreeningResolver {
     @FieldResolver((returns) => Screener)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.SCREENER)
     async screener(@Root() screening: InstructorScreening) {
         return await prisma.screener.findUnique({ where: { id: screening.screenerId } });
     }
