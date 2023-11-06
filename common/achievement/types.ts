@@ -7,7 +7,8 @@ export type Metric = {
 
 export type EventValue = number | string | boolean;
 
-export type FormulaContext = {
+// match, pool, openMatchRequestCount, screening, firstMatchRequest
+export type Context = {
     subcourse?: {
         lectures: {
             start: Date;
@@ -26,7 +27,7 @@ export type FormulaContext = {
     };
 };
 
-export type FormulaFunction = (context: FormulaContext) => number | string | boolean;
+export type FormulaFunction = (context: Context) => number | string | boolean;
 
 // A bucket is seen as a period of time
 export interface Bucket {
@@ -41,7 +42,7 @@ export interface BucketEventsWithAggr extends BucketEvents {
     aggregation: EventValue;
 }
 
-type BucketFormulaFunction = (context: FormulaContext) => Bucket[];
+type BucketFormulaFunction = (context: Context) => Bucket[];
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
