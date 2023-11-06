@@ -5,8 +5,12 @@ import { User as TalkJsUser } from 'talkjs/all';
 import { User } from '../user';
 import assert from 'assert';
 import chatRetry from './retry';
+import { assureChatFeatureActive } from './util';
+import { getLogger } from '../logger/logger';
 
 dotenv.config();
+
+const logger = getLogger('Chat');
 
 const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
 const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
@@ -28,6 +32,8 @@ const getChatName = (user: User) => {
 
 const createChatUser = async (user: User): Promise<void> => {
     assert(TALKJS_SECRET_KEY, `No secret key found to create chat user ${user.userID} `);
+    assureChatFeatureActive();
+
     const userId = userIdToTalkJsId(user.userID);
     const userName = getChatName(user);
     try {
@@ -49,6 +55,7 @@ const createChatUser = async (user: User): Promise<void> => {
             1000
         );
         await checkResponseStatus(response);
+        logger.info(`Created ChatUser for User(${user.userID})`);
     } catch (error) {
         throw new Error(error);
     }
@@ -63,6 +70,7 @@ const createChatUser = async (user: User): Promise<void> => {
 async function getChatUser(user: User): Promise<TalkJsUser> {
     assert(TALKJS_APP_ID, `No TalkJS app ID found to get chat user ${user.userID}`);
     assert(TALKJS_SECRET_KEY, `No secret key found to get chat user ${user.userID}`);
+    assureChatFeatureActive();
 
     const userId = userIdToTalkJsId(user.userID);
     let response;
