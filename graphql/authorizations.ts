@@ -1,4 +1,15 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag, Concrete_notification } from './generated';
+import {
+    ModelsEnhanceMap,
+    Pupil,
+    ResolversEnhanceMap,
+    Student,
+    Subcourse,
+    Course,
+    Lecture,
+    Course_tag as CourseTag,
+    Concrete_notification,
+    Screener,
+} from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
 
@@ -488,6 +499,34 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             cooperationID: nobody,
         }),
     },
+
+    Screener: {
+        fields: withPublicFields<Screener, 'id'>({
+            verification: nobody,
+            password: nobody,
+            verified: nobody,
+            verifiedAt: nobody,
+            instructor_screening: nobody,
+            isRedacted: nobody,
+            oldNumberID: nobody,
+            project_coaching_screening: nobody,
+            screenings: nobody,
+            updatedAt: nobody,
+            _count: nobody,
+
+            lastLogin: onlyOwner,
+            lastTimeCheckedNotifications: onlyOwner,
+            notificationPreferences: onlyOwner,
+
+            is_trusted: onlyAdminOrScreener,
+            active: onlyAdminOrScreener,
+            createdAt: onlyAdminOrScreener,
+            firstname: onlyAdminOrScreener,
+            lastname: onlyAdminOrScreener,
+            email: onlyAdminOrScreener,
+        }),
+    },
+
     Subcourse: {
         fields: withPublicFields<
             Subcourse,
