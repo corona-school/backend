@@ -1,4 +1,7 @@
 import { AggregatorFunction } from './types';
 
-// Aggregators are needed to aggregate `EventValues` or `Buckets` for evaluation (like sum, count, max, min, avg)
-const aggregators: Map<string, AggregatorFunction> = new Map();
+type Aggregator = Record<string, AggregatorFunction>;
+
+// Aggregators are needed to aggregate event values (achievement_event.value) or buckets for evaluation (like sum, count, max, min, avg)
+
+export const aggregators: Aggregator = {};

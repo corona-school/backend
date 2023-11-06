@@ -27,67 +27,62 @@ datasource db {
 // A final achievement can consist of several sub-achievements
 model achievement_template {
   id                            Int                       @id @default(autoincrement())
+  name                          String                    @db.VarChar
   metrics                       String[]                  
   templateFor                   achievement_template_for_enum
   // Groups defines the "final-achievement"
   group                         String                    @db.VarChar
   // Group order tells in which place a subordinate step / achievement is
-  groupOrder                    Int                      
-  // the final achievement is marked with isLast 
-  isLast                        Boolean                   
+  groupOrder                    Int
+  // Sequential: Here we store the name of the step (one step => one achievement) for sequential achievements                    
+  stepName                      String                    @db.VarChar
   // what type of achievement is it
   type                          achievement_type_enum
-  name                          String                    @db.VarChar
   subtitle                      String                    @db.VarChar
   description                   String                    @db.VarChar
   image                         String                    @db.VarChar
-  // some achievements show actions that a user can/must perform next 
-  actionDescription             String?                   @db.VarChar
+  // some achievements show actions that a user can/must perform next.
+  // therefore we need the action name, type (for the icon) and a redirect link
+  actionName                    String?                   @db.VarChar
   actionRedirectLink            String?                   @db.VarChar
   actionType                    achievement_action_type_enum?
+  // Tiered: If a tiered achievement has been achieved, the text changes
+  achievedText                  String?                   @db.VarChar
   // defines what value must be reached to receive the achievement, e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
   condition                     String                    @db.VarChar
   // defined how values must be aggregated to evaluate the condition
   conditionDataAggregations     Json                      @db.Json
   isActive                      Boolean 
 }
+
 model user_achievement {
   id                            Int                       @id @default(autoincrement())
-  metrics                       String[]                  @default([])
-  templateFor                   achievement_template_for_enum
+  // the id of the relating achievement_template
+  templateId                    Int                       
+  userId                        Int
   group                         String                    @unique @db.VarChar
   groupOrder                    Int                       
-  isLast                        Boolean                   
-  type                          achievement_type_enum
-  name                          String                    @db.VarChar
-  subtitle                      String                    @db.VarChar
-  description                   String                    @db.VarChar
-  image                         String                    @db.VarChar
-  actionDescription             String?                   @db.VarChar
-  actionRedirectLink            String?                   @db.VarChar
-  actionType                    achievement_action_type_enum?         
-  condition                     String                    @db.VarChar
-  conditionDataAggregations     Json                      @db.Json
-  isActive                      Boolean                   @default(true) 
   isSeen                        Boolean                   @default(false)
   // achievedAt == null => not achieved, achievedAt != null => achieved
   achievedAt                    DateTime                  @db.Timestamp(6)
+  // Streaks: we have to store the highest record for streaks
+  recordValue                   Int?
+  context                       Json                      @db.Json
+  // template                      achievement_template      @relation(fields: [templateId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 // Save (tracked) event as raw data in DB and evaluate at runtime
-model event {
+model achievement_event {
     id                            Int                       @id @default(autoincrement())
     userId                        String                    @db.VarChar
     metric                        String                    @db.VarChar
-    eventId                       String                    @unique @db.VarChar
     // the value is calculated with the formula given in the metric
     value                         Int
     createdAt                     DateTime                  @default(now()) @db.Timestamp(6)
-    updatedAt                     DateTime                  @default(now()) @db.Timestamp(6)
-    // e.g. 'course', 'match',...
-    tags                          Json                      @db.Json
     // what action triggered the event
     action                        String                    @db.VarChar
+    // the relation is like a unique id so that we can later assign the event uniquely, e.g. "course/10", "match/12", "user/10"
+    relation                      String                    @db.VarChar
 }
 
 // An attachment is a file uploaded to an object storage and attached to a notification
@@ -414,6 +409,7 @@ model mentor {
   verifiedAt                   DateTime?               @db.Timestamp(6)
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedAchievements  DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
   lastLogin                    DateTime?               @default(now()) @db.Timestamp(6)
   wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
@@ -549,6 +545,7 @@ model pupil {
   isRedacted                   Boolean               @default(false)
   // The last time the notification popup was opened in the App:
   lastTimeCheckedNotifications DateTime?             @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedAchievements  DateTime?             @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                 @db.Json
   // The last time the user logged in to the Backend through GraphQL (= with the App):
   lastLogin                    DateTime?             @default(now()) @db.Timestamp(6)
@@ -663,6 +660,7 @@ model screener {
   verifiedAt                   DateTime?                    @db.Timestamp(6)
   isRedacted                   Boolean                      @default(false)
   lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedAchievements  DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                        @db.Json
   lastLogin                    DateTime?                    @default(now()) @db.Timestamp(6)
   // DEPRECATED, Use Secret instead
@@ -711,6 +709,7 @@ model student {
   // (but still keep the entry to keep foreign keys consistent and for statistics):
   isRedacted                                Boolean                  @default(false)
   lastTimeCheckedNotifications              DateTime?                @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  lastTimeCheckedAchievements               DateTime?                @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences                   Json?                    @db.Json
   lastLogin                                 DateTime?                @default(now()) @db.Timestamp(6)
   // DEPRECATED: We once had a registration form through Wix, the wix_id is still sometimes used as a foreign key
@@ -1213,7 +1212,9 @@ enum notification_sender_enum {
 
 enum achievement_template_for_enum {
   Course
+  Global_Courses
   Match
+  Global_Matches
   Global
 }
 
