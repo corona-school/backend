@@ -1,7 +1,8 @@
 import assert from 'assert';
 import { prisma } from '../common/prisma';
 import { pupilOne } from './01_user';
-import { adminClient, test } from './base';
+import { test } from './base';
+import { adminClient } from './base/clients';
 import { createMockNotification } from './base/notifications';
 
 void test('Action Notification Timing (Dry Run)', async () => {

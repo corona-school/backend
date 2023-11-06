@@ -1,13 +1,11 @@
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import * as Notification from '../../common/notification';
-import { getFullName, userForPupil, userForStudent } from '../user';
+import { userForPupil } from '../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from './lectures';
 import { parseSubjectString } from '../util/subjectsutils';
-// eslint-disable-next-line import/no-cycle
-import { getCourseCapacity, getCourseFreePlaces, isParticipant } from './participants';
-import { getCourseImageURL } from './util';
+import { getCourseCapacity, getCourseFreePlaces, getCourseImageURL } from './util';
 import { getCourse } from '../../graphql/util';
 import { shuffleArray } from '../../common/util/basic';
 import { NotificationContext } from '../notification/types';

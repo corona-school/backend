@@ -3,7 +3,7 @@ import { getSessionUser, GraphQLUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { UserType } from '../types/user';
-import { createChatSignature } from '../../common/chat/helper';
+import { createChatSignature } from '../../common/chat/create';
 
 @Resolver((of) => UserType)
 export class FieldMeResolver {

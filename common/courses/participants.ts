@@ -14,7 +14,6 @@ import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
-// eslint-disable-next-line import/no-cycle
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
@@ -318,16 +317,4 @@ export async function fillSubcourse(subcourse: Subcourse) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
     }
-}
-
-export async function getCourseParticipantCount(subcourse: Subcourse) {
-    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-}
-
-export async function getCourseCapacity(subcourse: Subcourse) {
-    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
-}
-
-export async function getCourseFreePlaces(subcourse: Subcourse) {
-    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
 }
