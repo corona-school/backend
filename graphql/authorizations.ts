@@ -422,7 +422,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'aboutMe'
             | 'state'
         >({
-            email: adminOrOwner,
+            email: adminOrOwnerOrScreener,
             phone: adminOrOwner,
             verification: nobody,
             verifiedAt: adminOrOwner,
