@@ -1,7 +1,7 @@
 import { pupilOneWithPassword } from './05_auth';
 import { test } from './base';
 import { createNewPupil, createNewStudent, createInactivityMockNotification } from './01_user';
-import { adminClient } from './base';
+import { adminClient } from './base/clients';
 import { prisma } from '../common/prisma';
 import { DEACTIVATE_ACCOUNTS_INACTIVITY_DAYS, deactivateInactiveAccounts } from '../jobs/periodic/redact-inactive-accounts/deactivate-inactive-accounts';
 import { sendInactivityNotification, NOTIFY_AFTER_DAYS } from '../jobs/periodic/redact-inactive-accounts/send-inactivity-notification';

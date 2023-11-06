@@ -1,4 +1,5 @@
-import { adminClient, test } from './base';
+import { test } from './base';
+import { adminClient } from './base/clients';
 import { gql } from 'graphql-request';
 import { randomBytes } from 'crypto';
 import assert from 'assert';
