@@ -4,7 +4,7 @@
 // - Typescript Types to make all the logic on top of the data typesafe
 // - GraphQL Resolvers, to automatically expose the data to clients (enriched with authorization checks)
 //
-// Previously we used TypeORM as our ORM, and before that the database was migrated manually, 
+// Previously we used TypeORM as our ORM, and before that the database was migrated manually,
 // and we still have some legacy from that time (i.e. 'strings as json' ...)
 
 generator client {
@@ -349,14 +349,17 @@ model log {
 model match {
   id                    Int       @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   // DEPRECATED: The uuid was used to generate non-guessable meeting room links, replaced by Appointments/Zoom
-  uuid                  String    @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
-  dissolved             Boolean   @default(false)
-  dissolvedAt           DateTime? @db.Timestamp(6)
+  uuid                  String             @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
+  dissolved             Boolean            @default(false)
+  dissolvedAt           DateTime?          @db.Timestamp(6)
+  dissolvedBy           dissolved_by_enum?
   // At some point in time the dissolve UI of pupils and students deviated,
   // and they would write different ids for the same dissolve reason into this field
   // As we do not store who dissolved the match, it is quite hard to interpret this number:
   // (but you can make some weird joins with the log table to find out who dissolved it)
+  // dissolveReason is DEPRECATED, use dissolveReasonEnum instead
   dissolveReason        Int?
+  dissolveReasonEnum    dissolve_reason?
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
   proposedTime          DateTime? @db.Timestamp(6)
@@ -796,7 +799,7 @@ model subcourse {
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
   alreadyPromoted                  Boolean                            @default(false)
-  // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants 
+  // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants
   // of a Subcourse might change, we create a random ID for it and store it:
   conversationId                   String?                            @db.VarChar
   allowChatContactProspects        Boolean                            @default(true)
@@ -1333,4 +1336,25 @@ enum screening_jobstatus_enum {
   Employee
   Retiree
   Misc
+}
+
+enum dissolved_by_enum {
+  pupil
+  student
+  admin
+  unknown
+}
+
+enum dissolve_reason {
+  accountDeactivated // The account was deactivated, causing any active matches to be dissolved automatically
+  ghosted // "Mein:e Lernpartner:in hat sich nicht zurückgemeldet"
+  noMoreHelpNeeded // "Mein:e Lernpartner:in benötigt keine Unterstützung mehr" and "Ich benötige keine Unterstützung mehr"
+  isOfNoHelp // "Ich konnte meinem/meiner Lernpartner:in nicht behilflich sein" and "Mein:e Lernpartner:in konnte mir nicht behilflich sein"
+  noMoreTime // "Ich habe keine Zeit mehr mein*e Lernpartner:in zu unterstützen" and "Mein:e Lernpartner:in hat keine Zeit mehr mich zu unterstützen"
+  personalIssues // "Wir hatten Schwierigkeiten auf zwischenmenschlicher Ebene"
+  scheduleIssues // "Wir konnten keine gemeinsamen Termine finden"
+  technicalIssues // "Wir hatten technische Schwierigkeiten"
+  languageIssues // "Wir hatten sprachliche Schwierigkeiten"
+  other // "Sonstiges"
+  unknown // legacy data which we can't map anymore
 }

@@ -141,12 +141,21 @@ const _notificationActions = {
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
-            firstLectureDate: '12.12.1984',
-            firstLectureTime: '12:00',
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_from_waitinglist: {
+        description: 'Participant / Joined Course from Waitinglist',
+        sampleContext: {
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_directly: {
+        description: 'Participant / Joined Course directly (not from Waitinglist)',
+        sampleContext: {
+            ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
@@ -183,6 +192,10 @@ const _notificationActions = {
                 description: 'Ein Kurs',
             },
         },
+    },
+    participant_course_ended: {
+        description: 'Participant / Course ended',
+        sampleContext: sampleCourse,
     },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
@@ -226,6 +239,10 @@ const _notificationActions = {
             },
         },
     },
+    instructor_course_ended: {
+        description: 'Instructor / Course ended',
+        sampleContext: sampleCourse,
+    },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
         sampleContext: sampleCourse,
@@ -248,6 +265,14 @@ const _notificationActions = {
             certificateLink: 'https://...',
         },
     },
+    tutee_match_requested: {
+        description: 'Tutee / Match requested',
+        sampleContext: {},
+    },
+    tutee_match_request_revoked: {
+        description: 'Tutee / Match Request revoked',
+        sampleContext: {},
+    },
     tutee_match_dissolved_other: {
         description: 'Tutee / Match was dissolved by student',
         sampleContext: {
@@ -263,6 +288,14 @@ const _notificationActions = {
             matchHash: '...',
             matchDate: '...',
         },
+    },
+    tutor_match_requested: {
+        description: 'Tutor / Match requested',
+        sampleContext: {},
+    },
+    tutor_match_request_revoked: {
+        description: 'Tutor / Match Request revoked',
+        sampleContext: {},
     },
     tutor_match_dissolved_other: {
         description: 'Tutor / Match was dissolved by pupil',
@@ -370,7 +403,10 @@ const _notificationActions = {
         description: 'Student / Certificate of Conduct Cancelled',
         sampleContext: {},
     },
-
+    instructor_course_full: {
+        description: 'Instructor / Course full',
+        sampleContext: sampleCourse,
+    },
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',
         sampleContext: {

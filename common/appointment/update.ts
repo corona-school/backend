@@ -6,7 +6,7 @@ import { getLogger } from '../logger/logger';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getAppointmentForNotification } from './util';
 import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
-import { getNotificationContextForSubcourse } from '../mails/courses';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const logger = getLogger('Appointment');
 
