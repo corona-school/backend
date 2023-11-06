@@ -1,4 +1,5 @@
-import { adminClient, createUserClient, defaultClient, test } from './base';
+import { test } from './base';
+import { defaultClient, createUserClient, adminClient } from './base/clients';
 import { pupilOne } from './01_user';
 import assert from 'assert';
 import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
