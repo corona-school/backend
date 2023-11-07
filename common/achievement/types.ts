@@ -10,11 +10,13 @@ export type EventValue = number | string | boolean;
 // match, pool, openMatchRequestCount, screening, firstMatchRequest
 export type Context = {
     subcourse?: {
+        id: number;
         lectures: {
             start: Date;
         }[];
     };
     match?: {
+        id: number;
         lectures: {
             start: Date;
         }[];
@@ -24,6 +26,9 @@ export type Context = {
         duration?: number;
         match?: number;
         subcourse?: number;
+    };
+    user?: {
+        id: number;
     };
 };
 
