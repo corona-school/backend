@@ -1,4 +1,5 @@
-import { test, createUserClient, adminClient } from './base';
+import { test } from './base';
+import { createUserClient, adminClient } from './base/clients';
 import assert from 'assert';
 import { randomBytes } from 'crypto';
 import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
