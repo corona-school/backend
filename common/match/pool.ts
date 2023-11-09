@@ -2,23 +2,18 @@ import { prisma } from '../prisma';
 import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore The matching algorithm is optional, to allow for slim local setups
-import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
-// eslint-disable-next-line import/no-cycle
+import type { Helpee, Helper, Settings } from 'corona-school-matching';
 import { createMatch } from './create';
-import { parseSubjectString, Subject } from '../util/subjectsutils';
+import { parseSubjectString } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
-import { cleanupUnconfirmed, InterestConfirmationStatus, removeInterest, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
+import { cleanupUnconfirmed, InterestConfirmationStatus, requestInterestConfirmation, sendInterestConfirmationReminders } from './interest';
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
-
-export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
-    MIN: 1,
-    MAX: 13,
-};
+import { formattedSubjectToSubjectWithGradeRestriction } from './util';
 
 const logger = getLogger('MatchingPool');
 
@@ -148,16 +143,6 @@ async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
         matchingPriority: pupil.matchingPriority,
         grade: gradeAsInt(pupil.grade),
         // firstMatchRequest: pupil.firstMatchRequest
-    };
-}
-
-function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): SubjectWithGradeRestriction {
-    return {
-        name: subject.name,
-        gradeRestriction: {
-            min: subject.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN, //due to a screening tool's bug (or how it is designed), those values may be null (which causes the algorithm to fail)
-            max: subject.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX,
-        },
     };
 }
 
@@ -386,9 +371,6 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     if (apply) {
         const startCommit = Date.now();
         for (const match of matches) {
-            if (pool.confirmInterest && match.pupil.openMatchRequestCount <= 1) {
-                await removeInterest(match.pupil);
-            }
             await pool.createMatch(match.pupil, match.student, pool);
         }
 

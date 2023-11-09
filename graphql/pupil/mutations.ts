@@ -24,15 +24,13 @@ import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
-// eslint-disable-next-line import/no-cycle
-import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { JSONResolver } from 'graphql-scalars';
+import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
 
 const logger = getLogger(`Pupil Mutations`);
 

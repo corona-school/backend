@@ -1,11 +1,9 @@
 /* eslint-disable camelcase */
-import { course_coursestate_enum, student as Student } from '@prisma/client';
+import { course_coursestate_enum, dissolve_reason, dissolved_by_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
-import { getZoomUser } from '../zoom/user';
 import { deleteZoomUser } from '../zoom/user';
-import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
@@ -32,7 +30,7 @@ export async function deactivateStudent(student: Student, silent = false, reason
         },
     });
     for (const match of matches) {
-        await dissolveMatch(match, 0, student);
+        await dissolveMatch(match, dissolve_reason.accountDeactivated, student, dissolved_by_enum.student);
     }
 
     //Delete course records for the student.

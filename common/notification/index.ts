@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 import { mailjetChannel } from './channels/mailjet';
 import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
 import { prisma } from '../prisma';
@@ -258,15 +257,22 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
+const allowedExtensions = ['uniqueId'];
+
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
 
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -276,9 +282,14 @@ export function validateContextForAction(action: ActionID, context: Notification
     const expectedKeys = Object.keys(sampleContext);
     const actualKeys = Object.keys(context);
     const missing = expectedKeys.filter((it) => !actualKeys.includes(it));
+    const unexpected = actualKeys.filter((it) => !expectedKeys.includes(it) && !allowedExtensions.includes(it));
 
     if (missing.length) {
         throw new Error(`Missing the following fields in context: ${missing.join(', ')}`);
+    }
+
+    if (unexpected.length) {
+        throw new Error(`The following unexpected keys occured in the context: ${unexpected.join(', ')}`);
     }
 }
 
@@ -331,6 +342,26 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
     });
 
     logger.info(`Cancelled ${publishedCount} drafted notifications for Notification(${notification.id})`);
+}
+
+/* -------------------------------- Hook ----------------------------------------------------------- */
+
+// Predicts when a hook will run for a certain user as caused by a certain action
+// i.e. 'When will a user by deactivated (hook) due to Certificate of Conduct reminders (action) ?'
+// Returns null if no date is known or hook was already triggered
+export async function predictedHookActionDate(action: ActionID, hookID: string, user: User): Promise<Date | null> {
+    const viableNotifications = ((await getNotifications()).get(action)?.toSend ?? []).filter((it) => it.hookID === hookID);
+
+    const possibleTrigger = await prisma.concrete_notification.findFirst({
+        where: {
+            state: ConcreteNotificationState.DELAYED,
+            userId: user.userID,
+            notificationID: { in: viableNotifications.map((it) => it.id) },
+        },
+        select: { sentAt: true },
+    });
+
+    return possibleTrigger?.sentAt;
 }
 
 export * from './hook';

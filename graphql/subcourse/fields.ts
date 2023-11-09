@@ -1,7 +1,7 @@
 import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
 import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, couldJoinSubcourse, getCourseCapacity, isParticipant } from '../../common/courses/participants';
+import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { Role } from '../authorizations';
@@ -14,6 +14,9 @@ import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
 import { Deprecated, getCourse } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
+import { subcourseSearch } from '../../common/courses/search';
+import { GraphQLInt } from 'graphql';
+import { getCourseCapacity } from '../../common/courses/util';
 
 @ObjectType()
 class Participant {
@@ -74,9 +77,7 @@ export class ExtendedFieldsSubcourseResolver {
         const filters = [IS_PUBLIC_SUBCOURSE()];
 
         if (search) {
-            filters.push({
-                course: { is: { OR: [{ outline: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }] } },
-            });
+            filters.push(await subcourseSearch(search));
         }
 
         if (onlyJoinable) {
@@ -124,6 +125,21 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         return courses;
+    }
+
+    @Query((returns) => [Subcourse])
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    @LimitedQuery()
+    async subcourseSearch(
+        @Arg('search') search: string,
+        @Arg('take', () => GraphQLInt) take: number,
+        @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
+    ) {
+        return await prisma.subcourse.findMany({
+            where: await subcourseSearch(search),
+            take,
+            skip,
+        });
     }
 
     @Query((returns) => Subcourse, { nullable: true })
@@ -342,8 +358,8 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(100)
     async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
-        return await prisma.pupil.findMany({
-            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true },
+        const pupils = await prisma.pupil.findMany({
+            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
             where: {
                 waiting_list_enrollment: {
                     some: {
@@ -352,6 +368,14 @@ export class ExtendedFieldsSubcourseResolver {
                 },
             },
         });
+
+        pupils.sort(
+            (a, b) =>
+                +a.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt -
+                +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
+        );
+
+        return pupils;
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')

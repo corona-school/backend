@@ -1,4 +1,5 @@
-import { adminClient, defaultClient, test } from './base';
+import { test } from './base';
+import { adminClient, defaultClient } from './base/clients';
 import { pupilOne, studentOne } from './01_user';
 import * as assert from 'assert';
 import { expectFetch } from './base/mock';

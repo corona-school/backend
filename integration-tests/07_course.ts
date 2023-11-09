@@ -1,5 +1,6 @@
-import { adminClient, defaultClient, test } from './base';
-import { pupilOne, pupilUpdated } from './01_user';
+import { test } from './base';
+import { adminClient } from './base/clients';
+import { pupilOne } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
@@ -53,6 +54,28 @@ const courseOne = test('Create Course One', async () => {
     `);
 
     assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
+
+    // Admin Course Search
+    const { courseSearch } = await adminClient.request(`
+        query AdminFindsCourseByName {
+            courseSearch(search: "integrationstest", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+        query AdminFindsCourseByOutline {
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch3 } = await adminClient.request(`
+        query AdminFindsCourseBySubject {
+            courseSearch(search: "informatik", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch3.some((it) => it.id === courseId));
 
     await adminClient.request(`
         mutation AllowCourse {

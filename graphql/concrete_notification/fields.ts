@@ -72,6 +72,10 @@ export class ExtendedFieldsConcreteNotificationResolver {
         const byCampaign: { [key: string]: Campaign } = {};
 
         for (const { _count, contextID, notificationID, state } of aggregated) {
+            if (!contextID) {
+                continue;
+            }
+
             const key = notificationID + '/' + contextID;
             if (!byCampaign[key]) {
                 const context = await prisma.concrete_notification.findFirst({

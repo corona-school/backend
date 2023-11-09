@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { randomBytes } from 'crypto';
-import { adminClient, createUserClient, test } from './base';
+import { test } from './base';
+import { adminClient, createUserClient } from './base/clients';
 import { instructorOne, instructorTwo, pupilOne, studentOne } from './01_user';
 
 const screenerOne = test('Admin can create Screener Account', async () => {
@@ -11,7 +12,7 @@ const screenerOne = test('Admin can create Screener Account', async () => {
 
     const { screenerCreate: token } = await adminClient.request(`
         mutation CreateScreenerAccount {
-            screenerCreate(data: { 
+            screenerCreate(data: {
                 email: "${email}",
                 firstname: "${firstname}",
                 lastname: "${lastname}"
@@ -80,7 +81,7 @@ void test('Screener can Query Users to Screen', async () => {
     const { usersSearch } = await client.request(`
         query FindUsersToScreen {
             usersSearch(query: "${instructor.firstname} ${instructor.lastname}", take: 1) {
-                student { 
+                student {
                   firstname
                   lastname
                   subjectsFormatted { name }
@@ -93,8 +94,8 @@ void test('Screener can Query Users to Screen', async () => {
                     dissolvedAt
                     studentFirstMatchRequest
                   }
-                  
-                  tutorScreenings { 
+
+                  tutorScreenings {
                     success
                     comment
                     jobStatus
@@ -102,8 +103,8 @@ void test('Screener can Query Users to Screen', async () => {
                     createdAt
                     screener { firstname lastname }
                   }
-                  
-                  instructorScreenings { 
+
+                  instructorScreenings {
                     success
                     comment
                     jobStatus
@@ -121,8 +122,8 @@ void test('Screener can Query Users to Screen', async () => {
 
     const { usersSearch: usersSearch2 } = await client.request(`
         query FindUsersToScreen {
-            usersSearch(query: "${pupil.firstname} ${pupil.lastname}", take: 1) {                
-                pupil { 
+            usersSearch(query: "${pupil.firstname} ${pupil.lastname}", take: 1) {
+                pupil {
                     firstname
                     lastname
                     subjectsFormatted { name }
@@ -167,7 +168,7 @@ void test('Screener can Query Users to Screen', async () => {
 
     const { pupilsToBeScreened } = await client.request(`
         query FindPupilsToBeScreened {
-            pupilsToBeScreened { 
+            pupilsToBeScreened {
                 firstname
                 lastname
             }
@@ -247,7 +248,7 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
 });
 
 void test('Screen Pupil One', async () => {
-    const { pupil, client } = await pupilWithScreening;
+    const { pupil } = await pupilWithScreening;
     const { client: screenerClient, screener } = await screenerOne;
 
     const { pupilsToBeScreened } = await screenerClient.request(`

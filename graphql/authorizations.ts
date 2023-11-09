@@ -1,4 +1,15 @@
-import { ModelsEnhanceMap, Pupil, ResolversEnhanceMap, Student, Subcourse, Course, Lecture, Course_tag as CourseTag, Concrete_notification } from './generated';
+import {
+    ModelsEnhanceMap,
+    Pupil,
+    ResolversEnhanceMap,
+    Student,
+    Subcourse,
+    Course,
+    Lecture,
+    Course_tag as CourseTag,
+    Concrete_notification,
+    Screener,
+} from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
 
@@ -308,7 +319,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     },
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
-    Subcourse_waiting_list_pupil: allAdmin,
     Concrete_notification: allAdmin,
     Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
@@ -400,7 +410,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_attendance_log: nobody,
             course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
-            subcourse_waiting_list_pupil: nobody,
             match: nobody,
             _count: nobody,
             waiting_list_enrollment: nobody,
@@ -424,7 +433,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'aboutMe'
             | 'state'
         >({
-            email: adminOrOwner,
+            email: adminOrOwnerOrScreener,
             phone: adminOrOwner,
             verification: nobody,
             verifiedAt: adminOrOwner,
@@ -490,6 +499,34 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             cooperationID: nobody,
         }),
     },
+
+    Screener: {
+        fields: withPublicFields<Screener, 'id'>({
+            verification: nobody,
+            password: nobody,
+            verified: nobody,
+            verifiedAt: nobody,
+            instructor_screening: nobody,
+            isRedacted: nobody,
+            oldNumberID: nobody,
+            project_coaching_screening: nobody,
+            screenings: nobody,
+            updatedAt: nobody,
+            _count: nobody,
+
+            lastLogin: onlyOwner,
+            lastTimeCheckedNotifications: onlyOwner,
+            notificationPreferences: onlyOwner,
+
+            is_trusted: onlyAdminOrScreener,
+            active: onlyAdminOrScreener,
+            createdAt: onlyAdminOrScreener,
+            firstname: onlyAdminOrScreener,
+            lastname: onlyAdminOrScreener,
+            email: onlyAdminOrScreener,
+        }),
+    },
+
     Subcourse: {
         fields: withPublicFields<
             Subcourse,
@@ -513,7 +550,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_participants_pupil: nobody,
-            subcourse_waiting_list_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,

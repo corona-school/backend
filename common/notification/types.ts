@@ -2,7 +2,6 @@
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
 import { User } from '../user';
-// eslint-disable-next-line import/no-cycle
 import { ActionID } from './actions';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
@@ -33,6 +32,8 @@ export interface NotificationContextExtensions {
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
     campaign?: string;
+    // For Campaigns, support sending custom Mailjet Notifications:
+    overrideMailjetTemplateID?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {

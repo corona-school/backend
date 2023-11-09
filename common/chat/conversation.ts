@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-// eslint-disable-next-line import/no-cycle
 import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
-import { User } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
+import { getPupil, getStudent } from '../../graphql/util';
 import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
+import { assureChatFeatureActive } from './util';
 
 dotenv.config();
 const logger = getLogger('Conversation');
@@ -18,6 +19,7 @@ const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to create a conversation.`);
+    assureChatFeatureActive();
 
     let conversationId: string;
     switch (type) {
@@ -47,6 +49,8 @@ const createConversation = async (participants: User[], conversationInfos: Conve
             body: body,
         });
         await checkResponseStatus(response);
+
+        logger.info(`Created Chat with ConversationID ${conversationId}`, { conversationInfosWithParticipants, conversationId });
         return conversationId;
     } catch (error) {
         throw new Error(error);
@@ -55,6 +59,8 @@ const createConversation = async (participants: User[], conversationInfos: Conve
 
 const getConversation = async (conversationId: string): Promise<TJConversation | undefined> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get a conversation.`);
+    assureChatFeatureActive();
+
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationId}`, {
         method: 'GET',
         headers: {
@@ -70,8 +76,19 @@ const getConversation = async (conversationId: string): Promise<TJConversation |
     }
 };
 
+const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
+    const student = await getStudent(matchees.studentId);
+    const pupil = await getPupil(matchees.pupilId);
+    const studentUser = userForStudent(student);
+    const pupilUser = userForPupil(pupil);
+    const conversationId = createOneOnOneId(studentUser, pupilUser);
+    const conversation = await getConversation(conversationId);
+    return { conversation, conversationId };
+};
+
 const getAllConversations = async (): Promise<AllConversations> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
+    assureChatFeatureActive();
 
     const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
         method: 'GET',
@@ -81,15 +98,18 @@ const getAllConversations = async (): Promise<AllConversations> => {
         },
     });
 
-    if (response.status === 200) {
-        return await response.json();
-    } else {
-        return undefined;
+    if (response.status !== 200) {
+        throw new Error(`Failed to get all conversations from TalkJS`);
     }
+
+    const result = await response.json();
+    logger.info(`Got all conversations`, { result });
+    return result;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get last unread conversation.`);
+    assureChatFeatureActive();
 
     const userId = userIdToTalkJsId(user.userID);
     try {
@@ -112,10 +132,13 @@ async function getLastUnreadConversation(user: User): Promise<{ data: Conversati
  */
 async function updateConversation(conversationToBeUpdated: { id: string } & ConversationInfos): Promise<any> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to update conversation ${conversationToBeUpdated.id}.`);
+    assureChatFeatureActive();
 
     try {
-        // TODO: This does not check anything!
-        await getConversation(conversationToBeUpdated.id);
+        if (!(await getConversation(conversationToBeUpdated.id))) {
+            throw new Error(`Cannot update Chat(${conversationToBeUpdated.id}) as it does not exist`);
+        }
+
         const response = await fetch(`${TALKJS_CONVERSATION_API_URL}/${conversationToBeUpdated.id}`, {
             method: 'PUT',
             headers: {
@@ -125,6 +148,7 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
             body: JSON.stringify(convertConversationInfosToString(conversationToBeUpdated)),
         });
         await checkResponseStatus(response);
+        logger.info(`Updated Chat with ConversationID ${conversationToBeUpdated.id} `, { conversationToBeUpdated, conversationId: conversationToBeUpdated.id });
     } catch (error) {
         throw new Error(error);
     }
@@ -132,6 +156,7 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
 
 async function deleteConversation(conversationId: string): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to delete conversation ${conversationId}.`);
+    assureChatFeatureActive();
 
     try {
         // check if conversation exists
@@ -144,6 +169,8 @@ async function deleteConversation(conversationId: string): Promise<void> {
             },
         });
         await checkResponseStatus(response);
+
+        logger.info(`Deleted Chat(${conversationId})`, { conversationId });
     } catch (error) {
         throw new Error(error);
     }
@@ -151,6 +178,7 @@ async function deleteConversation(conversationId: string): Promise<void> {
 
 async function addParticipant(user: User, conversationId: string, chatType?: ChatType): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to add participant ${user.userID} to conversation ${conversationId}.`);
+    assureChatFeatureActive();
 
     const userId = userIdToTalkJsId(user.userID);
     try {
@@ -165,6 +193,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
             }),
         });
         await checkResponseStatus(response);
+        logger.info(`Added User(${user.userID}) to Chat(${conversationId})`, { userID: user.userID, conversationId, chatType });
     } catch (error) {
         throw new Error(error);
     }
@@ -172,6 +201,7 @@ async function addParticipant(user: User, conversationId: string, chatType?: Cha
 
 async function removeParticipantFromCourseChat(user: User, conversationId: string): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to remove participant ${user.userID} from conversation ${conversationId}.`);
+    assureChatFeatureActive();
 
     const userId = userIdToTalkJsId(user.userID);
     try {
@@ -187,6 +217,7 @@ async function removeParticipantFromCourseChat(user: User, conversationId: strin
             }),
         });
         await checkResponseStatus(response);
+        logger.info(`Removed User(${user.userID}) from Chat(${conversationId})`, { conversationId, userID: user.userID });
     } catch (error) {
         throw new Error(error);
     }
@@ -194,6 +225,7 @@ async function removeParticipantFromCourseChat(user: User, conversationId: strin
 
 async function markConversationAsReadOnly(conversationId: string): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as readonly.`);
+    assureChatFeatureActive();
 
     try {
         const conversation = await getConversation(conversationId);
@@ -211,6 +243,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
                 }),
             });
             await checkResponseStatus(response);
+            logger.info(`Marked Chat(${conversationId}) as read-only`, { conversationId });
         }
     } catch (error) {
         throw new Error('Could not mark conversation as readonly.');
@@ -218,6 +251,7 @@ async function markConversationAsReadOnly(conversationId: string): Promise<void>
 }
 async function markConversationAsReadOnlyForPupils(conversationId: string): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as readonly for pupils.`);
+    assureChatFeatureActive();
 
     try {
         const conversation = await getConversation(conversationId);
@@ -236,6 +270,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
                 }),
             });
             await checkResponseStatus(response);
+            logger.info(`Marked Chat(${conversationId}) as read-only for Pupil(${pupilId})`, { conversationId, pupilId });
         }
     } catch (error) {
         logger.error('Could not mark conversation as readonly', error);
@@ -245,6 +280,7 @@ async function markConversationAsReadOnlyForPupils(conversationId: string): Prom
 
 async function markConversationAsWriteable(conversationId: string): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to mark conversation ${conversationId} as writeable.`);
+    assureChatFeatureActive();
 
     try {
         const conversation = await getConversation(conversationId);
@@ -261,6 +297,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
                 }),
             });
             await checkResponseStatus(response);
+            logger.info(`Marked Chat(${conversationId}) as writable for participant ${participantId}`, { conversationId });
         }
     } catch (error) {
         throw new Error(error);
@@ -269,6 +306,7 @@ async function markConversationAsWriteable(conversationId: string): Promise<void
 
 async function sendSystemMessage(message: string, conversationId: string, type?: SystemMessage): Promise<void> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to send system message for conversation ${conversationId}.`);
+    assureChatFeatureActive();
 
     try {
         const conversation = await getConversation(conversationId);
@@ -291,6 +329,7 @@ async function sendSystemMessage(message: string, conversationId: string, type?:
             ]),
         });
         await checkResponseStatus(response);
+        logger.info(`Sent System Message to Chat(${conversationId}) - ${message}`, { conversationId, message, type });
     } catch (error) {
         throw new Error(error);
     }
@@ -306,6 +345,7 @@ export {
     markConversationAsWriteable,
     sendSystemMessage,
     getConversation,
+    getMatcheeConversation,
     getAllConversations,
     deleteConversation,
     markConversationAsReadOnlyForPupils,
