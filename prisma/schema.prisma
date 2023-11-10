@@ -1045,6 +1045,8 @@ enum pupil_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
@@ -1076,6 +1078,8 @@ enum school_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
@@ -1135,6 +1139,8 @@ enum student_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
