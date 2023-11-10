@@ -1,4 +1,4 @@
-import { ActionID } from '../notification/actions';
+import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 import { Context } from './types';
 
@@ -10,7 +10,7 @@ export type ActionEvent = {
     user: User;
 };
 
-export function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: Context) {
+export function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     // TODO: create Event
     const event: ActionEvent = {
         action: actionId,
