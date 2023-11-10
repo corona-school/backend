@@ -27,7 +27,7 @@ export type Context = {
     };
 };
 
-export type FormulaFunction = (context: Context) => number | string | boolean;
+export type FormulaFunction = (context: Context) => number;
 
 // A bucket is seen as a period of time
 export interface Bucket {
