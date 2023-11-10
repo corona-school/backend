@@ -727,6 +727,17 @@ void (async function setupDevDB() {
         },
     });
 
+    await prisma.lecture.create({
+        data: {
+            subcourseId: subcourse5.id,
+            duration: 120,
+            start: new Date(year, month, date + 15, 11, 0, 0, 0),
+            organizerIds: [],
+            participantIds: [],
+            appointmentType: AppointmentType.group,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);

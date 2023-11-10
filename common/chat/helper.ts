@@ -1,23 +1,14 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser, userForPupil, userForStudent } from '../user';
-// eslint-disable-next-line import/no-cycle
-import { getOrCreateChatUser } from './user';
+import { User, getUser } from '../user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
-import { createHmac } from 'crypto';
 import { Subcourse } from '../../graphql/generated';
-import { getPupil, getStudent } from '../../graphql/util';
-// eslint-disable-next-line import/no-cycle
-import { getConversation } from './conversation';
 import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from './types';
 import { type MatchContactPupil, type MatchContactStudent } from './contacts';
-import assert from 'assert';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
 export type UserId = `${'pupil' | 'student'}/${number}`;
-
-const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
@@ -25,13 +16,6 @@ const userIdToTalkJsId = (userId: string): TalkJSUserId => {
 
 const talkJsIdToUserId = (userId: string): UserId => {
     return userId.replace('_', '/') as UserId;
-};
-const createChatSignature = async (user: User): Promise<string> => {
-    assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
-    const userId = (await getOrCreateChatUser(user)).id;
-    const key = TALKJS_SECRET_KEY;
-    const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
-    return hash.digest('hex');
 };
 
 function createOneOnOneId(userA: User, userB: User): string {
@@ -126,16 +110,6 @@ const getMembersForSubcourseGroupChat = async (subcourse: Subcourse) => {
     return members;
 };
 
-const getMatcheeConversation = async (matchees: { studentId: number; pupilId: number }): Promise<{ conversation: Conversation; conversationId: string }> => {
-    const student = await getStudent(matchees.studentId);
-    const pupil = await getPupil(matchees.pupilId);
-    const studentUser = userForStudent(student);
-    const pupilUser = userForPupil(pupil);
-    const conversationId = createOneOnOneId(studentUser, pupilUser);
-    const conversation = await getConversation(conversationId);
-    return { conversation, conversationId };
-};
-
 const countChatParticipants = (conversation: Conversation): number => {
     return Object.keys(conversation.participants).length;
 };
@@ -210,11 +184,9 @@ export {
     talkJsIdToUserId,
     parseUnderscoreToSlash,
     checkResponseStatus,
-    createChatSignature,
     getMatchByMatchees,
     createOneOnOneId,
     countChatParticipants,
-    getMatcheeConversation,
     checkChatMembersAccessRights,
     isSubcourseParticipant,
     getMembersForSubcourseGroupChat,

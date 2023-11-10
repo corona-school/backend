@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { randomBytes } from 'crypto';
-import { adminClient, test } from './base';
+import { test } from './base';
+import { adminClient } from './base/clients';
 import { pupilOne, studentOne } from './01_user';
 
 /* eslint-disable  */
@@ -147,7 +148,7 @@ void test('Admin Manage Notifications', async () => {
     const {
         notificationCreate: { id },
     } = await adminClient.request(`mutation CreateNotification {
-        notificationCreate(notification: { 
+        notificationCreate(notification: {
             description: "MOCK"
             active: false
             recipient: 0
@@ -181,7 +182,7 @@ void test('Admin Manage Notifications', async () => {
 
     await adminClient.request(`mutation Activate { notificationActivate(notificationId: ${id}, active: true)}`);
 
-    await adminClient.requestShallFail(`mutation SendOutWithMissingContext { 
+    await adminClient.requestShallFail(`mutation SendOutWithMissingContext {
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
         skipDraft: true
@@ -191,7 +192,7 @@ void test('Admin Manage Notifications', async () => {
       )
     }`);
 
-    await adminClient.request(`mutation SendOut { 
+    await adminClient.request(`mutation SendOut {
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
         skipDraft: true
@@ -203,13 +204,13 @@ void test('Admin Manage Notifications', async () => {
 
     const {
         me: { concreteNotifications: scheduled },
-    } = await pupilClient.request(`query NotificationScheduled { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationScheduled {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo
@@ -225,13 +226,13 @@ void test('Admin Manage Notifications', async () => {
 
     const {
         me: { concreteNotifications: sent },
-    } = await pupilClient.request(`query NotificationSent { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationSent {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo
@@ -261,13 +262,13 @@ void test('Admin Manage Notifications', async () => {
 
     const {
         me: { concreteNotifications: sent2 },
-    } = await pupilClient.request(`query NotificationSent2 { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationSent2 {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo

@@ -1,14 +1,83 @@
 import { Channel, Context, Notification, NotificationSender } from '../types';
-import * as mailjet from '../../mails/mailjetTypes';
-import { mailjetSmtp } from '../../mails/config';
 import { getLogger } from '../../../common/logger/logger';
 import * as assert from 'assert';
 import { AttachmentGroup } from '../../attachments';
 import { isDev } from '../../util/environment';
 import { User } from '../../user';
-// eslint-disable-next-line import/no-cycle
-import { createSecretEmailToken } from '../../secret';
 import moment from 'moment';
+import { createSecretEmailToken } from '../../secret/emailToken';
+
+// ------------ Mailjet Interface -------------------------------
+
+export interface SendParams {
+    Messages: SendParamsMessage[];
+    SandboxMode?: boolean;
+}
+
+export interface SendParamsMessage {
+    From: {
+        Email: string;
+        Name?: string;
+    };
+    Sender?: {
+        Email: string;
+        Name?: string;
+    };
+    To: SendParamsRecipient[];
+    Cc?: SendParamsRecipient[];
+    Bcc?: SendParamsRecipient[];
+    ReplyTo?: SendParamsRecipient;
+    Variables?: object;
+    TemplateID?: number;
+    TemplateLanguage?: boolean;
+    Subject: string;
+    TextPart?: string;
+    HTMLPart?: string;
+    MonitoringCategory?: string;
+    URLTags?: string;
+    CustomCampaign?: string;
+    DeduplicateCampaign?: boolean;
+    EventPayload?: string;
+    CustomID?: string;
+    Headers?: object;
+    Attachments?: Attachment[];
+    InlinedAttachments?: InlinedAttachment[];
+}
+
+interface SendParamsRecipient {
+    Email: string;
+    Name?: string;
+}
+
+interface Attachment {
+    ContentType: string;
+    Filename: string;
+    Base64Content: string;
+}
+
+interface InlinedAttachment extends Attachment {
+    ContentID: string;
+}
+
+// ------------- Config -----------------------------------------
+
+const mailjetSmtp = {
+    host: 'in-v3.mailjet.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: process.env.MAILJET_USER,
+        pass: process.env.MAILJET_PASSWORD,
+    },
+    tls: {
+        ciphers: 'SSLv3',
+    },
+};
+
+export const DEFAULTSENDERS = {
+    noreply: '"Lern-Fair Team" <noreply@lern-fair.de>',
+    support: '"Lern-Fair Team" <support@lern-fair.de>',
+};
 
 const logger = getLogger();
 const mailAuth = Buffer.from(`${mailjetSmtp.auth.user}:${mailjetSmtp.auth.pass}`).toString('base64');
@@ -23,6 +92,88 @@ const senders: { [sender in NotificationSender]: { Name: string; Email: string }
         Name: 'Lern-Fair Führungszeugnisse',
     },
 };
+
+// ------------------- Send -------------------------------------
+
+async function sendMessage(message: SendParamsMessage) {
+    let sandboxMode = false;
+
+    if (process.env.MAILJET_LIVE === 'TEST') {
+        message.Subject = `TESTEMAIL`;
+        logger.warn(`Mail is in Test Mode`);
+    } else if (process.env.MAILJET_LIVE != '1') {
+        logger.warn(`Mail is in Sandbox Mode`);
+        sandboxMode = true;
+    }
+
+    if (!mailjetSmtp.auth.user || !mailjetSmtp.auth.pass) {
+        throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
+    }
+
+    const requestOptions: SendParams = {
+        SandboxMode: sandboxMode,
+        Messages: [message],
+    };
+
+    const body = await fetch('https://api.mailjet.com/v3.1/send', {
+        body: JSON.stringify(requestOptions),
+        headers: {
+            Authorization: `Basic ${mailAuth}`,
+            'Content-Type': 'application/json',
+        },
+        method: 'POST',
+    }).then((res) => res.json());
+
+    if (!body.Messages || body.Messages.length !== 1) {
+        throw new Error(`Mailjet API responded with invalid body`);
+    }
+
+    const result = body.Messages[0];
+
+    if (result.Status !== 'success') {
+        const errorMessages = (result as any).Errors.map((error) => error.ErrorMessage).join(', ');
+
+        throw new Error(`Mailjet Message Delivery failed: ${errorMessages}`);
+    }
+}
+
+export async function sendMail(
+    subject: string,
+    text: string,
+    senderAddress: string,
+    receiverAddress: string,
+    senderName?: string,
+    receiverName?: string,
+    replyToAddress?: string,
+    replyToName?: string
+) {
+    // construct mailjet API message
+    const message: SendParamsMessage = {
+        From: {
+            Email: senderAddress,
+            Name: senderName,
+        },
+        To: [
+            {
+                Email: receiverAddress,
+                Name: receiverName,
+            },
+        ],
+        Subject: subject,
+        TextPart: text,
+    };
+
+    if (replyToAddress) {
+        message.ReplyTo = {
+            Email: replyToAddress,
+            Name: replyToName,
+        };
+    }
+
+    return await sendMessage(message);
+}
+
+// ---------------- Notification System Channel --------------------
 
 export const mailjetChannel: Channel = {
     type: 'email',
@@ -91,48 +242,10 @@ export const mailjetChannel: Channel = {
             };
         }
 
-        let sandboxMode = false;
-
-        if (process.env.MAILJET_LIVE === 'TEST') {
-            message.Subject = `TESTEMAIL`;
-            logger.warn(`Mail is in Test Mode`);
-        } else if (process.env.MAILJET_LIVE != '1') {
-            logger.warn(`Mail is in Sandbox Mode`);
-            sandboxMode = true;
-        }
-
-        if (!mailjetSmtp.auth.user || !mailjetSmtp.auth.pass) {
-            throw new Error(`Missing credentials for Mailjet API! Are MAILJET_USER and MAILJET_PASSWORD passed as env variables?`);
-        }
-
-        const requestOptions: mailjet.SendParams = {
-            SandboxMode: sandboxMode,
-            Messages: [message],
-        };
-
-        logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with options:`, requestOptions);
+        logger.debug(`Sending Mail(${message.TemplateID}) to ${context.user.email} with message`, message);
         logger.debug(`Variables: ${JSON.stringify({ ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '' })}`);
 
-        const body = await fetch('https://api.mailjet.com/v3.1/send', {
-            body: JSON.stringify(requestOptions),
-            headers: {
-                Authorization: `Basic ${mailAuth}`,
-                'Content-Type': 'application/json',
-            },
-            method: 'POST',
-        }).then((res) => res.json());
-
-        if (!body.Messages || body.Messages.length !== 1) {
-            throw new Error(`Mailjet API responded with invalid body`);
-        }
-
-        const result = body.Messages[0];
-
-        if (result.Status !== 'success') {
-            const errorMessages = (result as any).Errors.map((error) => error.ErrorMessage).join(', ');
-
-            throw new Error(`Mailjet Message Delivery failed: ${errorMessages}`);
-        }
+        await sendMessage(message);
 
         logger.info(`Sent Mail(${message.TemplateID})`);
     },

@@ -9,11 +9,11 @@ import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
-import { getNotificationContextForSubcourse } from '../mails/courses';
 import { User, getStudentsFromList, userForPupil, userForStudent } from '../user';
 import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
+import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 
 const logger = getLogger();
 
