@@ -6,8 +6,6 @@ const logger = getLogger();
 
 const dissolveReasonByIndex = (index: number, dissolvedBy: DissolvedBy): DissolveReason => {
     switch (index) {
-        case -1:
-            return DissolveReason.noMoreHelpNeeded;
         case 0:
             return DissolveReason.accountDeactivated;
         case 1:
@@ -87,15 +85,17 @@ export default async function execute() {
            match."dissolvedAt" < log."createdAt" + interval '1 minute') AND
       (student.id IS NOT NULL OR pupil.id IS NOT NULL)
     ORDER BY log."createdAt" DESC`;
-    console.log(data);
+
     let knownReason = 0;
     let knownDissolvedBy = 0;
     let unknownReason = 0;
     let unknownDissolvedBy = 0;
+    let didHaveMeetingCount = 0;
     for (const match of data) {
         const dissolver: DissolvedBy = mapDissolver(match.userType);
         const reason = dissolveReasonByIndex(match.dissolveReason, dissolver);
-        if (dissolver === DissolvedBy.unknown && reason === DissolveReason.unknown) {
+        const didHaveMeeting = match.dissolveReason === -1;
+        if (dissolver === DissolvedBy.unknown && reason === DissolveReason.unknown && !didHaveMeeting) {
             // continue, can't update anyways
             unknownDissolvedBy++;
             unknownReason++;
@@ -114,7 +114,11 @@ export default async function execute() {
             knownDissolvedBy++;
         }
 
-        logger.info(`Match(${match.matchId}): Setting reason=${reason}, dissolver=${dissolver}`);
+        if (didHaveMeeting) {
+            didHaveMeetingCount++;
+        }
+
+        logger.info(`Match(${match.matchId}): Setting reason=${reason}, dissolver=${dissolver}, didHaveMeeting=${didHaveMeeting}`);
         await prisma.match.update({
             where: {
                 id: match.matchId,
@@ -122,6 +126,7 @@ export default async function execute() {
             data: {
                 dissolveReasonEnum: reason,
                 dissolvedBy: dissolver,
+                didHaveMeeting,
             },
         });
     }
@@ -130,5 +135,6 @@ export default async function execute() {
         - We now know the dissolver for ${knownDissolvedBy} matches.
         - ${unknownDissolvedBy} matches still have an unknown dissolver.
         - ${unknownReason} matches still have an unknown reason.
+        - ${didHaveMeetingCount} matches did have a meeting.
     `);
 }
