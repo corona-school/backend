@@ -1,13 +1,14 @@
 import { ActionEvent } from '.';
-import { metrics } from './metric';
-import { Context, Metric } from './types';
+import { NotificationContext } from '../notification/types';
+import { metrics } from './metrics';
+import { Metric } from './types';
 
 export function getMetricsForEvent(event: ActionEvent): Metric[] {
     const metricsForEvent = metrics.filter((metric) => metric.onActions.some((_onAction) => _onAction === event.action));
     return metricsForEvent;
 }
 
-export function getRelationByContext(context: Context): string {
+export function getRelationByContext(context: NotificationContext): string {
     const { appointment, match, subcourse } = context;
     let relation: string;
 

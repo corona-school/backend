@@ -1,10 +1,12 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { Context, EventValue } from './types';
+import { EventValue } from './types';
 import { getMetricsForEvent, getRelationByContext } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { isAchievementExistingForAction } from './helper';
+import { NotificationContext } from '../notification/types';
+import { Achievement_event } from '../../graphql/generated';
 
 const logger = getLogger('Achievement');
 
@@ -13,17 +15,13 @@ export type ActionEvent = {
     at: Date;
     user: User;
 };
-
 export type Achievement_Event = {
-    id?: number;
     userId?: string;
     metric: string;
     value: EventValue;
-    createdAt?: Date;
     action?: string;
     relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
 };
-
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     const isAchievementAction = await isAchievementExistingForAction(actionId);
     if (!isAchievementAction) {
@@ -31,7 +29,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         return;
     }
 
-    // TODO: create Event
     const event: ActionEvent = {
         action: actionId,
         at: new Date(),
@@ -70,24 +67,24 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 //     };
 // };
 
-function trackEvent<ID extends ActionID>(event: ActionEvent, context: SpecificNotificationContext<ID>) {
+async function trackEvent(event: ActionEvent, context: NotificationContext) {
     const metricsForEvent = getMetricsForEvent(event);
-    // const { appointment, match, subcourse } = context;
-    // const relation = getRelationByContext(context);
+
+    const relation = getRelationByContext(context);
 
     for (const metric of metricsForEvent) {
         const formula = metric.formula;
         const value = formula(context);
 
-        const trackedEvent: Achievement_Event = {
-            metric: metric.metricName,
-            value: value,
-            action: event.action,
-            userId: event.user.userID,
-            // relation: relation,
-        };
-
-        // await prisma.achievement_event.create({ data: trackedEvent });
+        await prisma.achievement_event.create({
+            data: {
+                metric: metric.metricName,
+                value: value,
+                action: event.action,
+                userId: event.user.userID,
+                relation: relation,
+            },
+        });
     }
 
     return true;
