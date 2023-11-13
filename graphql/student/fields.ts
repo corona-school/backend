@@ -124,7 +124,7 @@ export class ExtendFieldsStudentResolver {
 
     // Date when a student will be deactivated as they have not handed in a valid certificate of conduct
     @FieldResolver((type) => Date, { nullable: true })
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async certificateOfConductDeactivationDate(@Root() student: Required<Student>) {
         return await predictedHookActionDate('coc_reminder', 'deactivate-student', userForStudent(student));
     }
@@ -146,7 +146,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Subcourse])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async subcoursesInstructing(
@@ -168,7 +168,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => [Course])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async coursesInstructing(@Root() student: Student) {
