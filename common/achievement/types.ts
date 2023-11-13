@@ -1,35 +1,20 @@
+import { ActionID, SpecificNotificationContext } from '../notification/actions';
+
+// type ActionIDUnion<A extends ActionID[]> = A[number];
+// formula: FormulaFunction<ActionIDUnion<Metric['onActions']>>;
+
 export type Metric = {
-    id: number;
+    id?: number;
     metricName: string;
-    onActions: string[];
-    formula: FormulaFunction;
+    onActions: ActionID[];
+    formula: FormulaFunction<ActionID>;
 };
+
+export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
 export type EventValue = number | string | boolean;
 
-// match, pool, openMatchRequestCount, screening, firstMatchRequest
-export type Context = {
-    subcourse?: {
-        lectures: {
-            start: Date;
-        }[];
-    };
-    match?: {
-        lectures: {
-            start: Date;
-        }[];
-    };
-    appointment?: {
-        id: number;
-        duration?: number;
-        match?: number;
-        subcourse?: number;
-    };
-};
-
-export type FormulaFunction = (context: Context) => number;
-
-// A bucket is seen as a period of time
+// A bucket is seen as for a period of time
 export interface Bucket {
     startTime: Date;
     endTime: Date;
@@ -42,10 +27,10 @@ export interface BucketEventsWithAggr extends BucketEvents {
     aggregation: EventValue;
 }
 
-type BucketFormulaFunction = (context: Context) => Bucket[];
+type BucketFormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => Bucket[];
 
 export type BucketFormula = {
-    function: BucketFormulaFunction;
+    function: BucketFormulaFunction<ActionID>;
 };
 
 export type AggregatorFunction = {

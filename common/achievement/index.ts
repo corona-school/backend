@@ -1,8 +1,9 @@
+import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
-import { Context } from './types';
+import { isAchievementExistingForAction } from './helper';
 
-// import * as Achievement from '../../common/achievement';
+const logger = getLogger('Achievement');
 
 export type ActionEvent = {
     action: string;
@@ -10,7 +11,13 @@ export type ActionEvent = {
     user: User;
 };
 
-export function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+    const isAchievementAction = await isAchievementExistingForAction(actionId);
+    if (!isAchievementAction) {
+        logger.debug(`No achievement found for action '${actionId}'`);
+        return;
+    }
+
     // TODO: create Event
     const event: ActionEvent = {
         action: actionId,
