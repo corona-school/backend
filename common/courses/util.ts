@@ -1,4 +1,4 @@
-import { course as Course, subcourse as Subcourse } from '@prisma/client';
+import { subcourse as Subcourse } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { join } from 'path';
 import { prisma } from '../prisma';
@@ -32,4 +32,16 @@ export async function getCourseOfSubcourse(subcourse: Subcourse) {
     return await prisma.course.findUniqueOrThrow({
         where: { id: subcourse.courseId },
     });
+}
+
+export async function getCourseParticipantCount(subcourse: Subcourse) {
+    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+}
+
+export async function getCourseCapacity(subcourse: Subcourse) {
+    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
+}
+
+export async function getCourseFreePlaces(subcourse: Subcourse) {
+    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
 }

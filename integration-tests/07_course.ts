@@ -1,5 +1,6 @@
-import { adminClient, defaultClient, test } from './base';
-import { pupilOne, pupilUpdated } from './01_user';
+import { test } from './base';
+import { adminClient } from './base/clients';
+import { pupilOne } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';

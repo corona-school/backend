@@ -2,15 +2,14 @@ import { getUser, updateUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
-// eslint-disable-next-line import/no-cycle
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
-import { Moment } from 'moment';
 import { isEmailAvailable } from '../user/email';
 import { secret_type_enum as SecretType } from '@prisma/client';
+import { createSecretEmailToken } from './emailToken';
 
 const logger = getLogger('Token');
 
@@ -105,29 +104,6 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-// The token returned by this function MAY NEVER be persisted and may only be sent to the user by email
-// If newEmail ist set, the token MUST be sent to that new email
-// TODO: we should create a dedicated field for newEmail
-export async function createSecretEmailToken(user: User, newEmail?: string, expiresAt?: Moment): Promise<string> {
-    const token = uuid();
-    const hash = hashToken(token);
-
-    const result = await prisma.secret.create({
-        data: {
-            type: SecretType.EMAIL_TOKEN,
-            userId: user.userID,
-            secret: hash,
-            expiresAt: expiresAt?.toDate(),
-            lastUsed: null,
-            description: newEmail,
-        },
-    });
-
-    logger.info(`Created a new email token Secret(${result.id}) for User(${user.userID}) with email change ${newEmail ?? '-'}`);
-
-    return token;
-}
-
 export async function loginToken(token: string): Promise<User | never> {
     const secret = await prisma.secret.findFirst({
         where: {
@@ -178,7 +154,7 @@ export async function loginToken(token: string): Promise<User | never> {
         await verifyEmail(user);
     }
 
-    return await user;
+    return user;
 }
 
 export async function verifyEmail(user: User) {

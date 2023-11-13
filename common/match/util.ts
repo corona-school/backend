@@ -1,10 +1,26 @@
 import { match as Match, pupil as Pupil, student as Student } from '@prisma/client';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore The matching algorithm is optional, to allow for slim local setups
+import type { SubjectWithGradeRestriction } from 'corona-school-matching';
 import { prisma } from '../prisma';
-import { parseSubjectString } from '../util/subjectsutils';
+import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { hashToken } from '../util/hashing';
-// eslint-disable-next-line import/no-cycle
-import { DEFAULT_TUTORING_GRADERESTRICTIONS } from './pool';
+
+export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
+    MIN: 1,
+    MAX: 13,
+};
+
+export function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): SubjectWithGradeRestriction {
+    return {
+        name: subject.name,
+        gradeRestriction: {
+            min: subject.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN, //due to a screening tool's bug (or how it is designed), those values may be null (which causes the algorithm to fail)
+            max: subject.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX,
+        },
+    };
+}
 
 export function getJitsiTutoringLink(match: Match) {
     return `https://meet.jit.si/CoronaSchool-${encodeURIComponent(match.uuid)}`;
