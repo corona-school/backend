@@ -4,9 +4,9 @@ import { EventValue } from './types';
 import { getMetricsForEvent, getRelationByContext } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { isAchievementExistingForAction } from './helper';
 import { NotificationContext } from '../notification/types';
 import { Achievement_event } from '../../graphql/generated';
+import { doesTemplateExistForAction } from './template';
 
 const logger = getLogger('Achievement');
 
@@ -23,8 +23,9 @@ export type Achievement_Event = {
     relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
 };
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
-    const isAchievementAction = await isAchievementExistingForAction(actionId);
-    if (!isAchievementAction) {
+    const templateExists = await doesTemplateExistForAction(actionId);
+
+    if (!templateExists) {
         logger.debug(`No achievement found for action '${actionId}'`);
         return;
     }
