@@ -44,30 +44,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     return null;
 }
 
-// export type Context = {
-//     subcourse?: {
-//         id: number;
-//         lectures: {
-//             start: Date;
-//         }[];
-//     };
-//     match?: {
-//         id: number;
-//         lectures: {
-//             start: Date;
-//         }[];
-//     };
-//     appointment?: {
-//         id: number;
-//         duration?: number;
-//         match?: number;
-//         subcourse?: number;
-//     };
-//     user?: {
-//         id: number;
-//     };
-// };
-
 async function trackEvent(event: ActionEvent, context: NotificationContext) {
     const metricsForEvent = getMetricsForEvent(event);
 
