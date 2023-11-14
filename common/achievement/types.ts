@@ -1,3 +1,5 @@
+import { Achievement_event } from '../../graphql/generated';
+
 export type Metric = {
     id: number;
     metricName: string;
@@ -5,7 +7,7 @@ export type Metric = {
     formula: FormulaFunction;
 };
 
-export type EventValue = number | string | boolean;
+export type EventValue = number[] | Achievement_event[];
 
 export type FormulaContext = {
     subcourse?: {
@@ -38,7 +40,7 @@ export interface BucketEvents extends Bucket {
     events: TrackEvent[];
 }
 export interface BucketEventsWithAggr extends BucketEvents {
-    aggregation: EventValue;
+    aggregation: number;
 }
 
 type BucketFormulaFunction = (context: FormulaContext) => Bucket[];
@@ -48,7 +50,7 @@ export type BucketFormula = {
 };
 
 export type AggregatorFunction = {
-    function: (elements: EventValue[]) => number;
+    function: (elements: EventValue) => number;
 };
 
 export type ConditionDataAggregations = {
