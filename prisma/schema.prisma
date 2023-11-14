@@ -23,6 +23,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Achievement
+// A final achievement can consist of several sub-achievements
+model achievement_template {
+  id                        Int                           @id @default(autoincrement())
+  name                      String                        @db.VarChar
+  metrics                   String[]
+  templateFor               achievement_template_for_enum
+  // Achievements can
+  // - cross-platform (i.e. for one user) 
+  // - across all offers (globally for all courses or for all matches) 
+  // - or specifically for one offer (eg `match/{{matchId}}`)
+  // We need the group for this in order to be able to assign it correctly later.
+  // e.g. "onboarding", "regular_learning/{{matchId}}", "course_completed/{{courseId}}" ""
+  group                     String                        @db.VarChar
+  // An achievement can also consist of sub-achievements, 
+  // e.g. in the case of sequential achievements, each step is seen as a separate achievement (sub-achievement). 
+  // In the case of tiered achievements, for example, each tier is a separate achievement but belongs to a group. 
+  // The groupOrder therefore determines the order of the sub-achievements.
+  groupOrder                Int
+  // Sequential: each step is seen as a separate achievement and each step has its own name                   
+  stepName                  String                        @db.VarChar
+  // what type of achievement is it
+  type                      achievement_type_enum
+  subtitle                  String                        @db.VarChar
+  description               String                        @db.VarChar
+  image                     String                        @db.VarChar
+  // some achievements show actions that a user can/must perform next.
+  // therefore we need the action name, type (for the icon) and a redirect link
+  actionName                String?                       @db.VarChar
+  actionRedirectLink        String?                       @db.VarChar
+  actionType                achievement_action_type_enum?
+  // Tiered: If a tiered achievement has been achieved, the text changes
+  achievedText              String?                       @db.VarChar
+  // defines what value must be reached to receive the achievement, 
+  // e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
+  condition                 String                        @db.VarChar
+  // defines how values must be aggregated to evaluate the condition
+  // it also contains bucket aggregators (buckets are used for aggregate values for a specific time of period)
+  conditionDataAggregations Json                          @db.Json
+  isActive                  Boolean
+  user_achievement          user_achievement[]
+}
+
+model user_achievement {
+  id          Int                  @id @default(autoincrement())
+  // the id of the relating achievement_template
+  templateId  Int
+  template    achievement_template @relation(fields: [templateId], references: [id])
+  userId      String
+  // the description of group and groupOrder can be found in the achievement_template. 
+  // It needs to be stored in user_achievement, as the group contains templating. 
+  // The correctly assigned achievement for a match / a course is therefore stored in the user_achievement.
+  group       String               @unique @db.VarChar
+  groupOrder  Int
+  isSeen      Boolean              @default(false)
+  // achievedAt == null => not achieved, achievedAt != null => achieved
+  achievedAt  DateTime?            @db.Timestamp(6)
+  // Streaks: we have to store the highest record for streaks
+  recordValue Int?
+  context     Json                 @db.Json
+}
+
+// Save (tracked) event as raw data in DB and evaluate at runtime
+model achievement_event {
+  id        Int      @id @default(autoincrement())
+  userId    String   @db.VarChar
+  metric    String   @db.VarChar
+  // the value is calculated with the formula given in the metric
+  value     Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  // what action triggered the event
+  action    String   @db.VarChar
+  // the relation is like a unique id so that we can later assign the event uniquely, e.g. "course/10", "match/12", "user/10"
+  relation  String   @db.VarChar
+}
+
 // An attachment is a file uploaded to an object storage and attached to a notification
 // We also store it in the DB to be able to track the file's lifecycle, i.e. delete it when the notification is archived
 model attachment {
@@ -285,7 +361,7 @@ model log {
 }
 
 model match {
-  id                    Int       @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
+  id                    Int                @id(map: "PK_92b6c3a6631dd5b24a67c69f69d") @default(autoincrement())
   // DEPRECATED: The uuid was used to generate non-guessable meeting room links, replaced by Appointments/Zoom
   uuid                  String             @unique(map: "IDX_65a3ec8c0aa6c3c9c04f5b53e3") @db.VarChar
   dissolved             Boolean            @default(false)
@@ -300,15 +376,15 @@ model match {
   dissolveReasonEnum    dissolve_reason?
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
-  proposedTime          DateTime? @db.Timestamp(6)
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  proposedTime          DateTime?          @db.Timestamp(6)
+  createdAt             DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime           @default(now()) @db.Timestamp(6)
   // DEPRECATED: With the Notification System we now use Concrete Notifications to track 
   // whether a notification was already sent. These booleans were used a long time ago by some cron jobs:
-  feedbackToPupilMail   Boolean   @default(false)
-  feedbackToStudentMail Boolean   @default(false)
-  followUpToPupilMail   Boolean   @default(false)
-  followUpToStudentMail Boolean   @default(false)
+  feedbackToPupilMail   Boolean            @default(false)
+  feedbackToStudentMail Boolean            @default(false)
+  followUpToPupilMail   Boolean            @default(false)
+  followUpToStudentMail Boolean            @default(false)
 
   // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
   source match_source_enum @default(matchedinternal)
@@ -1141,6 +1217,27 @@ enum student_state_enum {
 enum notification_sender_enum {
   SUPPORT
   CERTIFICATE_OF_CONDUCT
+}
+
+enum achievement_template_for_enum {
+  Course
+  Global_Courses
+  Match
+  Global_Matches
+  Global
+}
+
+enum achievement_type_enum {
+  SEQUENTIAL
+  TIERED
+  STREAK
+}
+
+enum achievement_action_type_enum {
+  Appointment
+  Action
+  Wait
+  Info
 }
 
 enum secret_type_enum {
