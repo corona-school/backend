@@ -27,10 +27,10 @@ export interface BucketEventsWithAggr extends BucketEvents {
     aggregation: EventValue;
 }
 
-type BucketFormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => Bucket[];
+type BucketFormulaFunction = (relation: string) => Bucket[];
 
 export type BucketFormula = {
-    function: BucketFormulaFunction<ActionID>;
+    function: BucketFormulaFunction;
 };
 
 export type AggregatorFunction = {
