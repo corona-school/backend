@@ -1,5 +1,5 @@
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { registerMetrics } from './metrics';
+import { registerAllMetrics } from './metrics';
 import { Metric } from './types';
 
 // Maps A | B to A & B (using contra-variant position - c.f. https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types)
@@ -13,14 +13,8 @@ type ContextForActions<ActionIDs extends ActionID[]> = UnionToIntersection<
 >;
 
 // This function utilizes generics to ensure flexibility in the ActionIDs and their respective contexts, allowing for dynamic metric creation.
-function createMetric<T extends ActionID[], K extends ContextForActions<T>>(
-    id: number,
-    metricName: string,
-    onActions: T,
-    formula: (context: K) => number
-): Metric {
+function createMetric<T extends ActionID[], K extends ContextForActions<T>>(metricName: string, onActions: T, formula: (context: K) => number): Metric {
     return {
-        id,
         metricName,
         onActions,
         formula,
@@ -28,9 +22,9 @@ function createMetric<T extends ActionID[], K extends ContextForActions<T>>(
 }
 
 const batchOfMetrics = [
-    createMetric(1, 'student_onboarding_registered', ['student_registration_started'], (context) => {
+    createMetric('student_onboarding_registered', ['student_registration_started'], (context) => {
         return 1;
     }),
 ];
 
-registerMetrics(batchOfMetrics);
+registerAllMetrics(batchOfMetrics);

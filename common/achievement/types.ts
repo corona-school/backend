@@ -4,7 +4,6 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 // formula: FormulaFunction<ActionIDUnion<Metric['onActions']>>;
 
 export type Metric = {
-    id?: number;
     metricName: string;
     onActions: ActionID[];
     formula: FormulaFunction<ActionID>;

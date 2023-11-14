@@ -1,26 +1,28 @@
 import { Metric } from './types';
 
-export const metrics: Metric[] = [];
+export const metrics: Map<string, Metric>[] = [];
 
-export const metricExists = (metricName: string) => metrics.some((m) => m.metricName == metricName);
+export const metricExists = (metricName: string) => metrics.some((map) => map.has(metricName));
 
-export function registerMetric(metric: Metric) {
+function registerMetric(metric: Metric) {
     const { metricName } = metric;
-    if (metricExists(metricName)) {
-        throw new Error(`Metric may only be registered once`);
+    const metricMap = metrics.find((map) => map.has(metricName));
+
+    if (metricMap) {
+        metricMap.set(metricName, metric);
+    } else {
+        const newMetricMap = new Map<string, Metric>();
+        newMetricMap.set(metricName, metric);
+        metrics.push(newMetricMap);
     }
-    metrics.push(metric);
 }
 
-export function registerMetrics(metricBatch: Metric[]) {
-    metricBatch.forEach((metric) => {
+export function registerAllMetrics(metrics: Metric[]) {
+    metrics.forEach((metric) => {
         const { metricName } = metric;
         if (metricExists(metricName)) {
-            throw new Error(`Metric may only be registered once`);
+            throw new Error(`Metric '${metricName}' may only be registered once`);
         }
-        if (metricName in metrics) {
-            throw new Error(`Metric '${metricName}' can only be registered once.`);
-        }
-        metrics.push(metric);
+        registerMetric(metric);
     });
 }
