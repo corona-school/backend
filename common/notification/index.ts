@@ -15,6 +15,7 @@ import { ALL_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
 import { addTagsToActiveSpan } from '../logger/tracing';
+import * as Achievement from '../../common/achievement';
 
 const logger = getLogger('Notification');
 
@@ -400,6 +401,8 @@ export async function actionTaken<ID extends ActionID>(
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
         return;
     }
+
+    await Achievement.actionTaken(user, actionId, notificationContext);
 
     return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
 }
