@@ -2,7 +2,7 @@ import { Achievement_template } from '../../graphql/generated';
 import { getLogger } from '../logger/logger';
 import { ActionID } from '../notification/actions';
 import { prisma } from '../prisma';
-import { metrics } from './metrics';
+import { metricsByAction } from './metrics';
 import { Metric } from './types';
 
 const logger = getLogger('Achievement Template');
@@ -51,28 +51,11 @@ async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Pr
 }
 
 function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
-    const metricsForAction: Metric[] = [];
-
-    for (const metricMap of metrics) {
-        for (const metric of metricMap.values()) {
-            if (metric.onActions.includes(actionId)) {
-                metricsForAction.push(metric);
-            }
-        }
-    }
-
-    return metricsForAction;
+    return metricsByAction.get(actionId) || [];
 }
 
 function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean {
-    for (const metricMap of metrics) {
-        for (const metric of metricMap.values()) {
-            if (metric.onActions.includes(actionId)) {
-                return true;
-            }
-        }
-    }
-    return false;
+    return metricsByAction.has(actionId);
 }
 
 export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction };
