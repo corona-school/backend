@@ -1,7 +1,7 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
 import { EventValue } from './types';
-import { getMetricsForEvent, getRelationByContext } from './util';
+import { getMetricsByAction, getRelationByContext } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
@@ -11,7 +11,7 @@ import { doesTemplateExistForAction } from './template';
 const logger = getLogger('Achievement');
 
 export type ActionEvent = {
-    action: string;
+    actionId: ActionID;
     at: Date;
     user: User;
 };
@@ -31,7 +31,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     }
 
     const event: ActionEvent = {
-        action: actionId,
+        actionId,
         at: new Date(),
         user: user,
     };
@@ -45,9 +45,12 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 }
 
 async function trackEvent(event: ActionEvent, context: NotificationContext) {
-    const metricsForEvent = getMetricsForEvent(event);
+    const metricsForEvent = getMetricsByAction(event.actionId);
 
-    const relation = getRelationByContext(context);
+    if (!metricsForEvent) {
+        logger.debug(`Can't track event, because no metrics found for action '${event.actionId}'`);
+        return;
+    }
 
     for (const metric of metricsForEvent) {
         const formula = metric.formula;
@@ -57,9 +60,9 @@ async function trackEvent(event: ActionEvent, context: NotificationContext) {
             data: {
                 metric: metric.metricName,
                 value: value,
-                action: event.action,
+                action: event.actionId,
                 userId: event.user.userID,
-                relation: relation,
+                relation: getRelationByContext(context),
             },
         });
     }

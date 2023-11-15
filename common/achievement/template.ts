@@ -4,6 +4,7 @@ import { ActionID } from '../notification/actions';
 import { prisma } from '../prisma';
 import { metricsByAction } from './metrics';
 import { Metric } from './types';
+import { getMetricsByAction } from './util';
 
 const logger = getLogger('Achievement Template');
 
@@ -48,10 +49,6 @@ async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Pr
     }
 
     return false;
-}
-
-function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
-    return metricsByAction.get(actionId) || [];
 }
 
 function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean {
