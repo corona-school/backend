@@ -1,12 +1,13 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { EventValue } from './types';
 import { getMetricsByAction, getRelationByContext } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
-import { Achievement_event } from '../../graphql/generated';
-import { doesTemplateExistForAction } from './template';
+import { Achievement_template } from '../../graphql/generated';
+import { doesTemplateExistForAction, getAchievementTemplatesByMetric } from './template';
+import { evaluateAchievement } from './evaluate';
+import { ConditionDataAggregations, Metric } from './types';
 
 const logger = getLogger('Achievement');
 
@@ -15,13 +16,7 @@ export type ActionEvent = {
     at: Date;
     user: User;
 };
-export type Achievement_Event = {
-    userId?: string;
-    metric: string;
-    value: EventValue;
-    action?: string;
-    relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
-};
+
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     const templateExists = await doesTemplateExistForAction(actionId);
 
@@ -36,10 +31,9 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         user: user,
     };
 
-    const tracked = await trackEvent(event, context);
+    await trackEvent(event, context);
     // TODO: check if user achievement already exists
-    // TODO: track event(event)
-    // TODO: checkAwardAchievement
+    await checkAwardAchievement(context, event);
 
     return null;
 }
@@ -68,4 +62,31 @@ async function trackEvent(event: ActionEvent, context: NotificationContext) {
     }
 
     return true;
+}
+
+async function getAchievementForMetric(metric: Metric): Promise<Readonly<Achievement_template>[] | undefined> {
+    const templates = await getAchievementTemplatesByMetric();
+    return templates.get(metric.metricName);
+}
+
+async function checkAwardAchievement(context: NotificationContext, event: ActionEvent) {
+    const metricsForEvent = getMetricsByAction(event.actionId);
+    for (const metric of metricsForEvent) {
+        const achievements = await getAchievementForMetric(metric);
+        for (const achievement of achievements) {
+            if (achievement) {
+                await isAchievementConditionMet(achievement, context);
+            } else {
+                console.log(`No template found for metric '${metric.metricName}'`);
+            }
+        }
+    }
+}
+
+async function isAchievementConditionMet(achievement: Achievement_template, context: NotificationContext) {
+    const { condition, conditionDataAggregations } = achievement;
+    if (!condition) {
+        return;
+    }
+    await evaluateAchievement(achievement.condition, conditionDataAggregations as ConditionDataAggregations, context);
 }

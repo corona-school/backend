@@ -3,17 +3,16 @@ import { getLogger } from '../logger/logger';
 import { ActionID } from '../notification/actions';
 import { prisma } from '../prisma';
 import { metricsByAction } from './metrics';
-import { Metric } from './types';
 import { getMetricsByAction } from './util';
 
 const logger = getLogger('Achievement Template');
 
-type AchievementTemplatesMap = Map<string, Readonly<Achievement_template>[]>;
-let _achievementTemplates: Promise<AchievementTemplatesMap>;
+type AchievementTemplatesByMetric = Map<string, Readonly<Achievement_template>[]>;
+let achievementTemplatesByMetric: Promise<AchievementTemplatesByMetric>;
 
-function getAchievementTemplates(): Promise<AchievementTemplatesMap> {
-    if (_achievementTemplates === undefined) {
-        _achievementTemplates = (async function () {
+function getAchievementTemplatesByMetric(): Promise<AchievementTemplatesByMetric> {
+    if (achievementTemplatesByMetric === undefined) {
+        achievementTemplatesByMetric = (async function () {
             const result = new Map<string, Readonly<Achievement_template>[]>();
 
             const achievementTemplates = await prisma.achievement_template.findMany({
@@ -36,14 +35,14 @@ function getAchievementTemplates(): Promise<AchievementTemplatesMap> {
         })();
     }
 
-    return _achievementTemplates;
+    return achievementTemplatesByMetric;
 }
 
 async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {
     const metrics = getMetricsByAction(actionId);
-    const templates = await getAchievementTemplates();
+    const achievements = await getAchievementTemplatesByMetric();
     for (const metric of metrics) {
-        if (templates.has(metric.metricName)) {
+        if (achievements.has(metric.metricName)) {
             return true;
         }
     }
@@ -55,4 +54,4 @@ function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean
     return metricsByAction.has(actionId);
 }
 
-export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction };
+export { isMetricExistingForActionId, getAchievementTemplatesByMetric, doesTemplateExistForAction };

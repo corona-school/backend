@@ -1,3 +1,4 @@
+import { Achievement_event } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 
 // type ActionIDUnion<A extends ActionID[]> = A[number];
@@ -20,13 +21,13 @@ export interface Bucket {
 }
 
 export interface BucketEvents extends Bucket {
-    events: TrackEvent[];
+    events: Achievement_event[];
 }
 export interface BucketEventsWithAggr extends BucketEvents {
     aggregation: EventValue;
 }
 
-type BucketFormulaFunction = (relation: string) => Bucket[];
+type BucketFormulaFunction = (relation?: string) => Bucket[] | Promise<Bucket[]>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
