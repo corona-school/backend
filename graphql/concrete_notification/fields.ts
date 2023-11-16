@@ -30,6 +30,8 @@ class Campaign {
     error: number;
     @Field((type) => Int)
     canceled: number;
+    @Field((type) => Int)
+    archived: number;
 }
 
 @Resolver((of) => ConcreteNotification)
@@ -92,6 +94,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
                     scheduled: 0,
                     sent: 0,
                     canceled: 0,
+                    archived: 0,
                 };
             }
 
@@ -112,6 +115,10 @@ export class ExtendedFieldsConcreteNotificationResolver {
 
                 case ConcreteNotificationState.ACTION_TAKEN:
                     byCampaign[key].canceled = _count;
+                    break;
+
+                case ConcreteNotificationState.ARCHIVED:
+                    byCampaign[key].archived = _count;
                     break;
 
                 default:
