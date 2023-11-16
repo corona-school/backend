@@ -9,8 +9,9 @@ const logger = getLogger('Achievement Template');
 
 type AchievementTemplatesByMetric = Map<string, Readonly<Achievement_template>[]>;
 let achievementTemplatesByMetric: Promise<AchievementTemplatesByMetric>;
+export const achievementsByGroup: Map<string, Readonly<Achievement_template>[]> = new Map();
 
-function getAchievementTemplatesByMetric(): Promise<AchievementTemplatesByMetric> {
+function getAchievementTemplates(): Promise<AchievementTemplatesByMetric> {
     if (achievementTemplatesByMetric === undefined) {
         achievementTemplatesByMetric = (async function () {
             const result = new Map<string, Readonly<Achievement_template>[]>();
@@ -27,6 +28,12 @@ function getAchievementTemplatesByMetric(): Promise<AchievementTemplatesByMetric
 
                     result.get(metric).push(template);
                 }
+                for (const group of template.group) {
+                    if (!achievementsByGroup.has(group)) {
+                        achievementsByGroup.set(group, []);
+                    }
+                    achievementsByGroup.get(group).push(template);
+                }
             }
 
             logger.debug(`Loaded ${achievementTemplates.length} achievement templates into the cache`);
@@ -38,9 +45,20 @@ function getAchievementTemplatesByMetric(): Promise<AchievementTemplatesByMetric
     return achievementTemplatesByMetric;
 }
 
+async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
+    const templates = await getAchievementTemplates();
+    const metricsForAction = metricsByAction.get(actionId);
+    let templatesForAction: Achievement_template[];
+    for (const metric of metricsForAction) {
+        templatesForAction = templates.get(metric.metricName);
+    }
+
+    return templatesForAction;
+}
+
 async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {
     const metrics = getMetricsByAction(actionId);
-    const achievements = await getAchievementTemplatesByMetric();
+    const achievements = await getAchievementTemplates();
     for (const metric of metrics) {
         if (achievements.has(metric.metricName)) {
             return true;
@@ -54,4 +72,4 @@ function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean
     return metricsByAction.has(actionId);
 }
 
-export { isMetricExistingForActionId, getAchievementTemplatesByMetric, doesTemplateExistForAction };
+export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction, getTemplatesByAction };
