@@ -86,11 +86,13 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-const getAllConversations = async (): Promise<AllConversations> => {
+const getAllConversations = async (direction: 'ASC' | 'DESC' = 'ASC', startingAfter?: string): Promise<AllConversations> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
+    const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=3&orderBy=lastActivity&orderDirection=${direction}`;
+    const apiURLPag = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}&startingAfter=${startingAfter}`;
 
-    const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
+    const response = await fetch(startingAfter ? apiURLPag : apiURL, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
