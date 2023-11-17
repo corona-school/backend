@@ -342,7 +342,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Pupil_screening: allAdmin,
     Waiting_list_enrollment: allAdmin,
     Achievement_template: allAdmin,
-    User_achievement: allAdmin, // TODO change
+    User_achievement: allAdmin,
     Achievement_event: allAdmin,
 };
 
