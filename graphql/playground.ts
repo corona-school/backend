@@ -2,7 +2,7 @@ import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-co
 import { isDev } from '../common/util/environment';
 
 const userHeader = { authorization: 'Bearer <somerandombearer>' };
-const adminHeader = { authorization: `Basic ${btoa('admin:' + process.env.ADMIN_AUTH_TOKEN)}` };
+const adminHeader = { authorization: `Basic ${isDev ? btoa('admin:' + process.env.ADMIN_AUTH_TOKEN) : 'btoa<admin:$ADMIN_AUTH_TOKEN>'}` };
 
 const endpoint = '/apollo';
 
