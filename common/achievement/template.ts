@@ -8,6 +8,7 @@ import { getMetricsByAction } from './util';
 const logger = getLogger('Achievement Template');
 
 type AchievementTemplatesByMetric = Map<string, Readonly<Achievement_template>[]>;
+// TODO - achievement templates by metric, by group
 let achievementTemplatesByMetric: Promise<AchievementTemplatesByMetric>;
 export const achievementsByGroup: Map<string, Readonly<Achievement_template>[]> = new Map();
 
@@ -48,6 +49,12 @@ function getAchievementTemplates(): Promise<AchievementTemplatesByMetric> {
 async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
     const templates = await getAchievementTemplates();
     const metricsForAction = metricsByAction.get(actionId);
+
+    console.log('_____________________');
+    console.log('GET TEMPLATE - TEMPLATES', templates);
+    console.log('GET TEMPLATE - Metrics for action', metricsForAction);
+    console.log('_____________________');
+
     let templatesForAction: Achievement_template[];
     for (const metric of metricsForAction) {
         templatesForAction = templates.get(metric.metricName);

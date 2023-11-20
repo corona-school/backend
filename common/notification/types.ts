@@ -36,6 +36,7 @@ export interface NotificationContextExtensions {
     overrideMailjetTemplateID?: string;
     // TODO: For achievements
     relationId?: string;
+    weeks?: number;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {

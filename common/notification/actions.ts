@@ -614,6 +614,10 @@ const _notificationActions = {
         description: 'Screener suggests a Ressource for a User',
         sampleContext: {},
     },
+    joined_meeting: {
+        description: 'User joined meeting',
+        sampleContext: {},
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },

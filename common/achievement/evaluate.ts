@@ -3,12 +3,14 @@ import { Bucket, BucketEvents, BucketEventsWithAggr, ConditionDataAggregations, 
 import { prisma } from '../prisma';
 import { NotificationContext } from '../notification/types';
 import { aggregators } from './aggregator';
-import { swan } from '@onlabsorg/swan-js';
+import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 
-export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, context: NotificationContext, metrics?: Metric[]) {
-    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics.map((metric) => metric.metricName) } } });
+export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, metrics: string[]): Promise<boolean> {
+    console.log('01 EVALUATE - METRICS', metrics);
+    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } } });
 
+    // EVENT ARRAY
     const valuesByMetric: Record<string, Achievement_event[]> = {}; // Hier speichern wir Werte pro Metric
     for (const event of achievementEvents) {
         if (!valuesByMetric[event.metric]) {
@@ -17,13 +19,20 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
         valuesByMetric[event.metric].push(event);
     }
 
+    console.log('_________________');
+    console.log('02 EVALUATE - VALUES BY METRIC:', JSON.stringify(valuesByMetric));
+    console.log('_________________');
+
     const resultObject: Record<string, number | string | boolean> = {};
 
     for (const key in dataAggregation) {
-        // eslint-disable-next-line no-prototype-builtins
-        if (dataAggregation.hasOwnProperty(key)) {
+        console.log('_________________');
+        console.log('0000 EVALUATE - KEY DATA AGGREGATION:', key, JSON.stringify(dataAggregation), dataAggregation[key]);
+        console.log('_________________');
+
+        if (dataAggregation[key]) {
             const dataAggregationObject = dataAggregation[key];
-            const metricId = dataAggregationObject.metricId;
+            const metricId = dataAggregationObject.metric;
 
             const bucketCreator = dataAggregationObject.createBuckets || 'default';
             const bucketAggregator = dataAggregationObject.bucketAggregator || 'count';
@@ -37,34 +46,51 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
                 const bucketAggregatorFunction = aggregators[bucketAggregator].function;
                 const aggFunction = aggregators[aggregator].function;
 
-                // TODO - how do we pass relation to the bucket creator
-                const buckets = (await bucketCreatorFunction(valuesForMetric[0].relation)) || [];
+                const buckets = await bucketCreatorFunction(valuesForMetric[0].relation);
                 const bucketEvents = createBucketEvents(valuesForMetric, buckets);
 
-                // TODO: events should be sorted by start date asc
+                console.log('_________________');
+                console.log('03 EVALUATE - BUCKET EVENTS:', JSON.stringify(bucketEvents));
+                console.log('_________________');
+
                 const bucketAggr = bucketEvents.map(
                     (bucketEvent): BucketEventsWithAggr => ({
                         ...bucketEvent,
                         aggregation: bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)),
                     })
                 );
-                // TODO: buckets should be sorted by start date asc
                 const value = aggFunction(bucketAggr.map((bucket) => bucket.aggregation));
                 resultObject[key] = value;
             }
         }
     }
 
-    const evaluate = swan.parse(condition);
-    const value = await evaluate(resultObject);
+    console.log('_________________');
+    console.log('04 EVALUATE - CONDITION:', condition);
+    console.log('_________________');
 
-    return null;
+    const evaluate = swan.parse(condition);
+    console.log('_________________');
+    console.log('_________________');
+    const value: boolean = await evaluate(resultObject);
+
+    console.log('_________________');
+    console.log('06 EVALUATE - VALUE:', value);
+    console.log('_________________');
+
+    return value;
 }
 
 export function createBucketEvents(events: Achievement_event[], buckets: Bucket[]): BucketEvents[] {
     // If there a no buckets, we are just creating one bucket for each event
     if (buckets.length === 0) {
-        return events.map((event) => ({
+        const sortedEvents = events.sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
+
+        console.log('_________________');
+        console.log('CREATE BUCKETS - SORTED:', JSON.stringify(sortedEvents));
+        console.log('_________________');
+
+        return sortedEvents.map((event) => ({
             startTime: event.createdAt!,
             endTime: event.createdAt!,
             events: [event],

@@ -25,6 +25,17 @@ const batchOfMetrics = [
     createMetric('student_onboarding_registered', ['student_registration_started'], (context) => {
         return 1;
     }),
+    createMetric('onboarding_registrated', ['joined_meeting'], () => {
+        return 1;
+    }),
+    createMetric('onboarding_verified', ['joined_meeting'], () => {
+        return 1;
+    }),
+    createMetric('onboarding_appointment_booked', ['joined_meeting'], () => {
+        return 1;
+    }),
 ];
 
-registerAllMetrics(batchOfMetrics);
+export function addMetrics() {
+    registerAllMetrics(batchOfMetrics);
+}

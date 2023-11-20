@@ -5,10 +5,11 @@ import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
 import { Achievement_template } from '../../graphql/generated';
-import { doesTemplateExistForAction, getAchievementTemplates, getTemplatesByAction } from './template';
+import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
 import { ConditionDataAggregations, EventValue, Metric } from './types';
 import { createUserAchievement } from './create';
+import { addMetrics } from './metric';
 
 const logger = getLogger('Achievement');
 
@@ -26,9 +27,14 @@ export type Achievement_Event = {
     relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
 };
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
-    const templateExists = await doesTemplateExistForAction(actionId);
-    // check if action triggers achievement
-    if (!templateExists) {
+    const templates = await getTemplatesByAction(actionId);
+
+    console.log('_________________');
+    console.log('ACTION TAKEN - TEMPLATES:', JSON.stringify(templates));
+    console.log('_________________');
+
+    // check if action triggers an achievement
+    if (templates.length === 0) {
         logger.debug(`No achievement found for action '${actionId}'`);
         return;
     }
@@ -39,16 +45,20 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         user: user,
         context,
     };
+    context.weeks;
 
     await trackEvent(event, context);
-    const userAchievement = createUserAchievement(actionId, user.userID, context);
-    await checkAwardAchievement(context, event);
+    await checkAndCreateAchievement(templates, user.userID, context);
 
     return null;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: SpecificNotificationContext<ID>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
+
+    console.log('_________________');
+    console.log('TRACK EVENT - METRICS FOR EVENT:', JSON.stringify(metricsForEvent));
+    console.log('_________________');
 
     if (!metricsForEvent) {
         logger.debug(`Can't track event, because no metrics found for action '${event.actionId}'`);
@@ -65,7 +75,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
                 value: value,
                 action: event.actionId,
                 userId: event.user.userID,
-                // TODO - get relation
+                // TODO - get relation OR get relationId from context?
                 relation: event.context.relationId ?? '',
             },
         });
@@ -74,30 +84,22 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function getAchievementForMetric(metric: Metric): Promise<Readonly<Achievement_template>[] | undefined> {
-    const templates = await getAchievementTemplates();
-    return templates.get(metric.metricName);
-}
-
-async function checkAwardAchievement<ID extends ActionID>(context: NotificationContext, event: ActionEvent<ID>) {
-    const metricsForEvent = getMetricsByAction(event.actionId);
-    for (const metric of metricsForEvent) {
-        const achievements = await getAchievementForMetric(metric);
-        for (const achievement of achievements) {
-            if (achievement) {
-                await isAchievementConditionMet(achievement, context);
-                // TODO - for sequential steps we have to copy the next step if the step before is achieved
-            } else {
-                console.log(`No template found for metric '${metric.metricName}'`);
+async function checkAndCreateAchievement<ID extends ActionID>(templates: Achievement_template[], userId: string, context: SpecificNotificationContext<ID>) {
+    for (const achievement of templates) {
+        if (achievement) {
+            const isMet = await isAchievementConditionMet(achievement, context);
+            if (isMet) {
+                await createUserAchievement(templates, userId, context);
             }
         }
     }
 }
 
 async function isAchievementConditionMet(achievement: Achievement_template, context: NotificationContext) {
-    const { condition, conditionDataAggregations } = achievement;
+    const { condition, conditionDataAggregations, metrics } = achievement;
     if (!condition) {
         return;
     }
-    await evaluateAchievement(achievement.condition, conditionDataAggregations as ConditionDataAggregations, context);
+    const conditionIsMet = await evaluateAchievement(achievement.condition, conditionDataAggregations as ConditionDataAggregations, metrics);
+    return conditionIsMet;
 }

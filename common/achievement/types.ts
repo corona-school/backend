@@ -12,7 +12,7 @@ export type Metric = {
 
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
-export type EventValue = number | string | boolean;
+export type EventValue = number[] | Achievement_event[];
 
 // A bucket is seen as for a period of time
 export interface Bucket {
@@ -24,22 +24,22 @@ export interface BucketEvents extends Bucket {
     events: Achievement_event[];
 }
 export interface BucketEventsWithAggr extends BucketEvents {
-    aggregation: EventValue;
+    aggregation: number;
 }
 
-type BucketFormulaFunction = (relation?: string) => Bucket[] | Promise<Bucket[]>;
+type BucketFormulaFunction = (relation?: string) => Promise<Bucket[]>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
 };
 
 export type AggregatorFunction = {
-    function: (elements: EventValue[]) => number;
+    function: (elements: number[]) => number;
 };
 
 export type ConditionDataAggregations = {
     [key: string]: {
-        metricId: number;
+        metric: string;
         aggregator: string;
         // These two are used to first create all the needed buckets and then aggregate the events that fall into these
         // Default: count
