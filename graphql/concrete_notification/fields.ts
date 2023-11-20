@@ -8,6 +8,9 @@ import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { getMessage } from '../../common/notification/messages';
 import { ConcreteNotificationState } from '../../common/notification/types';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger('Concrete Notifications');
 
 @ObjectType()
 class Campaign {
@@ -62,14 +65,18 @@ export class ExtendedFieldsConcreteNotificationResolver {
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { sample_context: { not: undefined } },
+            where: { sample_context: { not: { equals: null } } },
         });
+
+        logger.info(`Found Campaign Mails`, { campaignMails });
 
         const aggregated = await prisma.concrete_notification.groupBy({
             _count: true,
             by: ['notificationID', 'contextID', 'state'],
             where: { notificationID: { in: campaignMails.map((it) => it.id) } },
         });
+
+        logger.info(`Got aggregated results per campaign`, { aggregated });
 
         const byCampaign: { [key: string]: Campaign } = {};
 
