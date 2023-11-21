@@ -346,6 +346,8 @@ model lecture {
   student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
   match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
   course_attendance_log course_attendance_log[]
+  // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
+  override_meeting_link String?
 }
 
 // The Transaction Log is supposed to store a history of business transactions for a user,
