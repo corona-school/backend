@@ -82,4 +82,13 @@ export class MutateUserResolver {
         });
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async joinedMatchMeeting(@Ctx() context: GraphQLContext, matchId: number) {
+        await Notification.actionTaken(context.user, 'joined_match_meeting', {
+            matchId: String(matchId),
+        });
+        return true;
+    }
 }

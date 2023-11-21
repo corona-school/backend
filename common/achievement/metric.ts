@@ -34,6 +34,9 @@ const batchOfMetrics = [
     createMetric('onboarding_appointment_booked', ['joined_meeting'], () => {
         return 1;
     }),
+    createMetric('student_performed_match_appointment', ['joined_match_meeting'], () => {
+        return 1;
+    }),
 ];
 
 export function addMetrics() {

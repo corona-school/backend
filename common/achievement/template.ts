@@ -7,57 +7,54 @@ import { getMetricsByAction } from './util';
 
 const logger = getLogger('Achievement Template');
 
-type AchievementTemplatesByMetric = Map<string, Readonly<Achievement_template>[]>;
-// TODO - achievement templates by metric, by group
-let achievementTemplatesByMetric: Promise<AchievementTemplatesByMetric>;
-export const achievementsByGroup: Map<string, Readonly<Achievement_template>[]> = new Map();
+export enum TemplateSelectEnum {
+    BY_GROUP = 'group',
+    BY_METRIC = 'metrics',
+}
 
-function getAchievementTemplates(): Promise<AchievementTemplatesByMetric> {
-    if (achievementTemplatesByMetric === undefined) {
-        achievementTemplatesByMetric = (async function () {
-            const result = new Map<string, Readonly<Achievement_template>[]>();
+// string == metricId, group
+const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
-            const achievementTemplates = await prisma.achievement_template.findMany({
-                where: { isActive: true },
-            });
+async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, Achievement_template[]>> {
+    if (achievementTemplates === undefined) {
+        const achievementTemplates = await prisma.achievement_template.findMany({
+            where: { isActive: true },
+        });
 
-            for (const template of achievementTemplates) {
-                for (const metric of template.metrics) {
-                    if (!result.has(metric)) {
-                        result.set(metric, []);
+        for (const template of achievementTemplates) {
+            const selection = template[select];
+
+            if (Array.isArray(selection)) {
+                for (const value of selection) {
+                    if (!achievementTemplates[select].has(value)) {
+                        achievementTemplates[select].set(value, []);
                     }
-
-                    result.get(metric).push(template);
+                    achievementTemplates[select][value].push(template);
                 }
-                for (const group of template.group) {
-                    if (!achievementsByGroup.has(group)) {
-                        achievementsByGroup.set(group, []);
-                    }
-                    achievementsByGroup.get(group).push(template);
+            } else {
+                if (!achievementTemplates[select].has(selection)) {
+                    achievementTemplates[select].set(selection, []);
                 }
+                achievementTemplates[select][selection].push(template);
             }
-
-            logger.debug(`Loaded ${achievementTemplates.length} achievement templates into the cache`);
-
-            return result;
-        })();
+        }
+        logger.debug(`Loaded ${achievementTemplates.length} achievement templates into the cache`);
+        return achievementTemplates[select];
     }
-
-    return achievementTemplatesByMetric;
 }
 
 async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
-    const templates = await getAchievementTemplates();
+    const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
     const metricsForAction = metricsByAction.get(actionId);
 
     console.log('_____________________');
-    console.log('GET TEMPLATE - TEMPLATES', templates);
+    console.log('GET TEMPLATE - TEMPLATES', templatesByMetric);
     console.log('GET TEMPLATE - Metrics for action', metricsForAction);
     console.log('_____________________');
 
     let templatesForAction: Achievement_template[];
     for (const metric of metricsForAction) {
-        templatesForAction = templates.get(metric.metricName);
+        templatesForAction = templatesByMetric[metric.metricName];
     }
 
     return templatesForAction;
@@ -65,7 +62,7 @@ async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
 
 async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {
     const metrics = getMetricsByAction(actionId);
-    const achievements = await getAchievementTemplates();
+    const achievements = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
     for (const metric of metrics) {
         if (achievements.has(metric.metricName)) {
             return true;
