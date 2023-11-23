@@ -404,7 +404,7 @@ export async function actionTaken<ID extends ActionID>(
 
     await Achievement.actionTaken(user, actionId, notificationContext);
 
-    // return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
+    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
 }
 
 /* actionTakenAt is the mighty variant of actionTaken:

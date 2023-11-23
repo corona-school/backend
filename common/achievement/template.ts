@@ -16,45 +16,42 @@ export enum TemplateSelectEnum {
 const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
 async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, Achievement_template[]>> {
-    if (achievementTemplates === undefined) {
-        const achievementTemplates = await prisma.achievement_template.findMany({
+    if (!achievementTemplates.has(select)) {
+        achievementTemplates.set(select, new Map());
+
+        const templatesFromDB = await prisma.achievement_template.findMany({
             where: { isActive: true },
         });
 
-        for (const template of achievementTemplates) {
+        for (const template of templatesFromDB) {
             const selection = template[select];
 
             if (Array.isArray(selection)) {
                 for (const value of selection) {
-                    if (!achievementTemplates[select].has(value)) {
-                        achievementTemplates[select].set(value, []);
+                    if (!achievementTemplates.get(select)?.has(value)) {
+                        achievementTemplates.get(select)?.set(value, []);
                     }
-                    achievementTemplates[select][value].push(template);
+                    achievementTemplates.get(select)?.get(value)?.push(template);
                 }
             } else {
-                if (!achievementTemplates[select].has(selection)) {
-                    achievementTemplates[select].set(selection, []);
+                if (!achievementTemplates.get(select)?.has(selection)) {
+                    achievementTemplates.get(select)?.set(selection, []);
                 }
-                achievementTemplates[select][selection].push(template);
+                achievementTemplates.get(select)?.get(selection)?.push(template);
             }
         }
-        logger.debug(`Loaded ${achievementTemplates.length} achievement templates into the cache`);
-        return achievementTemplates[select];
+        logger.debug(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
     }
+    return achievementTemplates.get(select);
 }
 
 async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
     const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
     const metricsForAction = metricsByAction.get(actionId);
 
-    console.log('_____________________');
-    console.log('GET TEMPLATE - TEMPLATES', templatesByMetric);
-    console.log('GET TEMPLATE - Metrics for action', metricsForAction);
-    console.log('_____________________');
-
     let templatesForAction: Achievement_template[];
     for (const metric of metricsForAction) {
-        templatesForAction = templatesByMetric[metric.metricName];
+        templatesForAction = templatesByMetric.get(metric.metricName);
     }
 
     return templatesForAction;
