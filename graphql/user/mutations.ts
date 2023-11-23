@@ -74,12 +74,45 @@ export class MutateUserResolver {
         return true;
     }
 
+    // ! Achievement Test Mutations - Just for trigger achievements
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async joinedMeeting(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'joined_meeting', {
-            relationId: 'match/2',
-        });
+        await Notification.actionTaken(context.user, 'joined_meeting', {});
+        return true;
+    }
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async requestToken(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'requestedToken', {});
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async verifiedEmail(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'user_registration_verified_email', {});
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async appointmentBooked(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'calendly_appointment_booked', {});
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async screenedSucces(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'tutor_screening_success', {});
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async cocSuccess(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'student_coc_updated', {});
         return true;
     }
 
