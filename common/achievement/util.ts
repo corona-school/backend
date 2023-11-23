@@ -2,7 +2,24 @@ import { ActionID } from '../notification/types';
 import { metricsByAction } from './metrics';
 import { Metric } from './types';
 import { prisma } from '../prisma';
-import { SpecificNotificationContext } from '../notification/actions';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('Gamification');
+export function isGamificationFeatureActive(): boolean {
+    const isActive: boolean = JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
+
+    if (!isActive) {
+        logger.warn('Gamification is deactivated');
+    }
+
+    return isActive;
+}
+
+export function assureGamificationFeatureActive() {
+    if (!isGamificationFeatureActive()) {
+        throw new Error(`Gamification is deactivated`);
+    }
+}
 
 export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
     return metricsByAction.get(actionId) || [];
