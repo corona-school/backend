@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { getMatch, getSubcourse } from '../../../graphql/util';
-import { getAllConversations, markConversationAsReadOnly, sendSystemMessage, updateConversation } from '../../../common/chat';
+import { ConversationDirectionEnum, getAllConversations, markConversationAsReadOnly, sendSystemMessage, updateConversation } from '../../../common/chat';
 import { getLogger } from '../../../common/logger/logger';
 import { Lecture } from '../../../graphql/generated';
 import { FinishedReason, SystemMessage, TJConversation } from '../../../common/chat/types';
@@ -63,7 +63,7 @@ async function finishConversation(convo: conversationsToDeactivate, finishReason
     logger.info('Mark conversation as readonly', { conversationId: convo.id, conversationType: convo.conversationType });
 }
 
-async function paginateConversations(orderDirection: 'ASC' | 'DESC') {
+async function paginateConversations(orderDirection: ConversationDirectionEnum) {
     let startingAfter: string = undefined;
     const conversationsToFlag: conversationsToDeactivate[] = [];
 
@@ -125,7 +125,7 @@ async function paginateConversations(orderDirection: 'ASC' | 'DESC') {
 }
 
 export default async function flagInactiveConversationsAsReadonly() {
-    const conversationsToFlag = await paginateConversations('ASC');
+    const conversationsToFlag = await paginateConversations(ConversationDirectionEnum.ASC);
 
     if (conversationsToFlag.length > 0) {
         for (const convo of conversationsToFlag) {

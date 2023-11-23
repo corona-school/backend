@@ -15,6 +15,11 @@ const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
+
+export enum ConversationDirectionEnum {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -86,7 +91,7 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-const getAllConversations = async (direction: 'ASC' | 'DESC' = 'ASC', startingAfter?: string): Promise<AllConversations> => {
+const getAllConversations = async (direction: ConversationDirectionEnum = ConversationDirectionEnum.ASC, startingAfter?: string): Promise<AllConversations> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
     const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}`;
