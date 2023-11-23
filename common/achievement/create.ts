@@ -43,8 +43,9 @@ async function createSequentialAchievement(templateToCreate: Achievement_templat
         orderBy: { template: { groupOrder: 'desc' } },
     });
 
-    const lastStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder : 0;
-    const nextStepIndex = lastStepIndex + 1;
+    // const lastStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder : 0;
+    // const nextStepIndex = lastStepIndex + 1;
+    const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder : 1;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
     if (templatesForGroup) {
@@ -56,7 +57,7 @@ async function createSequentialAchievement(templateToCreate: Achievement_templat
                 userId: userId,
                 group: nextStepTemplate.group,
                 groupOrder: nextStepTemplate.groupOrder,
-                context: JSON.stringify(context ? context : {}),
+                context: context ? JSON.stringify(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
             },
             select: { userId: true, context: true, template: true },
