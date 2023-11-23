@@ -24,6 +24,7 @@ function registerMetric(metric: Metric) {
 }
 
 export function registerAllMetrics(metrics: Metric[]) {
+    console.log('REGISTER METRICS', metrics);
     metrics.forEach((metric) => {
         const { metricName } = metric;
         if (metricExists(metricName)) {

@@ -3,46 +3,65 @@ import { getLogger } from '../logger/logger';
 import { ActionID } from '../notification/actions';
 import { prisma } from '../prisma';
 import { metricsByAction } from './metrics';
-import { Metric } from './types';
+import { getMetricsByAction } from './util';
 
 const logger = getLogger('Achievement Template');
 
-type AchievementTemplatesMap = Map<string, Readonly<Achievement_template>[]>;
-let _achievementTemplates: Promise<AchievementTemplatesMap>;
+export enum TemplateSelectEnum {
+    BY_GROUP = 'group',
+    BY_METRIC = 'metrics',
+}
 
-function getAchievementTemplates(): Promise<AchievementTemplatesMap> {
-    if (_achievementTemplates === undefined) {
-        _achievementTemplates = (async function () {
-            const result = new Map<string, Readonly<Achievement_template>[]>();
+// string == metricId, group
+const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
-            const achievementTemplates = await prisma.achievement_template.findMany({
-                where: { isActive: true },
-            });
+async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, Achievement_template[]>> {
+    if (!achievementTemplates.has(select)) {
+        achievementTemplates.set(select, new Map());
 
-            for (const template of achievementTemplates) {
-                for (const metric of template.metrics) {
-                    if (!result.has(metric)) {
-                        result.set(metric, []);
+        const templatesFromDB = await prisma.achievement_template.findMany({
+            where: { isActive: true },
+        });
+
+        for (const template of templatesFromDB) {
+            const selection = template[select];
+
+            if (Array.isArray(selection)) {
+                for (const value of selection) {
+                    if (!achievementTemplates.get(select)?.has(value)) {
+                        achievementTemplates.get(select)?.set(value, []);
                     }
-
-                    result.get(metric).push(template);
+                    achievementTemplates.get(select)?.get(value)?.push(template);
                 }
+            } else {
+                if (!achievementTemplates.get(select)?.has(selection)) {
+                    achievementTemplates.get(select)?.set(selection, []);
+                }
+                achievementTemplates.get(select)?.get(selection)?.push(template);
             }
+        }
+        logger.debug(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
+    }
+    return achievementTemplates.get(select);
+}
 
-            logger.debug(`Loaded ${achievementTemplates.length} achievement templates into the cache`);
+async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
+    const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
+    const metricsForAction = metricsByAction.get(actionId);
 
-            return result;
-        })();
+    let templatesForAction: Achievement_template[];
+    for (const metric of metricsForAction) {
+        templatesForAction = templatesByMetric.get(metric.metricName);
     }
 
-    return _achievementTemplates;
+    return templatesForAction;
 }
 
 async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {
     const metrics = getMetricsByAction(actionId);
-    const templates = await getAchievementTemplates();
+    const achievements = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
     for (const metric of metrics) {
-        if (templates.has(metric.metricName)) {
+        if (achievements.has(metric.metricName)) {
             return true;
         }
     }
@@ -50,12 +69,8 @@ async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Pr
     return false;
 }
 
-function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
-    return metricsByAction.get(actionId) || [];
-}
-
 function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean {
     return metricsByAction.has(actionId);
 }
 
-export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction };
+export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction, getTemplatesByAction };

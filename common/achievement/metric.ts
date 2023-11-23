@@ -22,9 +22,24 @@ function createMetric<T extends ActionID[], K extends ContextForActions<T>>(metr
 }
 
 const batchOfMetrics = [
-    createMetric('student_onboarding_registered', ['student_registration_started'], (context) => {
+    createMetric('onboarding_registered', ['requestedToken'], () => {
         return 1;
     }),
+    createMetric('onboarding_verified_email', ['user_registration_verified_email'], () => {
+        return 1;
+    }),
+    createMetric('onboarding_appointment_booked', ['calendly_appointment_booked'], () => {
+        return 1;
+    }),
+    createMetric('onboarding_screening_success', ['tutor_screening_success', 'instructor_screening_success'], () => {
+        return 1;
+    }),
+    createMetric('onboarding_coc_success', ['student_coc_updated'], () => {
+        return 1;
+    }),
+    createMetric('student_performed_match_appointment', ['joined_match_meeting'], () => {
 ];
 
-registerAllMetrics(batchOfMetrics);
+export function addMetrics() {
+    registerAllMetrics(batchOfMetrics);
+}

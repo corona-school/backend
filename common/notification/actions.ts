@@ -614,6 +614,36 @@ const _notificationActions = {
         description: 'Screener suggests a Ressource for a User',
         sampleContext: {},
     },
+
+    // ACHIEVEMENT TEST ACTIONS
+
+    /* ONBOARDING */
+    requestedToken: {
+        description: 'User joined meeting',
+        sampleContext: {},
+    },
+    calendly_appointment_booked: {
+        description: 'User joined meeting',
+        sampleContext: {},
+    },
+
+    /* MEETINGS */
+    joined_meeting: {
+        description: 'User joined meeting',
+        sampleContext: {},
+    },
+    joined_match_meeting: {
+        description: 'User joined a match meeting',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    joined_subcourse_meeting: {
+        description: 'User joined meeting',
+        sampleContext: {
+            subcourseId: '1',
+        },
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
