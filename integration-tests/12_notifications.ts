@@ -466,6 +466,46 @@ void test('Notification sent via Mailjet', async () => {
     assert.strictEqual(sent2, 2, 'Expected Notification to be sent');
 });
 
+void test('Notification sent via Mailjet to overrideEmail', async () => {
+    const { pupil, client: pupilClient } = await pupilOne;
+
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateNotification {
+        notificationCreate(notification: {
+            description: "MOCK Campaign1"
+            active: false
+            recipient: 0
+            mailjetTemplateId: 42
+            onActions: { set: ["TEST"]}
+            cancelledOnAction: { set: []}
+            type: legacy
+        }) { id }
+    }`);
+
+    await addMockNotification(id);
+
+    expectFetch({
+        url: 'https://api.mailjet.com/v3.1/send',
+        method: 'POST',
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"override@example.org"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"a":"a","uniqueId":"2","overrideReceiverEmail":"override@example.org","user":{"userID":"${
+            pupil.userID
+        }","firstname":"${pupil.firstname}","lastname":"${pupil.lastname}","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":${
+            pupil.pupil.id
+        },"fullName":"${pupil.firstname} ${
+            pupil.lastname
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
+        responseStatus: 200,
+        response: '{ "Messages": [{ "Status": "success" }]}',
+    });
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2", overrideReceiverEmail: "override@example.org" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
+    }`);
+});
+
 // ---------------------------- Campaigns ------------------------------------
 
 void test('Create Campaign', async () => {
