@@ -255,7 +255,9 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
-const allowedExtensions = ['uniqueId', 'campaign', 'overrideReceiverEmail', 'overrideType'];
+// overrideType and overrideMailjetTemplateId are not listed here, they need to be specified
+// in the Notification.sample_context to be overridable
+const allowedExtensions = ['uniqueId', 'campaign', 'overrideReceiverEmail'];
 
 // ATTENTION: This currently allows very powerful extensions needed for Campaign Notifications
 // This should only be used to validate contexts from trusted sources (Admins), for other users

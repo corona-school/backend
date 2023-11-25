@@ -16,9 +16,38 @@ For each notification and reminder sent out to a user, a **concrete notification
 Optionally a notification can trigger a **notification hook** when it is sent out. This makes sense for notifications which inform the user about changes to their account (e.g. that it is deactivated). The hook is a function in the backend which is then executed.
 Thus by cancelling the notification or rescheduling it, one can influence whether and when the hook is run.
 
-The Notification System can also be used to run **Campaigns**. A campaign is uniquely identified by a notification and a corresponding context (identified by the context's uniqueId, known as the contextID).
-To create a campaign for a notification, one only has to create a concrete notification for every user that is supposed to receive the campaign. To be able to double check the campaign before sending, the concrete notifications are created in draft state and can then be released.
-All notifications that can be used for campaigns should be of category 'campaign' so that they show up properly in the Retool, they should have an 'example_context' for the Retool UI to fill the context to work correctly, and the context should contain a 'campaign' field, which will be used in Mailjet to group statistics for the campaign together.
+## Campaigns
+
+The Notification System can also be used to run Campaigns, although it was not initially designed for it - thus campaigns clash a bit of the design of the notification system.
+
+Usually for each and every campaign one would have to create a separate Notification, however there are also "repetitive campaigns" (i.e. course promotions) where only small text parts change. We model this by treating the notification as the "campaign template" and not the "campaign" itself (Notification ("campaign template") -> "campaign" -> concrete notification). As we don't really have a good place to store campaign information, we write them into the concrete notifications instead, and reuse the contextID (uniqueId) as the campaign identifier:
+
+**(Campaign) Notifications**
+
+| ID  | description     | mailjetTemplateId | type     | sample_context                 |
+| --- | --------------- | ----------------- | -------- | ------------------------------ |
+| 1   | Campaign        | NULL              | campaign | { overrideMailjetTemplate: 1 } |
+| 2   | Course Campaign | 10                | course   | { courseName: "Beispielkurs" } |
+
+**Concrete Notification**
+
+| NotificationID | UserID    | ContextID | Context                                             |
+| -------------- | --------- | --------- | --------------------------------------------------- |
+| 1              | pupil/1   | Camp. 1   | { campaign: "Camp. 1", overrideMailjetTemplate: 1 } |
+| 1              | pupil/2   | Camp. 1   | { campaign: "Camp. 1", overrideMailjetTemplate: 1 } |
+| 1              | student/1 | Camp. 2   | { campaign: "Camp. 1", overrideMailjetTemplate: 2 } |
+| 1              | student/2 | Camp. 2   | { campaign: "Camp. 1", overrideMailjetTemplate: 2 } |
+| 2              | student/1 | Camp. 3   | { campaign: "Camp. 1", courseName: "Kurs 10" }      |
+
+For specialized campaigns one can write `overrideType` and `overrideMailjetTemplate` into the context, to specify different mailjet templates and types per campaign (for "non generic campaigns"). For repetitive campaigns, one can just pass in specific information via the context, that can be used during template rendering.
+
+Usually a Notification is triggered via a Backend Action, and thus the context is known from the code. For campaigns however,
+the context is typed in by the user creating the campaign, thus we need some way to determine all the context fields that are needed.
+This is done by storing a `sample_context` in the Notification, which can be used to validate templates against it, and on the other hand can be used to validate contexts specified when creating a campaign. As this is needed for every campaign, a Notification is a campaign notification if it has a sample_context.
+
+To send out a campaign, one has to pick a campaign notification, create a context that has all the fields of the sample context as well as a uniqueId for the specific campaign, and then create a concrete notification for every user that is supposed to get the notification. These concrete notifications are first created in `DRAFT` state, then when a campaign is released they are moved to `DELAYED` state - and are just picked up like reminders by the background job. To cancel a campaign, all the concrete notificiations are moved to `ACTION_TAKEN` state. After three months, they are archived like other notifications.
+
+The notification system background job can send about 1000 mails per minute (mainly limited by the Mailjet API). As the background job is triggered every 10 minutes, we should avoid scheduling more than 10.000 notifications at a time. To prevent that, and to prevent a thundering herd of users clicking on links in mails (although that has not happened so far), when creating the concrete notifications they are distributed over a period of time, so that they are continously picked up by the background job.
 
 ## How do I create a new Notification / Reminder?
 
@@ -44,7 +73,8 @@ Q: What if a Mail cannot be delivered to the user?
 A: In the future, this will be indicated through the concrete notification being moved into "error" state
 
 Q: What if the template ID has a typo / the Template has syntax errors?
-A: Nothing, we raised this issues to Mailjet and this will hopefully be fixed on their end
+A: Sometimes nothing, we raised this issues to Mailjet and this will hopefully be fixed on their end.
+Usually we do get an email though to `backend@` for every failed render.
 
 Q: What if the backend crashes while sending out emails?
 A: Then "pending" concrete notifications will hang around in the database. We might be able to automatically recover from this in the future
