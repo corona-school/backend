@@ -582,6 +582,9 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
     return requestsToSend;
 }
 
+// As Screenings are held by the Lern-Fair Team, prevent scheduling to many screenings at once
+const MAX_SCREENINGS_PER_DAY = 10;
+
 export async function screeningInvitationsToSend(pool: MatchPool) {
     const offers = await getStudentOfferCount(pool, []);
     const requests = await getPupilDemandCount(pool, []);
@@ -591,6 +594,12 @@ export async function screeningInvitationsToSend(pool: MatchPool) {
 
     const screeningPending = await getPupilDemandCount(pool, ['pupil-screening-pending']);
     const requestsToSend = Math.max(0, screeningsNeeded - screeningPending);
+
+    // The screening invitation job currently runs every three days
+    const requestsToSendLimited = Math.min(requestsToSend, MAX_SCREENINGS_PER_DAY * 3);
+
+    // TODO: We could differentiate the screening success rate into the "no-show rate", and
+    // add the now show rate here
 
     return requestsToSend;
 }
