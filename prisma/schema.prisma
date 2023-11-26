@@ -1007,6 +1007,7 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestSent
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
+  skippedCoC
 }
 
 // DEPRECATED

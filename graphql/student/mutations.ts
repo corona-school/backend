@@ -324,7 +324,12 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
+    async studentInstructorScreeningCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('studentId') studentId: number,
+        @Arg('screening') screening: ScreeningInput,
+        @Arg('skipCoC', { nullable: true }) skipCoC?: boolean
+    ) {
         const student = await getStudent(studentId);
 
         if (!student.isInstructor) {
@@ -333,7 +338,7 @@ export class MutateStudentResolver {
         }
 
         const screener = await getSessionScreener(context);
-        await addInstructorScreening(screener, student, screening);
+        await addInstructorScreening(screener, student, screening, !!skipCoC);
         return true;
     }
 
