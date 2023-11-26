@@ -34,12 +34,16 @@ export interface MatchPool {
     //  "confirmation-unknown" -> pupils who have not been asked for their interest
 
     // if present, the matching is run automatically on a daily basis if the criteria are matched
+    // Not used yet
     readonly automatic?: {
         readonly minStudents: number;
         readonly minPupils: number;
     };
-    readonly confirmInterest?: boolean;
-    readonly needsScreening?: boolean;
+
+    // If set, pupils are automatically invited for screening or interest confirmation
+    // Otherwise this can be done manually via GraphQL
+    readonly autoInviteForInterestConfirmation?: boolean;
+    readonly autoInviteForScreening?: boolean;
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -238,7 +242,7 @@ export const TEST_POOL = {
 const _pools = [
     {
         name: 'lern-fair-now',
-        confirmInterest: false,
+        autoInviteForScreening: false, // TODO: Turn on
         toggles: [...INTEREST_CONFIRMATION_TOGGLES, ...PUPIL_SCREENING_TOGGLES],
 
         pupilsToMatch: (toggles: (InterestConfirmationToggle | PupilScreeningToggle)[]): Prisma.pupilWhereInput => {
@@ -521,6 +525,15 @@ export async function getInterestConfirmationRate() {
     return confirmedInterestConfirmations / totalInterestConfirmations || 0;
 }
 
+export async function getScreeningSuccessRate() {
+    const totalScreenings = await prisma.pupil_screening.count({});
+    const successfulScreenings = await prisma.pupil_screening.count({
+        where: { status: 'success' },
+    });
+
+    return successfulScreenings / totalScreenings || 0;
+}
+
 // Predicted Pupil Match Time in Days
 // As we do not collect the actual wait time, this is only a very rough estimation
 export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMonth: number): Promise<number> {
@@ -534,15 +547,15 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
     if (pool.toggles.includes('confirmation-pending')) {
-        const futureConfirmations = pool.confirmInterest ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const futureConfirmations = pool.autoInviteForInterestConfirmation ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
         const pendingConfirmations = await getPupilCount(pool, ['confirmation-pending']);
         backlog += (futureConfirmations + pendingConfirmations) * (await getInterestConfirmationRate());
     }
 
     if (pool.toggles.includes('pupil-screening-pending')) {
-        const futureScreenings = pool.needsScreening ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const futureScreenings = pool.autoInviteForScreening ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
         const pendingScreenings = await getPupilCount(pool, ['pupil-screening-pending']);
-        backlog += (futureScreenings + pendingScreenings) * 1; // TODO: Calculate Screening success rate once we have enough data
+        backlog += (futureScreenings + pendingScreenings) * (await getScreeningSuccessRate());
     }
 
     return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
@@ -565,6 +578,19 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
 
     const confirmationsPending = await getPupilDemandCount(pool, ['confirmation-pending']);
     const requestsToSend = Math.max(0, confirmationsNeeded - confirmationsPending);
+
+    return requestsToSend;
+}
+
+export async function screeningInvitationsToSend(pool: MatchPool) {
+    const offers = await getStudentOfferCount(pool, []);
+    const requests = await getPupilDemandCount(pool, []);
+    const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
+
+    const screeningsNeeded = Math.floor(openOffers / ((await getScreeningSuccessRate()) || 1));
+
+    const screeningPending = await getPupilDemandCount(pool, ['pupil-screening-pending']);
+    const requestsToSend = Math.max(0, screeningsNeeded - screeningPending);
 
     return requestsToSend;
 }
@@ -610,9 +636,8 @@ export async function sendConfirmationRequests(pool: MatchPool) {
 }
 
 export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
-    if (!toSendCount) {
-        // TODO: Implement heuristics once we have enough data
-        throw new Error(`No heuristic yet to calculate the number of pupil screenings to send`);
+    if (toSendCount === undefined) {
+        toSendCount = await screeningInvitationsToSend(pool);
     }
 
     const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSendCount);
@@ -623,10 +648,11 @@ export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) 
 
 export async function runInterestConfirmations() {
     for (const pool of pools) {
-        if (pool.confirmInterest) {
+        if (pool.autoInviteForInterestConfirmation) {
             await sendConfirmationRequests(pool);
         }
-        if (pool.needsScreening) {
+
+        if (pool.autoInviteForScreening) {
             await addPupilScreenings(pool);
         }
     }
