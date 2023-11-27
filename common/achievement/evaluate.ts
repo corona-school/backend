@@ -77,14 +77,19 @@ const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketC
 };
 
 const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
-    const sortedEvents = events.sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
-
-    return sortedEvents.map((event) => ({
-        kind: 'time',
-        startTime: event.createdAt!,
-        endTime: event.createdAt!,
-        events: [event],
-    }));
+    const { buckets } = bucketConfig;
+    const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
+        const filteredEvents = events.filter((event) => {
+            return event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime;
+        });
+        return {
+            kind: bucket.kind,
+            startTime: bucket.startTime,
+            endTime: bucket.endTime,
+            events: filteredEvents,
+        };
+    });
+    return bucketsWithEvents;
 };
 
 const createFilterBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
@@ -92,6 +97,7 @@ const createFilterBuckets = (events: Achievement_event[], bucketConfig: BucketCo
     const filteredEvents = events.filter((event) => {
         return buckets.some((bucket) => bucket.actionName === event.action);
     });
+    // TODO - filter and sort events by actionName and put them in the right bucket
     return filteredEvents.map((event) => ({
         kind: 'filter',
         actionName: event.action,
