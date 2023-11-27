@@ -7,7 +7,7 @@ import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
 import { ActionEvent, ConditionDataAggregations, EventValue, UserAchievementContext, UserAchievementTemplate } from './types';
-import { createSequentialAchievement, getOrCreateUserAchievement } from './create';
+import { createUserAchievement, getOrCreateUserAchievement } from './create';
 
 const logger = getLogger('Achievement');
 
@@ -30,7 +30,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     for (const template of templatesForAction) {
         const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
-        await checkUserAchievement(userAchievement as UserAchievementTemplate, user.userID, context);
+        await checkUserAchievement(userAchievement as UserAchievementTemplate, context);
     }
 
     return null;
@@ -63,16 +63,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, userId: string, context: SpecificNotificationContext<ID>) {
+async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
     if (userAchievement) {
         const isConditionMet = await isAchievementConditionMet(userAchievement, context);
         if (isConditionMet) {
             const awardedAchievement = await awardUser(userAchievement.id);
-            // if a sequential achievement has been reached, we create the next step
-            if (userAchievement.template.type === 'SEQUENTIAL') {
-                const userAchievementContext: UserAchievementContext = {};
-                await createSequentialAchievement(awardedAchievement.template, userId, userAchievementContext);
-            }
+            const userAchievementContext: UserAchievementContext = {};
+            await createUserAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
         }
     }
 }
