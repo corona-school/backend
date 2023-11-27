@@ -1,3 +1,4 @@
+import { Achievement_event } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 
 // type ActionIDUnion<A extends ActionID[]> = A[number];
@@ -9,9 +10,8 @@ export type Metric = {
     formula: FormulaFunction<ActionID>;
 };
 
+export type EventValue = number[] | Achievement_event[];
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
-
-export type EventValue = number | string | boolean;
 
 // A bucket is seen as for a period of time
 export interface Bucket {
@@ -23,7 +23,7 @@ export interface BucketEvents extends Bucket {
     events: TrackEvent[];
 }
 export interface BucketEventsWithAggr extends BucketEvents {
-    aggregation: EventValue;
+    aggregation: number;
 }
 
 type BucketFormulaFunction = (relation: string) => Bucket[];
@@ -33,7 +33,7 @@ export type BucketFormula = {
 };
 
 export type AggregatorFunction = {
-    function: (elements: EventValue[]) => number;
+    function: (elements: EventValue) => number;
 };
 
 export type ConditionDataAggregations = {
