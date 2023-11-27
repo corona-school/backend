@@ -27,6 +27,20 @@ async function getOrCreateUserAchievement(template: Achievement_template, userId
 }
 
 async function createUserAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
+    switch (templateToCreate.type) {
+        case 'SEQUENTIAL':
+            return await createAchievement(templateToCreate, userId, context);
+        case 'TIERED':
+            return await createAchievement(templateToCreate, userId, context);
+        case 'STREAK':
+            // await createStreakAchievement(userAchievements[0], userId, context);
+            break;
+        default:
+            console.log('DEFAULT');
+    }
+}
+
+async function createAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: { template: { group: templateToCreate.group } },
@@ -53,4 +67,4 @@ async function createUserAchievement(templateToCreate: Achievement_template, use
     }
 }
 
-export { createUserAchievement, getOrCreateUserAchievement };
+export { createUserAchievement, getOrCreateUserAchievement, createAchievement };

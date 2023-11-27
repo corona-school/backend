@@ -116,11 +116,13 @@ export class MutateUserResolver {
         return true;
     }
 
+    // joined_match_meeting triggers a tiered achievement and therefore needs a relationId to be passed to create a filter bucket from
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async joinedMatchMeeting(@Ctx() context: GraphQLContext, matchId: number) {
         await Notification.actionTaken(context.user, 'joined_match_meeting', {
             matchId: String(matchId),
+            relationId: 'joined_match_meeting',
         });
         return true;
     }
