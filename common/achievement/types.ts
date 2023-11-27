@@ -55,7 +55,7 @@ export type BucketFormula = {
 };
 
 export type AggregatorFunction = {
-    function: (elements: number[]) => number;
+    function: (elements: BucketEvents[]) => number;
 };
 
 export type ConditionDataAggregations = {
@@ -81,6 +81,7 @@ export type UserAchievementTemplate = {
     userId: string;
     context: UserAchievementContext;
     template: Achievement_template;
+    recordValue?: number;
 };
 
 export type ActionEvent<ID extends ActionID> = {
@@ -103,4 +104,9 @@ export type AchievementToCheck = {
     achievedAt: Date;
     context: Prisma.JsonValue;
     template: Achievement_template;
+};
+
+export type EvaluationResult = {
+    conditionIsMet: boolean;
+    resultObject: Record<string, string | number | boolean>;
 };

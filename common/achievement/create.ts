@@ -10,7 +10,7 @@ async function doesUserAchievementAlreadyExist(templateId: number, userId: strin
             templateId,
             userId,
         },
-        select: { id: true, userId: true, context: true, template: true, achievedAt: true },
+        select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
     if (!userAchievement) {
         return false;
@@ -21,23 +21,9 @@ async function doesUserAchievementAlreadyExist(templateId: number, userId: strin
 async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context?: UserAchievementContext) {
     const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
     if (existingUserAchievement === false) {
-        return await createUserAchievement(template, userId, context);
+        return await createAchievement(template, userId, context);
     }
     return existingUserAchievement;
-}
-
-async function createUserAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
-    switch (templateToCreate.type) {
-        case 'SEQUENTIAL':
-            return await createAchievement(templateToCreate, userId, context);
-        case 'TIERED':
-            return await createAchievement(templateToCreate, userId, context);
-        case 'STREAK':
-            // await createStreakAchievement(userAchievements[0], userId, context);
-            break;
-        default:
-            console.log('DEFAULT');
-    }
 }
 
 async function createAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
@@ -61,10 +47,10 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
                 context: context ? JSON.stringify(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
             },
-            select: { id: true, userId: true, context: true, template: true, achievedAt: true },
+            select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });
         return createdUserAchievement;
     }
 }
 
-export { createUserAchievement, getOrCreateUserAchievement, createAchievement };
+export { getOrCreateUserAchievement, createAchievement };

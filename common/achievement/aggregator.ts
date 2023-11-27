@@ -1,4 +1,4 @@
-import { AggregatorFunction } from './types';
+import { AggregatorFunction, BucketEventsWithAggr } from './types';
 
 type Aggregator = Record<string, AggregatorFunction>;
 
@@ -6,8 +6,25 @@ type Aggregator = Record<string, AggregatorFunction>;
 
 export const aggregators: Aggregator = {
     count: {
-        function: (events): number => {
+        function: (buckets): number => {
+            const events = [];
+            for (const bucket of buckets) {
+                events.push(...bucket.events.map((event) => event.value));
+            }
             return events.length;
+        },
+    },
+    count_weeks: {
+        function: (buckets): number => {
+            let weeks = 0;
+            for (const bucket of buckets) {
+                if (bucket.events.length > 0) {
+                    weeks = weeks + 1;
+                } else {
+                    break;
+                }
+            }
+            return weeks;
         },
     },
 };
