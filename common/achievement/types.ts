@@ -58,6 +58,7 @@ export type UserAchievementContext = {
 export type UserAchievementTemplate = {
     id: number;
     userId: string;
+    achievedAt: Date;
     context: UserAchievementContext;
     template: Achievement_template;
 };

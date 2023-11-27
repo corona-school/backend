@@ -51,7 +51,7 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
     }
 
     const evaluate = swan.parse(condition);
-    const value: boolean = evaluate(resultObject);
+    const value: boolean = await evaluate(resultObject);
 
     return value;
 }
