@@ -11,9 +11,8 @@ export type Metric = {
     formula: FormulaFunction<ActionID>;
 };
 
-export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
-
 export type EventValue = number[] | Achievement_event[];
+export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
 // A bucket is seen as for a period of time
 export interface Bucket {
@@ -59,6 +58,7 @@ export type UserAchievementContext = {
 export type UserAchievementTemplate = {
     id: number;
     userId: string;
+    achievedAt: Date;
     context: UserAchievementContext;
     template: Achievement_template;
 };

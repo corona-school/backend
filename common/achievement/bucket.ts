@@ -28,17 +28,17 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             // TODO - where did we get the number of weeks
             const weeks = 5;
             const today = moment();
-            const bucekts: Bucket[] = [];
+            const buckets: Bucket[] = [];
 
             for (let i = 0; i < weeks; i++) {
                 const weeksBefore = today.clone().subtract(i, 'week');
-                bucekts.push({
+                buckets.push({
                     startTime: weeksBefore.startOf('week').toDate(),
                     endTime: weeksBefore.endOf('week').toDate(),
                 });
             }
 
-            return await bucekts;
+            return await buckets;
         },
     },
     by_months: {

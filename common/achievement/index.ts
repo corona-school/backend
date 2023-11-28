@@ -6,7 +6,7 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { ActionEvent, ConditionDataAggregations, EventValue, UserAchievementContext, UserAchievementTemplate } from './types';
+import { ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createSequentialAchievement, getOrCreateUserAchievement } from './create';
 
 const logger = getLogger('Achievement');
@@ -66,8 +66,10 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     if (userAchievement) {
         const isConditionMet = await isAchievementConditionMet(userAchievement, context);
         if (isConditionMet) {
-            const awardedAchievement = await awardUser(userAchievement.id);
-            // if a sequential achievement has been reached, we create the next step
+            let awardedAchievement: UserAchievementTemplate;
+            if (userAchievement.achievedAt === null) {
+                awardedAchievement = await awardUser(userAchievement.id, userId);
+            }
             if (userAchievement.template.type === 'SEQUENTIAL') {
                 const userAchievementContext: UserAchievementContext = {};
                 await createSequentialAchievement(awardedAchievement.template, userId, userAchievementContext);
@@ -76,11 +78,11 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     }
 }
 
-async function isAchievementConditionMet(achievement: UserAchievementTemplate, context: NotificationContext) {
+async function isAchievementConditionMet(userAchievement: UserAchievementTemplate, context: NotificationContext) {
     const {
         userId,
         template: { condition, conditionDataAggregations, metrics },
-    } = achievement;
+    } = userAchievement;
     if (!condition) {
         return;
     }
@@ -88,10 +90,18 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate, c
     return conditionIsMet;
 }
 
-async function awardUser(userAchievementId: number) {
-    return await prisma.user_achievement.update({
+async function awardUser(userAchievementId: number, userId: string) {
+    const date = new Date();
+    const achievedAt = date.toISOString();
+
+    if (!userAchievementId) {
+        logger.error(`User couldn't be awarded, because of missing user achievement ID.`);
+    }
+    const updatedUserAchievement = await prisma.user_achievement.update({
+        data: { achievedAt: achievedAt },
         where: { id: userAchievementId },
-        data: { achievedAt: new Date() },
-        select: { id: true, userId: true, context: true, template: true },
+        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
+
+    return updatedUserAchievement as UserAchievementTemplate;
 }
