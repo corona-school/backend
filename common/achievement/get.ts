@@ -23,24 +23,15 @@ const createFrontendAchievements = (groups: { [group: string]: User_achievement[
     const achievements: Achievement[] = [];
     for (const group in groups) {
         const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
+        const currentAchievementIndex = sortedGroupAchievements.findIndex((ua) => !ua.achievedAt) - 1;
         const state: achievement_state =
-            groups[group].length === 0
+            sortedGroupAchievements.length === 0
                 ? achievement_state.INACTIVE
-                : groups[group].length === groups[group].length
+                : typeof currentAchievementIndex !== 'number'
                 ? achievement_state.COMPLETED
                 : achievement_state.ACTIVE;
-        const newAchievement = groups[group].length === sortedGroupAchievements.length && !groups[group][groups[group].length - 1].isSeen;
+        const newAchievement = state === achievement_state.COMPLETED && !sortedGroupAchievements[currentAchievementIndex].isSeen;
 
-        const steps: Step[] = sortedGroupAchievements.map((achievement, index) => {
-            if (!achievement.template.stepName) {
-                return null;
-            }
-            const step: Step = {
-                description: achievement.template.stepName,
-                isActive: index === groups[group].length - 1,
-            };
-            return step;
-        });
         const currentAchievementTemplate = sortedGroupAchievements[0].template;
         const groupAchievement: Achievement = {
             name: currentAchievementTemplate.name,
@@ -51,13 +42,22 @@ const createFrontendAchievements = (groups: { [group: string]: User_achievement[
             actionType: currentAchievementTemplate.actionType as achievement_action_type_enum,
             achievementType: currentAchievementTemplate.type as achievement_type_enum,
             achievementState: state,
-            steps: currentAchievementTemplate.stepName ? steps : undefined,
+            steps: currentAchievementTemplate.stepName
+                ? sortedGroupAchievements.map((achievement, index) => {
+                      // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
+                      // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
+                      return {
+                          description: achievement.template.stepName,
+                          isActive: index === currentAchievementIndex,
+                      };
+                  })
+                : null,
             maxSteps: sortedGroupAchievements.length,
-            currentStep: groups[group].length,
+            currentStep: sortedGroupAchievements.length,
             newAchievement: newAchievement,
-            progressDescription: `Noch ${sortedGroupAchievements.length - groups[group].length} Schritte bis zum Abschluss`,
-            actionName: sortedGroupAchievements[groups[group].length - 1].template.actionName,
-            actionRedirectLink: sortedGroupAchievements[groups[group].length - 1].template.actionRedirectLink,
+            progressDescription: `Noch ${sortedGroupAchievements.length - sortedGroupAchievements.length} Schritte bis zum Abschluss`,
+            actionName: sortedGroupAchievements[sortedGroupAchievements.length - 1].template.actionName,
+            actionRedirectLink: sortedGroupAchievements[sortedGroupAchievements.length - 1].template.actionRedirectLink,
         };
         achievements.push(groupAchievement);
     }
