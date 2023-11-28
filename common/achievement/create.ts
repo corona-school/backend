@@ -36,9 +36,16 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
     const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder + 1 : 1;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
-    if (templatesForGroup) {
-        const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+    if (templatesForGroup && templatesForGroup.length <= nextStepIndex) {
+        const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
+        return createdUserAchievement;
+    }
+}
 
+async function createNextUserAchievement(templatesForGroup: Achievement_template[], nextStepIndex: number, userId: string, context: UserAchievementContext) {
+    const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+
+    if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {
                 userId: userId,
@@ -46,12 +53,14 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
                 groupOrder: nextStepTemplate.groupOrder,
                 context: context ? JSON.stringify(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
-                recordValue: templateToCreate.type === 'STREAK' ? 0 : null,
+                recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });
         return createdUserAchievement;
     }
+    const nextUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex + 1, userId, context);
+    return nextUserAchievement;
 }
 
 export { getOrCreateUserAchievement, createAchievement };
