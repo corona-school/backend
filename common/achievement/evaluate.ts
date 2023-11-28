@@ -101,7 +101,6 @@ const createFilterBuckets = (events: Achievement_event[], bucketConfig: BucketCo
     const filteredEvents = events.filter((event) => {
         return buckets.some((bucket) => bucket.actionName === event.action);
     });
-    // TODO - filter and sort events by actionName and put them in the right bucket
     return filteredEvents.map((event) => ({
         kind: 'filter',
         actionName: event.action,
