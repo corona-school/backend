@@ -1,4 +1,3 @@
-import { Achievement_event } from '../../graphql/generated';
 import { AggregatorFunction } from './types';
 
 type Aggregator = Record<string, AggregatorFunction>;
@@ -7,13 +6,36 @@ type Aggregator = Record<string, AggregatorFunction>;
 
 export const aggregators: Aggregator = {
     sum: {
-        function: (values: number[]): number => {
+        function: (buckets): number => {
+            const values = [];
+            for (const bucket of buckets) {
+                if (bucket.events.length > 0) {
+                    values.push(bucket.events.reduce((total, event) => total + event.value, 0));
+                }
+            }
             return values.reduce((total, num) => total + num, 0);
         },
     },
     count: {
-        function: (events: number[]): number => {
+        function: (buckets): number => {
+            const events = [];
+            for (const bucket of buckets) {
+                events.push(...bucket.events.map((event) => event.value));
+            }
             return events.length;
+        },
+    },
+    count_weeks: {
+        function: (buckets): number => {
+            let weeks = 0;
+            for (const bucket of buckets) {
+                if (bucket.events.length > 0) {
+                    weeks = weeks + 1;
+                } else {
+                    break;
+                }
+            }
+            return weeks;
         },
     },
 };

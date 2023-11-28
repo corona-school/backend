@@ -42,6 +42,9 @@ const batchOfMetrics = [
     createMetric('student_conducted_match_appointment', ['tutor_match_requested', 'joined_match_meeting'], () => {
         return 1;
     }),
+    createMetric('weekly_presence', ['requestedToken'], () => {
+        return 1;
+    }),
 ];
 
 export function addMetrics() {

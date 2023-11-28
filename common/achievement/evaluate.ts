@@ -1,11 +1,11 @@
 import { Achievement_event } from '../../graphql/generated';
-import { Bucket, BucketConfig, BucketEvents, BucketEventsWithAggr, ConditionDataAggregations, FilterBucket, TimeBucket } from './types';
+import { BucketConfig, BucketEvents, BucketEventsWithAggr, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 
-export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, metrics: string[]): Promise<boolean> {
+export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, metrics: string[]): Promise<EvaluationResult> {
     const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } } });
 
     const eventsByMetric: Record<string, Achievement_event[]> = {}; // Store events per metric
@@ -43,10 +43,11 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
                 const bucketAggr = bucketEvents.map(
                     (bucketEvent): BucketEventsWithAggr => ({
                         ...bucketEvent,
-                        aggregation: bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)),
+                        aggregation: bucketAggregatorFunction([bucketEvent]),
                     })
                 );
-                const value = aggFunction(bucketAggr.map((bucket) => bucket.aggregation));
+
+                const value = aggFunction(bucketAggr);
                 resultObject[key] = value;
             }
         }
@@ -55,7 +56,10 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
     const evaluate = swan.parse(condition);
     const value: boolean = await evaluate(resultObject);
 
-    return value;
+    return {
+        conditionIsMet: value,
+        resultObject,
+    };
 }
 
 export function createBucketEvents(events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
@@ -77,14 +81,19 @@ const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketC
 };
 
 const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
-    const sortedEvents = events.sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
-
-    return sortedEvents.map((event) => ({
-        kind: 'time',
-        startTime: event.createdAt!,
-        endTime: event.createdAt!,
-        events: [event],
-    }));
+    const { buckets } = bucketConfig;
+    const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
+        const filteredEvents = events.filter((event) => {
+            return event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime;
+        });
+        return {
+            kind: bucket.kind,
+            startTime: bucket.startTime,
+            endTime: bucket.endTime,
+            events: filteredEvents,
+        };
+    });
+    return bucketsWithEvents;
 };
 
 const createFilterBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
