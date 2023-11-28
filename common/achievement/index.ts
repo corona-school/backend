@@ -29,17 +29,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         return;
     }
 
-    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
-    for (const template of templatesForAction) {
-        if (!templatesByGroups.has(template.group)) {
-            templatesByGroups.set(template.group, []);
-        }
-        templatesByGroups.get(template.group).push(template);
-    }
-    templatesByGroups.forEach((group, key) => {
-        group.sort((a, b) => a.groupOrder - b.groupOrder);
-        templatesByGroups.set(key, group);
-    });
+    const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
 
     const event: ActionEvent<ID> = {
         actionId,
@@ -64,6 +54,21 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     }
 
     return null;
+}
+
+function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
+    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
+    for (const template of templatesForAction) {
+        if (!templatesByGroups.has(template.group)) {
+            templatesByGroups.set(template.group, []);
+        }
+        templatesByGroups.get(template.group).push(template);
+    }
+    templatesByGroups.forEach((group, key) => {
+        group.sort((a, b) => a.groupOrder - b.groupOrder);
+        templatesByGroups.set(key, group);
+    });
+    return templatesByGroups;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: SpecificNotificationContext<ID>) {
@@ -93,7 +98,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined) {
+async function checkUserAchievement(userAchievement: UserAchievementTemplate | undefined) {
     if (userAchievement) {
         const evaluationResult = await isAchievementConditionMet(userAchievement);
         if (evaluationResult.conditionIsMet) {
@@ -133,6 +138,6 @@ async function awardUser(evaluationResult: number, userAchievement: UserAchievem
     return await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue },
-        select: { id: true, userId: true, context: true, template: true },
+        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
 }
