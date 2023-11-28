@@ -52,3 +52,9 @@ export async function getRelationContext(relation: string) {
 
     throw new Error(`Unknown Relation(${relation})`);
 }
+
+// this function is used to split the action names in a string to an array of action names for the filter bucket creator function to create buckets for the specific events
+export function getActionsContext(actionNames: string) {
+    const actions = actionNames.split(',');
+    return actions;
+}

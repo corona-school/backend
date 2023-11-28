@@ -6,8 +6,9 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
-import { createSequentialAchievement, getOrCreateUserAchievement } from './create';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, EventValue, UserAchievementContext, UserAchievementTemplate } from './types';
+import { createAchievement, getOrCreateUserAchievement } from './create';
+import { Achievement_template } from '../../graphql/generated';
 
 const logger = getLogger('Achievement');
 
@@ -20,6 +21,18 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         return;
     }
 
+    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
+    for (const template of templatesForAction) {
+        if (!templatesByGroups.has(template.group)) {
+            templatesByGroups.set(template.group, []);
+        }
+        templatesByGroups.get(template.group).push(template);
+    }
+    templatesByGroups.forEach((group, key) => {
+        group.sort((a, b) => a.groupOrder - b.groupOrder);
+        templatesByGroups.set(key, group);
+    });
+
     const event: ActionEvent<ID> = {
         actionId,
         at: new Date(),
@@ -28,9 +41,18 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     };
     await trackEvent(event, context);
 
-    for (const template of templatesForAction) {
-        const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
-        await checkUserAchievement(userAchievement as UserAchievementTemplate, user.userID, context);
+    for (const [key, group] of templatesByGroups) {
+        let achievementToCheck: AchievementToCheck;
+        for (const template of group) {
+            const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
+            if (userAchievement.achievedAt === null) {
+                achievementToCheck = userAchievement;
+                break;
+            }
+        }
+        if (achievementToCheck) {
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, context);
+        }
     }
 
     return null;
@@ -63,18 +85,14 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, userId: string, context: SpecificNotificationContext<ID>) {
+async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
     if (userAchievement) {
         const isConditionMet = await isAchievementConditionMet(userAchievement, context);
         if (isConditionMet) {
-            let awardedAchievement: UserAchievementTemplate;
-            if (userAchievement.achievedAt === null) {
-                awardedAchievement = await awardUser(userAchievement.id, userId);
-            }
-            if (userAchievement.template.type === 'SEQUENTIAL') {
-                const userAchievementContext: UserAchievementContext = {};
-                await createSequentialAchievement(awardedAchievement.template, userId, userAchievementContext);
-            }
+            const awardedAchievement = await awardUser(userAchievement.id, userAchievement.userId);
+            // if a sequential achievement has been reached, we create the next step
+            const userAchievementContext: UserAchievementContext = {};
+            await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
         }
     }
 }
