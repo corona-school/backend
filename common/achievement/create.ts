@@ -46,6 +46,7 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
                 groupOrder: nextStepTemplate.groupOrder,
                 context: context ? JSON.stringify(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
+                recordValue: templateToCreate.type === 'STREAK' ? 0 : null,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });

@@ -98,7 +98,9 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
         const evaluationResult = await isAchievementConditionMet(userAchievement);
         if (evaluationResult.conditionIsMet) {
             const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
-            const awardedAchievement = await awardUser(evaluationResult[dataAggregationKey], userAchievement);
+            const evaluationResultValue =
+                typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+            const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
             const userAchievementContext: UserAchievementContext = {};
             await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
         }
@@ -123,7 +125,7 @@ function injectRecordValue(condition: string, recordValue: number) {
     return condition.replace('recordValue', recordValue.toString());
 }
 
-async function awardUser(evaluationResult: string | null | undefined, userAchievement: UserAchievementTemplate) {
+async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
