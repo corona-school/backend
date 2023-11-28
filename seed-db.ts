@@ -26,6 +26,7 @@ import {
     course_subject_enum as CourseSubject,
     lecture_appointmenttype_enum as AppointmentType,
 } from '@prisma/client';
+import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from './graphql/generated';
 
 const logger = getLogger('DevSetup');
 
@@ -735,6 +736,28 @@ void (async function setupDevDB() {
             organizerIds: [],
             participantIds: [],
             appointmentType: AppointmentType.group,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Onboarding abschließen',
+            metrics: ['onboarding_registered'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'Onboarding',
+            groupOrder: 1,
+            stepName: 'Verifizieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_00',
+            achievedImage: '',
+            actionName: 'E-Mail erneut senden',
+            actionRedirectLink: '',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'registered_events > 0',
+            conditionDataAggregations: JSON.stringify({ registered_events: { metric: 'onboarding_registered', aggregator: 'count' } }),
+            isActive: true,
         },
     });
 

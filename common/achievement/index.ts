@@ -89,7 +89,7 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     if (userAchievement) {
         const isConditionMet = await isAchievementConditionMet(userAchievement, context);
         if (isConditionMet) {
-            const awardedAchievement = await awardUser(userAchievement.id);
+            const awardedAchievement = await awardUser(userAchievement.id, userAchievement.userId);
             // if a sequential achievement has been reached, we create the next step
             const userAchievementContext: UserAchievementContext = {};
             await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
@@ -97,11 +97,11 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     }
 }
 
-async function isAchievementConditionMet(achievement: UserAchievementTemplate, context: NotificationContext) {
+async function isAchievementConditionMet(userAchievement: UserAchievementTemplate, context: NotificationContext) {
     const {
         userId,
         template: { condition, conditionDataAggregations, metrics },
-    } = achievement;
+    } = userAchievement;
     if (!condition) {
         return;
     }
@@ -109,10 +109,18 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate, c
     return conditionIsMet;
 }
 
-async function awardUser(userAchievementId: number) {
-    return await prisma.user_achievement.update({
+async function awardUser(userAchievementId: number, userId: string) {
+    const date = new Date();
+    const achievedAt = date.toISOString();
+
+    if (!userAchievementId) {
+        logger.error(`User couldn't be awarded, because of missing user achievement ID.`);
+    }
+    const updatedUserAchievement = await prisma.user_achievement.update({
+        data: { achievedAt: achievedAt },
         where: { id: userAchievementId },
-        data: { achievedAt: new Date() },
-        select: { id: true, userId: true, context: true, template: true },
+        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
+
+    return updatedUserAchievement as UserAchievementTemplate;
 }
