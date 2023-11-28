@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Achievement_event, Achievement_template, achievement_type_enum } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
@@ -14,27 +15,46 @@ export type Metric = {
 export type EventValue = number[] | Achievement_event[];
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
-// A bucket is seen as for a period of time
-export interface Bucket {
+// Used to destinguish between different types of buckets
+export type GenericBucketConfig<T extends Bucket> = {
+    bucketKind: T['kind'];
+    buckets: T[];
+};
+// Combines all possible bucket configs
+export type BucketConfig = GenericBucketConfig<TimeBucket> | GenericBucketConfig<FilterBucket> | GenericBucketConfig<DefaultBucket>;
+
+export type DefaultBucket = {
+    kind: 'default';
+};
+// Bucket containing events from a specific time frame
+export type TimeBucket = {
+    kind: 'time';
     startTime: Date;
     endTime: Date;
-}
+};
+// Bucket containing events that match a specific actionName
+export type FilterBucket = {
+    kind: 'filter';
+    actionName: string;
+};
+// A bucket is seen as for a period of time
+export type Bucket = DefaultBucket | TimeBucket | FilterBucket;
 
-export interface BucketEvents extends Bucket {
+export type BucketEvents = Bucket & {
     events: Achievement_event[];
-}
-export interface BucketEventsWithAggr extends BucketEvents {
+};
+export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
-}
+};
 
-type BucketFormulaFunction = (relation?: string) => Promise<Bucket[]>;
+type BucketFormulaFunction = (relation?: string) => Promise<BucketConfig>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
 };
 
 export type AggregatorFunction = {
-    function: (elements: number[]) => number;
+    function: (elements: BucketEvents[]) => number;
 };
 
 export type ConditionDataAggregations = {
@@ -61,6 +81,7 @@ export type UserAchievementTemplate = {
     achievedAt: Date;
     context: UserAchievementContext;
     template: Achievement_template;
+    recordValue?: number;
 };
 
 export type ActionEvent<ID extends ActionID> = {
@@ -75,4 +96,17 @@ export type Achievement_Event = {
     value: EventValue;
     action?: string;
     relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
+};
+
+export type AchievementToCheck = {
+    userId: string;
+    id: number;
+    achievedAt: Date;
+    context: Prisma.JsonValue;
+    template: Achievement_template;
+};
+
+export type EvaluationResult = {
+    conditionIsMet: boolean;
+    resultObject: Record<string, string | number | boolean>;
 };

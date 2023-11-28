@@ -6,8 +6,11 @@ import { UserAchievementContext } from './types';
 async function doesUserAchievementAlreadyExist(templateId: number, userId: string, context?: UserAchievementContext) {
     // TODO - check if user achievement exist for one match or one subcourse
     const userAchievement = await prisma.user_achievement.findFirst({
-        where: { templateId, userId },
-        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
+        where: {
+            templateId,
+            userId,
+        },
+        select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
     if (!userAchievement) {
         return false;
@@ -18,43 +21,31 @@ async function doesUserAchievementAlreadyExist(templateId: number, userId: strin
 async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context?: UserAchievementContext) {
     const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
     if (existingUserAchievement === false) {
-        return await createUserAchievement(template, userId, context);
+        return await createAchievement(template, userId, context);
     }
     return existingUserAchievement;
 }
 
-async function createUserAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
-    switch (templateToCreate.type) {
-        case 'SEQUENTIAL':
-            return await createSequentialAchievement(templateToCreate, userId, context);
-            break;
-        case 'TIERED':
-            // await createTieredAchievement(userAchievements, userId, context);
-            break;
-        case 'STREAK':
-            // await createStreakAchievement(userAchievements[0], userId, context);
-            break;
-        default:
-            console.log('DEFAULT');
-    }
-}
-
-async function createSequentialAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
+async function createAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: { template: { group: templateToCreate.group } },
         // orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    // const lastStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder : 0;
-    // const nextStepIndex = lastStepIndex + 1;
     const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder + 1 : 1;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
-    if (templatesForGroup) {
-        const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
-        const isLastStepInGroup = nextStepIndex === templatesForGroup.length;
+    if (templatesForGroup && templatesForGroup.length <= nextStepIndex) {
+        const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
+        return createdUserAchievement;
+    }
+}
 
+async function createNextUserAchievement(templatesForGroup: Achievement_template[], nextStepIndex: number, userId: string, context: UserAchievementContext) {
+    const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+
+    if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {
                 userId: userId,
@@ -62,11 +53,14 @@ async function createSequentialAchievement(templateToCreate: Achievement_templat
                 groupOrder: nextStepTemplate.groupOrder,
                 context: context ? JSON.stringify(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
+                recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
             },
-            select: { id: true, userId: true, achievedAt: true, context: true, template: true },
+            select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });
         return createdUserAchievement;
     }
+    const nextUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex + 1, userId, context);
+    return nextUserAchievement;
 }
 
-export { createUserAchievement, getOrCreateUserAchievement, createSequentialAchievement };
+export { getOrCreateUserAchievement, createAchievement };

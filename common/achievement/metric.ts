@@ -31,13 +31,20 @@ const batchOfMetrics = [
     createMetric('onboarding_appointment_booked', ['calendly_appointment_booked'], () => {
         return 1;
     }),
-    createMetric('onboarding_screening_success', ['tutor_screening_success', 'instructor_screening_success'], () => {
+    createMetric('onboarding_screening_events', ['tutor_screening_success', 'instructor_screening_success'], () => {
         return 1;
     }),
-    createMetric('onboarding_coc_success', ['student_coc_updated'], () => {
+    createMetric('onboarding_coc_event', ['student_coc_updated'], () => {
         return 1;
     }),
-    createMetric('student_performed_match_appointment', ['joined_match_meeting'], () => {
+    // student_conducted_match_appointment is a tiered achievement and therefore needs to be initialized, in this case with tutor_match_requested
+    // later requests to this metric will onle be conducted by joined_match_meeting. This is secured by the filter bucket
+    createMetric('student_conducted_match_appointment', ['tutor_match_requested', 'joined_match_meeting'], () => {
+        return 1;
+    }),
+    createMetric('weekly_presence', ['requestedToken'], () => {
+        return 1;
+    }),
 ];
 
 export function addMetrics() {

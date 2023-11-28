@@ -6,8 +6,17 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
-import { createSequentialAchievement, getOrCreateUserAchievement } from './create';
+import {
+    AchievementToCheck,
+    ActionEvent,
+    ConditionDataAggregations,
+    EvaluationResult,
+    EventValue,
+    UserAchievementContext,
+    UserAchievementTemplate,
+} from './types';
+import { createAchievement, getOrCreateUserAchievement } from './create';
+import { Achievement_template } from '../../graphql/generated';
 
 const logger = getLogger('Achievement');
 
@@ -19,6 +28,9 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         logger.debug(`No achievement found for action '${actionId}'`);
         return;
     }
+
+    const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
+
     const event: ActionEvent<ID> = {
         actionId,
         at: new Date(),
@@ -27,12 +39,36 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     };
     await trackEvent(event, context);
 
-    for (const template of templatesForAction) {
-        const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
-        await checkUserAchievement(userAchievement as UserAchievementTemplate, user.userID, context);
+    for (const [key, group] of templatesByGroups) {
+        let achievementToCheck: AchievementToCheck;
+        for (const template of group) {
+            const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
+            if (userAchievement.achievedAt === null || userAchievement.recordValue) {
+                achievementToCheck = userAchievement;
+                break;
+            }
+        }
+        if (achievementToCheck) {
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate);
+        }
     }
 
     return null;
+}
+
+function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
+    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
+    for (const template of templatesForAction) {
+        if (!templatesByGroups.has(template.group)) {
+            templatesByGroups.set(template.group, []);
+        }
+        templatesByGroups.get(template.group).push(template);
+    }
+    templatesByGroups.forEach((group, key) => {
+        group.sort((a, b) => a.groupOrder - b.groupOrder);
+        templatesByGroups.set(key, group);
+    });
+    return templatesByGroups;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: SpecificNotificationContext<ID>) {
@@ -62,46 +98,46 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, userId: string, context: SpecificNotificationContext<ID>) {
+async function checkUserAchievement(userAchievement: UserAchievementTemplate | undefined) {
     if (userAchievement) {
-        const isConditionMet = await isAchievementConditionMet(userAchievement, context);
-        if (isConditionMet) {
-            let awardedAchievement: UserAchievementTemplate;
-            if (userAchievement.achievedAt === null) {
-                awardedAchievement = await awardUser(userAchievement.id, userId);
-            }
-            if (userAchievement.template.type === 'SEQUENTIAL') {
-                const userAchievementContext: UserAchievementContext = {};
-                await createSequentialAchievement(awardedAchievement.template, userId, userAchievementContext);
-            }
+        const evaluationResult = await isAchievementConditionMet(userAchievement);
+        if (evaluationResult.conditionIsMet) {
+            const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
+            const evaluationResultValue =
+                typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+            const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+            const userAchievementContext: UserAchievementContext = {};
+            await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
         }
     }
 }
 
-async function isAchievementConditionMet(userAchievement: UserAchievementTemplate, context: NotificationContext) {
+async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const {
         userId,
         template: { condition, conditionDataAggregations, metrics },
-    } = userAchievement;
+    } = achievement;
     if (!condition) {
         return;
     }
-    const conditionIsMet = await evaluateAchievement(condition, conditionDataAggregations as ConditionDataAggregations, metrics);
-    return conditionIsMet;
+
+    const updatedCondition = injectRecordValue(condition, achievement.recordValue);
+    const { conditionIsMet, resultObject } = await evaluateAchievement(updatedCondition, conditionDataAggregations as ConditionDataAggregations, metrics);
+    return { conditionIsMet, resultObject };
 }
 
-async function awardUser(userAchievementId: number, userId: string) {
-    const date = new Date();
-    const achievedAt = date.toISOString();
+function injectRecordValue(condition: string, recordValue: number) {
+    return condition.replace('recordValue', recordValue.toString());
+}
 
-    if (!userAchievementId) {
-        logger.error(`User couldn't be awarded, because of missing user achievement ID.`);
+async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
+    let newRecordValue = null;
+    if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
+        newRecordValue = evaluationResult;
     }
-    const updatedUserAchievement = await prisma.user_achievement.update({
-        data: { achievedAt: achievedAt },
-        where: { id: userAchievementId },
+    return await prisma.user_achievement.update({
+        where: { id: userAchievement.id },
+        data: { achievedAt: new Date(), recordValue: newRecordValue },
         select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
-
-    return updatedUserAchievement as UserAchievementTemplate;
 }
