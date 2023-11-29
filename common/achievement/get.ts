@@ -23,14 +23,15 @@ const createFrontendAchievements = (groups: { [group: string]: User_achievement[
     const achievements: Achievement[] = [];
     for (const group in groups) {
         const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
-        const currentAchievementIndex = sortedGroupAchievements.findIndex((ua) => !ua.achievedAt) - 1;
+        const currentAchievementIndex = sortedGroupAchievements.findIndex((ua) => !ua.achievedAt);
+        const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
         const state: achievement_state =
             sortedGroupAchievements.length === 0
                 ? achievement_state.INACTIVE
-                : typeof currentAchievementIndex !== 'number'
+                : typeof resultIndex !== 'number'
                 ? achievement_state.COMPLETED
                 : achievement_state.ACTIVE;
-        const newAchievement = state === achievement_state.COMPLETED && !sortedGroupAchievements[currentAchievementIndex].isSeen;
+        const newAchievement = state === achievement_state.COMPLETED && !sortedGroupAchievements[resultIndex].isSeen;
 
         const currentAchievementTemplate = sortedGroupAchievements[0].template;
         const groupAchievement: Achievement = {
@@ -48,7 +49,7 @@ const createFrontendAchievements = (groups: { [group: string]: User_achievement[
                       // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                       return {
                           description: achievement.template.stepName,
-                          isActive: index === currentAchievementIndex,
+                          isActive: index === resultIndex,
                       };
                   })
                 : null,
