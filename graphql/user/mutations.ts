@@ -87,6 +87,12 @@ export class MutateUserResolver {
         await Notification.actionTaken(context.user, 'requestedToken', {});
         return true;
     }
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async studentJoinedMeeting(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'student_joined_meeting', {});
+        return true;
+    }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)

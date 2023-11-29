@@ -628,6 +628,10 @@ const _notificationActions = {
     },
 
     /* MEETINGS */
+    student_joined_meeting: {
+        description: 'Student joined meeting',
+        sampleContext: {},
+    },
     joined_meeting: {
         description: 'User joined meeting',
         sampleContext: {},
@@ -639,7 +643,7 @@ const _notificationActions = {
         },
     },
     joined_subcourse_meeting: {
-        description: 'User joined meeting',
+        description: 'User joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
         },

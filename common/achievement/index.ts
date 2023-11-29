@@ -126,8 +126,12 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     return { conditionIsMet, resultObject };
 }
 
+// replace recordValue in condition with number of last record
 function injectRecordValue(condition: string, recordValue: number) {
-    return condition.replace('recordValue', recordValue.toString());
+    if (typeof recordValue === 'number') {
+        return condition.replace('recordValue', recordValue.toString());
+    }
+    return condition;
 }
 
 async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
