@@ -3,18 +3,9 @@ import { User } from '../user';
 import { assureGamificationFeatureActive, getMetricsByAction } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import {
-    AchievementToCheck,
-    ActionEvent,
-    ConditionDataAggregations,
-    EvaluationResult,
-    EventValue,
-    UserAchievementContext,
-    UserAchievementTemplate,
-} from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
 

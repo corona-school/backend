@@ -30,13 +30,13 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: { template: { group: templateToCreate.group } },
-        // orderBy: { template: { groupOrder: 'asc' } },
+        orderBy: { template: { groupOrder: 'asc' } },
     });
 
     const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder + 1 : 1;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
-    if (templatesForGroup && templatesForGroup.length <= nextStepIndex) {
+    if (templatesForGroup && templatesForGroup.length >= nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
         return createdUserAchievement;
     }
