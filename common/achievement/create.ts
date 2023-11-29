@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import { UserAchievementContext } from './types';
 
-async function doesUserAchievementAlreadyExist(templateId: number, userId: string, context?: UserAchievementContext) {
+async function doesUserAchievementAlreadyExist(templateId: number, userId: string) {
     // TODO - check if user achievement exist for one match or one subcourse
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
@@ -12,15 +12,12 @@ async function doesUserAchievementAlreadyExist(templateId: number, userId: strin
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
-    if (!userAchievement) {
-        return false;
-    }
     return userAchievement;
 }
 
 async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context?: UserAchievementContext) {
-    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
-    if (existingUserAchievement === false) {
+    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId);
+    if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
     }
     return existingUserAchievement;

@@ -110,3 +110,21 @@ export type EvaluationResult = {
     conditionIsMet: boolean;
     resultObject: Record<string, string | number | boolean>;
 };
+
+export type RelationContextType = {
+    match?: {
+        id: number;
+        lecture: {
+            start: Date;
+            duration: number;
+        };
+    };
+    subcourse?: {
+        id: number;
+        lecture: {
+            start: Date;
+            duration: number;
+        };
+    };
+    actionNames?: string[];
+};

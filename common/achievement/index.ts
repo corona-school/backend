@@ -12,7 +12,9 @@ import { Achievement_template } from '../../graphql/generated';
 const logger = getLogger('Achievement');
 
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
-    assureGamificationFeatureActive();
+    if (!assureGamificationFeatureActive()) {
+        return null;
+    }
     const templatesForAction = await getTemplatesByAction(actionId);
 
     if (templatesForAction.length === 0) {
