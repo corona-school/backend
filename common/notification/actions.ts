@@ -618,32 +618,47 @@ const _notificationActions = {
     // ACHIEVEMENT TEST ACTIONS
 
     /* ONBOARDING */
-    requestedToken: {
-        description: 'User joined meeting',
+    student_screening_appointment_done: {
+        description: 'Student has attended screening appointment',
         sampleContext: {},
     },
-    calendly_appointment_booked: {
-        description: 'User joined meeting',
+    pupil_registration_verified_email: {
+        description: 'Pupil / E-Mail verified',
         sampleContext: {},
     },
-
+    student_registration_verified_email: {
+        description: 'Student / E-Mail verified',
+        sampleContext: {},
+    },
+    student_calendly_appointment_booked: {
+        description: 'Student booked appointment via calendly ',
+        sampleContext: {},
+    },
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
+        sampleContext: {},
+    },
     /* MEETINGS */
-    student_joined_meeting: {
-        description: 'Student joined meeting',
-        sampleContext: {},
-    },
-    joined_meeting: {
-        description: 'User joined meeting',
-        sampleContext: {},
-    },
-    joined_match_meeting: {
-        description: 'User joined a match meeting',
+    student_joined_match_meeting: {
+        description: 'Student joined a match meeting',
         sampleContext: {
             matchId: '1',
         },
     },
-    joined_subcourse_meeting: {
-        description: 'User joined subcourse meeting',
+    student_joined_subcourse_meeting: {
+        description: 'Student joined subcourse meeting',
+        sampleContext: {
+            subcourseId: '1',
+        },
+    },
+    pupil_joined_match_meeting: {
+        description: 'Pupil joined a match meeting',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    pupil_joined_subcourse_meeting: {
+        description: 'Pupil joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
         },

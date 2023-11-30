@@ -22,27 +22,18 @@ function createMetric<T extends ActionID[], K extends ContextForActions<T>>(metr
 }
 
 const batchOfMetrics = [
-    createMetric('onboarding_registered', ['requestedToken'], () => {
+    /* STUDENT ONBOARDING */
+    createMetric('student_onboarding_verified', ['student_registration_verified_email'], () => {
         return 1;
     }),
-    createMetric('onboarding_verified_email', ['user_registration_verified_email'], () => {
+    // TODO - relevant if calendly API is integrated
+    createMetric('student_onboarding_appointment_booked', ['student_calendly_appointment_booked'], () => {
         return 1;
     }),
-    createMetric('onboarding_appointment_booked', ['calendly_appointment_booked'], () => {
+    createMetric('student_onboarding_screened', ['student_screening_appointment_done', 'tutor_screening_success', 'instructor_screening_success'], () => {
         return 1;
     }),
-    createMetric('onboarding_screening_events', ['tutor_screening_success', 'instructor_screening_success'], () => {
-        return 1;
-    }),
-    createMetric('onboarding_coc_event', ['student_coc_updated'], () => {
-        return 1;
-    }),
-    // student_conducted_match_appointment is a tiered achievement and therefore needs to be initialized, in this case with tutor_match_requested
-    // later requests to this metric will onle be conducted by joined_match_meeting. This is secured by the filter bucket
-    createMetric('student_conducted_match_appointment', ['tutor_match_requested', 'joined_match_meeting'], () => {
-        return 1;
-    }),
-    createMetric('weekly_presence', ['joined_meeting'], () => {
+    createMetric('student_onboarding_coc_success', ['student_coc_updated'], () => {
         return 1;
     }),
 ];
