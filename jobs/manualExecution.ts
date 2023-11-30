@@ -10,6 +10,7 @@ import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversatio
 import { postStatisticsToSlack } from './slack-statistics';
 import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
 import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
+import revalidateStreaks, { StreakTimeFrame } from './periodic/revalidate-streaks';
 
 // Run inside the Web Dyno via GraphQL (mutation _executeJob)
 // Run inside the Job Dyno via npm run jobs --execute <jobName
@@ -61,6 +62,14 @@ export const executeJob = async (job) => {
         }
         case 'migrateDissolveReasonEnum': {
             await migrateDissolveReasonEnum();
+            break;
+        }
+        case 'weeklyStreakRevalidation': {
+            await revalidateStreaks(StreakTimeFrame.WEEK);
+            break;
+        }
+        case 'monthlyStreakRevalidation': {
+            await revalidateStreaks(StreakTimeFrame.MONTH);
             break;
         }
         default: {

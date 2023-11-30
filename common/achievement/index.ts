@@ -91,14 +91,14 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement(userAchievement: UserAchievementTemplate | undefined) {
+export async function checkUserAchievement(userAchievement: UserAchievementTemplate | undefined) {
     if (userAchievement) {
         const evaluationResult = await isAchievementConditionMet(userAchievement);
         if (evaluationResult.conditionIsMet) {
             const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
             const evaluationResultValue =
                 typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
-            const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+            const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement);
             const userAchievementContext: UserAchievementContext = {};
             await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
         }
@@ -127,7 +127,7 @@ function injectRecordValue(condition: string, recordValue: number) {
     return condition;
 }
 
-async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
+async function rewardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
