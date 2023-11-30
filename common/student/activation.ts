@@ -8,6 +8,7 @@ import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
+import { CertificateState } from '../certificate';
 
 export async function deactivateStudent(student: Student, silent = false, reason?: string) {
     if (!student.active) {
@@ -32,6 +33,12 @@ export async function deactivateStudent(student: Student, silent = false, reason
     for (const match of matches) {
         await dissolveMatch(match, dissolve_reason.accountDeactivated, student, dissolved_by_enum.student);
     }
+
+    // Remove any pending certificates, so that they no longer show up in pupil dashboards
+    await prisma.participation_certificate.updateMany({
+        where: { studentId: student.id, state: CertificateState.awaitingApproval },
+        data: { state: CertificateState.manual },
+    });
 
     //Delete course records for the student.
     const courses = await prisma.course.findMany({
