@@ -30,17 +30,17 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder + 1 : 1;
+    const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === templateToCreate.groupOrder) : 1;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
-    if (templatesForGroup && templatesForGroup.length >= nextStepIndex) {
+    if (templatesForGroup && templatesForGroup.length > nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
         return createdUserAchievement;
     }
 }
 
 async function createNextUserAchievement(templatesForGroup: Achievement_template[], nextStepIndex: number, userId: string, context: UserAchievementContext) {
-    const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+    const nextStepTemplate = templatesForGroup[nextStepIndex];
 
     if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({
