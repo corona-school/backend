@@ -1,6 +1,6 @@
 import { ActionID } from '../notification/types';
 import { metricsByAction } from './metrics';
-import { Metric, RelationContextType } from './types';
+import { Metric, AchievementContextType } from './types';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 
@@ -26,10 +26,10 @@ export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] 
     return metricsByAction.get(actionId) || [];
 }
 
-type RelationTypes = 'match' | 'subcourse';
+type RelationTypes = 'match' | 'subcourse' | 'achievementName';
 
 export function getRelationTypeAndId(relation: string): [relationType: RelationTypes, id: number] {
-    const validRelationTypes = ['match', 'subcourse'];
+    const validRelationTypes = ['match', 'subcourse', 'achievementName'];
     const [relationType, relationId] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
@@ -39,9 +39,9 @@ export function getRelationTypeAndId(relation: string): [relationType: RelationT
     return [relationType as RelationTypes, parsedRelationId];
 }
 
-export async function getRelationContext(relation: string): Promise<RelationContextType> {
+export async function getAchievementContext(relation: string): Promise<AchievementContextType> {
     const [type, id] = getRelationTypeAndId(relation);
-    const relationContext: RelationContextType = {
+    const achievementContext: AchievementContextType = {
         match:
             type === 'match'
                 ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
@@ -50,7 +50,7 @@ export async function getRelationContext(relation: string): Promise<RelationCont
             type === 'subcourse'
                 ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
                 : null,
-        actionNames: type !== 'match' && type !== 'subcourse' ? relation.split(',') : null,
+        actionNames: type === 'achievementName' ? relation.split(',').map((actionName) => actionName.split('/')[1]) : null,
     };
-    return relationContext;
+    return achievementContext;
 }
