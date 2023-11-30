@@ -1,4 +1,5 @@
 /* eslint-disable comma-dangle */
+import 'reflect-metadata';
 import { createHash, randomBytes } from 'crypto';
 import { hashPassword } from './common/util/hashing';
 import { getNotifications, importMessageTranslations, importNotifications } from './common/notification/notification';
@@ -739,10 +740,11 @@ void (async function setupDevDB() {
         },
     });
 
+    // Achievements
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['onboarding_registered'],
+            metrics: ['student_onboarding_verified'],
             templateFor: achievement_template_for_enum.Global,
             group: 'Onboarding',
             groupOrder: 1,
@@ -755,8 +757,94 @@ void (async function setupDevDB() {
             actionName: 'E-Mail erneut senden',
             actionRedirectLink: '',
             actionType: achievement_action_type_enum.Action,
-            condition: 'registered_events > 0',
-            conditionDataAggregations: JSON.stringify({ registered_events: { metric: 'onboarding_registered', aggregator: 'count' } }),
+            condition: 'student_verified_events > 0',
+            conditionDataAggregations: { student_verified_events: { metric: 'student_onboarding_verified', aggregator: 'count' } },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Onboarding abschließen',
+            metrics: ['student_onboarding_appointment_booked'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'Onboarding',
+            groupOrder: 2,
+            stepName: 'Kennenlerngespräch buchen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_01',
+            achievedImage: '',
+            actionName: 'Termin vereinbaren',
+            actionRedirectLink: 'https://calendly.com',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_appointment_booked_events > 0',
+            conditionDataAggregations: {
+                student_appointment_booked_events: { metric: 'student_onboarding_appointment_booked', aggregator: 'count' },
+            },
+            isActive: false,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Onboarding abschließen',
+            metrics: ['student_onboarding_screened'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'Onboarding',
+            groupOrder: 3,
+            stepName: 'Screening absolvieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_02',
+            achievedImage: '',
+            actionName: 'Screening absolvieren',
+            actionRedirectLink: '',
+            actionType: achievement_action_type_enum.Appointment,
+            condition: 'student_screened_events > 0',
+            conditionDataAggregations: { student_screened_events: { metric: 'student_onboarding_screened', aggregator: 'count' } },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Onboarding abschließen',
+            metrics: ['student_onboarding_coc_success'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'Onboarding',
+            groupOrder: 4,
+            stepName: 'Führungszeugnis einreichen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_02',
+            achievedImage: '',
+            actionName: 'Zeugnis einreichen',
+            actionRedirectLink: 'mailto:fz@lern-fair.de',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_coc_success_events > 0',
+            conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Onboarding abschließen',
+            metrics: ['student_onboarding_coc_success'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'Onboarding',
+            groupOrder: 5,
+            stepName: 'Onboarding abgeschlossen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Flugticket',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_coc_success_events > 0',
+            conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
             isActive: true,
         },
     });
