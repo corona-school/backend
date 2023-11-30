@@ -168,6 +168,7 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.studentId },
             });
+            await Notification.actionTaken(user, 'student_registration_verified_email', {});
 
             logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
         }
