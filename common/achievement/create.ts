@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Achievement_template, JsonFilter } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
@@ -61,7 +62,7 @@ async function createNextUserAchievement<ID extends ActionID>(
                 userId: userId,
                 group: nextStepTemplate.group,
                 groupOrder: nextStepTemplate.groupOrder,
-                context: context ? context : {},
+                context: context ? context : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
             },
