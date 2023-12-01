@@ -17,21 +17,21 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
         }
         userAchievementGroups[ua.template.group].push(ua);
     });
-    const achievements: Achievement[] = await createFrontendAchievements(userAchievementGroups, user);
+    const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
 };
 
-const createFrontendAchievements = async (groups: { [group: string]: User_achievement[] }, user: User): Promise<Achievement[]> => {
+const generateReorderedAchievementData = async (groups: { [group: string]: User_achievement[] }, user: User): Promise<Achievement[]> => {
     const achievements: Achievement[] = [];
     for (const group in groups) {
         const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
-        const groupAchievement: Achievement = await putTogetherAchievement(sortedGroupAchievements, user);
+        const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
         achievements.push(groupAchievement);
     }
     return achievements;
 };
 
-const putTogetherAchievement = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
+const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
     const contextKeys = Object.keys(userAchievements[currentAchievementIndex].context);
@@ -88,7 +88,7 @@ const putTogetherAchievement = async (userAchievements: User_achievement[], user
               })
             : null,
         maxSteps: userAchievements.length,
-        currentStep: userAchievements.length,
+        currentStep: currentAchievementIndex,
         newAchievement: newAchievement,
         progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
         actionName: userAchievements[userAchievements.length - 1].template.actionName,
