@@ -35,7 +35,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     for (const [key, group] of templatesByGroups) {
         let achievementToCheck: AchievementToCheck;
-        const context = {} as UserAchievementContext;
         for (const template of group) {
             const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
             if (userAchievement.achievedAt === null || userAchievement.recordValue) {
