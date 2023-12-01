@@ -39,5 +39,5 @@ export const allJobs: CSCronJob[] = [
     { cronTime: '00 00 10 * * *', jobFunction: notificationsEndedYesterday, name: 'notificationsEndedYesterday' },
     // Revalidate streaks are used to revalidate if streaks are still meeting their conditions and updates them accordingly
     { cronTime: '00 00 02 * * 1', jobFunction: () => revalidateStreaks(StreakTimeFrame.WEEK), name: 'weeklyStreakRevalidation' },
-    { cronTime: '30 01 1 * *', jobFunction: () => revalidateStreaks(StreakTimeFrame.MONTH), name: 'monthlyStreakRevalidation' },
+    { cronTime: '00 30 01 1 * *', jobFunction: () => revalidateStreaks(StreakTimeFrame.MONTH), name: 'monthlyStreakRevalidation' },
 ];
