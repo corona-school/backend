@@ -43,7 +43,7 @@ export class MutateUserResolver {
     async userDetermineLoginOptions(@Arg('email') email: string) {
         try {
             const user = await getUserByEmail(validateEmail(email));
-            return await determinePreferredLoginOption(user);
+            return user.active ? await determinePreferredLoginOption(user) : 'deactivated';
         } catch (error) {
             // Invalid email
             return LoginOption.none;
