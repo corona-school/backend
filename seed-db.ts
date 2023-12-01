@@ -1206,6 +1206,58 @@ void (async function setupDevDB() {
         },
     });
 
+    // PUPIL REGULAR LEARNING
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Regelmäßiges Lernen',
+            metrics: ['pupil_match_learned_regular'],
+            templateFor: achievement_template_for_enum.Match,
+            group: 'pupil_match_regular_learning',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Hat_grey',
+            achievedImage: 'Hat_gold',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Rekord gebrochen.',
+            condition: 'pupil_match_learning_events > recordValue',
+            conditionDataAggregations: {
+                pupil_match_learning_events: { metric: 'pupil_match_learned_regular', aggregator: 'count', createBuckets: 'by_lecture_start' },
+            },
+            isActive: true,
+        },
+    });
+
+    // STUDENT REGULAR LEARNING
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Regelmäßiges Lernen',
+            metrics: ['student_match_learned_regular'],
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_match_regular_learning',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Hat_grey',
+            achievedImage: 'Hat_gold',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Rekord gebrochen.',
+            condition: 'student_match_learning_events > recordValue',
+            conditionDataAggregations: {
+                student_match_learning_events: { metric: 'student_match_learned_regular', aggregator: 'count', createBuckets: 'by_lecture_start' },
+            },
+            isActive: true,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);

@@ -48,11 +48,19 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    /* STUDENT CONDUCTED MATCH APPOINTMENT */
+    /* CONDUCTED MATCH APPOINTMENT */
     createMetric('student_conducted_match_appointment', ['student_joined_match_meeting'], () => {
         return 1;
     }),
     createMetric('pupil_conducted_match_appointment', ['pupil_joined_match_meeting'], () => {
+        return 1;
+    }),
+
+    /* REGULAR MATCH LEARNING */
+    createMetric('pupil_match_learned_regular', ['pupil_joined_match_meeting'], () => {
+        return 1;
+    }),
+    createMetric('student_match_learned_regular', ['student_joined_match_meeting'], () => {
         return 1;
     }),
 ];
