@@ -7,6 +7,9 @@ export enum StreakTimeFrame {
     MONTH = 'by_months',
 }
 
+// A cron job to revalidate the current state of a users streaks is important to prevent users from being rewarded for unwanted behavior
+// Not continuing with a streak, therefore triggering no events that start a revalidation process, would result in users not doing tasks in order to keep their streaks
+// The cron job revalidates if the condition for a users streaks is still met after a certain time frame, to reset the streak if the condition is not met anymore
 export default async function revalidateStreaks(timeFrame: StreakTimeFrame) {
     const streakAchievements = await prisma.user_achievement.findMany({
         where: {
