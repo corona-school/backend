@@ -622,6 +622,10 @@ const _notificationActions = {
         description: 'Student has attended screening appointment',
         sampleContext: {},
     },
+    pupil_screening_appointment_done: {
+        description: 'Pupil has attended screening appointment',
+        sampleContext: {},
+    },
     pupil_registration_verified_email: {
         description: 'Pupil / E-Mail verified',
         sampleContext: {},

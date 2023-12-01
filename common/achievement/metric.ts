@@ -36,6 +36,25 @@ const batchOfMetrics = [
     createMetric('student_onboarding_coc_success', ['student_coc_updated'], () => {
         return 1;
     }),
+    /* PUPIL ONBOARDING */
+    createMetric('pupil_onboarding_verified', ['pupil_registration_verified_email'], () => {
+        return 1;
+    }),
+    // TODO - relevant if calendly API is integrated
+    createMetric('pupil_onboarding_appointment_booked', ['pupil_calendly_appointment_booked'], () => {
+        return 1;
+    }),
+    createMetric('pupil_onboarding_screened', ['pupil_screening_appointment_done', 'pupil_screening_add', 'pupil_screening_succeeded'], () => {
+        return 1;
+    }),
+
+    /* STUDENT CONDUCTED MATCH APPOINTMENT */
+    createMetric('student_conducted_match_appointment', ['student_joined_match_meeting'], () => {
+        return 1;
+    }),
+    createMetric('pupil_conducted_match_appointment', ['pupil_joined_match_meeting'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {
