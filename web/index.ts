@@ -6,14 +6,14 @@ import { isCommandArg } from '../common/util/basic';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
-import { addMetrics } from '../common/achievement/metric';
+import { registerAchievementMetrics } from '../common/achievement/metric';
 
 const logger = getLogger('WebServer');
 logger.debug('Debug logging enabled');
 
 moment.locale('de'); //set global moment date format
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
-addMetrics();
+registerAchievementMetrics();
 
 export const started = (async function main() {
     logger.info(`Starting the Webserver`);

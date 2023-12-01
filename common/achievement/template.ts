@@ -49,9 +49,9 @@ async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
     const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
     const metricsForAction = metricsByAction.get(actionId);
 
-    let templatesForAction: Achievement_template[];
+    let templatesForAction: Achievement_template[] = [];
     for (const metric of metricsForAction) {
-        templatesForAction = templatesByMetric.get(metric.metricName);
+        templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
     }
 
     return templatesForAction;

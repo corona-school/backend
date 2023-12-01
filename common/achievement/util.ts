@@ -1,6 +1,6 @@
 import { ActionID } from '../notification/types';
 import { metricsByAction } from './metrics';
-import { Metric } from './types';
+import { Metric, RelationContextType } from './types';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 
@@ -17,8 +17,9 @@ export function isGamificationFeatureActive(): boolean {
 
 export function assureGamificationFeatureActive() {
     if (!isGamificationFeatureActive()) {
-        throw new Error(`Gamification is deactivated`);
+        return false;
     }
+    return true;
 }
 
 export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
@@ -38,23 +39,18 @@ export function getRelationTypeAndId(relation: string): [relationType: RelationT
     return [relationType as RelationTypes, parsedRelationId];
 }
 
-export async function getRelationContext(relation: string) {
+export async function getRelationContext(relation: string): Promise<RelationContextType> {
     const [type, id] = getRelationTypeAndId(relation);
-
-    if (type == 'match') {
-        const match = await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } });
-        return match;
-    }
-    if (type == 'subcourse') {
-        const subcourse = await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } });
-        return subcourse;
-    }
-
-    throw new Error(`Unknown Relation(${relation})`);
-}
-
-// this function is used to split the action names in a string to an array of action names for the filter bucket creator function to create buckets for the specific events
-export function getActionsContext(actionNames: string) {
-    const actions = actionNames.split(',');
-    return actions;
+    const relationContext: RelationContextType = {
+        match:
+            type === 'match'
+                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                : null,
+        subcourse:
+            type === 'subcourse'
+                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                : null,
+        actionNames: type !== 'match' && type !== 'subcourse' ? relation.split(',') : null,
+    };
+    return relationContext;
 }

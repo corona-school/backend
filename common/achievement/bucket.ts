@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { Bucket, BucketConfig, BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
-import { getActionsContext, getRelationContext } from './util';
+import { getRelationContext } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -8,24 +8,21 @@ type BucketCreatorDefs = Record<string, BucketFormula>;
 export const bucketCreatorDefs: BucketCreatorDefs = {
     default: {
         function: async (): Promise<GenericBucketConfig<DefaultBucket>> => {
-            return await {
-                bucketKind: 'default',
-                buckets: [],
-            };
+            return await { bucketKind: 'default', buckets: [] };
         },
     },
     by_lecture_start: {
         function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
             if (!relation) {
-                return {
-                    bucketKind: 'time',
-                    buckets: [],
-                };
+                return { bucketKind: 'time', buckets: [] };
             }
             const context = await getRelationContext(relation);
+            if (!context[relation].lecture) {
+                return { bucketKind: 'time', buckets: [] };
+            }
             return {
                 bucketKind: 'time',
-                buckets: context.lecture.map((lecture) => ({
+                buckets: context[relation].lecture.map((lecture) => ({
                     kind: 'time',
                     startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
                     endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
@@ -80,9 +77,9 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     // this is a filter bucket array, which means that it will only contain buckets for events related to certain action names
     by_conducted_match_meeting: {
-        function: async (actionName): Promise<GenericBucketConfig<FilterBucket>> => {
-            const actions = await getActionsContext(actionName);
-            const buckets: FilterBucket[] = actions.map((action) => {
+        function: async (relation): Promise<GenericBucketConfig<FilterBucket>> => {
+            const actions = await getRelationContext(relation);
+            const buckets: FilterBucket[] = actions.actionNames.map((action) => {
                 return {
                     kind: 'filter',
                     actionName: action,

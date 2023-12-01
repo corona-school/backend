@@ -43,7 +43,7 @@ export class MutateUserResolver {
     async userDetermineLoginOptions(@Arg('email') email: string) {
         try {
             const user = await getUserByEmail(validateEmail(email));
-            return await determinePreferredLoginOption(user);
+            return user.active ? await determinePreferredLoginOption(user) : 'deactivated';
         } catch (error) {
             // Invalid email
             return LoginOption.none;
@@ -85,6 +85,12 @@ export class MutateUserResolver {
     @Authorized(Role.USER)
     async requestToken(@Ctx() context: GraphQLContext) {
         await Notification.actionTaken(context.user, 'requestedToken', {});
+        return true;
+    }
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async studentJoinedMeeting(@Ctx() context: GraphQLContext) {
+        await Notification.actionTaken(context.user, 'student_joined_meeting', {});
         return true;
     }
 

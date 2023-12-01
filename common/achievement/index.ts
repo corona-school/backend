@@ -3,25 +3,19 @@ import { User } from '../user';
 import { assureGamificationFeatureActive, getMetricsByAction } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { NotificationContext } from '../notification/types';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import {
-    AchievementToCheck,
-    ActionEvent,
-    ConditionDataAggregations,
-    EvaluationResult,
-    EventValue,
-    UserAchievementContext,
-    UserAchievementTemplate,
-} from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
+import { Prisma } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
-    assureGamificationFeatureActive();
+    if (!assureGamificationFeatureActive()) {
+        return null;
+    }
     const templatesForAction = await getTemplatesByAction(actionId);
 
     if (templatesForAction.length === 0) {
@@ -41,8 +35,9 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     for (const [key, group] of templatesByGroups) {
         let achievementToCheck: AchievementToCheck;
+        const context = {} as UserAchievementContext;
         for (const template of group) {
-            const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
+            const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
             if (userAchievement.achievedAt === null || userAchievement.recordValue) {
                 achievementToCheck = userAchievement;
                 break;
@@ -126,8 +121,12 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     return { conditionIsMet, resultObject };
 }
 
+// replace recordValue in condition with number of last record
 function injectRecordValue(condition: string, recordValue: number) {
-    return condition.replace('recordValue', recordValue.toString());
+    if (typeof recordValue === 'number') {
+        return condition.replace('recordValue', recordValue.toString());
+    }
+    return condition;
 }
 
 async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
