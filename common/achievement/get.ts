@@ -61,7 +61,11 @@ const putTogetherAchievement = async (userAchievements: User_achievement[], user
     });
     const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
     const state: achievement_state =
-        userAchievements.length === 0 ? achievement_state.INACTIVE : typeof resultIndex !== 'number' ? achievement_state.COMPLETED : achievement_state.ACTIVE;
+        userAchievements.length === 0
+            ? achievement_state.INACTIVE
+            : userAchievements[currentAchievementIndex].achievedAt
+            ? achievement_state.COMPLETED
+            : achievement_state.ACTIVE;
     const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
 
     return {
