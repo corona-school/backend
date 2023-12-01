@@ -127,7 +127,7 @@ export class MutateUserResolver {
     @Authorized(Role.USER)
     async joinedMatchMeeting(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number) {
         await Notification.actionTaken(context.user, 'joined_match_meeting', {
-            relationId: `match/${matchId}`,
+            matchId: '',
         });
         return true;
     }

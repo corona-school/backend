@@ -638,11 +638,15 @@ const _notificationActions = {
     },
     joined_match_meeting: {
         description: 'User joined a match meeting',
-        sampleContext: {},
+        sampleContext: {
+            matchId: '1',
+        },
     },
     joined_subcourse_meeting: {
         description: 'User joined subcourse meeting',
-        sampleContext: {},
+        sampleContext: {
+            subcourseId: '1',
+        },
     },
     TEST: {
         description: 'For Tests',

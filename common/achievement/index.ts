@@ -43,7 +43,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
             }
         }
         if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, event.context);
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, context);
         }
     }
 
