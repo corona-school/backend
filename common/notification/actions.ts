@@ -647,6 +647,8 @@ const _notificationActions = {
         description: 'Student joined a match meeting',
         sampleContext: {
             matchId: '1',
+            pupil: { firstname: 'Pupil' }, // = matchpartner
+            relationId: 'match/1',
         },
     },
     student_joined_subcourse_meeting: {
