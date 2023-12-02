@@ -179,6 +179,8 @@ model course {
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
   subcourse                  subcourse[]
+  shared                     Boolean                      @default(false)
+
 }
 
 // DEPRECATED: This was filled from BBB Meetings, replaced with the zoomMeetingReports field of lectures

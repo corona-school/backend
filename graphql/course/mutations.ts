@@ -12,7 +12,7 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 
-import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState, Course } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
@@ -80,6 +80,19 @@ export class MutateCourseResolver {
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
         logger.info(`Course (${result.id}) created by Student (${student.id})`);
         return result;
+    }
+
+    @Mutation((returns) => GraphQLModel.Course)
+    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
+    async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const updatedCourse = await prisma.course.update({
+            where: { id: course.id },
+            data: { shared: shared },
+        });
+        return updatedCourse;
     }
 
     @Mutation((returns) => GraphQLModel.Course)
