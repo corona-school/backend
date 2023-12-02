@@ -80,6 +80,7 @@ export class ExtendedFieldsCourseResolver {
         @Arg('take', () => GraphQLInt) take,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
+        const courseSearchFilters = await courseSearch(search);
         const courses = await prisma.course.findMany({
             where: {
                 OR: [
@@ -92,9 +93,7 @@ export class ExtendedFieldsCourseResolver {
                                     },
                                 },
                             },
-                            {
-                                OR: [{ name: { contains: search } }, { description: { contains: search } }],
-                            },
+                            courseSearchFilters,
                         ],
                     },
                     {
