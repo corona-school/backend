@@ -83,7 +83,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Course)
-    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
