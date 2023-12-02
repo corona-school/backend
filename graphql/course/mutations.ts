@@ -92,6 +92,7 @@ export class MutateCourseResolver {
             where: { id: course.id },
             data: { shared: shared },
         });
+        logger.info(`Course(${course.id} was ${shared ? 'shared' : 'unshared'} by User(${context.user.userID})`);
         return updatedCourse;
     }
 
