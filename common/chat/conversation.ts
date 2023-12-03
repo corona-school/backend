@@ -106,6 +106,8 @@ const getAllConversations = async (direction: ConversationDirectionEnum = Conver
     });
 
     if (response.status !== 200) {
+        const text = await response.text();
+        logger.warn(`Failed to get all conversations from TalkJS`, { status: response.status, text });
         throw new Error(`Failed to get all conversations from TalkJS`);
     }
 
