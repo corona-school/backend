@@ -95,7 +95,7 @@ const getAllConversations = async (direction: ConversationDirectionEnum = Conver
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
     const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}`;
-    const apiURLPag = `${TALKJS_CONVERSATION_API_URL}?limit=300&orderBy=lastActivity&orderDirection=${direction}&startingAfter=${startingAfter}`;
+    const apiURLPag = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}&startingAfter=${startingAfter}`;
 
     const response = await fetch(startingAfter ? apiURLPag : apiURL, {
         method: 'GET',
