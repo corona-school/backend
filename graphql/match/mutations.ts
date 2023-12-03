@@ -62,10 +62,9 @@ export class MutateMatchResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN)
-    async matchReactivate(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
+    @Authorized(Role.ADMIN)
+    async matchReactivate(@Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
         const match = await getMatch(matchId);
-        await hasAccess(context, 'Match', match);
         await reactivateMatch(match);
         const { conversation, conversationId } = await getMatcheeConversation({
             studentId: match.studentId,
