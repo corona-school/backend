@@ -55,6 +55,9 @@ export async function runJob(name: JobName): Promise<boolean> {
                 return await jobPrisma.job_run.create({
                     data: { job_name: name, worker: process.env.DYNO ?? '?' },
                 });
+
+                // It is important that the transaction ends here and the INSERT above is commited
+                // Otherwise we would continue execution, and the commit would be rolled back after the job actually executed
             },
             { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
         );
