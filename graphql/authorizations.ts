@@ -344,6 +344,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Achievement_template: allAdmin,
     User_achievement: allAdmin, // TODO change
     Achievement_event: allAdmin,
+    Job_run: { _all: nobody },
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are

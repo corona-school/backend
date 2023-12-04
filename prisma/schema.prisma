@@ -952,6 +952,16 @@ model waiting_list_enrollment {
   pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c019519c21578e119799586d7ed")
 }
 
+// Synchronizes Job Runs across Dynos
+model job_run {
+    job_name  String
+    startedAt DateTime @default(now()) @db.Timestamp(6)
+    endedAt   DateTime? @db.Timestamp(6)
+    worker    String
+
+    @@id([job_name, startedAt])
+}
+
 enum course_category_enum {
   language
   focus
