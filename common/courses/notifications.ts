@@ -1,19 +1,14 @@
-import { prisma } from '../../prisma';
-import { mailjetTemplates, sendTemplateMail, sendTextEmail } from '../index';
-import moment from 'moment-timezone';
-import { getLogger } from '../../logger/logger';
-import { DEFAULTSENDERS } from '../config';
-import * as Notification from '../../../common/notification';
-import { getFullName, userForPupil, userForStudent } from '../../user';
+import { prisma } from '../prisma';
+import { getLogger } from '../logger/logger';
+import * as Notification from '../../common/notification';
+import { userForPupil } from '../user';
 import * as Prisma from '@prisma/client';
-import { getFirstLecture } from '../../courses/lectures';
-import { parseSubjectString } from '../../util/subjectsutils';
-import { getCourseCapacity, getCourseFreePlaces, isParticipant } from '../../courses/participants';
-import { getCourseImageURL } from '../../courses/util';
-import { createSecretEmailToken } from '../../secret';
-import { getCourse } from '../../../graphql/util';
-import { shuffleArray } from '../../../common/util/basic';
-import { NotificationContext } from '../../notification/types';
+import { getFirstLecture } from './lectures';
+import { parseSubjectString } from '../util/subjectsutils';
+import { getCourseCapacity, getCourseFreePlaces, getCourseImageURL } from './util';
+import { getCourse } from '../../graphql/util';
+import { shuffleArray } from '../../common/util/basic';
+import { NotificationContext } from '../notification/types';
 
 const logger = getLogger('Course Notification');
 
@@ -36,13 +31,6 @@ export async function sendSubcourseCancelNotifications(course: Prisma.course, su
     // Send mail or this lecture to each participant
     logger.info('Sending cancellation mails for subcourse ' + subcourse.id + ' of course ' + course.name + ' to ' + participants.length + ' participants');
     for (const participant of participants) {
-        const mail = mailjetTemplates.COURSESCANCELLED({
-            participantFirstname: participant.pupil.firstname,
-            courseName: course.name,
-            firstLectureDate: moment(firstLecture).format('DD.MM.YYYY'),
-            firstLectureTime: moment(firstLecture).format('HH:mm'),
-        });
-        await sendTemplateMail(mail, participant.pupil.email);
         await Notification.actionTaken(userForPupil(participant.pupil), 'participant_course_cancelled', {
             uniqueId: `${subcourse.id}`,
             ...(await getNotificationContextForSubcourse(course, subcourse)),

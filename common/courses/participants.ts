@@ -2,18 +2,19 @@ import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prism
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
 import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
 import { createSecretEmailToken } from '../secret';
-import { userForPupil } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
+import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -106,9 +107,12 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
     if (queueEnrollmentDeletions.count > 0) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
         await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });
+        return true;
     } else if (force) {
         throw new RedundantError(`Pupil is not on the waiting list`);
     }
+
+    return false;
 }
 
 type CourseDecision =
@@ -208,7 +212,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         const pupilUser = userForPupil(pupil);
-        await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
+        const leftWaitingList = await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
 
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
@@ -236,31 +240,32 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         try {
-            const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
+            const course = await getCourseOfSubcourse(subcourse);
             const courseStart = moment(firstLecture[0].start);
             const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
 
-            /* TODO: Deprecate usage of old mailjet templates */
-            const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
-                participantFirstname: pupil.firstname,
-                courseName: course.name,
-                courseId: String(course.id),
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
-                authToken,
-            });
+            const context = await getNotificationContextForSubcourse(course, subcourse);
+            if (leftWaitingList) {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', context);
+            } else {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', context);
+            }
 
-            await sendTemplateMail(mail, pupil.email);
-
-            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
-                course,
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
-            });
+            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', context);
         } catch (error) {
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
     });
+
+    // Notify instructors if the subcourse is full now
+    const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+    if (participantCountAfter == subcourse.maxParticipants) {
+        const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
+
+        for (const instructor of await getSubcourseInstructors(subcourse)) {
+            await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+        }
+    }
 }
 
 export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
@@ -312,16 +317,4 @@ export async function fillSubcourse(subcourse: Subcourse) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
     }
-}
-
-export async function getCourseParticipantCount(subcourse: Subcourse) {
-    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-}
-
-export async function getCourseCapacity(subcourse: Subcourse) {
-    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
-}
-
-export async function getCourseFreePlaces(subcourse: Subcourse) {
-    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
 }

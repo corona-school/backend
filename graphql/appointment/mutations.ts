@@ -13,6 +13,7 @@ import {
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import { LectureWhereInput } from '../generated';
 import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
@@ -153,6 +154,16 @@ export class MutateAppointmentResolver {
     async appointmentAddZoomMeeting(@Ctx() context: GraphQLContext, @Arg('appointmentId', () => GraphQLInt) appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await createZoomMeetingForAppointment(appointment);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc(
+        'Support may override the zoom meeting if appointment organizers prefer another platform. New appointments then try to infer the link from the last appointment. Provide empty string if override should be removed.'
+    )
+    async appointmentOverrideMeetingLink(@Arg('lectureWhere') lectureWhere: LectureWhereInput, @Arg('overrideLink') overrideLink: string) {
+        await prisma.lecture.updateMany({ where: lectureWhere, data: { override_meeting_link: overrideLink.length === 0 ? null : overrideLink } });
         return true;
     }
 }

@@ -5,7 +5,7 @@ import { createNewPupil, createNewStudent } from './01_user';
 import moment from 'moment';
 import redactInactiveAccounts, { GRACE_PERIOD } from '../jobs/periodic/redact-inactive-accounts';
 import { pupil, student } from '@prisma/client';
-import { adminClient } from './base';
+import { adminClient } from './base/clients';
 
 function testUser(shouldBeRedacted: boolean, userOld: pupil | student, userNew: pupil | student) {
     // TODO: check how to check if other things have been deleted

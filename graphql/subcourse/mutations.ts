@@ -5,7 +5,6 @@ import { contactInstructors, contactParticipants } from '../../common/courses/co
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
 import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
-import { sendPupilCoursePromotion } from '../../common/mails/courses';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
@@ -17,6 +16,7 @@ import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { chat_type } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
+import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -361,11 +361,11 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.OWNER)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
-
         await hasAccess(context, 'Subcourse', subcourse);
+
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
