@@ -956,7 +956,7 @@ model waiting_list_enrollment {
 model job_run {
     job_name  String
     startedAt DateTime @default(now()) @db.Timestamp(6)
-    endedAt   DateTime?
+    endedAt   DateTime? @db.Timestamp(6)
     worker    String
 
     @@id([job_name, startedAt])
