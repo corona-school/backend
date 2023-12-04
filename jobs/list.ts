@@ -24,6 +24,11 @@ export const allJobs = {
     flagInactiveConversationsAsReadonly,
     notificationsEndedYesterday,
     checkReminders,
+
+    // For Integration Tests only:
+    NOTHING_DO_NOT_USE: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    },
 } as const;
 
 export type JobName = keyof typeof allJobs;
