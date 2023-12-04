@@ -308,4 +308,6 @@ void test('Job Synchronization', async () => {
 
     assert.strictEqual(successBooked.length, 1, 'Expected only one job to be booked to the database');
     assert.ok(!!successBooked[0].endedAt, 'Expected endedAt to be set after job execution');
+
+    await adminClient.request(`mutation RunJob6 { _executeJob(job: "NOTHING_DO_NOT_USE") }`);
 });
