@@ -78,11 +78,15 @@ export async function runJob(name: JobName) {
             span.finish();
         });
 
+        logger.info(`Finished Running Job '${name}', releasing table lock`);
+
         // ---------- RELEASE -------------
         await prisma.job_run.update({
             where: { job_name_startedAt: jobRun },
             data: { endedAt: new Date() },
         });
+
+        logger.info(`Finished Job '${name}'`);
     } catch (error) {
         logger.error('Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!', error);
         // Eventually we now have a job run in the job_run table that has no endedAt,
