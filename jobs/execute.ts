@@ -26,7 +26,9 @@ if (process.env.METRICS_SERVER_ENABLED === 'true') {
     startMetricsServer().catch((e) => logger.error('Failed to setup metrics server', e));
 }
 
-export async function runJob(name: JobName) {
+export async function runJob(name: JobName): Promise<boolean> {
+    let success = false;
+
     try {
         logger.info(`Starting to run Job '${name}'`);
 
@@ -36,8 +38,8 @@ export async function runJob(name: JobName) {
         // During insert we need transaction level SERIALIZABLE to prevent two jobs from inserting a new job run
         // at the same time
         const jobRun = await prisma.$transaction(
-            async (prisma) => {
-                const runningJob = await prisma.job_run.findFirst({
+            async (jobPrisma) => {
+                const runningJob = await jobPrisma.job_run.findFirst({
                     where: {
                         job_name: name,
                         endedAt: { equals: null },
@@ -50,7 +52,7 @@ export async function runJob(name: JobName) {
                     );
                 }
 
-                return await prisma.job_run.create({
+                return await jobPrisma.job_run.create({
                     data: { job_name: name, worker: process.env.DYNO ?? '?' },
                 });
             },
@@ -67,6 +69,7 @@ export async function runJob(name: JobName) {
             try {
                 const job = allJobs[name];
                 await job();
+                success = true;
             } catch (e) {
                 logger.error(`Can't execute job: ${name} due to error`, e);
                 logger.debug(e);
@@ -82,15 +85,18 @@ export async function runJob(name: JobName) {
 
         // ---------- RELEASE -------------
         await prisma.job_run.update({
-            where: { job_name_startedAt: jobRun },
+            where: { job_name_startedAt: { startedAt: jobRun.startedAt, job_name: jobRun.job_name } },
             data: { endedAt: new Date() },
         });
 
         logger.info(`Finished Job '${name}'`);
     } catch (error) {
-        logger.error('Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!', error);
+        logger.error(`Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup! - ${error.message}`, error);
+        success = false;
         // Eventually we now have a job run in the job_run table that has no endedAt,
         // but which will never finish. To unlock this again, simply delete this entry
         // (This should only happen in the rare case that the Dyno is killed (!) during execution)
     }
+
+    return success;
 }

@@ -19,7 +19,11 @@ export class AdminMutationsResolver {
             throw new UserInputError(`No Job named '${job}'`);
         }
 
-        await runJob(job);
+        const success = await runJob(job);
+        if (!success) {
+            throw new Error(`Job Execution failed`);
+        }
+
         return true;
     }
 
