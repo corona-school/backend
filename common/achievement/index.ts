@@ -8,6 +8,7 @@ import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
+import { Prisma } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -34,8 +35,9 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     for (const [key, group] of templatesByGroups) {
         let achievementToCheck: AchievementToCheck;
+        const context = {} as UserAchievementContext;
         for (const template of group) {
-            const userAchievement = await getOrCreateUserAchievement(template, user.userID, {});
+            const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
             if (userAchievement.achievedAt === null || userAchievement.recordValue) {
                 achievementToCheck = userAchievement;
                 break;

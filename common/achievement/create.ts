@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Achievement_template } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
@@ -15,7 +16,7 @@ async function doesUserAchievementAlreadyExist(templateId: number, userId: strin
     return userAchievement;
 }
 
-async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context?: UserAchievementContext) {
+async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context: UserAchievementContext) {
     const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
@@ -48,7 +49,7 @@ async function createNextUserAchievement(templatesForGroup: Achievement_template
                 userId: userId,
                 group: nextStepTemplate.group,
                 groupOrder: nextStepTemplate.groupOrder,
-                context: context ? JSON.stringify(context) : {},
+                context: context ? context : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
             },
