@@ -27,17 +27,25 @@ module.exports = {
                 if (!isMutation) return;
 
                 const undeferredAuth = methodNode.decorators?.find((it) => it.expression.callee.name === 'Authorized');
-
-                if (!undeferredAuth) {
+                const deferredAuth = methodNode.decorators?.find((it) => it.expression.callee.name === 'AuthorizedDeferred');
+                
+                if (!undeferredAuth && !deferredAuth) {
                     return;
                 }
 
-                const needsToBeDeferred = undeferredAuth.expression.arguments.some((it) => ['OWNER', 'SUBCOURSE_PARTICIPANT'].includes(it.property.name));
+                const needsToBeDeferred = (undeferredAuth ?? deferredAuth).expression.arguments.some((it) => ['OWNER', 'SUBCOURSE_PARTICIPANT'].includes(it.property.name));
 
-                if (needsToBeDeferred) {
+                if (undeferredAuth && needsToBeDeferred) {
                     context.report({
                         node: methodNode.key,
                         message: `Must use @AuthorizedDeferred for mutation ${methodNode.key.name}`,
+                    });
+                }
+
+                if (deferredAuth && !needsToBeDeferred) {
+                    context.report({
+                        node: methodNode.key,
+                        message: `@AuthorizedDeferred for mutation ${methodNode.key.name} is unnecessary as no context dependent role is used. Did you mean to use OWNER or SUBCOURSE_PARTICIPANT?`,
                     });
                 }
             },
