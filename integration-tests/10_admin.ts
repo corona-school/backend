@@ -222,7 +222,7 @@ void test('Admin Manage Notifications', async () => {
 
     assert.ok(!scheduled.find((it) => it.notificationID === id), 'Concrete notification already visible?');
 
-    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+    await adminClient.request(`mutation { _executeJob(job: "checkReminders") }`);
 
     const {
         me: { concreteNotifications: sent },
