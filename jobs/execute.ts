@@ -1,9 +1,11 @@
-import { JobName } from './list';
+import { JobName, allJobs } from './list';
 import tracer from '../common/logger/tracing';
 import { getLogger } from '../common/logger/logger';
 import { metrics, metricsRouter } from '../common/logger/metrics';
 import express from 'express';
 import http from 'http';
+import { prisma } from '../common/prisma';
+import { Prisma } from '@prisma/client';
 
 const logger = getLogger('Job Execution');
 
@@ -25,20 +27,66 @@ if (process.env.METRICS_SERVER_ENABLED === 'true') {
 }
 
 export async function runJob(name: JobName) {
-    const span = tracer.startSpan(name);
-    return await tracer.scope().activate(span, async () => {
-        let hasError = false;
-        try {
-            await runJob(name);
-        } catch (e) {
-            logger.error(`Can't execute job: ${name} due to error with message:`, e);
-            logger.debug(e);
-            hasError = true;
-        }
+    try {
+        logger.info(`Starting to run Job '${name}'`);
 
-        metrics.JobCountExecuted.inc({ hasError: `${hasError}`, name: name });
+        // ---------- AQUIRE --------------
+        // Prevent Job Runs running concurrently (across dynos), as jobs usually lack synchronization internally
+        // To synchronize we use the 'job_run' table in our Postgres
+        // During insert we need transaction level SERIALIZABLE to prevent two jobs from inserting a new job run
+        // at the same time
+        const jobRun = await prisma.$transaction(
+            async (prisma) => {
+                const runningJob = await prisma.job_run.findFirst({
+                    where: {
+                        job_name: name,
+                        endedAt: { equals: null },
+                    },
+                });
 
-        this.start();
-        span.finish();
-    });
+                if (runningJob) {
+                    throw new Error(
+                        `Cannot concurrently execute Job '${name}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`
+                    );
+                }
+
+                return await prisma.job_run.create({
+                    data: { job_name: name, worker: process.env.DYNO ?? '?' },
+                });
+            },
+            { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+        );
+
+        logger.info(`Aquired Table Lock to run Job '${name}'`);
+
+        // ---------- RUN ----------------
+
+        const span = tracer.startSpan(name);
+        await tracer.scope().activate(span, async () => {
+            let hasError = false;
+            try {
+                const job = allJobs[name];
+                await job();
+            } catch (e) {
+                logger.error(`Can't execute job: ${name} due to error`, e);
+                logger.debug(e);
+                hasError = true;
+            }
+
+            metrics.JobCountExecuted.inc({ hasError: `${hasError}`, name: name });
+
+            span.finish();
+        });
+
+        // ---------- RELEASE -------------
+        await prisma.job_run.update({
+            where: { job_name_startedAt: jobRun },
+            data: { endedAt: new Date() },
+        });
+    } catch (error) {
+        logger.error('Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!', error);
+        // Eventually we now have a job run in the job_run table that has no endedAt,
+        // but which will never finish. To unlock this again, simply delete this entry
+        // (This should only happen in the rare case that the Dyno is killed (!) during execution)
+    }
 }
