@@ -75,7 +75,8 @@ export async function runJob(name: JobName): Promise<boolean> {
 
         logger.info(`Finished Job '${name}'`);
     } catch (error) {
-        logger.error(`Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup! - ${error.message}`, error);
+        logger.error(error.message);
+        logger.error(`Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!`, error);
         success = false;
         // Eventually we now have a job run in the job_run table that has no endedAt,
         // but which will never finish. To unlock this again, simply delete this entry
