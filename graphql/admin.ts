@@ -13,13 +13,13 @@ import { Doc } from './util';
 export class AdminMutationsResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    @Doc('Schedules a Job for immediate Execution - Does not wait for the Job to be finished')
-    _executeJob(@Arg('job') job: string) {
+    @Doc('Schedules a Job for immediate Execution - The request might time out while the job is still running')
+    async _executeJob(@Arg('job') job: string) {
         if (!jobExists(job)) {
             throw new UserInputError(`No Job named '${job}'`);
         }
 
-        void runJob(job);
+        await runJob(job);
         return true;
     }
 
