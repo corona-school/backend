@@ -9,7 +9,7 @@ import { prisma } from '../../common/prisma';
 @Resolver(() => Achievement)
 export class MutateAchievementResolver {
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.USER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async matchMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number) {
         const { user } = context;
         const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true, student: true } });
@@ -24,6 +24,7 @@ export class MutateAchievementResolver {
         } else if (user.pupilId) {
             await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
                 matchId: matchId.toString(),
+                relationId: `match/${matchId}`,
             });
         }
 

@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_event, Achievement_template, achievement_type_enum } from '../../graphql/generated';
+import { Achievement_event, Achievement_template, Lecture } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 
@@ -114,17 +114,13 @@ export type EvaluationResult = {
 export type RelationContextType = {
     match?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        };
+        lecture: ContextLecture[];
     };
     subcourse?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        };
+        lecture: ContextLecture[];
     };
     actionNames?: string[];
 };
+
+type ContextLecture = Pick<Lecture, 'start' | 'duration'>;

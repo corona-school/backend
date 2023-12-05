@@ -1,6 +1,6 @@
 import moment from 'moment';
-import { Bucket, BucketConfig, BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
-import { getRelationContext } from './util';
+import { BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
+import { getRelationContext, getRelationTypeAndId } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -13,16 +13,18 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_lecture_start: {
         function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
+            const [type] = getRelationTypeAndId(relation);
+
             if (!relation) {
                 return { bucketKind: 'time', buckets: [] };
             }
             const context = await getRelationContext(relation);
-            if (!context[relation].lecture) {
+            if (!context[type].lecture) {
                 return { bucketKind: 'time', buckets: [] };
             }
             return {
                 bucketKind: 'time',
-                buckets: context[relation].lecture.map((lecture) => ({
+                buckets: context[type].lecture.map((lecture) => ({
                     kind: 'time',
                     startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
                     endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),

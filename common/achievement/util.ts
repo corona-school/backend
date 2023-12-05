@@ -44,11 +44,11 @@ export async function getRelationContext(relation: string): Promise<RelationCont
     const relationContext: RelationContextType = {
         match:
             type === 'match'
-                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
         subcourse:
             type === 'subcourse'
-                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
         actionNames: type !== 'match' && type !== 'subcourse' ? relation.split(',') : null,
     };
