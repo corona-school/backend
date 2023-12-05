@@ -18,6 +18,11 @@ export async function runJob(name: JobName): Promise<boolean> {
         // To synchronize we use the 'job_run' table in our Postgres
         // During insert we need transaction level SERIALIZABLE to prevent two jobs from inserting a new job run
         // at the same time
+
+        // Wait between 0 and 1000ms to reduce the likelihood of transaction deadlocks
+        // (as a lot of Cron Jobs fire at exactly the same time)
+        await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 1000)));
+
         const jobRun = await prisma.$transaction(
             async (jobPrisma) => {
                 const runningJob = await jobPrisma.job_run.findFirst({
