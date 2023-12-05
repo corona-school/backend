@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
+import { actionTakenAt } from '../notification';
 import { isGamificationFeatureActive, getMetricsByAction } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
@@ -8,7 +9,6 @@ import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
-import { Prisma } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -44,7 +44,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
             }
         }
         if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate);
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, event);
         }
     }
 
@@ -93,13 +93,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
     return true;
 }
 
-async function checkUserAchievement(userAchievement: UserAchievementTemplate) {
+async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     const evaluationResult = await isAchievementConditionMet(userAchievement);
     if (evaluationResult.conditionIsMet) {
         const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
         const evaluationResultValue =
             typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
-        const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+        const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement, event);
         const userAchievementContext: UserAchievementContext = {};
         await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
     }
@@ -127,11 +127,12 @@ function injectRecordValue(condition: string, recordValue: number) {
     return condition;
 }
 
-async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
+async function rewardUser<ID extends ActionID>(evaluationResult: number, userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
     }
+    await actionTakenAt(new Date(event.at), event.user, 'reward_issued', event.context);
     return await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },

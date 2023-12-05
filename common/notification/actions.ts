@@ -618,6 +618,14 @@ const _notificationActions = {
     // ACHIEVEMENT TEST ACTIONS
 
     /* ONBOARDING */
+    reward_issued: {
+        description: 'Reward issued',
+        sampleContext: {},
+    },
+    achievement_seen: {
+        description: 'Achievement seen',
+        sampleContext: {},
+    },
     requestedToken: {
         description: 'User initiated registration',
         sampleContext: {},
