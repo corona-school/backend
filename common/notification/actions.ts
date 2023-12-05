@@ -622,10 +622,6 @@ const _notificationActions = {
         description: 'Reward issued',
         sampleContext: {},
     },
-    achievement_seen: {
-        description: 'Achievement seen',
-        sampleContext: {},
-    },
     requestedToken: {
         description: 'User initiated registration',
         sampleContext: {},
