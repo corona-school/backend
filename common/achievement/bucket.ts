@@ -12,7 +12,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_lecture_start: {
-        function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
+        function: async (relation: string): Promise<GenericBucketConfig<TimeBucket>> => {
             if (!relation) {
                 return { bucketKind: 'time', buckets: [] };
             }
@@ -77,7 +77,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     // this is a filter bucket array, which means that it will only contain buckets for events related to certain action names
     by_conducted_match_meeting: {
-        function: async (relation): Promise<GenericBucketConfig<FilterBucket>> => {
+        function: async (relation: string): Promise<GenericBucketConfig<FilterBucket>> => {
             const actions = await getRelationContext(relation);
             const buckets: FilterBucket[] = actions.actionNames.map((action) => {
                 return {
