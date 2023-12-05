@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { Bucket, BucketConfig, BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
-import { getAchievementContext } from './util';
+import { getAchievementContext, getRelationTypeAndId } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -17,7 +17,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 return { bucketKind: 'time', buckets: [] };
             }
             const context = await getAchievementContext(relation);
-            if (!context[relation].lecture) {
+            if (!context[context.type].lecture) {
                 return { bucketKind: 'time', buckets: [] };
             }
             return {

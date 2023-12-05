@@ -111,7 +111,10 @@ export type EvaluationResult = {
     resultObject: Record<string, string | number | boolean>;
 };
 
+export type RelationTypes = 'match' | 'subcourse' | 'achievementName';
+
 export type AchievementContextType = {
+    type: RelationTypes;
     match?: {
         id: number;
         lecture: {
