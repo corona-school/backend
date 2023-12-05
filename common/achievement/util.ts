@@ -44,11 +44,11 @@ export async function getAchievementContext(relation: string): Promise<Achieveme
     const achievementContext: AchievementContextType = {
         match:
             type === 'match'
-                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                ? await prisma.match.findFirst({ where: { id: id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
         subcourse:
             type === 'subcourse'
-                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                ? await prisma.subcourse.findFirst({ where: { id: id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
         actionNames: type === 'achievementName' ? relation.split(',').map((actionName) => actionName.split('/')[1]) : null,
     };

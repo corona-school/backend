@@ -117,14 +117,14 @@ export type AchievementContextType = {
         lecture: {
             start: Date;
             duration: number;
-        };
+        }[];
     };
     subcourse?: {
         id: number;
         lecture: {
             start: Date;
             duration: number;
-        };
+        }[];
     };
     actionNames?: string[];
 };
