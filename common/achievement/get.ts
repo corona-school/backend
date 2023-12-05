@@ -69,6 +69,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
 
     return {
+        id: userAchievements[resultIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
