@@ -111,7 +111,12 @@ export type EvaluationResult = {
     resultObject: Record<string, string | number | boolean>;
 };
 
+export type RelationTypes = 'match' | 'subcourse' | 'achievementName';
+
+type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+
 export type AchievementContextType = {
+    type: RelationTypes;
     match?: {
         id: number;
         lecture: ContextLecture[];
@@ -122,5 +127,3 @@ export type AchievementContextType = {
     };
     actionNames?: string[];
 };
-
-type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
