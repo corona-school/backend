@@ -21,7 +21,7 @@ export async function runJob(name: JobName): Promise<boolean> {
 
         // Wait between 0 and 1000ms to reduce the likelihood of transaction deadlocks
         // (as a lot of Cron Jobs fire at exactly the same time)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 1000)));
 
         const jobRun = await prisma.$transaction(
             async (jobPrisma) => {
