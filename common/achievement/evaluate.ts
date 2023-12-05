@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
+import moment from 'moment';
 
 export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, metrics: string[]): Promise<EvaluationResult> {
     const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } } });
@@ -89,14 +90,17 @@ const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketC
 const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
-        const filteredEvents = events.filter((event) => {
-            return event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime;
-        });
+        const filteredEvents = events
+            .filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime)
+            .sort((a, b) => moment(a.createdAt).valueOf() - moment(b.createdAt).valueOf()); // Sort events by createdAt
+
+        const earliestEvent = filteredEvents.length > 0 ? [filteredEvents[0]] : [];
+
         return {
             kind: bucket.kind,
             startTime: bucket.startTime,
             endTime: bucket.endTime,
-            events: filteredEvents,
+            events: earliestEvent,
         };
     });
     return bucketsWithEvents;
