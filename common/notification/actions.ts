@@ -619,11 +619,11 @@ const _notificationActions = {
 
     /* ONBOARDING */
     requestedToken: {
-        description: 'User joined meeting',
+        description: 'User initiated registration',
         sampleContext: {},
     },
     calendly_appointment_booked: {
-        description: 'User joined meeting',
+        description: 'Calendly appointment booked',
         sampleContext: {},
     },
 
