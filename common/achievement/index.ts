@@ -82,7 +82,6 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 value: value,
                 action: event.actionId,
                 userId: event.user.userID,
-                // TODO - get relation OR get relationId from context
                 relation: event.context.relationId ?? '',
             },
         });

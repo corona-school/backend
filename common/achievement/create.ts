@@ -39,6 +39,7 @@ async function createAchievement<ID extends ActionID>(templateToCreate: Achievem
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
+    // TODO
     const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === templateToCreate.groupOrder) + 1 : 0;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
@@ -54,7 +55,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ) {
-    const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+    const nextStepTemplate = templatesForGroup[nextStepIndex];
 
     if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({

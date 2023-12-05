@@ -19,7 +19,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 return { bucketKind: 'time', buckets: [] };
             }
             const context = await getAchievementContext(relation);
-            if (!context[relation].lecture) {
+            if (!context[type].lecture) {
                 return { bucketKind: 'time', buckets: [] };
             }
             return {
