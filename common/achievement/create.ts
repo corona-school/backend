@@ -34,8 +34,22 @@ async function getOrCreateUserAchievement<ID extends ActionID>(template: Achieve
 
 async function createAchievement<ID extends ActionID>(templateToCreate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
+    const keys = Object.keys(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
-        where: { template: { group: templateToCreate.group } },
+        where: {
+            template: {
+                group: templateToCreate.group,
+            },
+            userId,
+            AND: keys.map((key) => {
+                return {
+                    context: {
+                        path: key,
+                        equals: context[key],
+                    },
+                };
+            }),
+        },
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
