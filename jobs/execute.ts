@@ -3,9 +3,20 @@ import tracer from '../common/logger/tracing';
 import { getLogger } from '../common/logger/logger';
 import { metrics, metricsRouter } from '../common/logger/metrics';
 import { prisma } from '../common/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, job_run } from '@prisma/client';
+import assert from 'assert';
 
 const logger = getLogger('Job Execution');
+
+enum LockStatus {
+    // We failed to aquire the lock as the transaction was rolled back by the database
+    // (due to a conflict), but we don't yet know whether another job is currently running
+    // Best to retry soon
+    ROLLBACK = 1,
+    // Failed to aquire a lock because the same job is already running
+    CONFLICT = 2,
+    AQUIRED = 3,
+}
 
 export async function runJob(name: JobName): Promise<boolean> {
     let success = false;
@@ -19,34 +30,61 @@ export async function runJob(name: JobName): Promise<boolean> {
         // During insert we need transaction level SERIALIZABLE to prevent two jobs from inserting a new job run
         // at the same time
 
-        // Wait between 0 and 1000ms to reduce the likelihood of transaction deadlocks
-        // (as a lot of Cron Jobs fire at exactly the same time)
-        await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 1000)));
+        let jobRun: job_run;
+        let lockStatus: LockStatus = LockStatus.ROLLBACK as LockStatus;
+        let lockRetries = 5;
 
-        const jobRun = await prisma.$transaction(
-            async (jobPrisma) => {
-                const runningJob = await jobPrisma.job_run.findFirst({
-                    where: {
-                        job_name: name,
-                        endedAt: { equals: null },
+        do {
+            try {
+                // Wait between 0 and 1000ms to reduce the likelihood of transaction deadlocks
+                // (as a lot of Cron Jobs fire at exactly the same time)
+                await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 1000)));
+
+                jobRun = await prisma.$transaction(
+                    async (jobPrisma) => {
+                        const runningJob = await jobPrisma.job_run.findFirst({
+                            where: {
+                                job_name: name,
+                                endedAt: { equals: null },
+                            },
+                        });
+
+                        if (runningJob) {
+                            logger.warn(
+                                `Cannot concurrently execute Job '${name}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`
+                            );
+                            lockStatus = LockStatus.CONFLICT;
+                            return undefined;
+                        }
+
+                        lockStatus = LockStatus.AQUIRED;
+
+                        return await jobPrisma.job_run.create({
+                            data: { job_name: name, worker: process.env.DYNO ?? '?' },
+                        });
+                        // It is important that the transaction ends here and the INSERT above is commited
+                        // Otherwise we would continue execution, and the commit would be rolled back after the job actually executed
                     },
-                });
+                    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+                );
+            } catch (error) {
+                // The transaction was aborted, likely because the DB rolled back the deadlock
+                lockStatus = LockStatus.ROLLBACK;
+                lockRetries -= 1;
+            }
+        } while (lockStatus === LockStatus.ROLLBACK && lockRetries > 0);
 
-                if (runningJob) {
-                    throw new Error(
-                        `Cannot concurrently execute Job '${name}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`
-                    );
-                }
+        if (lockStatus === LockStatus.CONFLICT) {
+            return false;
+        }
 
-                return await jobPrisma.job_run.create({
-                    data: { job_name: name, worker: process.env.DYNO ?? '?' },
-                });
+        if (lockStatus === LockStatus.ROLLBACK) {
+            logger.error(`Failed to aquire Lock after 5 retries`);
+            return false;
+        }
 
-                // It is important that the transaction ends here and the INSERT above is commited
-                // Otherwise we would continue execution, and the commit would be rolled back after the job actually executed
-            },
-            { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-        );
+        assert.ok(lockStatus === LockStatus.AQUIRED);
+        assert.ok(runJob != null);
 
         logger.info(`Aquired Table Lock to run Job '${name}'`);
 
