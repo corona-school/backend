@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Achievement_template } from '../../graphql/generated';
 import { getLogger } from '../logger/logger';
 import { ActionID } from '../notification/actions';
