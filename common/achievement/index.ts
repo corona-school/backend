@@ -88,6 +88,11 @@ async function checkUserAchievement(userAchievement: UserAchievementTemplate) {
         const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
         const userAchievementContext: UserAchievementContext = {};
         await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
+    } else {
+        await prisma.user_achievement.update({
+            where: { id: userAchievement.id },
+            data: { achievedAt: null, isSeen: false },
+        });
     }
 }
 
