@@ -35,7 +35,7 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
             return;
         }
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
-        const relation = eventsForMetric.find((event) => event.relation).relation;
+        const relation = eventsForMetric.find((event) => event.relation)?.relation;
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;

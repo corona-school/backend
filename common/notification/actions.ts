@@ -615,19 +615,10 @@ const _notificationActions = {
         sampleContext: {},
     },
 
-    // ACHIEVEMENT TEST ACTIONS
+    // ACHIEVEMENT ACTIONS
 
-    /* ONBOARDING */
     reward_issued: {
         description: 'Reward issued',
-        sampleContext: {},
-    },
-    requestedToken: {
-        description: 'User initiated registration',
-        sampleContext: {},
-    },
-    calendly_appointment_booked: {
-        description: 'Calendly appointment booked',
         sampleContext: {},
     },
 
