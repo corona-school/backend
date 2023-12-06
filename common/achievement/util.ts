@@ -19,8 +19,6 @@ export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] 
     return metricsByAction.get(actionId) || [];
 }
 
-type RelationTypes = 'match' | 'subcourse';
-
 export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
     const validRelationTypes = ['match', 'subcourse'];
     const [relationType, relationId] = relation.split('/');
