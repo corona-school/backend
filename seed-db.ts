@@ -1226,7 +1226,7 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Rekord gebrochen.',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {
-                pupil_match_learning_events: { metric: 'pupil_match_learned_regular', aggregator: 'count', createBuckets: 'by_lecture_start' },
+                pupil_match_learning_events: { metric: 'pupil_match_learned_regular', aggregator: 'count', createBuckets: 'by_weeks' },
             },
             isActive: true,
         },
@@ -1252,7 +1252,7 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Rekord gebrochen.',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
-                student_match_learning_events: { metric: 'student_match_learned_regular', aggregator: 'count', createBuckets: 'by_lecture_start' },
+                student_match_learning_events: { metric: 'student_match_learned_regular', aggregator: 'count', createBuckets: 'by_weeks' },
             },
             isActive: true,
         },
