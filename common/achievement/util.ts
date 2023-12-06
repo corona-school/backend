@@ -37,7 +37,7 @@ export function getRelationTypeAndId(relation: string): [relationType: RelationT
     return [relationType as RelationTypes, parsedRelationId];
 }
 
-export async function getAchievementContext(relation: string): Promise<AchievementContextType> {
+export async function getBucketContext(relation: string): Promise<AchievementContextType> {
     const [type, id] = getRelationTypeAndId(relation);
     const achievementContext: AchievementContextType = {
         type: type,
@@ -49,7 +49,6 @@ export async function getAchievementContext(relation: string): Promise<Achieveme
             type === 'subcourse'
                 ? await prisma.subcourse.findFirst({ where: { id: id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
-        actionNames: type === 'achievementName' ? relation.split(',').map((actionName) => actionName.split('/')[1]) : null,
     };
     return achievementContext;
 }

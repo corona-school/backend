@@ -111,7 +111,7 @@ export type EvaluationResult = {
     resultObject: Record<string, string | number | boolean>;
 };
 
-export type RelationTypes = 'match' | 'subcourse' | 'achievementName';
+export type RelationTypes = 'match' | 'subcourse';
 
 export type AchievementContextType = {
     type: RelationTypes;
@@ -129,5 +129,4 @@ export type AchievementContextType = {
             duration: number;
         }[];
     };
-    actionNames?: string[];
 };
