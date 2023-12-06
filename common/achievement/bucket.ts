@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { Bucket, BucketConfig, BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket } from './types';
 import { getRelationContext } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
@@ -12,7 +12,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_lecture_start: {
-        function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
+        function: async (relation: string): Promise<GenericBucketConfig<TimeBucket>> => {
             if (!relation) {
                 return { bucketKind: 'time', buckets: [] };
             }
@@ -72,22 +72,6 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             return await {
                 bucketKind: 'time',
                 buckets,
-            };
-        },
-    },
-    // this is a filter bucket array, which means that it will only contain buckets for events related to certain action names
-    by_conducted_match_meeting: {
-        function: async (relation): Promise<GenericBucketConfig<FilterBucket>> => {
-            const actions = await getRelationContext(relation);
-            const buckets: FilterBucket[] = actions.actionNames.map((action) => {
-                return {
-                    kind: 'filter',
-                    actionName: action,
-                };
-            });
-            return await {
-                bucketKind: 'filter',
-                buckets: buckets,
             };
         },
     },
