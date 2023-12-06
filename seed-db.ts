@@ -739,28 +739,6 @@ void (async function setupDevDB() {
         },
     });
 
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            metrics: ['onboarding_registered'],
-            templateFor: achievement_template_for_enum.Global,
-            group: 'Onboarding',
-            groupOrder: 1,
-            stepName: 'Verifizieren',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_00',
-            achievedImage: '',
-            actionName: 'E-Mail erneut senden',
-            actionRedirectLink: '',
-            actionType: achievement_action_type_enum.Action,
-            condition: 'registered_events > 0',
-            conditionDataAggregations: JSON.stringify({ registered_events: { metric: 'onboarding_registered', aggregator: 'count' } }),
-            isActive: true,
-        },
-    });
-
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);

@@ -12,7 +12,6 @@ import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
-import * as Notification from '../../common/notification';
 import { prisma } from '../../common/prisma';
 
 @InputType()
@@ -74,72 +73,12 @@ export class MutateUserResolver {
 
         return true;
     }
-
     @Mutation(() => Boolean)
     @Authorized(Role.USER)
     async achievementIsSeen(@Arg('achievementId') achievementId: number) {
         await prisma.user_achievement.update({
             where: { id: achievementId },
             data: { isSeen: true },
-        });
-        return true;
-    }
-
-    // ! Achievement Test Mutations - Just for trigger achievements
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async joinedMeeting(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'joined_meeting', {});
-        return true;
-    }
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async requestToken(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'requestedToken', {});
-        return true;
-    }
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async studentJoinedMeeting(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'student_joined_meeting', {});
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async verifiedEmail(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'user_registration_verified_email', {});
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async appointmentBooked(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'calendly_appointment_booked', {});
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async screenedSucces(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'tutor_screening_success', {});
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async cocSuccess(@Ctx() context: GraphQLContext) {
-        await Notification.actionTaken(context.user, 'student_coc_updated', {});
-        return true;
-    }
-
-    // joined_match_meeting triggers a tiered achievement and therefore needs a relationId to be passed to create a filter bucket from
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.USER)
-    async joinedMatchMeeting(@Ctx() context: GraphQLContext, matchId: number) {
-        await Notification.actionTaken(context.user, 'joined_match_meeting', {
-            matchId: String(matchId),
-            relationId: 'joined_match_meeting',
         });
         return true;
     }
