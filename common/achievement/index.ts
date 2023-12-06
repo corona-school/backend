@@ -1,6 +1,6 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { assureGamificationFeatureActive, getMetricsByAction } from './util';
+import { isGamificationFeatureActive, getMetricsByAction } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
@@ -9,12 +9,13 @@ import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchieve
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
 import { Prisma } from '@prisma/client';
+import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
 
 const logger = getLogger('Achievement');
 
 export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
-    if (!assureGamificationFeatureActive()) {
-        return null;
+    if (!isGamificationFeatureActive()) {
+        return;
     }
     const templatesForAction = await getTemplatesByAction(actionId);
 
@@ -43,26 +44,11 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
             }
         }
         if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, context);
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate);
         }
     }
 
-    return null;
-}
-
-function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
-    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
-    for (const template of templatesForAction) {
-        if (!templatesByGroups.has(template.group)) {
-            templatesByGroups.set(template.group, []);
-        }
-        templatesByGroups.get(template.group).push(template);
-    }
-    templatesByGroups.forEach((group, key) => {
-        group.sort((a, b) => a.groupOrder - b.groupOrder);
-        templatesByGroups.set(key, group);
-    });
-    return templatesByGroups;
+    return;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
@@ -92,16 +78,15 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
-    if (userAchievement) {
-        const evaluationResult = await isAchievementConditionMet(userAchievement);
-        if (evaluationResult.conditionIsMet) {
-            const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
-            const evaluationResultValue =
-                typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
-            const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
-            await createAchievement(awardedAchievement.template, userAchievement.userId, context);
-        }
+async function checkUserAchievement(userAchievement: UserAchievementTemplate) {
+    const evaluationResult = await isAchievementConditionMet(userAchievement);
+    if (evaluationResult.conditionIsMet) {
+        const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
+        const evaluationResultValue =
+            typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+        const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+        const userAchievementContext: UserAchievementContext = {};
+        await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
     }
 }
 
@@ -119,14 +104,6 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     return { conditionIsMet, resultObject };
 }
 
-// replace recordValue in condition with number of last record
-function injectRecordValue(condition: string, recordValue: number) {
-    if (typeof recordValue === 'number') {
-        return condition.replace('recordValue', recordValue.toString());
-    }
-    return condition;
-}
-
 async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
@@ -134,7 +111,7 @@ async function awardUser(evaluationResult: number, userAchievement: UserAchievem
     }
     return await prisma.user_achievement.update({
         where: { id: userAchievement.id },
-        data: { achievedAt: new Date(), recordValue: newRecordValue },
+        data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
         select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
 }

@@ -15,19 +15,14 @@ export function isGamificationFeatureActive(): boolean {
     return isActive;
 }
 
-export function assureGamificationFeatureActive() {
-    if (!isGamificationFeatureActive()) {
-        return false;
-    }
-    return true;
-}
-
 export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
     return metricsByAction.get(actionId) || [];
 }
 
-export function getRelationTypeAndId(relation: string): [relationType: RelationTypes, id: number] {
-    const validRelationTypes = ['match', 'subcourse', 'achievementName'];
+type RelationTypes = 'match' | 'subcourse';
+
+export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
+    const validRelationTypes = ['match', 'subcourse'];
     const [relationType, relationId] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);

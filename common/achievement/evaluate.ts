@@ -19,38 +19,44 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
     const resultObject: Record<string, number | string | boolean> = {};
 
     for (const key in dataAggregation) {
-        if (dataAggregation[key]) {
-            const dataAggregationObject = dataAggregation[key];
-            const metricName = dataAggregationObject.metric;
-
-            const bucketCreator = dataAggregationObject.createBuckets || 'default';
-            const bucketAggregator = dataAggregationObject.bucketAggregator || 'count';
-
-            const aggregator = dataAggregationObject.aggregator;
-
-            const eventsForMetric = eventsByMetric[metricName];
-            // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
-            const relation = eventsForMetric.find((event) => event.relation)?.relation;
-
-            if (eventsForMetric) {
-                const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
-                const bucketAggregatorFunction = aggregators[bucketAggregator].function;
-                const aggFunction = aggregators[aggregator].function;
-
-                const buckets = await bucketCreatorFunction(relation);
-                const bucketEvents = createBucketEvents(eventsForMetric, buckets);
-
-                const bucketAggr = bucketEvents.map(
-                    (bucketEvent): BucketEventsWithAggr => ({
-                        ...bucketEvent,
-                        aggregation: bucketAggregatorFunction([bucketEvent]),
-                    })
-                );
-
-                const value = aggFunction(bucketAggr);
-                resultObject[key] = value;
-            }
+        if (!dataAggregation[key]) {
+            return;
         }
+        const dataAggregationObject = dataAggregation[key];
+        const metricName = dataAggregationObject.metric;
+
+        const bucketCreator = dataAggregationObject.createBuckets || 'default';
+        const bucketAggregator = dataAggregationObject.bucketAggregator || 'count';
+
+        const aggregator = dataAggregationObject.aggregator;
+
+        const eventsForMetric = eventsByMetric[metricName];
+        if (!eventsForMetric) {
+            return;
+        }
+        // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
+        const relation = eventsForMetric.find((event) => event.relation)?.relation;
+
+        const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
+        const bucketAggregatorFunction = aggregators[bucketAggregator].function;
+        const aggFunction = aggregators[aggregator].function;
+
+        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggFunction) {
+            return;
+        }
+
+        const buckets = await bucketCreatorFunction(relation);
+        const bucketEvents = createBucketEvents(eventsForMetric, buckets);
+
+        const bucketAggr = bucketEvents.map(
+            (bucketEvent): BucketEventsWithAggr => ({
+                ...bucketEvent,
+                aggregation: bucketAggregatorFunction([bucketEvent]),
+            })
+        );
+
+        const value = aggFunction(bucketAggr);
+        resultObject[key] = value;
     }
 
     const evaluate = swan.parse(condition);

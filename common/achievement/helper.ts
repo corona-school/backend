@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { AchievementContextType } from './types';
-import { Achievement, achievement_state } from '../../graphql/types/achievement';
+import { achievement_state } from '../../graphql/types/achievement';
 import { Context } from '../notification/types';
 import { User } from '../user';
 import { prisma } from '../prisma';
@@ -62,4 +62,27 @@ export function getAchievementState(userAchievements: User_achievement[], curren
         : userAchievements[currentAchievementIndex].achievedAt
         ? achievement_state.COMPLETED
         : achievement_state.ACTIVE;
+}
+
+export function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
+    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
+    for (const template of templatesForAction) {
+        if (!templatesByGroups.has(template.group)) {
+            templatesByGroups.set(template.group, []);
+        }
+        templatesByGroups.get(template.group).push(template);
+    }
+    templatesByGroups.forEach((group, key) => {
+        group.sort((a, b) => a.groupOrder - b.groupOrder);
+        templatesByGroups.set(key, group);
+    });
+    return templatesByGroups;
+}
+
+// replace recordValue in condition with number of last record
+export function injectRecordValue(condition: string, recordValue: number) {
+    if (typeof recordValue === 'number') {
+        return condition.replace('recordValue', recordValue.toString());
+    }
+    return condition;
 }
