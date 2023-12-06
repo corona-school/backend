@@ -59,17 +59,16 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                 : currentAchievementTemplate[key];
         currentAchievementTemplate[key] = updatedElement;
     });
-    const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
     const state: achievement_state =
         userAchievements.length === 0
             ? achievement_state.INACTIVE
             : userAchievements[currentAchievementIndex].achievedAt
             ? achievement_state.COMPLETED
             : achievement_state.ACTIVE;
-    const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
+    const newAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
     return {
-        id: userAchievements[resultIndex].id,
+        id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
@@ -84,7 +83,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                   // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                   return {
                       description: achievement.template.stepName,
-                      isActive: index === resultIndex,
+                      isActive: index === currentAchievementIndex,
                   };
               })
             : null,

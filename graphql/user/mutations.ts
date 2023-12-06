@@ -75,7 +75,7 @@ export class MutateUserResolver {
     }
     @Mutation(() => Boolean)
     @Authorized(Role.USER)
-    async achievementIsSeen(@Arg('achievementId') achievementId: number) {
+    async markAchievementAsSeen(@Arg('achievementId') achievementId: number) {
         await prisma.user_achievement.update({
             where: { id: achievementId },
             data: { isSeen: true },
