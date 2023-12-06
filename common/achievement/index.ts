@@ -109,10 +109,12 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
     }
-    await actionTakenAt(new Date(event.at), event.user, 'reward_issued', event.context);
-    return await prisma.user_achievement.update({
+    const updatedAchievement = await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
         select: { id: true, userId: true, achievedAt: true, context: true, template: true },
     });
+
+    await actionTakenAt(new Date(event.at), event.user, 'user_achievemnet_reward_issued', event.context);
+    return updatedAchievement;
 }

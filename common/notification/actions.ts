@@ -617,7 +617,7 @@ const _notificationActions = {
 
     // ACHIEVEMENT ACTIONS
 
-    reward_issued: {
+    user_achievemnet_reward_issued: {
         description: 'Reward issued',
         sampleContext: {},
     },
