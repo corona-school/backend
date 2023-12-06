@@ -43,7 +43,6 @@ export async function getRelationContext(relation: string): Promise<RelationCont
             type === 'subcourse'
                 ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
                 : null,
-        actionNames: type !== 'match' && type !== 'subcourse' ? relation.split(',') : null,
     };
     return relationContext;
 }

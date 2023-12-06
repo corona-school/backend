@@ -615,18 +615,6 @@ const _notificationActions = {
         sampleContext: {},
     },
 
-    // ACHIEVEMENT TEST ACTIONS
-
-    /* ONBOARDING */
-    requestedToken: {
-        description: 'User initiated registration',
-        sampleContext: {},
-    },
-    calendly_appointment_booked: {
-        description: 'Calendly appointment booked',
-        sampleContext: {},
-    },
-
     /* MEETINGS */
     student_joined_meeting: {
         description: 'Student joined meeting',
