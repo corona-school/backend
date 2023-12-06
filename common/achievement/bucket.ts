@@ -1,6 +1,6 @@
 import moment from 'moment';
-import { Bucket, BucketConfig, BucketFormula, DefaultBucket, FilterBucket, GenericBucketConfig, TimeBucket } from './types';
-import { getAchievementContext, getRelationTypeAndId } from './util';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket } from './types';
+import { getBucketContext, getRelationTypeAndId } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -18,13 +18,13 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             if (!relation) {
                 return { bucketKind: 'time', buckets: [] };
             }
-            const context = await getAchievementContext(relation);
-            if (!context[type].lecture) {
+            const context = await getBucketContext(relation);
+            if (!context[context.type].lecture) {
                 return { bucketKind: 'time', buckets: [] };
             }
             return {
                 bucketKind: 'time',
-                buckets: context[type].lecture.map((lecture) => ({
+                buckets: context[context.type].lecture.map((lecture) => ({
                     kind: 'time',
                     startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
                     endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
@@ -74,22 +74,6 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             return await {
                 bucketKind: 'time',
                 buckets,
-            };
-        },
-    },
-    // this is a filter bucket array, which means that it will only contain buckets for events related to certain action names
-    by_conducted_match_meeting: {
-        function: async (relation): Promise<GenericBucketConfig<FilterBucket>> => {
-            const actions = await getAchievementContext(relation);
-            const buckets: FilterBucket[] = actions.actionNames.map((action) => {
-                return {
-                    kind: 'filter',
-                    actionName: action,
-                };
-            });
-            return await {
-                bucketKind: 'filter',
-                buckets: buckets,
             };
         },
     },

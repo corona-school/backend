@@ -12,7 +12,6 @@ import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
-import * as Notification from '../../common/notification';
 
 @InputType()
 class SupportMessage {

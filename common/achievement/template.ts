@@ -47,6 +47,10 @@ async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<
 
 async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
     const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
+    if (!Object.keys(templatesByMetric)) {
+        logger.warn(`No achievement templates were found in the database for the action with id: ${actionId}`);
+        return [];
+    }
     const metricsForAction = metricsByAction.get(actionId);
 
     let templatesForAction: Achievement_template[] = [];

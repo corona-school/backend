@@ -19,8 +19,8 @@ export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] 
     return metricsByAction.get(actionId) || [];
 }
 
-export function getRelationTypeAndId(relation: string): [relationType: RelationTypes, id: number] {
-    const validRelationTypes = ['match', 'subcourse', 'achievementName'];
+export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
+    const validRelationTypes = ['match', 'subcourse'];
     const [relationType, relationId] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
@@ -30,7 +30,7 @@ export function getRelationTypeAndId(relation: string): [relationType: RelationT
     return [relationType as RelationTypes, parsedRelationId];
 }
 
-export async function getAchievementContext(relation: string): Promise<AchievementContextType> {
+export async function getBucketContext(relation: string): Promise<AchievementContextType> {
     const [type, id] = getRelationTypeAndId(relation);
     const achievementContext: AchievementContextType = {
         type: type,
@@ -42,7 +42,6 @@ export async function getAchievementContext(relation: string): Promise<Achieveme
             type === 'subcourse'
                 ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
                 : null,
-        actionNames: type === 'achievementName' ? relation.split(',').map((actionName) => actionName.split('/')[1]) : null,
     };
     return achievementContext;
 }

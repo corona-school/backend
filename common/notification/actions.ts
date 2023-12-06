@@ -615,7 +615,7 @@ const _notificationActions = {
         sampleContext: {},
     },
 
-    // ACHIEVEMENT TEST ACTIONS
+    // ACHIEVEMENT ACTIONS
 
     /* ONBOARDING */
     student_screening_appointment_done: {

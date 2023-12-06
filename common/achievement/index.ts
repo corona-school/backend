@@ -5,9 +5,9 @@ import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
-import { Achievement_template } from '../../graphql/generated';
+import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
 
 const logger = getLogger('Achievement');
 
@@ -49,21 +49,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     return;
 }
 
-function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
-    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
-    for (const template of templatesForAction) {
-        if (!templatesByGroups.has(template.group)) {
-            templatesByGroups.set(template.group, []);
-        }
-        templatesByGroups.get(template.group).push(template);
-    }
-    templatesByGroups.forEach((group, key) => {
-        group.sort((a, b) => a.groupOrder - b.groupOrder);
-        templatesByGroups.set(key, group);
-    });
-    return templatesByGroups;
-}
-
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
 
@@ -91,15 +76,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
 }
 
 async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
-    if (userAchievement) {
-        const evaluationResult = await isAchievementConditionMet(userAchievement);
-        if (evaluationResult.conditionIsMet) {
-            const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
-            const evaluationResultValue =
-                typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
-            const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
-            await createAchievement(awardedAchievement.template, userAchievement.userId, context);
-        }
+    const evaluationResult = await isAchievementConditionMet(userAchievement);
+    if (evaluationResult.conditionIsMet) {
+        const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
+        const evaluationResultValue =
+            typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+        const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+        await createAchievement(awardedAchievement.template, userAchievement.userId, context);
     }
 }
 
@@ -115,14 +98,6 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const updatedCondition = injectRecordValue(condition, achievement.recordValue);
     const { conditionIsMet, resultObject } = await evaluateAchievement(updatedCondition, conditionDataAggregations as ConditionDataAggregations, metrics);
     return { conditionIsMet, resultObject };
-}
-
-// replace recordValue in condition with number of last record
-function injectRecordValue(condition: string, recordValue: number) {
-    if (typeof recordValue === 'number') {
-        return condition.replace('recordValue', recordValue.toString());
-    }
-    return condition;
 }
 
 async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
