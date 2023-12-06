@@ -9,6 +9,7 @@ import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchieve
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { Achievement_template } from '../../graphql/generated';
 import { Prisma } from '@prisma/client';
+import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
 
 const logger = getLogger('Achievement');
 
@@ -49,21 +50,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     }
 
     return;
-}
-
-function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
-    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
-    for (const template of templatesForAction) {
-        if (!templatesByGroups.has(template.group)) {
-            templatesByGroups.set(template.group, []);
-        }
-        templatesByGroups.get(template.group).push(template);
-    }
-    templatesByGroups.forEach((group, key) => {
-        group.sort((a, b) => a.groupOrder - b.groupOrder);
-        templatesByGroups.set(key, group);
-    });
-    return templatesByGroups;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: SpecificNotificationContext<ID>) {
@@ -117,14 +103,6 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const updatedCondition = injectRecordValue(condition, achievement.recordValue);
     const { conditionIsMet, resultObject } = await evaluateAchievement(updatedCondition, conditionDataAggregations as ConditionDataAggregations, metrics);
     return { conditionIsMet, resultObject };
-}
-
-// replace recordValue in condition with number of last record
-function injectRecordValue(condition: string, recordValue: number) {
-    if (typeof recordValue === 'number') {
-        return condition.replace('recordValue', recordValue.toString());
-    }
-    return condition;
 }
 
 async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {

@@ -126,5 +126,4 @@ export type RelationContextType = {
             duration: number;
         };
     };
-    actionNames?: string[];
 };
