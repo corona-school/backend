@@ -21,7 +21,7 @@ export const aggregators: Aggregator = {
             return elements.length > 0 ? 1 : 0;
         },
     },
-    streak: {
+    lastStreakLength: {
         function: (elements): number => {
             let value = 0;
             for (const element of elements) {
