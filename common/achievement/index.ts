@@ -1,6 +1,5 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { actionTakenAt } from '../notification';
 import { isGamificationFeatureActive, getMetricsByAction } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
@@ -9,6 +8,7 @@ import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
+import { actionTakenAt } from '../notification';
 
 const logger = getLogger('Achievement');
 

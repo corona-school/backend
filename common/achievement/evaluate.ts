@@ -51,11 +51,13 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
         const bucketAggr = bucketEvents.map(
             (bucketEvent): BucketEventsWithAggr => ({
                 ...bucketEvent,
-                aggregation: bucketAggregatorFunction([bucketEvent]),
+                aggregation: bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)),
             })
         );
 
-        const value = aggFunction(bucketAggr);
+        const valuesFromBucketAggr = bucketAggr.map((bucket) => bucket.aggregation);
+
+        const value = aggFunction(valuesFromBucketAggr);
         resultObject[key] = value;
     }
 
