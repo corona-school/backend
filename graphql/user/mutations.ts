@@ -12,6 +12,7 @@ import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
+import { prisma } from '../../common/prisma';
 
 @InputType()
 class SupportMessage {
@@ -70,6 +71,15 @@ export class MutateUserResolver {
             /* reply to name */ getFullName(context.user)
         );
 
+        return true;
+    }
+    @Mutation(() => Boolean)
+    @Authorized(Role.USER)
+    async markAchievementAsSeen(@Arg('achievementId') achievementId: number) {
+        await prisma.user_achievement.update({
+            where: { id: achievementId },
+            data: { isSeen: true },
+        });
         return true;
     }
 }
