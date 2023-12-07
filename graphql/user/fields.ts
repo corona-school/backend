@@ -165,7 +165,7 @@ export class UserFieldsResolver {
 
         if (pupilQuery) {
             // Make sure only active users with verified email are returned
-            const pupils = await prisma.student.findMany({
+            const pupils = await prisma.pupil.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
                 where: { ...pupilQuery, active: true, verification: null },
             });
@@ -175,7 +175,20 @@ export class UserFieldsResolver {
         if (studentQuery) {
             const students = await prisma.student.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
-                where: { ...studentQuery, active: true, verification: null },
+                where: {
+                    AND: [
+                        studentQuery,
+                        {
+                            active: true,
+                            verification: null,
+                        },
+                        // For now we exclude unscreened helpers, as they wont be interested
+                        // in most of our marketing campaigns anyways
+                        {
+                            OR: [{ screening: { success: true } }, { instructor_screening: { success: true } }],
+                        },
+                    ],
+                },
             });
             result.push(...students.map(userForStudent));
         }

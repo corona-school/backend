@@ -8,6 +8,9 @@ import { getSessionUser } from '../authentication';
 import { NotificationMessageType } from '../types/notificationMessage';
 import { getMessage } from '../../common/notification/messages';
 import { ConcreteNotificationState } from '../../common/notification/types';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger('Concrete Notifications');
 
 @ObjectType()
 class Campaign {
@@ -30,6 +33,8 @@ class Campaign {
     error: number;
     @Field((type) => Int)
     canceled: number;
+    @Field((type) => Int)
+    archived: number;
 }
 
 @Resolver((of) => ConcreteNotification)
@@ -60,14 +65,18 @@ export class ExtendedFieldsConcreteNotificationResolver {
     async concreteNotificationCampaign() {
         const campaignMails = await prisma.notification.findMany({
             select: { id: true },
-            where: { sample_context: { not: undefined } },
+            where: { sample_context: { not: { equals: null } } },
         });
+
+        logger.info(`Found Campaign Mails`, { campaignMails });
 
         const aggregated = await prisma.concrete_notification.groupBy({
             _count: true,
             by: ['notificationID', 'contextID', 'state'],
             where: { notificationID: { in: campaignMails.map((it) => it.id) } },
         });
+
+        logger.info(`Got aggregated results per campaign`, { aggregated });
 
         const byCampaign: { [key: string]: Campaign } = {};
 
@@ -92,6 +101,7 @@ export class ExtendedFieldsConcreteNotificationResolver {
                     scheduled: 0,
                     sent: 0,
                     canceled: 0,
+                    archived: 0,
                 };
             }
 
@@ -112,6 +122,10 @@ export class ExtendedFieldsConcreteNotificationResolver {
 
                 case ConcreteNotificationState.ACTION_TAKEN:
                     byCampaign[key].canceled = _count;
+                    break;
+
+                case ConcreteNotificationState.ARCHIVED:
+                    byCampaign[key].archived = _count;
                     break;
 
                 default:

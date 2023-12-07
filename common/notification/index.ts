@@ -257,7 +257,7 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
-const allowedExtensions = ['uniqueId'];
+const allowedExtensions = ['uniqueId', 'campaign', 'overrideReceiverEmail'];
 
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
@@ -317,7 +317,7 @@ export async function bulkCreateConcreteNotifications(
             notificationID: notification.id,
             state,
             userId: user.userID,
-            sentAt: new Date(+startAt + 1000 * 60 * 60 * 24 * Math.floor(index / 500)),
+            sentAt: new Date(+startAt + 1000 * 60 * 15 * Math.floor(index / 250)),
             contextID: context.uniqueId,
             context,
         })),

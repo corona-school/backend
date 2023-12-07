@@ -9,6 +9,7 @@ import {
     Course_tag as CourseTag,
     Concrete_notification,
     Screener,
+    User_achievement,
 } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
@@ -340,6 +341,10 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Message_translation: { _all: nobody },
     Pupil_screening: allAdmin,
     Waiting_list_enrollment: allAdmin,
+    Achievement_template: allAdmin,
+    User_achievement: allAdmin, // TODO change
+    Achievement_event: allAdmin,
+    Job_run: { _all: nobody },
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -600,6 +605,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
                 declinedBy: participantOrOwnerOrAdmin,
                 zoomMeetingId: participantOrOwnerOrAdmin,
                 zoomMeetingReport: adminOrOwner,
+                override_meeting_link: participantOrOwnerOrAdmin,
             }
         ),
     },
