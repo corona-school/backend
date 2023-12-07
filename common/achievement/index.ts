@@ -24,15 +24,15 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
 
-    const event: ActionEvent<ID> = {
+    const actionEvent: ActionEvent<ID> = {
         actionId,
         at: new Date(),
         user: user,
         context,
     };
-    await trackEvent(event);
+    await trackEvent(actionEvent);
 
-    for (const [key, group] of templatesByGroups) {
+    for (const [, group] of templatesByGroups) {
         let achievementToCheck: AchievementToCheck;
         for (const template of group) {
             const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
@@ -77,10 +77,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
 
 async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
     const evaluationResult = await isAchievementConditionMet(userAchievement);
+
     if (evaluationResult.conditionIsMet) {
-        const dataAggregationKey = Object.keys(userAchievement.template.conditionDataAggregations as ConditionDataAggregations)[0];
+        const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
+        const dataAggregationKey = Object.keys(conditionDataAggregations)[0];
         const evaluationResultValue =
             typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+
         const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
         await createAchievement(awardedAchievement.template, userAchievement.userId, context);
     }
@@ -88,15 +91,20 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
 
 async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const {
-        userId,
+        recordValue,
         template: { condition, conditionDataAggregations, metrics },
     } = achievement;
     if (!condition) {
         return;
     }
 
-    const updatedCondition = injectRecordValue(condition, achievement.recordValue);
-    const { conditionIsMet, resultObject } = await evaluateAchievement(updatedCondition, conditionDataAggregations as ConditionDataAggregations, metrics);
+    const updatedCondition = injectRecordValue(condition, recordValue);
+    const { conditionIsMet, resultObject } = await evaluateAchievement(
+        updatedCondition,
+        conditionDataAggregations as ConditionDataAggregations,
+        metrics,
+        recordValue
+    );
     return { conditionIsMet, resultObject };
 }
 

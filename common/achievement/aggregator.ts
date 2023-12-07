@@ -23,6 +23,7 @@ export const aggregators: Aggregator = {
     },
     lastStreakLength: {
         function: (elements): number => {
+            // elements are sorted desc, i.e. [KW 52, KW 51, KW 50]
             let value = 0;
             for (const element of elements) {
                 if (element === 0) {

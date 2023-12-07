@@ -33,13 +33,12 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_weeks: {
-        function: async (): Promise<GenericBucketConfig<TimeBucket>> => {
-            // TODO - where did we get the number of weeks
-            const weeks = 5;
+        function: async (_relation, weeks): Promise<GenericBucketConfig<TimeBucket>> => {
+            // the buckets are created in a desc order
             const today = moment();
             const buckets: TimeBucket[] = [];
 
-            for (let i = 0; i < weeks; i++) {
+            for (let i = 0; i < weeks + 1; i++) {
                 const weeksBefore = today.clone().subtract(i, 'week');
                 buckets.push({
                     kind: 'time',
@@ -55,14 +54,12 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_months: {
-        function: async (): Promise<GenericBucketConfig<TimeBucket>> => {
-            // TODO - where did we get the number of months
-
-            const months = 12;
+        function: async (_relation, months): Promise<GenericBucketConfig<TimeBucket>> => {
+            // the buckets are created in a desc order
             const today = moment();
             const buckets: TimeBucket[] = [];
 
-            for (let i = 0; i < months; i++) {
+            for (let i = 0; i < months + 1; i++) {
                 const monthsBefore = today.clone().subtract(i, 'month');
                 buckets.push({
                     kind: 'time',

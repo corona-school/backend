@@ -46,7 +46,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketFormulaFunction = (relation?: string) => Promise<BucketConfig>;
+type BucketFormulaFunction = (relation?: string, numberOfPeriode?: number) => Promise<BucketConfig>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
