@@ -12,7 +12,6 @@ export type Metric = {
     formula: FormulaFunction<ActionID>;
 };
 
-export type EventValue = number[] | Achievement_event[];
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
 // Used to destinguish between different types of buckets
@@ -47,14 +46,14 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketFormulaFunction = (relation?: string) => Promise<BucketConfig>;
+type BucketFormulaFunction = (relation?: string, numberOfPeriode?: number) => Promise<BucketConfig>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
 };
 
 export type AggregatorFunction = {
-    function: (elements: BucketEvents[]) => number;
+    function: (elements: number[]) => number;
 };
 
 export type ConditionDataAggregations = {
@@ -89,13 +88,6 @@ export type ActionEvent<ID extends ActionID> = {
     at: Date;
     user: User;
     context: SpecificNotificationContext<ID>;
-};
-export type Achievement_Event = {
-    userId?: string;
-    metric: string;
-    value: EventValue;
-    action?: string;
-    relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
 };
 
 export type AchievementToCheck = {
