@@ -50,8 +50,9 @@ export async function runJob(jobName: JobName): Promise<boolean> {
                         });
 
                         if (runningJob) {
-                            logger.warn(
+                            logger.error(
                                 `Cannot concurrently execute Job '${jobName}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`,
+                                undefined,
                                 { jobName, runningJob }
                             );
                             lockStatus = LockStatus.CONFLICT;
@@ -81,11 +82,9 @@ export async function runJob(jobName: JobName): Promise<boolean> {
         }
 
         if (lockStatus === LockStatus.ROLLBACK) {
-            logger.error(
-                `Failed to aquire Lock after at most 5 retries - This might leave the system in a locked state requiring manual cleanup!`,
-                new Error(),
-                { jobName }
-            );
+            logger.error(`Failed to aquire Lock after at most 5 retries - This might leave the system in a locked state requiring manual cleanup!`, undefined, {
+                jobName,
+            });
             return false;
         }
 
