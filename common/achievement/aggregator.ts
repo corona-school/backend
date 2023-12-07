@@ -24,16 +24,11 @@ export const aggregators: Aggregator = {
     streak: {
         function: (elements): number => {
             let value = 0;
-            let afterNull = false;
             for (const element of elements) {
                 if (element === 0) {
-                    afterNull = true;
                     break;
                 }
-
-                if (afterNull) {
-                    value += element;
-                }
+                value += 1;
             }
             return value;
         },
