@@ -15,6 +15,11 @@ const TALKJS_APP_ID = process.env.TALKJS_APP_ID;
 const TALKJS_API_URL = `https://api.talkjs.com/v1/${TALKJS_APP_ID}`;
 const TALKJS_CONVERSATION_API_URL = `${TALKJS_API_URL}/conversations`;
 const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
+
+export enum ConversationDirectionEnum {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
 // adding "own" message type, since Message from 'talkjs/all' is either containing too many or too less attributes
 
 const createConversation = async (participants: User[], conversationInfos: ConversationInfos, type: 'oneOnOne' | 'group'): Promise<string> => {
@@ -86,11 +91,13 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-const getAllConversations = async (): Promise<AllConversations> => {
+const getAllConversations = async (direction: ConversationDirectionEnum = ConversationDirectionEnum.ASC, startingAfter?: string): Promise<AllConversations> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
+    const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}`;
+    const apiURLPag = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}&startingAfter=${startingAfter}`;
 
-    const response = await fetch(`${TALKJS_CONVERSATION_API_URL}`, {
+    const response = await fetch(startingAfter ? apiURLPag : apiURL, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
@@ -99,6 +106,8 @@ const getAllConversations = async (): Promise<AllConversations> => {
     });
 
     if (response.status !== 200) {
+        const text = await response.text();
+        logger.warn(`Failed to get all conversations from TalkJS`, { status: response.status, text });
         throw new Error(`Failed to get all conversations from TalkJS`);
     }
 

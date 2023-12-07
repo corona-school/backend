@@ -1,39 +1,61 @@
-import { CSCronJob } from './types';
-
-//import the jobs
-import * as Notification from '../common/notification';
-import { cleanupSecrets } from '../common/secret';
-import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import { runInterestConfirmations } from '../common/match/pool';
+import { checkReminders } from '../common/notification';
+import { cleanupSecrets } from '../common/secret';
 import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
+import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
+import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
+import redactInactiveAccounts from './periodic/redact-inactive-accounts';
+import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
+import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
 import syncToWebflow from './periodic/sync-to-webflow';
 import { postStatisticsToSlack } from './slack-statistics';
-import redactInactiveAccounts from './periodic/redact-inactive-accounts';
-import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
-import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 
+export const allJobs = {
+    cleanupSecrets,
+    dropOldNotificationContexts,
+    runInterestConfirmations,
+    anonymiseAttendanceLog,
+    syncToWebflow,
+    postStatisticsToSlack,
+    redactInactiveAccounts,
+    sendInactivityNotification,
+    deactivateInactiveAccounts,
+    flagInactiveConversationsAsReadonly,
+    notificationsEndedYesterday,
+    checkReminders,
+
+    // For Integration Tests only:
+    NOTHING_DO_NOT_USE: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    },
+} as const;
+
+export type JobName = keyof typeof allJobs;
+export const jobExists = (name: string): name is JobName => name in allJobs;
+
 // A list of all jobs that should be scheduled at the moment
-export const allJobs: CSCronJob[] = [
+export type ScheduledJob = { cronTime: string; name: JobName };
+export const regularJobs: ScheduledJob[] = [
     // every morning, quite early (but only on Monday and Thursday)
-    // { cronTime: "00 55 07 * * 1,4", jobFunction: initialInterestConfirmationRequests},
-    { cronTime: '00 55 07 * * 1,4', jobFunction: runInterestConfirmations, name: 'runInterestConfirmations' },
-    // { cronTime: "00 56 08 * * *", jobFunction: tutoringMatchMaking}, // only scheduled manually, at the moment
+    { cronTime: '00 55 07 * * 1,4', name: 'runInterestConfirmations' },
     // every morning, but a little bit later
     // every 10 minutes during the day (to distribute load and send out notifications faster)
-    { cronTime: '00 */10 * * * *', jobFunction: Notification.checkReminders, name: 'checkReminders' },
+    { cronTime: '00 */10 * * * *', name: 'checkReminders' },
     // each night - database cleanups
-    { cronTime: '00 00 05 * * *', jobFunction: anonymiseAttendanceLog, name: 'anonymiseAttendanceLog' },
-    { cronTime: '00 00 04 * * *', jobFunction: cleanupSecrets, name: 'cleanupSecrets' },
-    { cronTime: '00 00 01 * * *', jobFunction: dropOldNotificationContexts, name: 'dropOldNotificationContexts' },
+    { cronTime: '00 00 05 * * *', name: 'anonymiseAttendanceLog' },
+    { cronTime: '00 00 04 * * *', name: 'cleanupSecrets' },
+    { cronTime: '00 00 01 * * *', name: 'dropOldNotificationContexts' },
     // Account redaction
-    { cronTime: '00 00 01 * * *', jobFunction: deactivateInactiveAccounts, name: 'deactivateInactiveAccounts' },
-    { cronTime: '00 00 02 * * *', jobFunction: redactInactiveAccounts, name: 'redactInactiveAccounts' },
-    { cronTime: '00 00 02 * * *', jobFunction: sendInactivityNotification, name: 'sendInactivityNotification' },
+    { cronTime: '00 00 01 * * *', name: 'deactivateInactiveAccounts' },
+    { cronTime: '00 00 02 * * *', name: 'redactInactiveAccounts' },
+    { cronTime: '00 00 02 * * *', name: 'sendInactivityNotification' },
     // Synch DB data to webflow CMS
-    { cronTime: '00 */15 * * * *', jobFunction: syncToWebflow, name: 'syncToWebflow' },
+    { cronTime: '00 */15 * * * *', name: 'syncToWebflow' },
     // Send Slack Messages monthly:
-    { cronTime: '00 00 10 01 * *', jobFunction: postStatisticsToSlack, name: 'postStatisticsToSlack' },
+    { cronTime: '00 00 10 01 * *', name: 'postStatisticsToSlack' },
+    // Disable old chats on a daily basis:
+    { cronTime: '00 00 10 * * *', name: 'flagInactiveConversationsAsReadonly' },
     // Every night, trigger actions for courses that ended yesterday
-    { cronTime: '00 00 10 * * *', jobFunction: notificationsEndedYesterday, name: 'notificationsEndedYesterday' },
+    { cronTime: '00 00 10 * * *', name: 'notificationsEndedYesterday' },
 ];

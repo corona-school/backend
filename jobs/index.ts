@@ -6,9 +6,12 @@ import moment from 'moment-timezone';
 import { getLogger } from '../common/logger/logger';
 import { scheduleJobs } from './scheduler';
 import * as scheduler from './scheduler';
-import { allJobs } from './list';
 import { configureGracefulShutdown } from './shutdown';
-import { executeJob } from './manualExecution';
+import { jobExists, regularJobs } from './list';
+import { runJob } from './execute';
+import express from 'express';
+import { metricsRouter } from '../common/logger/metrics';
+import http from 'http';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
@@ -21,17 +24,38 @@ log.info('Backend started');
 moment.locale('de'); //set global moment date format
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 
-//SETUP: schedule jobs
-
 //SETUP: Add a graceful shutdown to the scheduler used
 configureGracefulShutdown(scheduler);
+
+// Add Metrics Server to Jobs Dyno
+async function startMetricsServer() {
+    const app = express();
+    app.use('/metrics', metricsRouter);
+
+    const port = process.env.PORT || 5100;
+
+    const server = http.createServer(app);
+
+    // Start listening
+    await new Promise<void>((res) => server.listen(port, res));
+    log.info(`Server listening on port ${port}`);
+}
+
+if (process.env.METRICS_SERVER_ENABLED === 'true') {
+    startMetricsServer().catch((e) => log.error('Failed to setup metrics server', e));
+}
 
 // Manual job execution via npm run jobs -- --execute <name>
 if (process.argv.length >= 4 && process.argv[2] === '--execute') {
     const job = process.argv[3];
+    if (!jobExists(job)) {
+        throw new Error(`No Job named '${job}'`);
+    }
+
     log.info(`Manually executing ${job}, creating DB connection`);
-    void executeJob(job);
+
+    void runJob(job);
 } else {
     log.info('To directly run one of the jobs, use --execute <name>, we now schedule Cron Jobs to run in the future');
-    void scheduleJobs(allJobs);
+    scheduleJobs(regularJobs);
 }
