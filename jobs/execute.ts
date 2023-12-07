@@ -69,6 +69,7 @@ export async function runJob(jobName: JobName): Promise<boolean> {
                     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
                 );
             } catch (error) {
+                logger.warn(`Aquiring Lock failed - ${error.message}`, { jobName, error });
                 // The transaction was aborted, likely because the DB rolled back the deadlock
                 lockStatus = LockStatus.ROLLBACK;
                 lockRetries -= 1;
@@ -80,7 +81,11 @@ export async function runJob(jobName: JobName): Promise<boolean> {
         }
 
         if (lockStatus === LockStatus.ROLLBACK) {
-            logger.error(`Failed to aquire Lock after 5 retries`, new Error(), { jobName });
+            logger.error(
+                `Failed to aquire Lock after at most 5 retries - This might leave the system in a locked state requiring manual cleanup!`,
+                new Error(),
+                { jobName }
+            );
             return false;
         }
 
