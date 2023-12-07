@@ -4,8 +4,9 @@ import { Step, Achievement, achievement_state } from '../../graphql/types/achiev
 import { User } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { Context } from '../notification/types';
-import { AchievementContextType } from './types';
-import { getAchievementContext, getAchievementState, getCurrentAchievementContext, transformPrismaJson } from './helper';
+import { AchievementContextType, ConditionDataAggregations } from './types';
+import { getAchievementContext, getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './helper';
+import { evaluateAchievement } from './evaluate';
 
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
@@ -27,8 +28,15 @@ const generateReorderedAchievementData = async (groups: { [group: string]: User_
     const achievements: Achievement[] = [];
     for (const group in groups) {
         const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
-        const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
-        achievements.push(groupAchievement);
+        if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
+            sortedGroupAchievements.forEach(async (groupAchievement, index) => {
+                const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
+                achievements.push(achievement);
+            });
+        } else {
+            const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
+            achievements.push(groupAchievement);
+        }
     }
     return achievements;
 };
@@ -39,12 +47,35 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
 
     const userAchievementContext = transformPrismaJson(userAchievements[currentAchievementIndex].context);
     const achievementContext = await getAchievementContext(user, userAchievementContext);
-    const currentAchievementTemplate = getCurrentAchievementContext(userAchievements[currentAchievementIndex], achievementContext);
+    const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
     const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
     const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
 
     const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
+
+    const condition = currentAchievementTemplate.condition.includes('recordValue')
+        ? currentAchievementTemplate.condition.replace('recordValue', (userAchievements[currentAchievementIndex].recordValue + 1).toString())
+        : currentAchievementTemplate.condition;
+
+    let maxValue;
+    let currentValue;
+    if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
+        const dataAggregationKey = Object.keys(currentAchievementTemplate.conditionDataAggregations)[0];
+        const evaluationResult = await evaluateAchievement(
+            condition,
+            currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
+            currentAchievementTemplate.metrics
+        );
+        currentValue = evaluationResult.resultObject[dataAggregationKey];
+        maxValue =
+            currentAchievementTemplate.type === achievement_type_enum.STREAK
+                ? userAchievements[currentAchievementIndex].recordValue
+                : currentAchievementTemplate.conditionDataAggregations[dataAggregationKey].valueToAchieve || 0;
+    } else {
+        currentValue = currentAchievementIndex + 1;
+        maxValue = userAchievements.length - 1;
+    }
 
     return {
         name: currentAchievementTemplate.name,
@@ -65,8 +96,8 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                   };
               })
             : null,
-        maxSteps: userAchievements.length,
-        currentStep: currentAchievementIndex,
+        maxSteps: maxValue,
+        currentStep: currentValue,
         newAchievement: newAchievement,
         progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
         actionName: userAchievements[userAchievements.length - 1].template.actionName,
