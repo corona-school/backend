@@ -1,28 +1,48 @@
-import { ActionID, NotificationContext } from '../notification/types';
+import { ActionID } from '../notification/types';
 import { metricsByAction } from './metrics';
-import { Metric } from './types';
+import { Metric, RelationContextType } from './types';
+import { prisma } from '../prisma';
+import { getLogger } from '../logger/logger';
 
-export function getRelationByContext(context: NotificationContext): string {
-    const { appointment, match, subcourse } = context;
-    let relation: string;
+const logger = getLogger('Gamification');
+export function isGamificationFeatureActive(): boolean {
+    const isActive: boolean = JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
 
-    switch (context) {
-        case context.match:
-            relation = `match/${match.id}`;
-            break;
-        case context.subcourse:
-            relation = `subcourse/${subcourse.id}`;
-            break;
-        case context.appointment:
-            relation = `appointment/${appointment.id}`;
-            break;
-        default:
-            relation = '';
+    if (!isActive) {
+        logger.warn('Gamification is deactivated');
     }
 
-    return relation;
+    return isActive;
 }
 
 export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
     return metricsByAction.get(actionId) || [];
+}
+
+type RelationTypes = 'match' | 'subcourse';
+
+export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
+    const validRelationTypes = ['match', 'subcourse'];
+    const [relationType, relationId] = relation.split('/');
+    if (!validRelationTypes.includes(relationType)) {
+        throw Error('No valid relation found in relation: ' + relationType);
+    }
+
+    const parsedRelationId = parseInt(relationId, 10);
+    return [relationType as RelationTypes, parsedRelationId];
+}
+
+export async function getRelationContext(relation: string): Promise<RelationContextType> {
+    const [type, id] = getRelationTypeAndId(relation);
+    const relationContext: RelationContextType = {
+        match:
+            type === 'match'
+                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                : null,
+        subcourse:
+            type === 'subcourse'
+                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })[0]
+                : null,
+    };
+    return relationContext;
 }

@@ -34,6 +34,8 @@ export interface NotificationContextExtensions {
     campaign?: string;
     // For Campaigns, support sending custom Mailjet Notifications:
     overrideMailjetTemplateID?: string;
+    // TODO: For achievements
+    relationId?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {

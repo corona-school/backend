@@ -49,6 +49,7 @@ model achievement_template {
   subtitle                  String                        @db.VarChar
   description               String                        @db.VarChar
   image                     String                        @db.VarChar
+  achievedImage             String                        @db.VarChar
   // some achievements show actions that a user can/must perform next.
   // therefore we need the action name, type (for the icon) and a redirect link
   actionName                String?                       @db.VarChar
@@ -75,7 +76,7 @@ model user_achievement {
   // the description of group and groupOrder can be found in the achievement_template. 
   // It needs to be stored in user_achievement, as the group contains templating. 
   // The correctly assigned achievement for a match / a course is therefore stored in the user_achievement.
-  group       String               @unique @db.VarChar
+  group       String               @db.VarChar
   groupOrder  Int
   isSeen      Boolean              @default(false)
   // achievedAt == null => not achieved, achievedAt != null => achieved

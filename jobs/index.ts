@@ -12,6 +12,7 @@ import { executeJob } from './manualExecution';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
+import { registerAchievementMetrics } from '../common/achievement/metric';
 
 //SETUP: logger
 const log = getLogger();
@@ -20,6 +21,9 @@ log.info('Backend started');
 //SETUP: moment
 moment.locale('de'); //set global moment date format
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
+
+// SETUP: Metrics registration
+registerAchievementMetrics();
 
 //SETUP: schedule jobs
 

@@ -1,4 +1,3 @@
-import { Achievement_event } from '../../graphql/generated';
 import { AggregatorFunction } from './types';
 
 type Aggregator = Record<string, AggregatorFunction>;
@@ -7,13 +6,31 @@ type Aggregator = Record<string, AggregatorFunction>;
 
 export const aggregators: Aggregator = {
     sum: {
-        function: (values: number[]): number => {
-            return values.reduce((total, num) => total + num, 0);
+        function: (elements): number => {
+            return elements.reduce((total, num) => total + num, 0);
         },
     },
     count: {
-        function: (events: Achievement_event[]): number => {
-            return events.length;
+        function: (elements): number => {
+            return elements.length;
+        },
+    },
+    // this aggregator should be used to check if min one event exist in a bucket, i.e. if one event happend in one week / one month
+    presenceOfEvents: {
+        function: (elements): number => {
+            return elements.length > 0 ? 1 : 0;
+        },
+    },
+    lastStreakLength: {
+        function: (elements): number => {
+            let value = 0;
+            for (const element of elements) {
+                if (element === 0) {
+                    break;
+                }
+                value += 1;
+            }
+            return value;
         },
     },
 };

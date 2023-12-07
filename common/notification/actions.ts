@@ -614,6 +614,28 @@ const _notificationActions = {
         description: 'Screener suggests a Ressource for a User',
         sampleContext: {},
     },
+
+    /* MEETINGS */
+    student_joined_meeting: {
+        description: 'Student joined meeting',
+        sampleContext: {},
+    },
+    joined_meeting: {
+        description: 'User joined meeting',
+        sampleContext: {},
+    },
+    joined_match_meeting: {
+        description: 'User joined a match meeting',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    joined_subcourse_meeting: {
+        description: 'User joined subcourse meeting',
+        sampleContext: {
+            subcourseId: '1',
+        },
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
