@@ -43,7 +43,7 @@ export async function getAchievementContext(user: User, userAchievementContext: 
     return achievementContext;
 }
 
-export function getCurrentAchievementContext(userAchievement: User_achievement, achievementContext: Partial<Context>): Achievement_template {
+export function getCurrentAchievementTemplateWithContext(userAchievement: User_achievement, achievementContext: Partial<Context>): Achievement_template {
     const currentAchievementContext = userAchievement.template as Achievement_template;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
