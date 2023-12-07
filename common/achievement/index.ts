@@ -32,11 +32,10 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
         user: user,
         context,
     };
-    await trackEvent(event, context);
+    await trackEvent(event);
 
     for (const [key, group] of templatesByGroups) {
         let achievementToCheck: AchievementToCheck;
-        const context = {} as UserAchievementContext;
         for (const template of group) {
             const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
             if (userAchievement.achievedAt === null || userAchievement.recordValue) {
@@ -52,7 +51,7 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
     return;
 }
 
-async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: SpecificNotificationContext<ID>) {
+async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
 
     if (!metricsForEvent) {
@@ -62,7 +61,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, context: 
 
     for (const metric of metricsForEvent) {
         const formula = metric.formula;
-        const value = formula(context);
+        const value = formula(event.context);
 
         await prisma.achievement_event.create({
             data: {

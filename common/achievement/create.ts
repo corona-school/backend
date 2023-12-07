@@ -1,30 +1,38 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_template } from '../../graphql/generated';
+import { Achievement_template, JsonFilter } from '../../graphql/generated';
+import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
-import { UserAchievementContext } from './types';
 
-async function doesUserAchievementAlreadyExist(templateId: number, userId: string) {
-    // TODO - check if user achievement exist for one match or one subcourse
+async function doesUserAchievementAlreadyExist<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
+    const keys = Object.keys(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
+            AND: keys.map((key) => {
+                return {
+                    context: {
+                        path: key,
+                        equals: context[key],
+                    },
+                };
+            }),
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
     return userAchievement;
 }
 
-async function getOrCreateUserAchievement(template: Achievement_template, userId: string, context: UserAchievementContext) {
-    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId);
+async function getOrCreateUserAchievement<ID extends ActionID>(template: Achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
+    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
     }
     return existingUserAchievement;
 }
 
-async function createAchievement(templateToCreate: Achievement_template, userId: string, context: UserAchievementContext) {
+async function createAchievement<ID extends ActionID>(templateToCreate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: { template: { group: templateToCreate.group } },
@@ -40,7 +48,12 @@ async function createAchievement(templateToCreate: Achievement_template, userId:
     }
 }
 
-async function createNextUserAchievement(templatesForGroup: Achievement_template[], nextStepIndex: number, userId: string, context: UserAchievementContext) {
+async function createNextUserAchievement<ID extends ActionID>(
+    templatesForGroup: Achievement_template[],
+    nextStepIndex: number,
+    userId: string,
+    context: SpecificNotificationContext<ID>
+) {
     const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.

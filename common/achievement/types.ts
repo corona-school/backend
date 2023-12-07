@@ -12,7 +12,6 @@ export type Metric = {
     formula: FormulaFunction<ActionID>;
 };
 
-export type EventValue = number[] | Achievement_event[];
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
 // Used to destinguish between different types of buckets
@@ -54,7 +53,7 @@ export type BucketFormula = {
 };
 
 export type AggregatorFunction = {
-    function: (elements: BucketEvents[]) => number;
+    function: (elements: number[]) => number;
 };
 
 export type ConditionDataAggregations = {
@@ -90,13 +89,6 @@ export type ActionEvent<ID extends ActionID> = {
     user: User;
     context: SpecificNotificationContext<ID>;
 };
-export type Achievement_Event = {
-    userId?: string;
-    metric: string;
-    value: EventValue;
-    action?: string;
-    relation?: string; // e.g. "user/10", "subcourse/15", "match/20"
-};
 
 export type AchievementToCheck = {
     userId: string;
@@ -111,19 +103,22 @@ export type EvaluationResult = {
     resultObject: Record<string, string | number | boolean>;
 };
 
-export type RelationContextType = {
+export type RelationTypes = 'match' | 'subcourse';
+
+export type AchievementContextType = {
+    type: RelationTypes;
     match?: {
         id: number;
         lecture: {
             start: Date;
             duration: number;
-        };
+        }[];
     };
     subcourse?: {
         id: number;
         lecture: {
             start: Date;
             duration: number;
-        };
+        }[];
     };
 };
