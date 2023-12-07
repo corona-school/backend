@@ -38,7 +38,7 @@ const generateReorderedAchievementData = async (groups: { [group: string]: User_
             achievements.push(groupAchievement);
         }
     }
-    return achievements;
+    return Promise.all(achievements);
 };
 
 const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
