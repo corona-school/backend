@@ -4,6 +4,8 @@ import { Step, Achievement, achievement_state } from '../../graphql/types/achiev
 import { User } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { Context } from '../notification/types';
+import { AchievementContextType } from './types';
+import { getAchievementContext, getAchievementState, getCurrentAchievementContext, transformPrismaJson } from './helper';
 
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
@@ -34,38 +36,14 @@ const generateReorderedAchievementData = async (groups: { [group: string]: User_
 const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
-    const contextKeys = Object.keys(userAchievements[currentAchievementIndex].context);
-    const achievementContext: Partial<Context> = {
-        user: { ...user, fullName: `${user.firstname} ${user.lastname}` },
-    };
-    const newContextValue = await Promise.all(
-        contextKeys.map(async (key) => {
-            const [type, id] = userAchievements[currentAchievementIndex].context[key].split('/');
-            const newContextValue = await prisma[type].findUnique({
-                where: { id: Number(id) },
-            });
-            return { key: type, value: newContextValue };
-        })
-    );
-    newContextValue.forEach((context) => {
-        achievementContext[context.key] = context.value;
-    });
-    const currentAchievementTemplate = userAchievements[currentAchievementIndex].template as Achievement_template;
-    const templateKeys = Object.keys(userAchievements[currentAchievementIndex].template);
-    templateKeys.forEach((key) => {
-        const updatedElement =
-            currentAchievementTemplate[key] && typeof currentAchievementTemplate[key] === 'string'
-                ? renderTemplate(currentAchievementTemplate[key], achievementContext)
-                : currentAchievementTemplate[key];
-        currentAchievementTemplate[key] = updatedElement;
-    });
+
+    const userAchievementContext = transformPrismaJson(userAchievements[currentAchievementIndex].context);
+    const achievementContext = await getAchievementContext(user, userAchievementContext);
+    const currentAchievementTemplate = getCurrentAchievementContext(userAchievements[currentAchievementIndex], achievementContext);
+
     const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
-    const state: achievement_state =
-        userAchievements.length === 0
-            ? achievement_state.INACTIVE
-            : userAchievements[currentAchievementIndex].achievedAt
-            ? achievement_state.COMPLETED
-            : achievement_state.ACTIVE;
+    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
+
     const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
 
     return {
