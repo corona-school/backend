@@ -18,11 +18,11 @@ enum LockStatus {
     AQUIRED = 3,
 }
 
-export async function runJob(name: JobName): Promise<boolean> {
+export async function runJob(jobName: JobName): Promise<boolean> {
     let success = false;
 
     try {
-        logger.info(`Starting to run Job '${name}'`);
+        logger.info(`Starting to run Job '${jobName}'`, { jobName });
 
         // ---------- AQUIRE --------------
         // Prevent Job Runs running concurrently (across dynos), as jobs usually lack synchronization internally
@@ -44,14 +44,15 @@ export async function runJob(name: JobName): Promise<boolean> {
                     async (jobPrisma) => {
                         const runningJob = await jobPrisma.job_run.findFirst({
                             where: {
-                                job_name: name,
+                                job_name: jobName,
                                 endedAt: { equals: null },
                             },
                         });
 
                         if (runningJob) {
                             logger.warn(
-                                `Cannot concurrently execute Job '${name}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`
+                                `Cannot concurrently execute Job '${jobName}' as it is already running on '${runningJob.worker}' since ${runningJob.startedAt}`,
+                                { jobName, runningJob }
                             );
                             lockStatus = LockStatus.CONFLICT;
                             return undefined;
@@ -60,7 +61,7 @@ export async function runJob(name: JobName): Promise<boolean> {
                         lockStatus = LockStatus.AQUIRED;
 
                         return await jobPrisma.job_run.create({
-                            data: { job_name: name, worker: process.env.DYNO ?? '?' },
+                            data: { job_name: jobName, worker: process.env.DYNO ?? '?' },
                         });
                         // It is important that the transaction ends here and the INSERT above is commited
                         // Otherwise we would continue execution, and the commit would be rolled back after the job actually executed
@@ -79,36 +80,36 @@ export async function runJob(name: JobName): Promise<boolean> {
         }
 
         if (lockStatus === LockStatus.ROLLBACK) {
-            logger.error(`Failed to aquire Lock after 5 retries`);
+            logger.error(`Failed to aquire Lock after 5 retries`, new Error(), { jobName });
             return false;
         }
 
         assert.ok(lockStatus === LockStatus.AQUIRED);
         assert.ok(runJob != null);
 
-        logger.info(`Aquired Table Lock to run Job '${name}'`);
+        logger.info(`Aquired Table Lock to run Job '${jobName}'`, { jobName });
 
         // ---------- RUN ----------------
 
-        const span = tracer.startSpan(name);
+        const span = tracer.startSpan(jobName);
         await tracer.scope().activate(span, async () => {
             let hasError = false;
             try {
-                const job = allJobs[name];
+                const job = allJobs[jobName];
                 await job();
                 success = true;
             } catch (e) {
-                logger.error(`Can't execute job: ${name} due to error`, e);
+                logger.error(`Can't execute job: ${jobName} due to error`, e);
                 logger.debug(e);
                 hasError = true;
             }
 
-            metrics.JobCountExecuted.inc({ hasError: `${hasError}`, name: name });
+            metrics.JobCountExecuted.inc({ hasError: `${hasError}`, name: jobName });
 
             span.finish();
         });
 
-        logger.info(`Finished Running Job '${name}', releasing table lock`);
+        logger.info(`Finished Running Job '${jobName}', releasing table lock`, { jobName });
 
         // ---------- RELEASE -------------
         await prisma.job_run.update({
@@ -116,10 +117,10 @@ export async function runJob(name: JobName): Promise<boolean> {
             data: { endedAt: new Date() },
         });
 
-        logger.info(`Finished Job '${name}'`);
+        logger.info(`Finished Job '${jobName}'`, { jobName });
     } catch (error) {
         logger.error(error.message);
-        logger.error(`Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!`, error);
+        logger.error(`Failure during Job Scheduling - This might leave the system in a locked state requiring manual cleanup!`, error, { jobName });
         success = false;
         // Eventually we now have a job run in the job_run table that has no endedAt,
         // but which will never finish. To unlock this again, simply delete this entry
