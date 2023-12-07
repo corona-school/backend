@@ -6,36 +6,36 @@ type Aggregator = Record<string, AggregatorFunction>;
 
 export const aggregators: Aggregator = {
     sum: {
-        function: (buckets): number => {
-            const values = [];
-            for (const bucket of buckets) {
-                if (bucket.events.length > 0) {
-                    values.push(bucket.events.reduce((total, event) => total + event.value, 0));
-                }
-            }
-            return values.reduce((total, num) => total + num, 0);
+        function: (elements): number => {
+            return elements.reduce((total, num) => total + num, 0);
         },
     },
     count: {
-        function: (buckets): number => {
-            const events = [];
-            for (const bucket of buckets) {
-                events.push(...bucket.events.map((event) => event.value));
-            }
-            return events.length;
+        function: (elements): number => {
+            return elements.length;
         },
     },
-    count_weeks: {
-        function: (buckets): number => {
-            let weeks = 0;
-            for (const bucket of buckets) {
-                if (bucket.events.length > 0) {
-                    weeks = weeks + 1;
-                } else {
+    // this aggregator should be used to check if min one event exist in a bucket, i.e. if one event happend in one week / one month
+    presenceOfEvents: {
+        function: (elements): number => {
+            return elements.length > 0 ? 1 : 0;
+        },
+    },
+    streak: {
+        function: (elements): number => {
+            let value = 0;
+            let afterNull = false;
+            for (const element of elements) {
+                if (element === 0) {
+                    afterNull = true;
                     break;
                 }
+
+                if (afterNull) {
+                    value += element;
+                }
             }
-            return weeks;
+            return value;
         },
     },
 };
