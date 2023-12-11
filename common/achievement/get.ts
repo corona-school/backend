@@ -1,11 +1,9 @@
 import { prisma } from '../prisma';
-import { Achievement_template, User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
-import { Step, Achievement, achievement_state } from '../../graphql/types/achievement';
+import { User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
+import { Achievement, achievement_state } from '../../graphql/types/achievement';
 import { User } from '../user';
-import { renderTemplate } from '../../utils/helpers';
-import { Context } from '../notification/types';
-import { AchievementContextType, ConditionDataAggregations } from './types';
-import { getAchievementContext, getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './helper';
+import { ConditionDataAggregations } from './types';
+import { getAchievementContext, getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {

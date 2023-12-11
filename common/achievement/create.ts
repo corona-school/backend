@@ -53,7 +53,6 @@ async function createAchievement<ID extends ActionID>(templateToCreate: Achievem
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    // TODO
     const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === templateToCreate.groupOrder) + 1 : 0;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);

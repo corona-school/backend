@@ -402,7 +402,7 @@ export async function actionTaken<ID extends ActionID>(
         return;
     }
 
-    await Achievement.actionTaken(user, actionId, notificationContext);
+    await Achievement.rewardActionTaken(user, actionId, notificationContext);
 
     return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
 }

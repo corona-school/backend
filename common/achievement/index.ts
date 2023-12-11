@@ -1,17 +1,16 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { isGamificationFeatureActive, getMetricsByAction } from './util';
+import { isGamificationFeatureActive, getMetricsByAction, injectRecordValue, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
-import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
 
 const logger = getLogger('Achievement');
 
-export async function actionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+export async function rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     if (!isGamificationFeatureActive()) {
         return;
     }
@@ -45,8 +44,6 @@ export async function actionTaken<ID extends ActionID>(user: User, actionId: ID,
             await checkUserAchievement(achievementToCheck as UserAchievementTemplate, context);
         }
     }
-
-    return;
 }
 
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
