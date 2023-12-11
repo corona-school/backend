@@ -23,7 +23,7 @@ export async function evaluateAchievement(
         eventsByMetric[event.metric].push(event);
     }
 
-    const resultObject: Record<string, number | string | boolean> = {};
+    const resultObject: Record<string, number> = {};
     resultObject['recordValue'] = recordValue;
 
     for (const key in dataAggregation) {

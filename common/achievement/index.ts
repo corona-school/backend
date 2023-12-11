@@ -77,11 +77,10 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
 
     if (evaluationResult.conditionIsMet) {
         const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
-        const dataAggregationKey = Object.keys(conditionDataAggregations)[0];
-        const evaluationResultValue =
-            typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+        const dataAggregationKeys = Object.keys(conditionDataAggregations);
+        const evaluationResultValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
 
-        const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
+        const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement);
         await createAchievement(awardedAchievement.template, userAchievement.userId, context);
     } else {
         await prisma.user_achievement.update({
@@ -104,7 +103,7 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     return { conditionIsMet, resultObject };
 }
 
-async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
+async function rewardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;

@@ -57,18 +57,24 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     let maxValue;
     let currentValue;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
-        const dataAggregationKey = Object.keys(currentAchievementTemplate.conditionDataAggregations)[0];
+        const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
         const evaluationResult = await evaluateAchievement(
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue
         );
-        currentValue = evaluationResult.resultObject[dataAggregationKey];
+        currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =
             currentAchievementTemplate.type === achievement_type_enum.STREAK
-                ? userAchievements[currentAchievementIndex].recordValue
-                : currentAchievementTemplate.conditionDataAggregations[dataAggregationKey].valueToAchieve || 0;
+                ? userAchievements[currentAchievementIndex].recordValue > currentValue
+                    ? userAchievements[currentAchievementIndex].recordValue
+                    : currentValue
+                : dataAggregationKeys
+                      .map((key) => {
+                          return Number(currentAchievementTemplate.conditionDataAggregations[key].valueToAchieve);
+                      })
+                      .reduce((a, b) => a + b, 0);
     } else {
         currentValue = currentAchievementIndex + 1;
         maxValue = userAchievements.length - 1;

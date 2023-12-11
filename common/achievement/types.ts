@@ -95,7 +95,7 @@ export type AchievementToCheck = {
 
 export type EvaluationResult = {
     conditionIsMet: boolean;
-    resultObject: Record<string, string | number | boolean>;
+    resultObject: Record<string, number>;
 };
 
 export type RelationTypes = 'match' | 'subcourse';
