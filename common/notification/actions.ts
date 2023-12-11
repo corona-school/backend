@@ -615,23 +615,56 @@ const _notificationActions = {
         sampleContext: {},
     },
 
+    // ACHIEVEMENT ACTIONS
+
+    /* ONBOARDING */
+    student_screening_appointment_done: {
+        description: 'Student has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_screening_appointment_done: {
+        description: 'Pupil has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_registration_verified_email: {
+        description: 'Pupil / E-Mail verified',
+        sampleContext: {},
+    },
+    student_registration_verified_email: {
+        description: 'Student / E-Mail verified',
+        sampleContext: {},
+    },
+    student_calendly_appointment_booked: {
+        description: 'Student booked appointment via calendly ',
+        sampleContext: {},
+    },
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
+        sampleContext: {},
+    },
     /* MEETINGS */
-    student_joined_meeting: {
-        description: 'Student joined meeting',
-        sampleContext: {},
+    student_joined_match_meeting: {
+        description: 'Student joined a match meeting',
+        sampleContext: {
+            matchId: '1',
+            pupil: { firstname: 'Pupil' }, // = matchpartner
+            relationId: 'match/1',
+        },
     },
-    joined_meeting: {
-        description: 'User joined meeting',
-        sampleContext: {},
+    student_joined_subcourse_meeting: {
+        description: 'Student joined subcourse meeting',
+        sampleContext: {
+            subcourseId: '1',
+        },
     },
-    joined_match_meeting: {
-        description: 'User joined a match meeting',
+    pupil_joined_match_meeting: {
+        description: 'Pupil joined a match meeting',
         sampleContext: {
             matchId: '1',
         },
     },
-    joined_subcourse_meeting: {
-        description: 'User joined subcourse meeting',
+    pupil_joined_subcourse_meeting: {
+        description: 'Pupil joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
         },

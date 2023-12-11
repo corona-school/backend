@@ -29,6 +29,7 @@ registerAchievementMetrics();
 
 //SETUP: Add a graceful shutdown to the scheduler used
 configureGracefulShutdown(scheduler);
+registerAchievementMetrics();
 
 // Manual job execution via npm run jobs -- --execute <name>
 if (process.argv.length >= 4 && process.argv[2] === '--execute') {

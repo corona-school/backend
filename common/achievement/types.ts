@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_event, Achievement_template, achievement_type_enum } from '../../graphql/generated';
+import { Achievement_event, Achievement_template, Lecture } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 
@@ -46,7 +46,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketFormulaFunction = (relation?: string) => Promise<BucketConfig>;
+type BucketFormulaFunction = (relation?: string, numberOfPeriode?: number) => Promise<BucketConfig>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
@@ -105,20 +105,16 @@ export type EvaluationResult = {
 
 export type RelationTypes = 'match' | 'subcourse';
 
+type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+
 export type AchievementContextType = {
     type: RelationTypes;
     match?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        }[];
+        lecture: ContextLecture[];
     };
     subcourse?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        }[];
+        lecture: ContextLecture[];
     };
 };

@@ -4,11 +4,17 @@ import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
+import moment from 'moment';
 
-export async function evaluateAchievement(condition: string, dataAggregation: ConditionDataAggregations, metrics: string[]): Promise<EvaluationResult> {
-    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } } });
+export async function evaluateAchievement(
+    condition: string,
+    dataAggregation: ConditionDataAggregations,
+    metrics: string[],
+    recordValue: number
+): Promise<EvaluationResult> {
+    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
 
-    const eventsByMetric: Record<string, Achievement_event[]> = {}; // Store events per metric
+    const eventsByMetric: Record<string, Achievement_event[]> = {};
     for (const event of achievementEvents) {
         if (!eventsByMetric[event.metric]) {
             eventsByMetric[event.metric] = [];
@@ -45,7 +51,7 @@ export async function evaluateAchievement(condition: string, dataAggregation: Co
             return;
         }
 
-        const buckets = await bucketCreatorFunction(relation);
+        const buckets = await bucketCreatorFunction(relation, recordValue);
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
 
         const bucketAggr = bucketEvents.map(
@@ -91,9 +97,9 @@ const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketC
 const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
-        const filteredEvents = events.filter((event) => {
-            return event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime;
-        });
+        // values will be sorted in a desc order
+        const filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
+
         return {
             kind: bucket.kind,
             startTime: bucket.startTime,

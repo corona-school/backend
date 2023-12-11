@@ -34,15 +34,29 @@ async function getOrCreateUserAchievement<ID extends ActionID>(template: Achieve
 
 async function createAchievement<ID extends ActionID>(templateToCreate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
+    const keys = Object.keys(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
-        where: { template: { group: templateToCreate.group } },
+        where: {
+            template: {
+                group: templateToCreate.group,
+            },
+            userId,
+            AND: keys.map((key) => {
+                return {
+                    context: {
+                        path: key,
+                        equals: context[key],
+                    },
+                };
+            }),
+        },
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    const nextStepIndex = userAchievementsByGroup.length > 0 ? templateToCreate.groupOrder + 1 : 1;
+    const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === templateToCreate.groupOrder) + 1 : 0;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
-    if (templatesForGroup && templatesForGroup.length >= nextStepIndex) {
+    if (templatesForGroup && templatesForGroup.length > nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
         return createdUserAchievement;
     }
@@ -54,7 +68,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ) {
-    const nextStepTemplate = templatesForGroup.find((template) => template.groupOrder === nextStepIndex);
+    const nextStepTemplate = templatesForGroup[nextStepIndex];
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate && nextStepTemplate.isActive) {
