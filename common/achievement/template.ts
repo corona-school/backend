@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Achievement_template } from '../../graphql/generated';
 import { getLogger } from '../logger/logger';
 import { ActionID } from '../notification/actions';
@@ -54,11 +55,14 @@ async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
     const metricsForAction = metricsByAction.get(actionId);
 
     let templatesForAction: Achievement_template[] = [];
-    for (const metric of metricsForAction) {
-        templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
+    if (!metricsForAction || !templatesByMetric) {
+        return [];
+    } else {
+        for (const metric of metricsForAction) {
+            templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
+        }
+        return templatesForAction;
     }
-
-    return templatesForAction;
 }
 
 async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {

@@ -1,4 +1,16 @@
-import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
+import {
+    Student,
+    Pupil,
+    Screener,
+    Secret,
+    Concrete_notification as ConcreteNotification,
+    Lecture,
+    StudentWhereInput,
+    PupilWhereInput,
+    Achievement_event,
+    User_achievement,
+    Achievement_template,
+} from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -16,6 +28,8 @@ import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
+import { getUserAchievements } from '../../common/achievement/get';
+import { Achievement } from '../types/achievement';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -194,6 +208,12 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+     achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
+        return getUserAchievements(context.user);
     }
 
     @FieldResolver((returns) => Boolean)

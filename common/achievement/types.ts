@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_event, Achievement_template, achievement_type_enum } from '../../graphql/generated';
+import { Achievement_event, Achievement_template, Lecture } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 
@@ -20,7 +20,7 @@ export type GenericBucketConfig<T extends Bucket> = {
     buckets: T[];
 };
 // Combines all possible bucket configs
-export type BucketConfig = GenericBucketConfig<TimeBucket> | GenericBucketConfig<FilterBucket> | GenericBucketConfig<DefaultBucket>;
+export type BucketConfig = GenericBucketConfig<TimeBucket> | GenericBucketConfig<DefaultBucket>;
 
 export type DefaultBucket = {
     kind: 'default';
@@ -31,13 +31,8 @@ export type TimeBucket = {
     startTime: Date;
     endTime: Date;
 };
-// Bucket containing events that match a specific actionName
-export type FilterBucket = {
-    kind: 'filter';
-    actionName: string;
-};
 // A bucket is seen as for a period of time
-export type Bucket = DefaultBucket | TimeBucket | FilterBucket;
+export type Bucket = DefaultBucket | TimeBucket;
 
 export type BucketEvents = Bucket & {
     events: Achievement_event[];
@@ -46,7 +41,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketFormulaFunction = (relation?: string) => Promise<BucketConfig>;
+type BucketFormulaFunction = (relation?: string, numberOfPeriode?: number) => Promise<BucketConfig>;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
@@ -103,19 +98,19 @@ export type EvaluationResult = {
     resultObject: Record<string, string | number | boolean>;
 };
 
-export type RelationContextType = {
+export type RelationTypes = 'match' | 'subcourse';
+
+type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+
+export type AchievementContextType = {
+    type: RelationTypes;
+    user?: User;
     match?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        };
+        lecture: ContextLecture[];
     };
     subcourse?: {
         id: number;
-        lecture: {
-            start: Date;
-            duration: number;
-        };
+        lecture: ContextLecture[];
     };
 };
