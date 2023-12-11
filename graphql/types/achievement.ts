@@ -65,7 +65,7 @@ class Achievement {
 @ObjectType()
 class Step {
     @Field()
-    description: string;
+    name: string;
 
     @Field({ nullable: true })
     isActive?: boolean;
