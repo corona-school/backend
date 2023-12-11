@@ -5,7 +5,7 @@ import { User } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { Context } from '../notification/types';
 import { AchievementContextType, ConditionDataAggregations } from './types';
-import { getAchievementContext, getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './helper';
+import { getAchievementContext, getAchievementState, getCurrentAchievementContext, transformPrismaJson } from './helper';
 import { evaluateAchievement } from './evaluate';
 
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
@@ -47,7 +47,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
 
     const userAchievementContext = transformPrismaJson(userAchievements[currentAchievementIndex].context);
     const achievementContext = await getAchievementContext(user, userAchievementContext);
-    const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
+    const currentAchievementTemplate = getCurrentAchievementContext(userAchievements[currentAchievementIndex], achievementContext);
 
     const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
     const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
@@ -79,6 +79,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     }
 
     return {
+        id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
@@ -93,7 +94,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                   // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                   return {
                       description: achievement.template.stepName,
-                      isActive: index === resultIndex,
+                      isActive: index === currentAchievementIndex,
                   };
               })
             : null,
