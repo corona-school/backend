@@ -5,9 +5,8 @@ import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
-import { injectRecordValue, sortActionTemplatesToGroups } from './helper';
 import { actionTakenAt } from '../notification';
 
 const logger = getLogger('Achievement');
@@ -43,7 +42,7 @@ export async function rewardActionTaken<ID extends ActionID>(user: User, actionI
             }
         }
         if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, event);
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent);
         }
     }
 }
