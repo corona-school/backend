@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, BucketEventsWithAggr, ConditionDataAggregations, EvaluationResult } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -24,6 +24,7 @@ export async function evaluateAchievement(
     }
 
     const resultObject: Record<string, number | string | boolean> = {};
+    resultObject['recordValue'] = recordValue;
 
     for (const key in dataAggregation) {
         if (!dataAggregation[key]) {
@@ -52,7 +53,7 @@ export async function evaluateAchievement(
             logger.error(
                 `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
             );
-            continue;
+            return;
         }
 
         const buckets = await bucketCreatorFunction(relation, recordValue);
