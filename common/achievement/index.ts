@@ -112,9 +112,11 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
     const updatedAchievement = await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
-        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
+        select: { id: true, userId: true, achievedAt: true, template: true },
     });
 
-    await actionTakenAt(new Date(event.at), event.user, 'user_achievemnet_reward_issued', event.context);
+    await actionTakenAt(new Date(event.at), event.user, 'user_achievemnet_reward_issued', {
+        achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+    });
     return updatedAchievement;
 }

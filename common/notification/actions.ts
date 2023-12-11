@@ -619,7 +619,12 @@ const _notificationActions = {
 
     user_achievemnet_reward_issued: {
         description: 'Reward issued',
-        sampleContext: {},
+        sampleContext: {
+            achievement: {
+                id: '0',
+                name: 'achievement',
+            },
+        },
     },
 
     /* MEETINGS */
