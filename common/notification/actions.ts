@@ -617,6 +617,24 @@ const _notificationActions = {
 
     // ACHIEVEMENT ACTIONS
 
+    /* ONBOARDING */
+    student_screening_appointment_done: {
+        description: 'Student has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_screening_appointment_done: {
+        description: 'Pupil has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_registration_verified_email: {
+        description: 'Pupil / E-Mail verified',
+        sampleContext: {},
+    },
+    student_registration_verified_email: {
+        description: 'Student / E-Mail verified',
+        sampleContext: {},
+    },
+
     user_achievemnet_reward_issued: {
         description: 'Reward issued',
         sampleContext: {
@@ -625,6 +643,10 @@ const _notificationActions = {
                 name: 'achievement',
             },
         },
+    },
+    student_calendly_appointment_booked: {
+        description: 'Student booked appointment via calendly ',
+        sampleContext: {},
     },
 
     /* MEETINGS */
