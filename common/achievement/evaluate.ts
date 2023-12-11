@@ -4,7 +4,8 @@ import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
-import moment from 'moment';
+import { getLogger } from '../logger/logger';
+const logger = getLogger('Achievement');
 
 export async function evaluateAchievement(
     condition: string,
@@ -26,7 +27,7 @@ export async function evaluateAchievement(
 
     for (const key in dataAggregation) {
         if (!dataAggregation[key]) {
-            return;
+            continue;
         }
         const dataAggregationObject = dataAggregation[key];
         const metricName = dataAggregationObject.metric;
@@ -38,7 +39,7 @@ export async function evaluateAchievement(
 
         const eventsForMetric = eventsByMetric[metricName];
         if (!eventsForMetric) {
-            return;
+            continue;
         }
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
         const relation = eventsForMetric.find((event) => event.relation)?.relation;
@@ -48,22 +49,18 @@ export async function evaluateAchievement(
         const aggFunction = aggregators[aggregator].function;
 
         if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggFunction) {
-            return;
+            logger.error(
+                `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
+            );
+            continue;
         }
 
         const buckets = await bucketCreatorFunction(relation, recordValue);
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
 
-        const bucketAggr = bucketEvents.map(
-            (bucketEvent): BucketEventsWithAggr => ({
-                ...bucketEvent,
-                aggregation: bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)),
-            })
-        );
+        const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
-        const valuesFromBucketAggr = bucketAggr.map((bucket) => bucket.aggregation);
-
-        const value = aggFunction(valuesFromBucketAggr);
+        const value = aggFunction(bucketAggr);
         resultObject[key] = value;
     }
 
@@ -82,8 +79,6 @@ export function createBucketEvents(events: Achievement_event[], bucketConfig: Bu
             return createDefaultBuckets(events, bucketConfig);
         case 'time':
             return createTimeBuckets(events, bucketConfig);
-        case 'filter':
-            return createFilterBuckets(events, bucketConfig);
     }
 }
 
@@ -108,16 +103,4 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
         };
     });
     return bucketsWithEvents;
-};
-
-const createFilterBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
-    const { buckets } = bucketConfig;
-    const filteredEvents = events.filter((event) => {
-        return buckets.some((bucket) => bucket.actionName === event.action);
-    });
-    return filteredEvents.map((event) => ({
-        kind: 'filter',
-        actionName: event.action,
-        events: [event],
-    }));
 };

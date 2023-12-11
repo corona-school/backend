@@ -20,7 +20,7 @@ export type GenericBucketConfig<T extends Bucket> = {
     buckets: T[];
 };
 // Combines all possible bucket configs
-export type BucketConfig = GenericBucketConfig<TimeBucket> | GenericBucketConfig<FilterBucket> | GenericBucketConfig<DefaultBucket>;
+export type BucketConfig = GenericBucketConfig<TimeBucket> | GenericBucketConfig<DefaultBucket>;
 
 export type DefaultBucket = {
     kind: 'default';
@@ -31,13 +31,8 @@ export type TimeBucket = {
     startTime: Date;
     endTime: Date;
 };
-// Bucket containing events that match a specific actionName
-export type FilterBucket = {
-    kind: 'filter';
-    actionName: string;
-};
 // A bucket is seen as for a period of time
-export type Bucket = DefaultBucket | TimeBucket | FilterBucket;
+export type Bucket = DefaultBucket | TimeBucket;
 
 export type BucketEvents = Bucket & {
     events: Achievement_event[];
@@ -109,6 +104,7 @@ type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
 
 export type AchievementContextType = {
     type: RelationTypes;
+    user?: User;
     match?: {
         id: number;
         lecture: ContextLecture[];

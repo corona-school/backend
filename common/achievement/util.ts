@@ -5,7 +5,6 @@ import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import { Prisma } from '@prisma/client';
 import { achievement_state } from '../../graphql/types/achievement';
-import { Context } from '../notification/types';
 import { User } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
@@ -52,43 +51,20 @@ export async function getBucketContext(relation: string): Promise<AchievementCon
     return achievementContext;
 }
 
-export function transformPrismaJson(json: Prisma.JsonValue): AchievementContextType | null {
+export function transformPrismaJson(user: User, json: Prisma.JsonValue): AchievementContextType | null {
     if (!json['match'] && !json['subcourse']) {
         return null;
     }
     const transformedJson: AchievementContextType = {
         type: json['match'] ? 'match' : 'subcourse',
+        user: user,
         match: json['match'] ? json['match'] : undefined,
         subcourse: json['subcourse'] ? json['subcourse'] : undefined,
     };
     return transformedJson;
 }
 
-export async function getAchievementContext(user: User, userAchievementContext: AchievementContextType): Promise<Partial<Context>> {
-    const achievementContext: Partial<Context> = {
-        user: { ...user, fullName: `${user.firstname} ${user.lastname}` },
-    };
-
-    if (userAchievementContext) {
-        const contextKeys = Object.keys(userAchievementContext);
-        const newContextValue = await Promise.all(
-            contextKeys.map(async (key) => {
-                const [type, id] = userAchievementContext[key].split('/');
-                const newContextValue = await prisma[type].findUnique({
-                    where: { id: Number(id) },
-                });
-                return { key: type, value: newContextValue };
-            })
-        );
-        newContextValue.forEach((context) => {
-            achievementContext[context.key] = context.value;
-        });
-    }
-
-    return achievementContext;
-}
-
-export function getCurrentAchievementTemplateWithContext(userAchievement: User_achievement, achievementContext: Partial<Context>): Achievement_template {
+export function getCurrentAchievementTemplateWithContext(userAchievement: User_achievement, achievementContext: AchievementContextType): Achievement_template {
     const currentAchievementContext = userAchievement.template as Achievement_template;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {

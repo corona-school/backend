@@ -4,7 +4,7 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 
-async function doesUserAchievementAlreadyExist<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
+async function findUserAchievement<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
     const keys = Object.keys(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
@@ -25,7 +25,7 @@ async function doesUserAchievementAlreadyExist<ID extends ActionID>(templateId: 
 }
 
 async function getOrCreateUserAchievement<ID extends ActionID>(template: Achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
-    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
+    const existingUserAchievement = await findUserAchievement(template.id, userId, context);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
     }
