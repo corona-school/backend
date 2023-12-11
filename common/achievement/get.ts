@@ -1,11 +1,9 @@
 import { prisma } from '../prisma';
-import { Achievement_template, User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
-import { Step, Achievement, achievement_state } from '../../graphql/types/achievement';
+import { User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
+import { Achievement, achievement_state } from '../../graphql/types/achievement';
 import { User } from '../user';
-import { renderTemplate } from '../../utils/helpers';
-import { Context } from '../notification/types';
-import { AchievementContextType, ConditionDataAggregations } from './types';
-import { getAchievementContext, getAchievementState, getCurrentAchievementContext, transformPrismaJson } from './helper';
+import { ConditionDataAggregations } from './types';
+import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
@@ -45,14 +43,12 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    const userAchievementContext = transformPrismaJson(userAchievements[currentAchievementIndex].context);
-    const achievementContext = await getAchievementContext(user, userAchievementContext);
-    const currentAchievementTemplate = getCurrentAchievementContext(userAchievements[currentAchievementIndex], achievementContext);
+    const achievementContext = await transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
+    const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
-    const resultIndex = currentAchievementIndex < 0 ? null : currentAchievementIndex;
     const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
 
-    const newAchievement = state === achievement_state.COMPLETED && !userAchievements[resultIndex].isSeen;
+    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
     const condition = currentAchievementTemplate.condition.includes('recordValue')
         ? currentAchievementTemplate.condition.replace('recordValue', (userAchievements[currentAchievementIndex].recordValue + 1).toString())
@@ -100,10 +96,10 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
             : null,
         maxSteps: maxValue,
         currentStep: currentValue,
-        newAchievement: newAchievement,
+        isNewAchievement: isNewAchievement,
         progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
-        actionName: userAchievements[userAchievements.length - 1].template.actionName,
-        actionRedirectLink: userAchievements[userAchievements.length - 1].template.actionRedirectLink,
+        actionName: userAchievements[currentAchievementIndex].template.actionName,
+        actionRedirectLink: userAchievements[currentAchievementIndex].template.actionRedirectLink,
     };
 };
 

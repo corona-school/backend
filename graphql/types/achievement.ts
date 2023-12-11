@@ -50,7 +50,7 @@ class Achievement {
     currentStep?: number;
 
     @Field({ nullable: true })
-    newAchievement?: boolean;
+    isNewAchievement?: boolean;
 
     @Field({ nullable: true })
     progressDescription?: string;

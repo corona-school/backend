@@ -4,7 +4,7 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 
-async function doesUserAchievementAlreadyExist<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
+async function findUserAchievement<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
     const keys = Object.keys(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
@@ -25,7 +25,7 @@ async function doesUserAchievementAlreadyExist<ID extends ActionID>(templateId: 
 }
 
 async function getOrCreateUserAchievement<ID extends ActionID>(template: Achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
-    const existingUserAchievement = await doesUserAchievementAlreadyExist(template.id, userId, context);
+    const existingUserAchievement = await findUserAchievement(template.id, userId, context);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
     }
@@ -53,7 +53,6 @@ async function createAchievement<ID extends ActionID>(templateToCreate: Achievem
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    // TODO
     const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === templateToCreate.groupOrder) + 1 : 0;
 
     const templatesForGroup = templatesByGroup.get(templateToCreate.group);
@@ -70,7 +69,8 @@ async function createNextUserAchievement<ID extends ActionID>(
     context: SpecificNotificationContext<ID>
 ) {
     const nextStepTemplate = templatesForGroup[nextStepIndex];
-
+    // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
+    // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {

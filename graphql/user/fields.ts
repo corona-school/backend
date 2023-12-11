@@ -212,7 +212,7 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => [Achievement])
     @Authorized(Role.ADMIN, Role.OWNER)
-     achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
+    achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
         return getUserAchievements(context.user);
     }
 
