@@ -1,6 +1,6 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { isGamificationFeatureActive, getMetricsByAction, injectRecordValue, sortActionTemplatesToGroups } from './util';
+import { isGamificationFeatureActive, getMetricsByAction, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
@@ -100,13 +100,7 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
         return;
     }
 
-    const updatedCondition = injectRecordValue(condition, recordValue);
-    const { conditionIsMet, resultObject } = await evaluateAchievement(
-        updatedCondition,
-        conditionDataAggregations as ConditionDataAggregations,
-        metrics,
-        recordValue
-    );
+    const { conditionIsMet, resultObject } = await evaluateAchievement(condition, conditionDataAggregations as ConditionDataAggregations, metrics, recordValue);
     return { conditionIsMet, resultObject };
 }
 

@@ -24,6 +24,7 @@ export async function evaluateAchievement(
     }
 
     const resultObject: Record<string, number | string | boolean> = {};
+    resultObject['recordValue'] = recordValue;
 
     for (const key in dataAggregation) {
         if (!dataAggregation[key]) {
