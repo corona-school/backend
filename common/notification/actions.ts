@@ -632,18 +632,33 @@ const _notificationActions = {
         description: 'Student joined meeting',
         sampleContext: {},
     },
-    joined_meeting: {
-        description: 'User joined meeting',
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
         sampleContext: {},
     },
-    joined_match_meeting: {
-        description: 'User joined a match meeting',
+    /* MEETINGS */
+    student_joined_match_meeting: {
+        description: 'Student joined a match meeting',
+        sampleContext: {
+            matchId: '1',
+            pupil: { firstname: 'Pupil' }, // = matchpartner
+            relationId: 'match/1',
+        },
+    },
+    student_joined_subcourse_meeting: {
+        description: 'Student joined subcourse meeting',
+        sampleContext: {
+            subcourseId: '1',
+        },
+    },
+    pupil_joined_match_meeting: {
+        description: 'Pupil joined a match meeting',
         sampleContext: {
             matchId: '1',
         },
     },
-    joined_subcourse_meeting: {
-        description: 'User joined subcourse meeting',
+    pupil_joined_subcourse_meeting: {
+        description: 'Pupil joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
         },

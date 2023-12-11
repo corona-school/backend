@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { ActionID } from '../notification/actions';
 import { Metric } from './types';
 
