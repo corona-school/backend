@@ -99,11 +99,3 @@ export function sortActionTemplatesToGroups(templatesForAction: Achievement_temp
     });
     return templatesByGroups;
 }
-
-// replace recordValue in condition with number of last record
-export function injectRecordValue(condition: string, recordValue: number) {
-    if (typeof recordValue === 'number') {
-        return condition.replace('recordValue', recordValue.toString());
-    }
-    return condition;
-}
