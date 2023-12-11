@@ -79,6 +79,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     }
 
     return {
+        id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
@@ -93,7 +94,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                   // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                   return {
                       description: achievement.template.stepName,
-                      isActive: index === resultIndex,
+                      isActive: index === currentAchievementIndex,
                   };
               })
             : null,

@@ -70,7 +70,8 @@ async function createNextUserAchievement<ID extends ActionID>(
     context: SpecificNotificationContext<ID>
 ) {
     const nextStepTemplate = templatesForGroup[nextStepIndex];
-
+    // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
+    // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate && nextStepTemplate.isActive) {
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {

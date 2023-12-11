@@ -14,6 +14,9 @@ registerEnumType(achievement_state, {
 @ObjectType()
 class Achievement {
     @Field()
+    id: number;
+
+    @Field()
     name: string;
 
     @Field()
