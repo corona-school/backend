@@ -28,6 +28,7 @@ export type DefaultBucket = {
 // Bucket containing events from a specific time frame
 export type TimeBucket = {
     kind: 'time';
+    relation: string;
     startTime: Date;
     endTime: Date;
 };
@@ -112,11 +113,11 @@ export type AchievementContextType = {
     match?: {
         id: number;
         lecture: ContextLecture[];
-    };
+    }[];
     subcourse?: {
         id: number;
         lecture: ContextLecture[];
-    };
+    }[];
 };
 
 // User-achievement context: {relation = match/1, match_all, subcourse/1, subcourse_all, all}

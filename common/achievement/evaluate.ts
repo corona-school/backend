@@ -12,10 +12,19 @@ export async function evaluateAchievement(
     condition: string,
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
-    recordValue: number
+    recordValue: number,
+    userId: string,
+    context: JSON
 ): Promise<EvaluationResult> {
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
-    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
+    const relation = context['relation'];
+    const achievementEvents = await prisma.achievement_event.findMany({
+        where: {
+            metric: { in: metrics },
+            AND: relation ? { relation: { equals: relation } } : {},
+        },
+        orderBy: { createdAt: 'desc' },
+    });
 
     const eventsByMetric: Record<string, Achievement_event[]> = {};
     for (const event of achievementEvents) {
@@ -45,7 +54,6 @@ export async function evaluateAchievement(
             continue;
         }
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
-        const relation = eventsForMetric.find((event) => event.relation)?.relation;
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;
@@ -61,7 +69,7 @@ export async function evaluateAchievement(
 
         let bucketContext: AchievementContextType;
         if (relation) {
-            bucketContext = await getBucketContext(relation);
+            bucketContext = await getBucketContext(relation, userId);
         }
 
         const buckets = bucketCreatorFunction({ periodLength: recordValue, context: bucketContext });
@@ -103,6 +111,12 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
         const filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
+        const byRelation: Achievement_event[] = [];
+        if (bucket.relation === 'match/all' || bucket.relation === 'subcourse/all') {
+            byRelation.push(...filteredEvents);
+        } else {
+            byRelation.push(...filteredEvents.filter((event) => event.relation === bucket.relation));
+        }
 
         return {
             kind: bucket.kind,

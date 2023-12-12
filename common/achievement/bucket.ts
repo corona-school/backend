@@ -13,27 +13,35 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     by_lecture_start: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-
-            if (!context[context.type].lecture) {
-                return { bucketKind: 'time', buckets: [] };
-            }
-
-            return {
+            const timeBucket: GenericBucketConfig<TimeBucket> = {
                 bucketKind: 'time',
-                buckets: context[context.type].lecture.map((lecture) => ({
+                buckets: [],
+            };
+            context[context.type].forEach((contextType) => {
+                if (!contextType.lecture) {
+                    return;
+                }
+                const buckets: TimeBucket[] = contextType.lecture.map((lecture) => ({
                     kind: 'time',
+                    relation: `${context.type}/${contextType['id']}`,
                     startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
                     endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
-                })),
-            };
+                }));
+                timeBucket.buckets.push(...buckets);
+            });
+            return timeBucket;
         },
     },
     by_weeks: {
-        function: (context): GenericBucketConfig<TimeBucket> => {
-            const { periodLength: weeks } = context;
+        function: (bucketContext): GenericBucketConfig<TimeBucket> => {
+            const { context } = bucketContext;
+            const { periodLength: weeks } = bucketContext;
             // the buckets are created in a desc order
             const today = moment();
-            const buckets: TimeBucket[] = [];
+            const timeBucket: GenericBucketConfig<TimeBucket> = {
+                bucketKind: 'time',
+                buckets: [],
+            };
 
             /*
             This is to look at the last few weeks before the current event so that we can evaluate whether the streak has been interrupted for the last few weeks or whether we have a new record.
@@ -43,42 +51,52 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             We now want to see if this record still exists. We want to know whether the last 7 weeks are correct, because the previous record was 6.
             Now it doesn't matter how long the user was inactive or similar. As soon as only one bucket is found among these buckets (7 buckets) that contains nothing, we know that the record has not been surpassed.
             */
-            for (let i = 0; i < weeks + 1; i++) {
-                const weeksBefore = today.clone().subtract(i, 'week');
-                buckets.push({
-                    kind: 'time',
-                    startTime: weeksBefore.startOf('week').toDate(),
-                    endTime: weeksBefore.endOf('week').toDate(),
-                });
-            }
+            context[context.type].forEach((contextType) => {
+                if (!contextType.lecture) {
+                    return;
+                }
+                for (let i = 0; i < weeks + 1; i++) {
+                    const weeksBefore = today.clone().subtract(i, 'week');
+                    timeBucket.buckets.push({
+                        kind: 'time',
+                        relation: `${context.type}/${contextType['id']}`,
+                        startTime: weeksBefore.startOf('week').toDate(),
+                        endTime: weeksBefore.endOf('week').toDate(),
+                    });
+                }
+            });
 
-            return {
-                bucketKind: 'time',
-                buckets,
-            };
+            return timeBucket;
         },
     },
     by_months: {
-        function: (context): GenericBucketConfig<TimeBucket> => {
-            const { periodLength: months } = context;
+        function: (bucketContext): GenericBucketConfig<TimeBucket> => {
+            const { context } = bucketContext;
+            const { periodLength: months } = bucketContext;
 
             // the buckets are created in a desc order
             const today = moment();
-            const buckets: TimeBucket[] = [];
-
-            for (let i = 0; i < months + 1; i++) {
-                const monthsBefore = today.clone().subtract(i, 'month');
-                buckets.push({
-                    kind: 'time',
-                    startTime: monthsBefore.startOf('month').toDate(),
-                    endTime: monthsBefore.endOf('month').toDate(),
-                });
-            }
-
-            return {
+            const timeBucket: GenericBucketConfig<TimeBucket> = {
                 bucketKind: 'time',
-                buckets,
+                buckets: [],
             };
+
+            context[context.type].forEach((contextType) => {
+                if (!contextType.lecture) {
+                    return;
+                }
+                for (let i = 0; i < months + 1; i++) {
+                    const monthsBefore = today.clone().subtract(i, 'month');
+                    timeBucket.buckets.push({
+                        kind: 'time',
+                        relation: `${context.type}/${contextType['id']}`,
+                        startTime: monthsBefore.startOf('month').toDate(),
+                        endTime: monthsBefore.endOf('month').toDate(),
+                    });
+                }
+            });
+
+            return timeBucket;
         },
     },
 };
