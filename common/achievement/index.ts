@@ -72,7 +72,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
+async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, context: SpecificNotificationContext<ID>) {
     const evaluationResult = await isAchievementConditionMet(userAchievement);
 
     if (evaluationResult.conditionIsMet) {

@@ -37,11 +37,13 @@ export type Bucket = DefaultBucket | TimeBucket;
 export type BucketEvents = Bucket & {
     events: Achievement_event[];
 };
+
 export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketFormulaFunction = (relation?: string, numberOfPeriode?: number) => Promise<BucketConfig>;
+type BucketCreatorContext = { numberOfPeriod: number; context: AchievementContextType };
+type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
 export type BucketFormula = {
     function: BucketFormulaFunction;
@@ -60,6 +62,8 @@ export type ConditionDataAggregations = {
         bucketAggregator?: string;
         // Default: one bucket / event
         createBuckets?: string;
+        // For tiered achievements we need the number (max value) that can be achieved (for the resolver)
+        valueToAchieve?: number;
     };
 };
 

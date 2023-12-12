@@ -1,27 +1,23 @@
 import moment from 'moment';
 import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket } from './types';
-import { getBucketContext, getRelationTypeAndId } from './util';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
 // Buckets are needed to pre-sort and aggregate certain events by types / a certain time window (e.g. weekly) etc.
 export const bucketCreatorDefs: BucketCreatorDefs = {
     default: {
-        function: async (): Promise<GenericBucketConfig<DefaultBucket>> => {
-            return await { bucketKind: 'default', buckets: [] };
+        function: (): GenericBucketConfig<DefaultBucket> => {
+            return { bucketKind: 'default', buckets: [] };
         },
     },
     by_lecture_start: {
-        function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
-            const [type] = getRelationTypeAndId(relation);
+        function: (bucketContext): GenericBucketConfig<TimeBucket> => {
+            const { context } = bucketContext;
 
-            if (!relation) {
-                return { bucketKind: 'time', buckets: [] };
-            }
-            const context = await getBucketContext(relation);
             if (!context[context.type].lecture) {
                 return { bucketKind: 'time', buckets: [] };
             }
+
             return {
                 bucketKind: 'time',
                 buckets: context[context.type].lecture.map((lecture) => ({
@@ -33,11 +29,20 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_weeks: {
-        function: async (_relation, weeks): Promise<GenericBucketConfig<TimeBucket>> => {
+        function: (context): GenericBucketConfig<TimeBucket> => {
+            const { numberOfPeriod: weeks } = context;
             // the buckets are created in a desc order
             const today = moment();
             const buckets: TimeBucket[] = [];
 
+            /*
+            This is to look at the last few weeks before the current event so that we can evaluate whether the streak has been interrupted for the last few weeks or whether we have a new record.
+            ---
+            Why do we pass the `recordValue` as weeks / months?
+            Let's imagine our current record: 6
+            We now want to see if this record still exists. We want to know whether the last 7 weeks are correct, because the previous record was 6.
+            Now it doesn't matter how long the user was inactive or similar. As soon as only one bucket is found among these buckets (7 buckets) that contains nothing, we know that the record has not been surpassed.
+            */
             for (let i = 0; i < weeks + 1; i++) {
                 const weeksBefore = today.clone().subtract(i, 'week');
                 buckets.push({
@@ -47,14 +52,16 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 });
             }
 
-            return await {
+            return {
                 bucketKind: 'time',
                 buckets,
             };
         },
     },
     by_months: {
-        function: async (_relation, months): Promise<GenericBucketConfig<TimeBucket>> => {
+        function: (context): GenericBucketConfig<TimeBucket> => {
+            const { numberOfPeriod: months } = context;
+
             // the buckets are created in a desc order
             const today = moment();
             const buckets: TimeBucket[] = [];
@@ -68,7 +75,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 });
             }
 
-            return await {
+            return {
                 bucketKind: 'time',
                 buckets,
             };

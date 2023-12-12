@@ -5,6 +5,7 @@ import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
+import { getBucketContext } from './util';
 const logger = getLogger('Achievement');
 
 export async function evaluateAchievement(
@@ -47,21 +48,28 @@ export async function evaluateAchievement(
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;
-        const aggFunction = aggregators[aggregator].function;
 
-        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggFunction) {
+        const aggregatorFunction = aggregators[aggregator].function;
+
+        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggregatorFunction) {
             logger.error(
                 `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
             );
             return;
         }
+        const bucketContext = await getBucketContext(relation);
 
-        const buckets = await bucketCreatorFunction(relation, recordValue);
+        let buckets: BucketConfig;
+        if (!relation) {
+            buckets = { bucketKind: 'time', buckets: [] };
+        }
+
+        buckets = bucketCreatorFunction({ numberOfPeriod: recordValue, context: bucketContext });
+
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
-
         const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
-        const value = aggFunction(bucketAggr);
+        const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;
     }
 
