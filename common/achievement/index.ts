@@ -5,8 +5,9 @@ import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getTemplatesByAction } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
+import { actionTakenAt } from '../notification';
 
 const logger = getLogger('Achievement');
 
@@ -41,7 +42,7 @@ export async function rewardActionTaken<ID extends ActionID>(user: User, actionI
             }
         }
         if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, context);
+            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent);
         }
     }
 }
@@ -72,7 +73,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate | undefined, context: SpecificNotificationContext<ID>) {
+async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     const evaluationResult = await isAchievementConditionMet(userAchievement);
 
     if (evaluationResult.conditionIsMet) {
@@ -80,9 +81,9 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
         const dataAggregationKey = Object.keys(conditionDataAggregations)[0];
         const evaluationResultValue =
             typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
-
-        const awardedAchievement = await awardUser(evaluationResultValue, userAchievement);
-        await createAchievement(awardedAchievement.template, userAchievement.userId, context);
+        const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement, event);
+        const userAchievementContext: UserAchievementContext = {};
+        await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
     } else {
         await prisma.user_achievement.update({
             where: { id: userAchievement.id },
@@ -104,14 +105,19 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     return { conditionIsMet, resultObject };
 }
 
-async function awardUser(evaluationResult: number, userAchievement: UserAchievementTemplate) {
+async function rewardUser<ID extends ActionID>(evaluationResult: number, userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
     }
-    return await prisma.user_achievement.update({
+    const updatedAchievement = await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
-        select: { id: true, userId: true, achievedAt: true, context: true, template: true },
+        select: { id: true, userId: true, achievedAt: true, template: true },
     });
+
+    await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+        achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+    });
+    return updatedAchievement;
 }

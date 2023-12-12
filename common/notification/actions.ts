@@ -634,8 +634,24 @@ const _notificationActions = {
         description: 'Student / E-Mail verified',
         sampleContext: {},
     },
+
+    user_achievement_reward_issued: {
+        description: 'Reward issued',
+        sampleContext: {
+            achievement: {
+                id: '0',
+                name: 'achievement',
+            },
+        },
+    },
     student_calendly_appointment_booked: {
         description: 'Student booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    /* MEETINGS */
+    student_joined_meeting: {
+        description: 'Student joined meeting',
         sampleContext: {},
     },
     pupil_calendly_appointment_booked: {
