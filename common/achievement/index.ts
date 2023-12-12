@@ -116,7 +116,7 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
         select: { id: true, userId: true, achievedAt: true, template: true },
     });
 
-    await actionTakenAt(new Date(event.at), event.user, 'user_achievemnet_reward_issued', {
+    await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
         achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
     });
     return updatedAchievement;
