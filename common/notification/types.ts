@@ -34,8 +34,8 @@ export interface NotificationContextExtensions {
     campaign?: string;
     // For Campaigns, support sending custom Mailjet Notifications:
     overrideMailjetTemplateID?: string;
-    // TODO: For achievements
-    relationId?: string;
+    // For Achievements, the match or subcourse is needed as a relation to allocate events to a specific user achievement
+    relation?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {

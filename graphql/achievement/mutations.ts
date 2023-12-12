@@ -19,12 +19,12 @@ export class MutateAchievementResolver {
             await Notification.actionTaken(user, 'student_joined_match_meeting', {
                 matchId: matchId.toString(),
                 pupil: match.pupil,
-                relationId: `match/${matchId}`,
+                relation: `match/${matchId}`,
             });
         } else if (user.pupilId) {
             await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
                 matchId: matchId.toString(),
-                relationId: `match/${matchId}`,
+                relation: `match/${matchId}`,
             });
         }
 
