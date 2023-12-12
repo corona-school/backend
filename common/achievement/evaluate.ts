@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
+import { AchievementContextType, BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -57,7 +57,11 @@ export async function evaluateAchievement(
             );
             return;
         }
-        const bucketContext = await getBucketContext(relation);
+
+        let bucketContext: AchievementContextType;
+        if (relation) {
+            bucketContext = await getBucketContext(relation);
+        }
 
         const buckets = bucketCreatorFunction({ periodLength: recordValue, context: bucketContext });
 
