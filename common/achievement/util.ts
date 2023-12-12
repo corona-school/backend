@@ -36,6 +36,7 @@ export function getRelationTypeAndId(relation: string): [type: RelationTypes, id
 }
 
 export async function getBucketContext(relation: string): Promise<AchievementContextType> {
+    // UserID
     const [type, id] = getRelationTypeAndId(relation);
     const achievementContext: AchievementContextType = {
         type: type,

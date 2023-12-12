@@ -14,6 +14,7 @@ export async function evaluateAchievement(
     metrics: string[],
     recordValue: number
 ): Promise<EvaluationResult> {
+    // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
 
     const eventsByMetric: Record<string, Achievement_event[]> = {};
