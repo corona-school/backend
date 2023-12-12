@@ -59,12 +59,7 @@ export async function evaluateAchievement(
         }
         const bucketContext = await getBucketContext(relation);
 
-        let buckets: BucketConfig;
-        if (!relation) {
-            buckets = { bucketKind: 'time', buckets: [] };
-        }
-
-        buckets = bucketCreatorFunction({ numberOfPeriod: recordValue, context: bucketContext });
+        const buckets = bucketCreatorFunction({ periodLength: recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
         const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));

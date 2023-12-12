@@ -30,7 +30,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_weeks: {
         function: (context): GenericBucketConfig<TimeBucket> => {
-            const { numberOfPeriod: weeks } = context;
+            const { periodLength: weeks } = context;
             // the buckets are created in a desc order
             const today = moment();
             const buckets: TimeBucket[] = [];
@@ -60,7 +60,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_months: {
         function: (context): GenericBucketConfig<TimeBucket> => {
-            const { numberOfPeriod: months } = context;
+            const { periodLength: months } = context;
 
             // the buckets are created in a desc order
             const today = moment();
