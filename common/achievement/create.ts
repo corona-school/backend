@@ -1,11 +1,11 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_template, JsonFilter } from '../../graphql/generated';
+import { Achievement_template, JsonFilter, achievement_template_for_enum } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 
 async function findUserAchievement<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
-    const keys = Object.keys(context);
+    const keys = context ? Object.keys(context) : [];
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
@@ -25,7 +25,11 @@ async function findUserAchievement<ID extends ActionID>(templateId: number, user
 }
 
 async function getOrCreateUserAchievement<ID extends ActionID>(template: Achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
-    const existingUserAchievement = await findUserAchievement(template.id, userId, context);
+    const isGlobal =
+        template.templateFor === achievement_template_for_enum.Global ||
+        template.templateFor === achievement_template_for_enum.Global_Courses ||
+        template.templateFor === achievement_template_for_enum.Global_Matches;
+    const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal && context);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
     }
