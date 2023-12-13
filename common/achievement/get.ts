@@ -23,20 +23,24 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
 };
 
 const generateReorderedAchievementData = async (groups: { [group: string]: User_achievement[] }, user: User): Promise<Achievement[]> => {
-    const achievements: Achievement[] = [];
-    for (const group in groups) {
-        const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
-        if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
-            sortedGroupAchievements.forEach(async (groupAchievement, index) => {
-                const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
-                achievements.push(achievement);
-            });
-        } else {
+    const groupKeys = Object.keys(groups);
+    const achievements = await Promise.all(
+        groupKeys.map(async (key) => {
+            const group = groups[key];
+            const sortedGroupAchievements = group.sort((a, b) => a.groupOrder - b.groupOrder);
+            if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
+                return await Promise.all(
+                    sortedGroupAchievements.map(async (groupAchievement) => {
+                        const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
+                        return achievement;
+                    })
+                );
+            }
             const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
-            achievements.push(groupAchievement);
-        }
-    }
-    return Promise.all(achievements);
+            return [groupAchievement];
+        })
+    );
+    return Promise.all(achievements.reduce((a, b) => a.concat(b), []));
 };
 
 const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {

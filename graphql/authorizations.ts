@@ -25,6 +25,7 @@ import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
+import { subcourse } from '@prisma/client';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -589,24 +590,26 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled'>(
-            {
-                course_attendance_log: nobody,
-                subcourseId: nobody,
-                subcourse: nobody,
-                student: nobody,
-                instructorId: nobody,
-                _count: nobody,
-                match: adminOrOwner,
-                matchId: participantOrOwnerOrAdmin,
-                participantIds: adminOrOwner,
-                organizerIds: adminOrOwner,
-                declinedBy: participantOrOwnerOrAdmin,
-                zoomMeetingId: participantOrOwnerOrAdmin,
-                zoomMeetingReport: adminOrOwner,
-                override_meeting_link: participantOrOwnerOrAdmin,
-            }
-        ),
+        // TODO: This is a workaround for presentation purposes
+        fields: withPublicFields<
+            Lecture,
+            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'matchId' | 'subcourseId'
+        >({
+            course_attendance_log: nobody,
+            // subcourseId: nobody,
+            subcourse: nobody,
+            student: nobody,
+            instructorId: nobody,
+            _count: nobody,
+            match: adminOrOwner,
+            // matchId: participantOrOwnerOrAdmin,
+            participantIds: adminOrOwner,
+            organizerIds: adminOrOwner,
+            declinedBy: participantOrOwnerOrAdmin,
+            zoomMeetingId: participantOrOwnerOrAdmin,
+            zoomMeetingReport: adminOrOwner,
+            override_meeting_link: participantOrOwnerOrAdmin,
+        }),
     },
     Participation_certificate: {
         fields: {
