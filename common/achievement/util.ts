@@ -26,13 +26,11 @@ export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] 
 
 export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
     const validRelationTypes = ['match', 'subcourse'];
-    const [relationType, relationId] = relation.split('/');
+    const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
     }
-
-    const parsedRelationId = parseInt(relationId, 10);
-    return [relationType as RelationTypes, parsedRelationId];
+    return [relationType as RelationTypes, Number(id)];
 }
 
 export async function getBucketContext(relation: string): Promise<AchievementContextType> {

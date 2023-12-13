@@ -50,6 +50,11 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     const achievementContext = await transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
     const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
+    const achievementTemplates = await prisma.achievement_template.findMany({
+        where: { group: currentAchievementTemplate.group },
+        orderBy: { groupOrder: 'asc' },
+    });
+
     const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
 
     const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
@@ -81,10 +86,10 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                       .reduce((a, b) => a + b, 0);
     } else {
         const achievementTemplates = await prisma.achievement_template.findMany({
-            where: { group: currentAchievementTemplate.group },
+            where: { group: currentAchievementTemplate.group, isActive: true },
             orderBy: { groupOrder: 'asc' },
         });
-        currentValue = currentAchievementIndex + 1;
+        currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }
 
@@ -99,14 +104,19 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         achievementType: currentAchievementTemplate.type as achievement_type_enum,
         achievementState: state,
         steps: currentAchievementTemplate.stepName
-            ? userAchievements.map((achievement, index) => {
-                  // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
-                  // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
-                  return {
-                      name: achievement.template.stepName,
-                      isActive: index === currentAchievementIndex,
-                  };
-              })
+            ? achievementTemplates
+                  .map((achievement, index) => {
+                      // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
+                      // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
+                      if (index < achievementTemplates.length - 1 && achievement.isActive) {
+                          return {
+                              name: achievement.stepName,
+                              isActive: index === currentAchievementIndex,
+                          };
+                      }
+                      return null;
+                  })
+                  .filter((step) => step)
             : null,
         maxSteps: maxValue,
         currentStep: currentValue,
