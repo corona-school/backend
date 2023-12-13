@@ -64,7 +64,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 value: value,
                 action: event.actionId,
                 userId: event.user.userID,
-                relation: event.context.relationId ?? '',
+                relation: event.context.relation ?? '',
             },
         });
     }
