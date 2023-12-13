@@ -6,6 +6,7 @@ import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { getBucketContext } from './util';
+import { Prisma } from '@prisma/client';
 const logger = getLogger('Achievement');
 
 export async function evaluateAchievement(
@@ -14,7 +15,7 @@ export async function evaluateAchievement(
     metrics: string[],
     recordValue: number,
     userId: string,
-    context: JSON
+    context: Prisma.JsonValue
 ): Promise<EvaluationResult> {
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const relation = context['relation'];

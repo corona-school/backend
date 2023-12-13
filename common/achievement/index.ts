@@ -99,7 +99,14 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
         return;
     }
 
-    const { conditionIsMet, resultObject } = await evaluateAchievement(condition, conditionDataAggregations as ConditionDataAggregations, metrics, recordValue);
+    const { conditionIsMet, resultObject } = await evaluateAchievement(
+        condition,
+        conditionDataAggregations as ConditionDataAggregations,
+        metrics,
+        recordValue,
+        achievement.userId,
+        achievement.context
+    );
     return { conditionIsMet, resultObject };
 }
 

@@ -62,7 +62,9 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
-            userAchievements[currentAchievementIndex].recordValue
+            userAchievements[currentAchievementIndex].recordValue,
+            user.userID,
+            userAchievements[currentAchievementIndex].context
         );
         currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =
