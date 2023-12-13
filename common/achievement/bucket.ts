@@ -12,6 +12,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
     by_lecture_start: {
+        // TODO: do not create a bucket if lecture.declinedBy includes the userId
         function: async (relation): Promise<GenericBucketConfig<TimeBucket>> => {
             const [type] = getRelationTypeAndId(relation);
 

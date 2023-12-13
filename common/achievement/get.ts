@@ -6,6 +6,7 @@ import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 
+// TODO: getAchievementById -> passed user and achievementId to return a single achievement
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID },
@@ -74,6 +75,8 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         maxValue = userAchievements.length - 1;
     }
 
+    // TODO: create a function to get the course image path for an array given templateIds. If the result of this function is undefined, use the template image.
+
     return {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
@@ -97,6 +100,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
+        // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
         progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
         actionName: userAchievements[currentAchievementIndex].template.actionName,
         actionRedirectLink: userAchievements[currentAchievementIndex].template.actionRedirectLink,
