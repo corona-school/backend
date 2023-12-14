@@ -36,36 +36,36 @@ export function getRelationTypeAndId(relation: string): [type: RelationTypes, id
 export async function getBucketContext(relation: string, id: string): Promise<AchievementContextType> {
     const [userType, userId] = getUserTypeAndIdForUserId(id);
     const [relationType, relationId] = getRelationTypeAndId(relation);
-    if (relationId === 'all') {
-        const achievementContext: AchievementContextType = {
-            type: relationType,
-            match:
-                relationType === 'match'
-                    ? await prisma.match.findMany({
-                          where: { [`${userType}Id`]: userId },
-                          select: { id: true, lecture: { select: { start: true, duration: true } } },
-                      })
-                    : null,
-            subcourse:
-                relationType === 'subcourse'
-                    ? await prisma.subcourse.findMany({
-                          where: { [`${userType}Id`]: userId },
-                          select: { id: true, lecture: { select: { start: true, duration: true } } },
-                      })
-                    : null,
-        };
-        return achievementContext;
-    }
     const idAsNumber = Number(relationId);
     const achievementContext: AchievementContextType = {
         type: relationType,
         match:
             relationType === 'match'
-                ? [await prisma.match.findFirst({ where: { id: idAsNumber }, select: { id: true, lecture: { select: { start: true, duration: true } } } })]
+                ? await prisma.match.findMany({
+                      where: { id: idAsNumber },
+                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                  })
                 : null,
         subcourse:
             relationType === 'subcourse'
-                ? [await prisma.subcourse.findFirst({ where: { id: idAsNumber }, select: { id: true, lecture: { select: { start: true, duration: true } } } })]
+                ? await prisma.subcourse.findMany({
+                      where: { id: idAsNumber },
+                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                  })
+                : null,
+        global_match:
+            relationType === 'global_match'
+                ? await prisma.subcourse.findMany({
+                      where: { [`${userType}Id`]: userId },
+                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                  })
+                : null,
+        global_subcourse:
+            relationType === 'global_subcourse'
+                ? await prisma.subcourse.findMany({
+                      where: { [`${userType}Id`]: userId },
+                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                  })
                 : null,
     };
     return achievementContext;

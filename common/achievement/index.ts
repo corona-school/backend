@@ -94,6 +94,8 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
 async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const {
         recordValue,
+        userId,
+        context,
         template: { condition, conditionDataAggregations, metrics },
     } = achievement;
     if (!condition) {
@@ -105,8 +107,8 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
         conditionDataAggregations as ConditionDataAggregations,
         metrics,
         recordValue,
-        achievement.userId,
-        achievement.context
+        userId,
+        context
     );
     return { conditionIsMet, resultObject };
 }

@@ -103,7 +103,7 @@ export type EvaluationResult = {
     resultObject: Record<string, number>;
 };
 
-export type RelationTypes = 'match' | 'subcourse'; // match_all, subcourse_all, all
+export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
 
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
 
@@ -115,6 +115,14 @@ export type AchievementContextType = {
         lecture: ContextLecture[];
     }[];
     subcourse?: {
+        id: number;
+        lecture: ContextLecture[];
+    }[];
+    global_match?: {
+        id: number;
+        lecture: ContextLecture[];
+    }[];
+    global_subcourse?: {
         id: number;
         lecture: ContextLecture[];
     }[];
