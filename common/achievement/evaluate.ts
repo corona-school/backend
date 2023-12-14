@@ -112,18 +112,14 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
         const filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
-        const byRelation: Achievement_event[] = [];
-        if (bucket.relation === 'match/all' || bucket.relation === 'subcourse/all') {
-            byRelation.push(...filteredEvents);
-        } else {
-            byRelation.push(...filteredEvents.filter((event) => event.relation === bucket.relation));
-        }
+        // event relations either have a specific relation (match/1, subcourse/7) or a global relation (global_match, global_subcourse)
+        const byRelation: Achievement_event[] = filteredEvents.filter((event) => event.relation === bucket.relation);
 
         return {
             kind: bucket.kind,
             startTime: bucket.startTime,
             endTime: bucket.endTime,
-            events: filteredEvents,
+            events: byRelation,
         };
     });
     return bucketsWithEvents;

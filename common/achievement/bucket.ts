@@ -17,13 +17,16 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 bucketKind: 'time',
                 buckets: [],
             };
+            // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
+            // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
             context[context.type].forEach((contextType) => {
                 if (!contextType.lecture) {
                     return;
                 }
+                const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${contextType['id']}` : context.type;
                 const buckets: TimeBucket[] = contextType.lecture.map((lecture) => ({
                     kind: 'time',
-                    relation: `${context.type}/${contextType['id']}`,
+                    relation: relation,
                     startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
                     endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
                 }));

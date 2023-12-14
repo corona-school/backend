@@ -43,6 +43,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
+// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / monthes
 type BucketCreatorContext = { recordValue: number; context: AchievementContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
@@ -103,6 +104,7 @@ export type EvaluationResult = {
     resultObject: Record<string, number>;
 };
 
+// match and subcourse are relation types to point to a specific match or subcourse, whereas global_match and global_subcourse are used to point to all matches/subcourses of a user
 export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
 
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
@@ -132,4 +134,3 @@ export type AchievementContextType = {
 // bucket context: liste an matches mit terminen, liste an subcourses mit
 // bei all -> List an matches und subcourses
 // bucket creator: by_lectures -> iterieren über matches/subcourses liste
-//

@@ -36,26 +36,26 @@ export function getRelationTypeAndId(relation: string): [type: RelationTypes, id
 export async function getBucketContext(relation: string, id: string): Promise<AchievementContextType> {
     const [userType, userId] = getUserTypeAndIdForUserId(id);
     const [relationType, relationId] = getRelationTypeAndId(relation);
-    const idAsNumber = Number(relationId);
+    // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
     const achievementContext: AchievementContextType = {
         type: relationType,
         match:
             relationType === 'match'
                 ? await prisma.match.findMany({
-                      where: { id: idAsNumber },
+                      where: { id: Number(relationId) },
                       select: { id: true, lecture: { select: { start: true, duration: true } } },
                   })
                 : null,
         subcourse:
             relationType === 'subcourse'
                 ? await prisma.subcourse.findMany({
-                      where: { id: idAsNumber },
+                      where: { id: Number(relationId) },
                       select: { id: true, lecture: { select: { start: true, duration: true } } },
                   })
                 : null,
         global_match:
             relationType === 'global_match'
-                ? await prisma.subcourse.findMany({
+                ? await prisma.match.findMany({
                       where: { [`${userType}Id`]: userId },
                       select: { id: true, lecture: { select: { start: true, duration: true } } },
                   })
