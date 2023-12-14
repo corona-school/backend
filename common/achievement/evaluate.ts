@@ -81,7 +81,7 @@ export async function evaluateAchievement(
         const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;
     }
-
+    // TODO: return true if the condition is empty (eg. a student finishes a course and automatically receives an achievement)
     const evaluate = swan.parse(condition);
     const value: boolean = await evaluate(resultObject);
 
