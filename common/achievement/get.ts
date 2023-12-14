@@ -7,6 +7,7 @@ import { getAchievementState, getCurrentAchievementTemplateWithContext, transfor
 import { evaluateAchievement } from './evaluate';
 
 // TODO: getAchievementById -> passed user and achievementId to return a single achievement
+// TODO: resolver for nextSteps -> get active sequential achievements and important information
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID },
