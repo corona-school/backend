@@ -26,7 +26,7 @@ const batchOfMetrics = [
     createMetric('student_onboarding_verified', ['student_registration_verified_email'], () => {
         return 1;
     }),
-    // TODO - relevant if calendly API is integrated
+    //! relevant if calendly API is integrated
     createMetric('student_onboarding_appointment_booked', ['student_calendly_appointment_booked'], () => {
         return 1;
     }),
@@ -40,7 +40,7 @@ const batchOfMetrics = [
     createMetric('pupil_onboarding_verified', ['pupil_registration_verified_email'], () => {
         return 1;
     }),
-    // TODO - relevant if calendly API is integrated
+    //! relevant if calendly API is integrated
     createMetric('pupil_onboarding_appointment_booked', ['pupil_calendly_appointment_booked'], () => {
         return 1;
     }),
@@ -63,6 +63,12 @@ const batchOfMetrics = [
     createMetric('student_match_learned_regular', ['student_joined_match_meeting'], () => {
         return 1;
     }),
+
+    // TODO: add offer course metric listening to 2 actions - screening_success and course_created
+
+    // TODO: new match metric listening to 2 actions - screening_success and match_requested
+
+    // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
 ];
 
 export function registerAchievementMetrics() {
