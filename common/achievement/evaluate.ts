@@ -63,7 +63,7 @@ export async function evaluateAchievement(
             bucketContext = await getBucketContext(relation);
         }
 
-        const buckets = bucketCreatorFunction({ periodLength: recordValue, context: bucketContext });
+        const buckets = bucketCreatorFunction({ recordValue: recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
         const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));

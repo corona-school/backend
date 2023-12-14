@@ -42,7 +42,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-type BucketCreatorContext = { periodLength: number; context: AchievementContextType };
+type BucketCreatorContext = { recordValue: number; context: AchievementContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
 export type BucketFormula = {
