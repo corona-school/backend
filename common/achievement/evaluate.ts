@@ -1,10 +1,11 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
+import { AchievementContextType, BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
+import { getBucketContext } from './util';
 const logger = getLogger('Achievement');
 
 export async function evaluateAchievement(
@@ -23,7 +24,7 @@ export async function evaluateAchievement(
         eventsByMetric[event.metric].push(event);
     }
 
-    const resultObject: Record<string, number | string | boolean> = {};
+    const resultObject: Record<string, number> = {};
     resultObject['recordValue'] = recordValue;
 
     for (const key in dataAggregation) {
@@ -47,21 +48,27 @@ export async function evaluateAchievement(
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;
-        const aggFunction = aggregators[aggregator].function;
 
-        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggFunction) {
+        const aggregatorFunction = aggregators[aggregator].function;
+
+        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggregatorFunction) {
             logger.error(
                 `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
             );
             return;
         }
 
-        const buckets = await bucketCreatorFunction(relation, recordValue);
-        const bucketEvents = createBucketEvents(eventsForMetric, buckets);
+        let bucketContext: AchievementContextType;
+        if (relation) {
+            bucketContext = await getBucketContext(relation);
+        }
 
+        const buckets = bucketCreatorFunction({ recordValue: recordValue, context: bucketContext });
+
+        const bucketEvents = createBucketEvents(eventsForMetric, buckets);
         const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
-        const value = aggFunction(bucketAggr);
+        const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;
     }
     // TODO: return true if the condition is empty (eg. a student finishes a course and automatically receives an achievement)

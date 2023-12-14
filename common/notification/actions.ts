@@ -649,22 +649,32 @@ const _notificationActions = {
         sampleContext: {},
     },
 
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    user_achievemnet_reward_issued: {
+        description: 'Reward issued',
+        sampleContext: {
+            achievement: {
+                id: '0',
+                name: 'achievement',
+            },
+        },
+    },
+
     /* MEETINGS */
     student_joined_meeting: {
         description: 'Student joined meeting',
         sampleContext: {},
     },
-    pupil_calendly_appointment_booked: {
-        description: 'Pupil booked appointment via calendly ',
-        sampleContext: {},
-    },
-    /* MEETINGS */
     student_joined_match_meeting: {
         description: 'Student joined a match meeting',
         sampleContext: {
             matchId: '1',
             pupil: { firstname: 'Pupil' }, // = matchpartner
-            relationId: 'match/1',
+            relation: 'match/1',
         },
     },
     student_joined_subcourse_meeting: {

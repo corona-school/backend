@@ -25,20 +25,24 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
 };
 
 const generateReorderedAchievementData = async (groups: { [group: string]: User_achievement[] }, user: User): Promise<Achievement[]> => {
-    const achievements: Achievement[] = [];
-    for (const group in groups) {
-        const sortedGroupAchievements = groups[group].sort((a, b) => a.groupOrder - b.groupOrder);
-        if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
-            sortedGroupAchievements.forEach(async (groupAchievement, index) => {
-                const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
-                achievements.push(achievement);
-            });
-        } else {
+    const groupKeys = Object.keys(groups);
+    const achievements = await Promise.all(
+        groupKeys.map(async (key) => {
+            const group = groups[key];
+            const sortedGroupAchievements = group.sort((a, b) => a.groupOrder - b.groupOrder);
+            if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
+                return await Promise.all(
+                    sortedGroupAchievements.map(async (groupAchievement) => {
+                        const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
+                        return achievement;
+                    })
+                );
+            }
             const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
-            achievements.push(groupAchievement);
-        }
-    }
-    return Promise.all(achievements);
+            return [groupAchievement];
+        })
+    );
+    return Promise.all(achievements.reduce((a, b) => a.concat(b), []));
 };
 
 const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
@@ -47,6 +51,11 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
 
     const achievementContext = await transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
     const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
+
+    const achievementTemplates = await prisma.achievement_template.findMany({
+        where: { group: currentAchievementTemplate.group },
+        orderBy: { groupOrder: 'asc' },
+    });
 
     const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
 
@@ -59,21 +68,31 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     let maxValue;
     let currentValue;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
-        const dataAggregationKey = Object.keys(currentAchievementTemplate.conditionDataAggregations)[0];
+        const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
         const evaluationResult = await evaluateAchievement(
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue
         );
-        currentValue = evaluationResult.resultObject[dataAggregationKey];
+        currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =
             currentAchievementTemplate.type === achievement_type_enum.STREAK
-                ? userAchievements[currentAchievementIndex].recordValue
-                : currentAchievementTemplate.conditionDataAggregations[dataAggregationKey].valueToAchieve || 0;
+                ? userAchievements[currentAchievementIndex].recordValue > currentValue
+                    ? userAchievements[currentAchievementIndex].recordValue
+                    : currentValue
+                : dataAggregationKeys
+                      .map((key) => {
+                          return Number(currentAchievementTemplate.conditionDataAggregations[key].valueToAchieve);
+                      })
+                      .reduce((a, b) => a + b, 0);
     } else {
-        currentValue = currentAchievementIndex + 1;
-        maxValue = userAchievements.length - 1;
+        const achievementTemplates = await prisma.achievement_template.findMany({
+            where: { group: currentAchievementTemplate.group, isActive: true },
+            orderBy: { groupOrder: 'asc' },
+        });
+        currentValue = currentAchievementIndex;
+        maxValue = achievementTemplates.length - 1;
     }
 
     // TODO: create a function to get the course image path for an array given templateIds. If the result of this function is undefined, use the template image.
@@ -89,14 +108,19 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         achievementType: currentAchievementTemplate.type as achievement_type_enum,
         achievementState: state,
         steps: currentAchievementTemplate.stepName
-            ? userAchievements.map((achievement, index) => {
-                  // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
-                  // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
-                  return {
-                      name: achievement.template.stepName,
-                      isActive: index === currentAchievementIndex,
-                  };
-              })
+            ? achievementTemplates
+                  .map((achievement, index) => {
+                      // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
+                      // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
+                      if (index < achievementTemplates.length - 1 && achievement.isActive) {
+                          return {
+                              name: achievement.stepName,
+                              isActive: index === currentAchievementIndex,
+                          };
+                      }
+                      return null;
+                  })
+                  .filter((step) => step)
             : null,
         maxSteps: maxValue,
         currentStep: currentValue,
