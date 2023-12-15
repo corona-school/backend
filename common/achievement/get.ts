@@ -1,14 +1,37 @@
 import { prisma } from '../prisma';
-import { User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
+import { important_information_recipients_enum, User_achievement, achievement_action_type_enum, achievement_type_enum } from '../../graphql/generated';
 import { Achievement, achievement_state } from '../../graphql/types/achievement';
 import { User } from '../user';
 import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
-import { Prisma } from '@prisma/client';
 
-// TODO: getAchievementById -> passed user and achievementId to return a single achievement
-// TODO: resolver for nextSteps -> get active sequential achievements and important information
+const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
+    const userAchievement = await prisma.user_achievement.findUnique({
+        where: { id: achievementId },
+        include: { template: true },
+    });
+    const achievement = await assembleAchievementData([userAchievement], user);
+    return achievement;
+};
+
+// Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
+const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
+    const userAchievements = await prisma.user_achievement.findMany({
+        where: { userId: user.userID, isSeen: false, template: { type: achievement_type_enum.SEQUENTIAL } },
+        include: { template: true },
+    });
+    const userAchievementGroups: { [group: string]: User_achievement[] } = {};
+    userAchievements.forEach((ua) => {
+        if (!userAchievementGroups[ua.template.group]) {
+            userAchievementGroups[ua.template.group] = [];
+        }
+        userAchievementGroups[ua.template.group].push(ua);
+    });
+    const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
+    return achievements;
+};
+
 // Inactive achievements are acheievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
 const getInactiveAchievements = async (user: User): Promise<Achievement[]> => {
@@ -184,4 +207,4 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     };
 };
 
-export { getUserAchievements, getInactiveAchievements };
+export { getUserAchievements, getInactiveAchievements, getNextStepAchievements, getAchievementById };
