@@ -958,7 +958,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 0',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 1,
+                },
             },
             isActive: true,
         },
@@ -982,7 +986,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 2',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 3,
+                },
             },
             isActive: true,
         },
@@ -1006,7 +1014,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 4',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 5,
+                },
             },
             isActive: true,
         },
@@ -1030,7 +1042,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 9',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 10,
+                },
             },
             isActive: true,
         },
@@ -1078,7 +1094,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 24',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 25,
+                },
             },
             isActive: true,
         },
@@ -1104,7 +1124,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 0',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 1,
+                },
             },
             isActive: true,
         },
@@ -1128,7 +1152,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 2',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 3,
+                },
             },
             isActive: true,
         },
@@ -1152,7 +1180,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 4',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 5,
+                },
             },
             isActive: true,
         },
@@ -1176,7 +1208,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 9',
             conditionDataAggregations: {
-                student_conducted_match_appointments: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
+                student_conducted_match_appointments: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 10,
+                },
             },
             isActive: true,
         },
@@ -1200,7 +1236,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 14',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 15,
+                },
             },
             isActive: true,
         },
@@ -1224,7 +1264,11 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 24',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    createBuckets: 'by_lecture_start',
+                    valueToAchieve: 25,
+                },
             },
             isActive: true,
         },
@@ -1286,6 +1330,144 @@ void (async function setupDevDB() {
                     aggregator: 'lastStreakLength',
                     createBuckets: 'by_weeks',
                     bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
+    // STUDENT OFFER COURSE
+    /* DRAFT OFFER COURSE */
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_course_draft'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 1,
+            stepName: 'Kurs entwerfen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle',
+            achievedImage: '',
+            actionName: 'Kurs erstellen',
+            actionRedirectLink: '/create-course',
+            actionType: achievement_action_type_enum.Action,
+            achievedText: '.',
+            condition: 'student_course_created_events > 0',
+            conditionDataAggregations: {
+                student_course_created_events: {
+                    metric: 'student_course_draft',
+                    aggregator: 'count',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_course_submit'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 2,
+            stepName: 'Kurs zur Prüfung freigeben',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle',
+            achievedImage: '',
+            actionName: 'Zur Prüfung freigeben',
+            actionRedirectLink: '/single-course/{{subcourse.id}}',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_course_submit_events > 0',
+            conditionDataAggregations: {
+                student_course_submit_events: {
+                    metric: 'student_course_submit',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_course_allow'], // student_course_publish
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 3,
+            stepName: 'Freigabe erhalten',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle',
+            achievedImage: '',
+            actionName: 'Kurs in Prüfung',
+            actionRedirectLink: '/single-course/{{subcourse.id}}',
+            actionType: achievement_action_type_enum.Wait,
+            condition: 'student_course_allow_events > 0',
+            conditionDataAggregations: {
+                student_course_allow_events: {
+                    metric: 'student_course_allow',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_course_publish'], // student_course_publish
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 4,
+            stepName: 'Kurs veröffentlichen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle',
+            achievedImage: '',
+            actionName: 'Kurs veröffentlichen',
+            actionRedirectLink: '/single-course/{{subcourse.id}}',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_course_publish_events > 0',
+            conditionDataAggregations: {
+                student_course_publish_events: {
+                    metric: 'student_course_publish',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    // last achievement
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_course_publish'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 5,
+            stepName: '',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Savanne',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_course_publish_events > 0',
+            conditionDataAggregations: {
+                student_course_publish_events: {
+                    metric: 'student_course_publish',
+                    aggregator: 'count',
                 },
             },
             isActive: true,
