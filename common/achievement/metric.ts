@@ -64,9 +64,19 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: add offer course metric listening to 2 actions - screening_success and course_created
-
-    // TODO: new match metric listening to 2 actions - screening_success and match_requested
+    /* STUDENT COURSE OFFER */
+    createMetric('student_course_draft', ['instructor_course_created'], () => {
+        return 1;
+    }),
+    createMetric('student_course_submit', ['student_submitted_course'], () => {
+        return 1;
+    }),
+    createMetric('student_course_allow', ['admin_allowed_course'], () => {
+        return 1;
+    }),
+    createMetric('student_course_publish', ['admin_allowed_course'], () => {
+        return 1;
+    }),
 
     // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
 ];

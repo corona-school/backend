@@ -206,6 +206,8 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
+            relation: 'subcourse/1',
+            courseId: '1',
             course: {
                 name: 'Hallo Welt',
                 description: 'Ein Kurs',
@@ -245,7 +247,7 @@ const _notificationActions = {
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
-        sampleContext: sampleCourse,
+        sampleContext: { ...sampleCourse, courseId: '1', relation: 'subcourse/1' },
     },
     available_places_on_subcourse: {
         description: 'Pupil / Available places on subcourse',
@@ -665,28 +667,50 @@ const _notificationActions = {
     },
 
     /* MEETINGS */
-    student_joined_meeting: {
-        description: 'Student joined meeting',
-        sampleContext: {},
-    },
     student_joined_match_meeting: {
         description: 'Student joined a match meeting',
         sampleContext: {
             matchId: '1',
-            pupil: { firstname: 'Pupil' }, // = matchpartner
             relation: 'match/1',
+            pupil: { firstname: 'Pupil' }, // = matchpartner
+        },
+    },
+    student_joined_match_meeting_global: {
+        description: 'Student joined a match meeting for global match achievements',
+        sampleContext: {
+            matchId: '1',
+            relation: 'global_match',
+            pupil: { firstname: 'Pupil' }, // = matchpartner
         },
     },
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
+            relation: 'subcourse/1',
+        },
+    },
+    student_joined_subcourse_meeting_global: {
+        description: 'Student joined subcourse meeting for global subcourse achievements',
+        sampleContext: {
+            subcourseId: '1',
+            relation: 'global_subcourse',
         },
     },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             matchId: '1',
+            relation: 'match/1',
+            student: { firstname: 'Student' },
+        },
+    },
+    pupil_joined_match_meeting_global: {
+        description: 'Pupil joined a match meeting for global match achievements',
+        sampleContext: {
+            matchId: '1',
+            relation: 'global_match',
+            student: { firstname: 'Student' },
         },
     },
     pupil_joined_subcourse_meeting: {
@@ -695,6 +719,29 @@ const _notificationActions = {
             subcourseId: '1',
         },
     },
+    pupil_joined_subcourse_meeting_global: {
+        description: 'Pupil joined subcourse meeting for global subcourse achievements',
+        sampleContext: {
+            subcourseId: '1',
+        },
+    },
+
+    // COURSE OFFER
+    student_submitted_course: {
+        description: '',
+        sampleContext: {
+            courseId: '1',
+            relation: 'subcourse/1',
+        },
+    },
+    admin_allowed_course: {
+        description: '',
+        sampleContext: {
+            courseId: '1',
+            relation: 'subcourse/1',
+        },
+    }, // ODER: instructor_subcourse_published
+
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
