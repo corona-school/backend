@@ -20,7 +20,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
             context[context.type].forEach((contextType) => {
-                if (!contextType.lecture) {
+                if (!contextType.lecture || contextType.lecture.length === 0) {
                     return;
                 }
                 const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${contextType['id']}` : context.type;
@@ -55,7 +55,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             Now it doesn't matter how long the user was inactive or similar. As soon as only one bucket is found among these buckets (7 buckets) that contains nothing, we know that the record has not been surpassed.
             */
             context[context.type].forEach((contextType) => {
-                if (!contextType.lecture) {
+                if (!contextType.lecture || contextType.lecture.length === 0) {
                     return;
                 }
                 for (let i = 0; i < weeks + 1; i++) {
@@ -85,7 +85,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             };
 
             context[context.type].forEach((contextType) => {
-                if (!contextType.lecture) {
+                if (!contextType.lecture || contextType.lecture.length === 0) {
                     return;
                 }
                 for (let i = 0; i < months + 1; i++) {

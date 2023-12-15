@@ -25,7 +25,7 @@ export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] 
 }
 
 export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse'];
+    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
@@ -43,28 +43,43 @@ export async function getBucketContext(relation: string, id: string): Promise<Ac
             relationType === 'match'
                 ? await prisma.match.findMany({
                       where: { id: Number(relationId) },
-                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                      select: {
+                          id: true,
+                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                      },
                   })
                 : null,
         subcourse:
             relationType === 'subcourse'
                 ? await prisma.subcourse.findMany({
                       where: { id: Number(relationId) },
-                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                      select: {
+                          id: true,
+                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                      },
                   })
                 : null,
         global_match:
             relationType === 'global_match'
                 ? await prisma.match.findMany({
                       where: { [`${userType}Id`]: userId },
-                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                      select: {
+                          id: true,
+                          lecture: {
+                              where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } },
+                              select: { start: true, duration: true, declinedBy: true },
+                          },
+                      },
                   })
                 : null,
         global_subcourse:
             relationType === 'global_subcourse'
                 ? await prisma.subcourse.findMany({
                       where: { [`${userType}Id`]: userId },
-                      select: { id: true, lecture: { select: { start: true, duration: true } } },
+                      select: {
+                          id: true,
+                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                      },
                   })
                 : null,
     };
