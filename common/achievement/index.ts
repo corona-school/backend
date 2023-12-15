@@ -82,8 +82,7 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
         const evaluationResultValue =
             typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
         const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement, event);
-        const userAchievementContext: UserAchievementContext = {};
-        await createAchievement(awardedAchievement.template, userAchievement.userId, userAchievementContext);
+        await createAchievement(awardedAchievement.template, userAchievement.userId, event.context);
     } else {
         await prisma.user_achievement.update({
             where: { id: userAchievement.id },

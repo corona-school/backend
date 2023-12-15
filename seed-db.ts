@@ -1397,7 +1397,7 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_course_allow'], // student_course_publish
+            metrics: ['student_course_allow'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
             groupOrder: 3,
@@ -1420,40 +1420,15 @@ void (async function setupDevDB() {
             isActive: true,
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Kurs anbieten',
-            metrics: ['student_course_publish'], // student_course_publish
-            templateFor: achievement_template_for_enum.Course,
-            group: 'student_offer_course',
-            groupOrder: 4,
-            stepName: 'Kurs veröffentlichen',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: '{{course.name}}',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle',
-            achievedImage: '',
-            actionName: 'Kurs veröffentlichen',
-            actionRedirectLink: '/single-course/{{subcourse.id}}',
-            actionType: achievement_action_type_enum.Action,
-            condition: 'student_course_publish_events > 0',
-            conditionDataAggregations: {
-                student_course_publish_events: {
-                    metric: 'student_course_publish',
-                    aggregator: 'count',
-                },
-            },
-            isActive: true,
-        },
-    });
+
     // last achievement
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_course_publish'],
+            metrics: ['student_course_allow'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
-            groupOrder: 5,
+            groupOrder: 4,
             stepName: '',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: '{{course.name}}',
@@ -1463,10 +1438,10 @@ void (async function setupDevDB() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            condition: 'student_course_publish_events > 0',
+            condition: 'student_course_allow_events > 0',
             conditionDataAggregations: {
-                student_course_publish_events: {
-                    metric: 'student_course_publish',
+                student_course_allow_events: {
+                    metric: 'student_course_allow',
                     aggregator: 'count',
                 },
             },

@@ -74,9 +74,6 @@ const batchOfMetrics = [
     createMetric('student_course_allow', ['admin_allowed_course'], () => {
         return 1;
     }),
-    createMetric('student_course_publish', ['admin_allowed_course'], () => {
-        return 1;
-    }),
 
     // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
 ];

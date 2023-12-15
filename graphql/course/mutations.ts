@@ -194,16 +194,15 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
-        const subcourse = await prisma.subcourse.findFirst({ where: { courseId } });
+        const subcourses = await prisma.subcourse.findMany({ where: { courseId } });
 
-        console.log('____________');
-        console.log('SUBCOURSE SUBMIT', subcourse);
-        console.log('____________');
-
-        await Notification.actionTaken(user, 'student_submitted_course', {
-            courseId: courseId.toString(),
-            relation: `course/${courseId}`,
-        });
+        for (const subcourse of subcourses) {
+            await Notification.actionTaken(user, 'student_submitted_course', {
+                relation: `subcourse/${subcourse.id}`,
+                subcourseId: subcourse.id.toString(),
+                course: { name: course.name },
+            });
+        }
 
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
         return true;

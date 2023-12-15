@@ -207,10 +207,9 @@ const _notificationActions = {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
             relation: 'subcourse/1',
-            courseId: '1',
+            subcourseId: '1',
             course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
+                name: 'Kursname',
             },
         },
     },
@@ -245,9 +244,10 @@ const _notificationActions = {
         description: 'Instructor / Course ended',
         sampleContext: sampleCourse,
     },
+
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
-        sampleContext: { ...sampleCourse, courseId: '1', relation: 'subcourse/1' },
+        sampleContext: { ...sampleCourse },
     },
     available_places_on_subcourse: {
         description: 'Pupil / Available places on subcourse',
@@ -636,27 +636,15 @@ const _notificationActions = {
         description: 'Student / E-Mail verified',
         sampleContext: {},
     },
-
-    user_achievement_reward_issued: {
-        description: 'Reward issued',
-        sampleContext: {
-            achievement: {
-                id: '0',
-                name: 'achievement',
-            },
-        },
-    },
     student_calendly_appointment_booked: {
         description: 'Student booked appointment via calendly ',
         sampleContext: {},
     },
-
     pupil_calendly_appointment_booked: {
         description: 'Pupil booked appointment via calendly ',
         sampleContext: {},
     },
-
-    user_achievemnet_reward_issued: {
+    user_achievement_reward_issued: {
         description: 'Reward issued',
         sampleContext: {
             achievement: {
@@ -688,6 +676,7 @@ const _notificationActions = {
         sampleContext: {
             subcourseId: '1',
             relation: 'subcourse/1',
+            ...sampleCourse,
         },
     },
     student_joined_subcourse_meeting_global: {
@@ -730,17 +719,23 @@ const _notificationActions = {
     student_submitted_course: {
         description: '',
         sampleContext: {
-            courseId: '1',
             relation: 'subcourse/1',
+            subcourseId: '1',
+            course: {
+                name: 'Kursname',
+            },
         },
     },
     admin_allowed_course: {
         description: '',
         sampleContext: {
-            courseId: '1',
+            subcourseId: '1',
             relation: 'subcourse/1',
+            course: {
+                name: 'Kursname',
+            },
         },
-    }, // ODER: instructor_subcourse_published
+    },
 
     TEST: {
         description: 'For Tests',
