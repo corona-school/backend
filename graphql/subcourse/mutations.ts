@@ -17,6 +17,7 @@ import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { chat_type } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -99,6 +100,11 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
+        await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
+            relation: `course/${courseId}`,
+            courseId: courseId.toString(),
+            course: { name: course.name, description: course.description },
+        });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;
     }
@@ -144,9 +150,10 @@ export class MutateSubcourseResolver {
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
+        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await publishSubcourse(subcourse);
+        await publishSubcourse(subcourse, user);
         return true;
     }
 

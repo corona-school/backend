@@ -5,6 +5,7 @@ import * as Notification from '../../common/notification';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import { RelationTypeEnum } from '../../common/achievement/types';
 
 @Resolver(() => Achievement)
 export class MutateAchievementResolver {
@@ -19,12 +20,23 @@ export class MutateAchievementResolver {
             await Notification.actionTaken(user, 'student_joined_match_meeting', {
                 matchId: matchId.toString(),
                 pupil: match.pupil,
-                relation: `match/${matchId}`,
+                relation: `${RelationTypeEnum.MATCH}/${matchId}`,
+            });
+            await Notification.actionTaken(user, 'student_joined_match_meeting_global', {
+                matchId: matchId.toString(),
+                relation: RelationTypeEnum.GLOBAL_MATCH,
+                pupil: match.pupil,
             });
         } else if (user.pupilId) {
             await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
                 matchId: matchId.toString(),
-                relation: `match/${matchId}`,
+                student: match.student,
+                relation: `${RelationTypeEnum.MATCH}/${matchId}`,
+            });
+            await Notification.actionTaken(user, 'pupil_joined_match_meeting_global', {
+                matchId: matchId.toString(),
+                relation: RelationTypeEnum.GLOBAL_MATCH,
+                student: match.student,
             });
         }
 

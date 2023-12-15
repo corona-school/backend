@@ -17,6 +17,7 @@ import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
+import * as Notification from '../../common/notification';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -189,9 +190,21 @@ export class MutateCourseResolver {
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async courseSubmit(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
+        const { user } = context;
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
+        const subcourse = await prisma.subcourse.findFirst({ where: { courseId } });
+
+        console.log('____________');
+        console.log('SUBCOURSE SUBMIT', subcourse);
+        console.log('____________');
+
+        await Notification.actionTaken(user, 'student_submitted_course', {
+            courseId: courseId.toString(),
+            relation: `course/${courseId}`,
+        });
+
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
         return true;
     }

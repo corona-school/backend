@@ -104,6 +104,13 @@ export type EvaluationResult = {
 
 export type RelationTypes = 'match' | 'subcourse';
 
+export enum RelationTypeEnum {
+    GLOBAL_MATCH = 'global_match',
+    GLOBAL_SUBCOURSE = 'global_subcourse',
+    MATCH = 'match',
+    SUBCOURSE = 'subcourse',
+}
+
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
 
 export type AchievementContextType = {

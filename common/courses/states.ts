@@ -20,7 +20,8 @@ import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
-import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import { getNotificationContextForSubcourse, sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('Course States');
 
@@ -64,9 +65,19 @@ export async function subcourseOver(subcourse: Subcourse) {
 
 /* ------------------ Course Review ----------------- */
 export async function allowCourse(course: Course, screeningComment: string | null) {
-    await prisma.course.update({ data: { screeningComment, courseState: CourseState.allowed }, where: { id: course.id } });
+    const updatedCourse = await prisma.course.update({
+        data: { screeningComment, courseState: CourseState.allowed },
+        where: { id: course.id },
+        select: { student: true },
+    });
+
     logger.info(`Admin allowed (approved) Course(${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
 
+    // TODO - for each subcourse id!
+    await Notification.actionTaken(userForStudent(updatedCourse.student), 'admin_allowed_course', {
+        courseId: course.id.toString(),
+        relation: `course/${course.id}`,
+    });
     // Usually when a new course is created, instructors also create a proper subcourse with it
     // and then forget to publish it after it was approved. Thus we just publish during approval,
     // assuming the subcourses are ready:
@@ -105,15 +116,21 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function publishSubcourse(subcourse: Subcourse) {
+export async function publishSubcourse(subcourse: Subcourse, user?: User) {
     const can = await canPublish(subcourse);
     if (!can.allowed) {
         throw new Error(`Cannot Publish Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
-
     const course = await getCourse(subcourse.courseId);
+
+    await Notification.actionTaken(user, 'instructor_subcourse_published', {
+        courseId: subcourse.id.toString(),
+        relation: `subcourse/${subcourse.id}`,
+        ...(await getNotificationContextForSubcourse(course, subcourse)),
+    });
+
     if (course.category !== 'focus') {
         await sendPupilCoursePromotion(subcourse);
         logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
