@@ -91,6 +91,7 @@ export type ActionEvent<ID extends ActionID> = {
     context: SpecificNotificationContext<ID>;
 };
 
+// This type is used for achievements that are not yet achieved and need to be evaluated
 export type AchievementToCheck = {
     userId: string;
     id: number;

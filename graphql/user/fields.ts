@@ -28,7 +28,7 @@ import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
-import { getUserAchievements } from '../../common/achievement/get';
+import { getInactiveAchievements, getUserAchievements } from '../../common/achievement/get';
 import { Achievement } from '../types/achievement';
 
 @ObjectType()
@@ -212,8 +212,15 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => [Achievement])
     @Authorized(Role.ADMIN, Role.OWNER)
-    achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
-        return getUserAchievements(context.user);
+    async inactiveAchievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
+        const achievements = await getInactiveAchievements(context.user);
+        return achievements;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
+        const achievements = await getUserAchievements(context.user);
+        return achievements;
     }
 
     @FieldResolver((returns) => Boolean)

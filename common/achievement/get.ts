@@ -5,9 +5,58 @@ import { User } from '../user';
 import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
+import { Prisma } from '@prisma/client';
 
 // TODO: getAchievementById -> passed user and achievementId to return a single achievement
 // TODO: resolver for nextSteps -> get active sequential achievements and important information
+// Inactive achievements are acheievements that are not yet existing but could be achieved in the future.
+// They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
+const getInactiveAchievements = async (user: User): Promise<Achievement[]> => {
+    const userAchievements = await prisma.user_achievement.findMany({
+        where: { userId: user.userID },
+        include: { template: true },
+    });
+
+    const groups = Array.from(new Set(userAchievements.map((ua) => ua.template.group)));
+    const templates = Array.from(new Set(userAchievements.map((ua) => ua.templateId)));
+    const tieredTemplates = await prisma.achievement_template.findMany({
+        where: {
+            isActive: true,
+            group: { in: groups },
+            type: achievement_type_enum.TIERED,
+            NOT: { id: { in: templates } },
+        },
+    });
+
+    const tieredAchievements = tieredTemplates.map((template) => {
+        const dataAggregationKeys = Object.keys(template.conditionDataAggregations);
+        const maxValue = dataAggregationKeys
+            .map((key) => {
+                return Number(template.conditionDataAggregations[key].valueToAchieve);
+            })
+            .reduce((a, b) => a + b, 0);
+        return {
+            id: template.id,
+            name: template.name,
+            subtitle: template.subtitle,
+            description: template.description,
+            image: template.image,
+            alternativeText: 'alternativeText',
+            actionType: template.actionType as achievement_action_type_enum,
+            achievementType: template.type as achievement_type_enum,
+            achievementState: achievement_state.INACTIVE,
+            steps: null,
+            maxSteps: maxValue,
+            currentStep: 0,
+            isNewAchievement: null,
+            progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            actionName: template.actionName,
+            actionRedirectLink: template.actionRedirectLink,
+        };
+    });
+    return tieredAchievements;
+};
+// User achievements are already started by the user and are either active or completed.
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID },
@@ -20,6 +69,7 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
         }
         userAchievementGroups[ua.template.group].push(ua);
     });
+    // TODO: when a group has multiple elements and one of the elements is group order null, this element should be deleted. (default achievements after registration)
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
 };
@@ -129,9 +179,9 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         isNewAchievement: isNewAchievement,
         // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
         progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
-        actionName: userAchievements[currentAchievementIndex].template.actionName,
-        actionRedirectLink: userAchievements[currentAchievementIndex].template.actionRedirectLink,
+        actionName: currentAchievementTemplate.actionName,
+        actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
 };
 
-export { getUserAchievements };
+export { getUserAchievements, getInactiveAchievements };
