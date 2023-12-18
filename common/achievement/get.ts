@@ -185,12 +185,12 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         steps: currentAchievementTemplate.stepName
             ? achievementTemplates
                   .map((achievement, index) => {
-                      // if a achievementTemplate has a stepName, it means that it must have multiple steps as well as being a sequential achievement
+                      // if a achievementTemplate has a stepName, it means that it must have multiple steps resulting in it having a sequence of achievements / templates
                       // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                       if (index < achievementTemplates.length - 1 && achievement.isActive) {
                           return {
                               name: achievement.stepName,
-                              isActive: index === currentAchievementIndex,
+                              isActive: index === currentAchievementIndex + 1,
                           };
                       }
                       return null;
