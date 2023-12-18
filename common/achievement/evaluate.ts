@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { AchievementContextType, BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -68,11 +68,7 @@ export async function evaluateAchievement(
             return;
         }
 
-        let bucketContext: AchievementContextType;
-        if (relation) {
-            bucketContext = await getBucketContext(relation, userId);
-        }
-
+        const bucketContext = await getBucketContext(userId, relation);
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
@@ -111,15 +107,16 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
-        const filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
-        // event relations either have a specific relation (match/1, subcourse/7) or a global relation (global_match, global_subcourse)
-        const byRelation: Achievement_event[] = filteredEvents.filter((event) => event.relation === bucket.relation);
+        let filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
+        if (bucket.relation) {
+            filteredEvents = filteredEvents.filter((event) => event.relation === bucket.relation);
+        }
 
         return {
             kind: bucket.kind,
             startTime: bucket.startTime,
             endTime: bucket.endTime,
-            events: byRelation,
+            events: filteredEvents,
         };
     });
     return bucketsWithEvents;

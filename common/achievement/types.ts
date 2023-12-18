@@ -109,26 +109,23 @@ export type EvaluationResult = {
 export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
 
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+export type ContextMatch = {
+    id: number;
+    relation: string | null; // will be null if searching for all matches
+    lecture: ContextLecture[];
+};
+export type ContextSubcourse = {
+    id: number;
+    relation: string | null; // will be null if searching for all subcourses
+    lecture: ContextLecture[];
+};
 
 export type AchievementContextType = {
+    // TODO: theoretically we can get rid of the type here
     type: RelationTypes;
     user?: User;
-    match?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    subcourse?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    global_match?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    global_subcourse?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
+    match: ContextMatch[];
+    subcourse: ContextSubcourse[];
 };
 
 // User-achievement context: {relation = match/1, match_all, subcourse/1, subcourse_all, all}
