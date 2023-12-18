@@ -64,10 +64,13 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: add offer course metric listening to 2 actions - screening_success and course_created
-
-    // TODO: new match metric listening to 2 actions - screening_success and match_requested
-
+    /* PUPIL COURSE COMPLETION */
+    createMetric('pupil_course_complete_meetings', ['pupil_joined_subcourse_meeting'], () => {
+        return 1;
+    }),
+    createMetric('pupil_course_completed', ['participant_course_ended'], () => {
+        return 1;
+    }),
     // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
 ];
 

@@ -195,7 +195,7 @@ const _notificationActions = {
     },
     participant_course_ended: {
         description: 'Participant / Course ended',
-        sampleContext: sampleCourse,
+        sampleContext: { relation: 'subcourse/1', subcourseId: '1', ...sampleCourse },
     },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',

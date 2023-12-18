@@ -5,6 +5,7 @@ import * as Notification from '../../common/notification';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { prisma } from '../../common/prisma';
+import execute from '../../jobs/periodic/notification-courses-ended-yesterday';
 
 @Resolver(() => Achievement)
 export class MutateAchievementResolver {
@@ -30,6 +31,25 @@ export class MutateAchievementResolver {
 
         return true;
     }
+    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') subcourseId: number) {
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        if (user.studentId) {
+            await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
+                subcourseId: subcourseId.toString(),
+                relation: `subcourse/${subcourseId}`,
+            });
+        } else if (user.pupilId) {
+            await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
+                subcourseId: subcourseId.toString(),
+                relation: `subcourse/${subcourseId}`,
+            });
+        }
+
+        return true;
+    }
 
     // ! - Just for testing
     @Mutation((returns) => Boolean)
@@ -40,6 +60,13 @@ export class MutateAchievementResolver {
         } else if (context.user.pupilId) {
             await Notification.actionTaken(context.user, 'pupil_registration_verified_email', {});
         }
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.USER)
+    async courseEnded(@Ctx() context: GraphQLContext) {
+        await execute();
         return true;
     }
 }

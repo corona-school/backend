@@ -1292,6 +1292,43 @@ void (async function setupDevDB() {
         },
     });
 
+    // PUPIL COURSE COMPLETED
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs erfolgreich beendet',
+            metrics: ['pupil_course_complete_meetings', 'pupil_course_completed'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'pupil_course_completion',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.TIERED,
+            subtitle: '{{course.name}}',
+            description: 'xyz',
+            image: 'Polaroid',
+            achievedImage: '',
+            actionName: 'Diesen Erfolg erhältst du nachdem du alle geplanten Termine erfolgreich absolviert hast.',
+            actionRedirectLink: null,
+            actionType: achievement_action_type_enum.Action,
+            achievedText: 'Wow! Du hast alle geplanten Termine erfolgreich absolviert.',
+            condition: 'pupil_all_subcourse_meetings_presence == 1',
+            conditionDataAggregations: {
+                pupil_subcourse_meetings: {
+                    metric: 'pupil_course_completed',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+                pupil_all_subcourse_meetings_presence: {
+                    metric: 'pupil_course_completed',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);

@@ -33,14 +33,16 @@ export default async function execute() {
         const lastLecture = subcourse.lecture.sort((a, b) => a.start.getTime() - b.start.getTime())[subcourse.lecture.length - 1];
         if (lastLecture.start >= moment().subtract(1, 'day').startOf('day').toDate() && lastLecture.start < moment().startOf('day').toDate()) {
             const notificationCtx = await getNotificationContextForSubcourse(subcourse.course, subcourse);
-            for (const instructor of subcourse.subcourse_instructors_student) {
-                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_ended', {
-                    uniqueId: String(subcourse.id),
-                    ...notificationCtx,
-                });
-            }
+            // for (const instructor of subcourse.subcourse_instructors_student) {
+            //     await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_ended', {
+            //         uniqueId: String(subcourse.id),
+            //         ...notificationCtx,
+            //     });
+            // }
             for (const participant of subcourse.subcourse_participants_pupil) {
                 await Notification.actionTaken(userForPupil(participant.pupil), 'participant_course_ended', {
+                    relation: `subcourse/${subcourse.id}`,
+                    subcourseId: subcourse.id.toString(),
                     uniqueId: String(subcourse.id),
                     ...notificationCtx,
                 });

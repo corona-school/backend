@@ -23,7 +23,7 @@ moment.locale('de'); //set global moment date format
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 
 // SETUP: Metrics registration
-registerAchievementMetrics();
+// registerAchievementMetrics();
 
 //SETUP: schedule jobs
 
