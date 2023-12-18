@@ -212,7 +212,7 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => [Achievement])
     @Authorized(Role.ADMIN, Role.OWNER)
-    async achievementById(@Ctx() context: GraphQLContext, @Arg('id') id: number): Promise<Achievement> {
+    async achievement(@Ctx() context: GraphQLContext, @Arg('id') id: number): Promise<Achievement> {
         const achievement = await getAchievementById(context.user, id);
         return achievement;
     }
