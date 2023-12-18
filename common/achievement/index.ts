@@ -108,7 +108,7 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
         metrics,
         recordValue,
         userId,
-        context
+        context['relation']
     );
     return { conditionIsMet, resultObject };
 }

@@ -15,10 +15,9 @@ export async function evaluateAchievement(
     metrics: string[],
     recordValue: number,
     userId: string,
-    context: Prisma.JsonValue
+    relation?: string | null
 ): Promise<EvaluationResult> {
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
-    const relation = context['relation'];
     const achievementEvents = await prisma.achievement_event.findMany({
         where: {
             metric: { in: metrics },

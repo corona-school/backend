@@ -5,13 +5,12 @@ import { User } from '../user';
 import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
-import { Prisma } from '@prisma/client';
 
 // TODO: getAchievementById -> passed user and achievementId to return a single achievement
 // TODO: resolver for nextSteps -> get active sequential achievements and important information
-// Inactive achievements are acheievements that are not yet existing but could be achieved in the future.
+// Further achievements are acheievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
-const getInactiveAchievements = async (user: User): Promise<Achievement[]> => {
+const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID },
         include: { template: true },
@@ -125,7 +124,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
             currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue,
             user.userID,
-            userAchievements[currentAchievementIndex].context
+            userAchievements[currentAchievementIndex].context['relation']
         );
         currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =
@@ -184,4 +183,4 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     };
 };
 
-export { getUserAchievements, getInactiveAchievements };
+export { getUserAchievements, getFurtherAchievements };

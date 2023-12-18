@@ -130,8 +130,3 @@ export type AchievementContextType = {
         lecture: ContextLecture[];
     }[];
 };
-
-// User-achievement context: {relation = match/1, match_all, subcourse/1, subcourse_all, all}
-// bucket context: liste an matches mit terminen, liste an subcourses mit
-// bei all -> List an matches und subcourses
-// bucket creator: by_lectures -> iterieren über matches/subcourses liste
