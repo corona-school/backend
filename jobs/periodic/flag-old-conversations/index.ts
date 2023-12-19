@@ -5,31 +5,19 @@ import { deactivateConversation, isConversationReadOnly, shouldMarkChatAsReadonl
 
 const logger = getLogger('FlagOldConversationsAsRO');
 
-async function paginateConversations(orderDirection: ConversationDirectionEnum) {
-    let startingAfter: string = undefined;
+export default async function flagInactiveConversationsAsReadonly() {
     const conversationsToFlag: TJConversation[] = [];
 
-    do {
-        const conversations = await getAllConversations(orderDirection, startingAfter);
-        for (const conversation of conversations) {
-            if (isConversationReadOnly(conversation)) {
-                logger.info(`Conversation ${conversation.id} is already readonly.`);
-                continue;
-            }
-
-            if (await shouldMarkChatAsReadonly(conversation)) {
-                conversationsToFlag.push(conversation);
-            }
+    for await (const conversation of getAllConversations()) {
+        if (isConversationReadOnly(conversation)) {
+            logger.info(`Conversation ${conversation.id} is already readonly.`);
+            continue;
         }
 
-        startingAfter = conversations[conversations.length - 1]?.id;
-    } while (startingAfter);
-
-    return conversationsToFlag;
-}
-
-export default async function flagInactiveConversationsAsReadonly() {
-    const conversationsToFlag = await paginateConversations(ConversationDirectionEnum.ASC);
+        if (await shouldMarkChatAsReadonly(conversation)) {
+            conversationsToFlag.push(conversation);
+        }
+    }
 
     if (conversationsToFlag.length > 0) {
         for (const conversation of conversationsToFlag) {
