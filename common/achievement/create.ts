@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client';
-import { Achievement_template, JsonFilter, achievement_template_for_enum } from '../../graphql/generated';
+import { Achievement_template, achievement_template_for_enum } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
+import tracer from '../logger/tracing';
 
 async function findUserAchievement<ID extends ActionID>(templateId: number, userId: string, context: SpecificNotificationContext<ID>) {
     const keys = context ? Object.keys(context) : [];
@@ -36,7 +37,8 @@ async function getOrCreateUserAchievement<ID extends ActionID>(template: Achieve
     return existingUserAchievement;
 }
 
-async function createAchievement<ID extends ActionID>(currentTemplate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
+const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
+async function _createAchievement<ID extends ActionID>(currentTemplate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const keys = Object.keys(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
