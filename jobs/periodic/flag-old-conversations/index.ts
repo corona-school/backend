@@ -1,6 +1,6 @@
 import { ConversationDirectionEnum, getAllConversations, markConversationAsReadOnly, sendSystemMessage, updateConversation } from '../../../common/chat';
 import { getLogger } from '../../../common/logger/logger';
-import { TJConversation } from '../../../common/chat/types';
+import { FinishedReason, TJConversation } from '../../../common/chat/types';
 import { deactivateConversation, isConversationReadOnly, shouldMarkChatAsReadonly } from '../../../common/chat/deactivation';
 
 const logger = getLogger('FlagOldConversationsAsRO');
@@ -11,6 +11,13 @@ export default async function flagInactiveConversationsAsReadonly() {
     for await (const conversation of getAllConversations()) {
         if (isConversationReadOnly(conversation)) {
             logger.info(`Conversation ${conversation.id} is already readonly.`);
+            continue;
+        }
+
+        if (conversation.custom?.finished === FinishedReason.REACTIVATE_BY_ADMIN) {
+            logger.info(`Converdation ${conversation.id} was reactivated by an admin, do not deactivate again automatically`, {
+                conversationId: conversation.id,
+            });
             continue;
         }
 

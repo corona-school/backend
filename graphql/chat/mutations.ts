@@ -4,10 +4,10 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils, markConversationAsWriteable } from '../../common/chat';
+import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
-import { ChatType, ContactReason } from '../../common/chat/types';
+import { ChatType, ContactReason, FinishedReason } from '../../common/chat/types';
 import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { getCourseImageURL } from '../../common/courses/util';
 import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
@@ -136,6 +136,16 @@ export class MutateChatResolver {
         }
 
         await markConversationAsWriteable(conversation.id);
+
+        // Mark that the conversation was reactivated by an admin,
+        // so that the background job will not directly reactivate it
+        await updateConversation({
+            id: conversation.id,
+            custom: {
+                finished: FinishedReason.REACTIVATE_BY_ADMIN,
+            },
+        });
+
         return true;
     }
 }
