@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { User, userForPupil, userForStudent } from '../user';
 import { getPupil, getStudent } from '../../graphql/util';
-import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
 import { assureChatFeatureActive } from './util';
@@ -91,7 +91,7 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-const getAllConversations = async (direction: ConversationDirectionEnum = ConversationDirectionEnum.ASC, startingAfter?: string): Promise<AllConversations> => {
+const getAllConversations = async (direction: ConversationDirectionEnum = ConversationDirectionEnum.ASC, startingAfter?: string): Promise<TJConversation[]> => {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
     const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}`;
@@ -113,7 +113,7 @@ const getAllConversations = async (direction: ConversationDirectionEnum = Conver
 
     const result = await response.json();
     logger.info(`Got all conversations`, { result });
-    return result;
+    return result.data;
 };
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {

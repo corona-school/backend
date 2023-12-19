@@ -75,7 +75,3 @@ export enum FinishedReason {
     COURSE_OVER = 'course_over',
     REACTIVATE = 'reactivated',
 }
-
-export type AllConversations = {
-    data: TJConversation[];
-};
