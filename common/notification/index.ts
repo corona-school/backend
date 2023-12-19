@@ -15,6 +15,7 @@ import { ALL_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
 import tracer, { addTagsToActiveSpan } from '../logger/tracing';
+// eslint-disable-next-line import/no-cycle
 import * as Achievement from '../../common/achievement';
 
 const logger = getLogger('Notification');

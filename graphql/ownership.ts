@@ -41,4 +41,5 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
     Match: (user, match) => user.pupilId === match.pupilId || user.studentId === match.studentId,
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,
     Participation_certificate: (user, certificate) => user.pupilId === certificate.pupilId || user.studentId === certificate.studentId,
+    User_achievement: (user, achievement) => user.userID === achievement.userId,
 };

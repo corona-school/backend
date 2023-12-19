@@ -13,12 +13,13 @@ const logger = getLogger('Achievement');
 export const evaluateAchievement = tracer.wrap('achievement.evaluateAchievement', _evaluateAchievement);
 
 async function _evaluateAchievement(
+    userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
     recordValue: number
 ): Promise<EvaluationResult> {
-    const achievementEvents = await prisma.achievement_event.findMany({ where: { metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
+    const achievementEvents = await prisma.achievement_event.findMany({ where: { userId, metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
 
     const eventsByMetric: Record<string, Achievement_event[]> = {};
     for (const event of achievementEvents) {
@@ -44,9 +45,6 @@ async function _evaluateAchievement(
         const aggregator = dataAggregationObject.aggregator;
 
         const eventsForMetric = eventsByMetric[metricName];
-        if (!eventsForMetric) {
-            continue;
-        }
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
         const relation = eventsForMetric.find((event) => event.relation)?.relation;
 
@@ -88,13 +86,15 @@ async function _evaluateAchievement(
 export function createBucketEvents(events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
     switch (bucketConfig.bucketKind) {
         case 'default':
-            return createDefaultBuckets(events, bucketConfig);
+            return createDefaultBuckets(events);
         case 'time':
             return createTimeBuckets(events, bucketConfig);
+        default:
+            return createDefaultBuckets(events);
     }
 }
 
-const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
+const createDefaultBuckets = (events: Achievement_event[]): BucketEvents[] => {
     return events.map((event) => ({
         kind: 'default',
         events: [event],

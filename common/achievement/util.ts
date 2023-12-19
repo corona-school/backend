@@ -1,28 +1,12 @@
-import { ActionID } from '../notification/types';
-import { metricsByAction } from './metrics';
-import { Metric, AchievementContextType, RelationTypes } from './types';
+import 'reflect-metadata';
+// ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
+import { AchievementContextType, RelationTypes } from './types';
 import { prisma } from '../prisma';
-import { getLogger } from '../logger/logger';
 import { Prisma } from '@prisma/client';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
-
-const logger = getLogger('Gamification');
-export function isGamificationFeatureActive(): boolean {
-    const isActive: boolean = JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
-
-    if (!isActive) {
-        logger.warn('Gamification is deactivated');
-    }
-
-    return isActive;
-}
-
-export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
-    return metricsByAction.get(actionId) || [];
-}
 
 export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
     const validRelationTypes = ['match', 'subcourse'];

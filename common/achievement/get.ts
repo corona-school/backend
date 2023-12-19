@@ -10,7 +10,7 @@ import { evaluateAchievement } from './evaluate';
 // TODO: resolver for nextSteps -> get active sequential achievements and important information
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID },
+        where: { userId: user.userID, AND: { template: { isActive: true } } },
         include: { template: true },
     });
     const userAchievementGroups: { [group: string]: User_achievement[] } = {};
@@ -70,6 +70,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
         const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
         const evaluationResult = await evaluateAchievement(
+            user.userID,
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
