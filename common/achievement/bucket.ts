@@ -1,7 +1,21 @@
 import moment from 'moment';
-import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
+
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] | null {
+    if (!data.lecture || data.lecture.length === 0) {
+        return null;
+    }
+    // const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${match['id']}` : null;
+    const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
+        kind: 'time',
+        relation: data.relation,
+        startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
+        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
+    }));
+    return buckets;
+}
 
 // Buckets are needed to pre-sort and aggregate certain events by types / a certain time window (e.g. weekly) etc.
 export const bucketCreatorDefs: BucketCreatorDefs = {
@@ -13,26 +27,11 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     by_lecture_start: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-            const timeBucket: GenericBucketConfig<TimeBucket> = {
-                bucketKind: 'time',
-                buckets: [],
-            };
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            context[context.type].forEach((contextType) => {
-                if (!contextType.lecture || contextType.lecture.length === 0) {
-                    return;
-                }
-                const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${contextType['id']}` : context.type;
-                const buckets: TimeBucket[] = contextType.lecture.map((lecture) => ({
-                    kind: 'time',
-                    relation: relation,
-                    startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
-                    endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
-                }));
-                timeBucket.buckets.push(...buckets);
-            });
-            return timeBucket;
+            const matchBuckets = context.match.map(createLectureBuckets).reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse.map(createLectureBuckets).reduce((acc, val) => acc.concat(val), []);
+            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
     },
     by_weeks: {
