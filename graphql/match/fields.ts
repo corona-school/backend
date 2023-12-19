@@ -7,6 +7,8 @@ import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
 import { Subject } from '../types/subject';
 import { GraphQLContext } from '../context';
+import { Chat } from '../chat/fields';
+import { getMatcheeConversation } from '../../common/chat';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -81,5 +83,16 @@ export class ExtendedFieldsMatchResolver {
             },
             orderBy: { start: 'asc' },
         });
+    }
+
+    @FieldResolver((returns) => Chat, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async chat(@Root() match: Required<Match>) {
+        try {
+            const { conversation } = await getMatcheeConversation(match);
+            return { conversation } as Chat;
+        } catch (error) {
+            return null;
+        }
     }
 }
