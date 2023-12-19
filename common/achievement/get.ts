@@ -6,9 +6,33 @@ import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 
-// TODO: getAchievementById -> passed user and achievementId to return a single achievement
-// TODO: resolver for nextSteps -> get active sequential achievements and important information
-// Further achievements are acheievements that are not yet existing but could be achieved in the future.
+const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
+    const userAchievement = await prisma.user_achievement.findUnique({
+        where: { id: achievementId },
+        include: { template: true },
+    });
+    const achievement = await assembleAchievementData([userAchievement], user);
+    return achievement;
+};
+
+// Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
+const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
+    const userAchievements = await prisma.user_achievement.findMany({
+        where: { userId: user.userID, isSeen: false, template: { type: achievement_type_enum.SEQUENTIAL } },
+        include: { template: true },
+    });
+    const userAchievementGroups: { [group: string]: User_achievement[] } = {};
+    userAchievements.forEach((ua) => {
+        if (!userAchievementGroups[ua.template.group]) {
+            userAchievementGroups[ua.template.group] = [];
+        }
+        userAchievementGroups[ua.template.group].push(ua);
+    });
+    const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
+    return achievements;
+};
+
+// Inactive achievements are acheievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
 const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
@@ -98,7 +122,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    const achievementContext = await transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
+    const achievementContext = transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
     const currentAchievementTemplate = getCurrentAchievementTemplateWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
     const achievementTemplates = await prisma.achievement_template.findMany({
@@ -118,13 +142,14 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     let currentValue;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
         const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
+        const relation = userAchievements[currentAchievementIndex].context['relation'] || null;
         const evaluationResult = await evaluateAchievement(
             user.userID,
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue,
-            user.userID
+            relation
         );
         currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =
@@ -183,4 +208,4 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     };
 };
 
-export { getUserAchievements, getFurtherAchievements };
+export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };

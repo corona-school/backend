@@ -8,8 +8,8 @@ import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
 
-export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse'];
+function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
+    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);

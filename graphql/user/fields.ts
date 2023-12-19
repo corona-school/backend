@@ -28,7 +28,7 @@ import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
-import { getFurtherAchievements, getUserAchievements } from '../../common/achievement/get';
+import { getAchievementById, getFurtherAchievements, getNextStepAchievements, getUserAchievements } from '../../common/achievement/get';
 import { Achievement } from '../types/achievement';
 
 @ObjectType()
@@ -223,6 +223,18 @@ export class UserFieldsResolver {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
     }
 
+    @FieldResolver((returns) => Achievement)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievement(@Ctx() context: GraphQLContext, @Arg('id') id: number): Promise<Achievement> {
+        const achievement = await getAchievementById(context.user, id);
+        return achievement;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async nextStepAchievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
+        const achievements = await getNextStepAchievements(context.user);
+        return achievements;
+    }
     @FieldResolver((returns) => [Achievement])
     @Authorized(Role.ADMIN, Role.OWNER)
     async furtherAchievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {

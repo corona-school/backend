@@ -100,7 +100,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
 }
 
 async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
-    const evaluationResult = await isAchievementConditionMet(userAchievement);
+    const evaluationResult = await isAchievementConditionMet(userAchievement, event);
 
     if (evaluationResult.conditionIsMet) {
         const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
@@ -117,7 +117,7 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     }
 }
 
-async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
+async function isAchievementConditionMet<ID extends ActionID>(achievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     const {
         userId,
         recordValue,
@@ -133,7 +133,8 @@ async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
         condition,
         conditionDataAggregations as ConditionDataAggregations,
         metrics,
-        recordValue
+        recordValue,
+        event.context.relation
     );
     return { conditionIsMet, resultObject };
 }
