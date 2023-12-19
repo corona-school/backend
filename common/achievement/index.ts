@@ -8,14 +8,16 @@ import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 import { actionTakenAt } from '../notification';
+import tracer from '../logger/tracing';
 
 const logger = getLogger('Achievement');
 
-export async function rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+export const rewardActionTaken = tracer.wrap('achievement.rewardActionTaken', _rewardActionTaken);
+async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     if (!isGamificationFeatureActive()) {
         return;
     }
-    const templatesForAction = await getTemplatesByAction(actionId);
+    const templatesForAction = await tracer.trace('achievement.getTemplatesByAction', () => getTemplatesByAction(actionId));
 
     if (templatesForAction.length === 0) {
         logger.debug(`No achievement found for action '${actionId}'`);
@@ -30,20 +32,27 @@ export async function rewardActionTaken<ID extends ActionID>(user: User, actionI
         user: user,
         context,
     };
-    await trackEvent(actionEvent);
+    await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent));
 
-    for (const [, group] of templatesByGroups) {
-        let achievementToCheck: AchievementToCheck;
-        for (const template of group) {
-            const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
-            if (userAchievement.achievedAt === null || userAchievement.recordValue) {
-                achievementToCheck = userAchievement;
-                break;
+    for (const [groupName, group] of templatesByGroups) {
+        await tracer.trace('achievement.evaluateAchievementGroups', async (span) => {
+            span.setTag('achievement.group', groupName);
+            let achievementToCheck: AchievementToCheck;
+            for (const template of group) {
+                const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
+                    getOrCreateUserAchievement(template, user.userID, context)
+                );
+                if (userAchievement.achievedAt === null || userAchievement.recordValue) {
+                    achievementToCheck = userAchievement;
+                    break;
+                }
             }
-        }
-        if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent);
-        }
+            span.setTag('achievement.foundToCheck', !!achievementToCheck);
+            if (achievementToCheck) {
+                span.setTag('achievement.id', achievementToCheck.id);
+                await tracer.trace('achievement.checkUserAchievement', () => checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent));
+            }
+        });
     }
 }
 

@@ -6,9 +6,13 @@ import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { getBucketContext } from './util';
+import tracer from '../logger/tracing';
+
 const logger = getLogger('Achievement');
 
-export async function evaluateAchievement(
+export const evaluateAchievement = tracer.wrap('achievement.evaluateAchievement', _evaluateAchievement);
+
+async function _evaluateAchievement(
     condition: string,
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
