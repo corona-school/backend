@@ -57,7 +57,6 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
 
     // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
     const achievementContext: AchievementContextType = {
-        type: relationType,
         match: matches.map((match) => ({
             id: match.id,
             relation: relationType ? `${relationType}/${match.id}` : null,
@@ -77,7 +76,6 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
         return null;
     }
     const transformedJson: AchievementContextType = {
-        type: json['match'] ? 'match' : 'subcourse',
         user: user,
         match: json['match'] ? json['match'] : undefined,
         subcourse: json['subcourse'] ? json['subcourse'] : undefined,

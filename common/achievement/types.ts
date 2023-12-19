@@ -113,8 +113,6 @@ export type ContextSubcourse = {
 };
 
 export type AchievementContextType = {
-    // TODO: theoretically we can get rid of the type here
-    type: RelationTypes;
     user?: User;
     match: ContextMatch[];
     subcourse: ContextSubcourse[];
