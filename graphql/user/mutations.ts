@@ -1,4 +1,4 @@
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { RateLimit } from '../rate-limit';
 import { Mutation, Resolver, Arg, Authorized, Ctx, InputType, Field } from 'type-graphql';
 import { UserType } from '../types/user';
@@ -74,12 +74,13 @@ export class MutateUserResolver {
         return true;
     }
     @Mutation(() => Boolean)
-    @Authorized(Role.USER)
-    async markAchievementAsSeen(@Arg('achievementId') achievementId: number) {
-        await prisma.user_achievement.update({
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async markAchievementAsSeen(@Ctx() context: GraphQLContext, @Arg('achievementId') achievementId: number) {
+        const acheivement = await prisma.user_achievement.update({
             where: { id: achievementId },
             data: { isSeen: true },
         });
+        await hasAccess(context, 'User_achievement', acheivement);
         return true;
     }
 }

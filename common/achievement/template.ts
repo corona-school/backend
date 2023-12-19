@@ -1,10 +1,9 @@
 import 'reflect-metadata';
+// ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { Achievement_template } from '../../graphql/generated';
 import { getLogger } from '../logger/logger';
-import { ActionID } from '../notification/actions';
 import { prisma } from '../prisma';
-import { metricsByAction } from './metrics';
-import { getMetricsByAction } from './util';
+import { Metric } from './types';
 
 const logger = getLogger('Achievement Template');
 
@@ -41,44 +40,25 @@ async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<
                 achievementTemplates.get(select)?.get(selection)?.push(template);
             }
         }
-        logger.debug(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
+        logger.info(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
     }
     return achievementTemplates.get(select);
 }
 
-async function getTemplatesByAction<ID extends ActionID>(actionId: ID) {
+async function getTemplatesByMetrics(metricsForAction: Metric[]) {
     const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
-    if (!Object.keys(templatesByMetric)) {
-        logger.warn(`No achievement templates were found in the database for the action with id: ${actionId}`);
+    if (Object.keys(templatesByMetric).length === 0) {
+        logger.debug(`No achievement templates were found in the database for the metrics: ${metricsForAction.map((m) => `${m.metricName}, `)}`);
         return [];
     }
-    const metricsForAction = metricsByAction.get(actionId);
-
     let templatesForAction: Achievement_template[] = [];
     if (!metricsForAction || !templatesByMetric) {
         return [];
-    } else {
-        for (const metric of metricsForAction) {
-            templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
-        }
-        return templatesForAction;
     }
-}
-
-async function doesTemplateExistForAction<ID extends ActionID>(actionId: ID): Promise<boolean> {
-    const metrics = getMetricsByAction(actionId);
-    const achievements = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
-    for (const metric of metrics) {
-        if (achievements.has(metric.metricName)) {
-            return true;
-        }
+    for (const metric of metricsForAction) {
+        templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
     }
-
-    return false;
+    return templatesForAction;
 }
 
-function isMetricExistingForActionId<ID extends ActionID>(actionId: ID): boolean {
-    return metricsByAction.has(actionId);
-}
-
-export { isMetricExistingForActionId, getAchievementTemplates, doesTemplateExistForAction, getTemplatesByAction };
+export { getAchievementTemplates, getTemplatesByMetrics };

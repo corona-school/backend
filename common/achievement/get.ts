@@ -58,7 +58,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
 // User achievements are already started by the user and are either active or completed.
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID },
+        where: { userId: user.userID, AND: { template: { isActive: true } } },
         include: { template: true },
     });
     const userAchievementGroups: { [group: string]: User_achievement[] } = {};
@@ -119,12 +119,12 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
         const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
         const evaluationResult = await evaluateAchievement(
+            user.userID,
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue,
-            user.userID,
-            userAchievements[currentAchievementIndex].context['relation']
+            user.userID
         );
         currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
         maxValue =

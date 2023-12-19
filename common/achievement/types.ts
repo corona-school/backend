@@ -1,5 +1,4 @@
-import { Prisma } from '@prisma/client';
-import { Achievement_event, Achievement_template, Lecture } from '../../graphql/generated';
+import { Achievement_event, Achievement_template, Lecture, User_achievement } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 
@@ -91,14 +90,7 @@ export type ActionEvent<ID extends ActionID> = {
     context: SpecificNotificationContext<ID>;
 };
 
-// This type is used for achievements that are not yet achieved and need to be evaluated
-export type AchievementToCheck = {
-    userId: string;
-    id: number;
-    achievedAt: Date;
-    context: Prisma.JsonValue;
-    template: Achievement_template;
-};
+export type AchievementToCheck = Pick<User_achievement, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template'>;
 
 export type EvaluationResult = {
     conditionIsMet: boolean;

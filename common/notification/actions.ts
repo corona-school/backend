@@ -654,21 +654,7 @@ const _notificationActions = {
         sampleContext: {},
     },
 
-    user_achievemnet_reward_issued: {
-        description: 'Reward issued',
-        sampleContext: {
-            achievement: {
-                id: '0',
-                name: 'achievement',
-            },
-        },
-    },
-
     /* MEETINGS */
-    student_joined_meeting: {
-        description: 'Student joined meeting',
-        sampleContext: {},
-    },
     student_joined_match_meeting: {
         description: 'Student joined a match meeting',
         sampleContext: {

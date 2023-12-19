@@ -30,16 +30,4 @@ export class MutateAchievementResolver {
 
         return true;
     }
-
-    // ! - Just for testing
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.USER)
-    async verifiedEmail(@Ctx() context: GraphQLContext) {
-        if (context.user.studentId) {
-            await Notification.actionTaken(context.user, 'student_registration_verified_email', {});
-        } else if (context.user.pupilId) {
-            await Notification.actionTaken(context.user, 'pupil_registration_verified_email', {});
-        }
-        return true;
-    }
 }

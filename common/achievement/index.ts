@@ -1,21 +1,29 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { isGamificationFeatureActive, getMetricsByAction, sortActionTemplatesToGroups } from './util';
+import { sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { getTemplatesByAction } from './template';
+import { getTemplatesByMetrics } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementContext, UserAchievementTemplate } from './types';
+import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
+// eslint-disable-next-line import/no-cycle
 import { actionTakenAt } from '../notification';
+import tracer from '../logger/tracing';
+import { getMetricsByAction } from './metrics';
+import { achievement_type_enum } from '../../graphql/generated';
+import { isGamificationFeatureActive } from '../../utils/environment';
 
 const logger = getLogger('Achievement');
 
-export async function rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+export const rewardActionTaken = tracer.wrap('achievement.rewardActionTaken', _rewardActionTaken);
+async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     if (!isGamificationFeatureActive()) {
+        logger.warn(`Gamification feature is not active`);
         return;
     }
-    const templatesForAction = await getTemplatesByAction(actionId);
+    const metricsForAction = getMetricsByAction(actionId);
+    const templatesForAction = await tracer.trace('achievement.getTemplatesByMetrics', () => getTemplatesByMetrics(metricsForAction));
 
     if (templatesForAction.length === 0) {
         logger.debug(`No achievement found for action '${actionId}'`);
@@ -30,19 +38,36 @@ export async function rewardActionTaken<ID extends ActionID>(user: User, actionI
         user: user,
         context,
     };
-    await trackEvent(actionEvent);
+    const isEventTracked = await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent));
+    if (!isEventTracked) {
+        logger.warn(`Can't track event for action '${actionId}' for user '${user.userID}'`);
+        return;
+    }
 
-    for (const [, group] of templatesByGroups) {
-        let achievementToCheck: AchievementToCheck;
-        for (const template of group) {
-            const userAchievement = await getOrCreateUserAchievement(template, user.userID, context);
-            if (userAchievement.achievedAt === null || userAchievement.recordValue) {
-                achievementToCheck = userAchievement;
-                break;
-            }
-        }
-        if (achievementToCheck) {
-            await checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent);
+    for (const [groupName, group] of templatesByGroups) {
+        try {
+            await tracer.trace('achievement.evaluateAchievementGroups', async (span) => {
+                span.setTag('achievement.group', groupName);
+                let achievementToCheck: AchievementToCheck;
+                for (const template of group) {
+                    const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
+                        getOrCreateUserAchievement(template, user.userID, context)
+                    );
+                    if (userAchievement.achievedAt === null || userAchievement.template.type === achievement_type_enum.STREAK) {
+                        achievementToCheck = userAchievement;
+                        break;
+                    }
+                }
+                span.setTag('achievement.foundToCheck', !!achievementToCheck);
+                if (achievementToCheck) {
+                    span.setTag('achievement.id', achievementToCheck.id);
+                    await tracer.trace('achievement.checkUserAchievement', () =>
+                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent)
+                    );
+                }
+            });
+        } catch (e) {
+            logger.error(`Error occurred while checking achievement for user '${user.userID}'`, e);
         }
     }
 }
@@ -50,9 +75,9 @@ export async function rewardActionTaken<ID extends ActionID>(user: User, actionI
 async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
 
-    if (!metricsForEvent) {
-        logger.debug(`Can't track event, because no metrics found for action '${event.actionId}'`);
-        return;
+    if (metricsForEvent.length === 0) {
+        logger.warn(`Can't track event, because no metrics found for action '${event.actionId}'`);
+        return false;
     }
 
     for (const metric of metricsForEvent) {
@@ -66,6 +91,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 action: event.actionId,
                 userId: event.user.userID,
                 relation: event.context.relation ?? '',
+                createdAt: event.at,
             },
         });
     }
@@ -93,22 +119,21 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
 
 async function isAchievementConditionMet(achievement: UserAchievementTemplate) {
     const {
-        recordValue,
         userId,
+        recordValue,
         context,
         template: { condition, conditionDataAggregations, metrics },
     } = achievement;
     if (!condition) {
-        return;
+        logger.error(`No condition found for achievement ${achievement.template.name}`);
     }
 
     const { conditionIsMet, resultObject } = await evaluateAchievement(
+        userId,
         condition,
         conditionDataAggregations as ConditionDataAggregations,
         metrics,
-        recordValue,
-        userId,
-        context['relation']
+        recordValue
     );
     return { conditionIsMet, resultObject };
 }

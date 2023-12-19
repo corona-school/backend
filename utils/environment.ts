@@ -17,3 +17,7 @@ export function getDDEnvironment(): string {
 export function getHostname(): string {
     return process.env.DD_HOSTNAME || 'n/a';
 }
+
+export function isGamificationFeatureActive(): boolean {
+    return JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
+}

@@ -6,20 +6,24 @@ import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { getBucketContext } from './util';
-import { Prisma } from '@prisma/client';
+import tracer from '../logger/tracing';
+
 const logger = getLogger('Achievement');
 
-export async function evaluateAchievement(
+export const evaluateAchievement = tracer.wrap('achievement.evaluateAchievement', _evaluateAchievement);
+
+async function _evaluateAchievement(
+    userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
     recordValue: number,
-    userId: string,
     relation?: string | null
 ): Promise<EvaluationResult> {
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const achievementEvents = await prisma.achievement_event.findMany({
         where: {
+            userId,
             metric: { in: metrics },
             AND: relation ? { relation: { equals: relation } } : {},
         },
@@ -50,9 +54,6 @@ export async function evaluateAchievement(
         const aggregator = dataAggregationObject.aggregator;
 
         const eventsForMetric = eventsByMetric[metricName];
-        if (!eventsForMetric) {
-            continue;
-        }
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
@@ -89,13 +90,15 @@ export async function evaluateAchievement(
 export function createBucketEvents(events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
     switch (bucketConfig.bucketKind) {
         case 'default':
-            return createDefaultBuckets(events, bucketConfig);
+            return createDefaultBuckets(events);
         case 'time':
             return createTimeBuckets(events, bucketConfig);
+        default:
+            return createDefaultBuckets(events);
     }
 }
 
-const createDefaultBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
+const createDefaultBuckets = (events: Achievement_event[]): BucketEvents[] => {
     return events.map((event) => ({
         kind: 'default',
         events: [event],

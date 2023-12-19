@@ -14,7 +14,8 @@ import { Channels } from '../../graphql/types/preferences';
 import { ALL_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
-import { addTagsToActiveSpan } from '../logger/tracing';
+import tracer, { addTagsToActiveSpan } from '../logger/tracing';
+// eslint-disable-next-line import/no-cycle
 import * as Achievement from '../../common/achievement';
 
 const logger = getLogger('Notification');
@@ -397,14 +398,17 @@ export async function actionTaken<ID extends ActionID>(
     attachments?: AttachmentGroup,
     noDuplicates = false
 ) {
-    if (!user.active) {
-        logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
-        return;
-    }
+    return await tracer.trace('notification.actionTaken', async (span) => {
+        span.setTag('actionId', actionId);
 
-    await Achievement.rewardActionTaken(user, actionId, notificationContext);
+        if (!user.active) {
+            logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
+            return;
+        }
 
-    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
+        await Achievement.rewardActionTaken(user, actionId, notificationContext);
+        return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
+    });
 }
 
 /* actionTakenAt is the mighty variant of actionTaken:
@@ -443,7 +447,8 @@ If 'noDuplicates' is set, a Notification will be ignored if a Notification alrea
 Otherwise a Notification will just be sent multiple times.
 */
 
-export async function actionTakenAt<ID extends ActionID>(
+export const actionTakenAt = tracer.wrap('notification.actionTakenAt', _actionTakenAt);
+export async function _actionTakenAt<ID extends ActionID>(
     at: Date,
     user: User,
     actionId: ID,
