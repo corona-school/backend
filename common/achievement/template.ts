@@ -47,7 +47,8 @@ async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<
 
 async function getTemplatesByMetrics(metricsForAction: Metric[]) {
     const templatesByMetric = await getAchievementTemplates(TemplateSelectEnum.BY_METRIC);
-    if (Object.keys(templatesByMetric).length === 0) {
+    const templateKeys = templatesByMetric ? Array.from(templatesByMetric.keys()) : [];
+    if (templateKeys.length === 0) {
         logger.debug(`No achievement templates were found in the database for the metrics: ${metricsForAction.map((m) => `${m.metricName}, `)}`);
         return [];
     }
