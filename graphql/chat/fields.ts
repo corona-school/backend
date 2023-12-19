@@ -1,4 +1,4 @@
-import { Authorized, FieldResolver, ObjectType, Resolver, Root } from 'type-graphql';
+import { Authorized, Field, FieldResolver, ObjectType, Resolver, Root } from 'type-graphql';
 import { isConversationReadOnly, shouldMarkChatAsReadonly } from '../../common/chat/deactivation';
 import { TJConversation } from '../../common/chat/types';
 import { Role } from '../roles';
@@ -7,12 +7,16 @@ import { GraphQLJSON } from 'graphql-scalars';
 
 @ObjectType()
 export class Chat {
+    @Field()
+    conversationId: string;
+
     conversation: TJConversation;
 }
 
 export async function getChat(conversationID: string): Promise<Chat | null> {
     try {
-        return { conversation: await getConversation(conversationID) };
+        const conversation = await getConversation(conversationID);
+        return { conversation, conversationId: conversation.id };
     } catch (error) {
         return null;
     }
@@ -20,12 +24,6 @@ export async function getChat(conversationID: string): Promise<Chat | null> {
 
 @Resolver((of) => Chat)
 export class FieldsChatResolver {
-    @FieldResolver((returns) => String)
-    @Authorized(Role.ADMIN)
-    conversationId(@Root() chat: Chat) {
-        return chat.conversation.id;
-    }
-
     @FieldResolver((returns) => Date)
     @Authorized(Role.ADMIN)
     createdAt(@Root() chat: Chat) {

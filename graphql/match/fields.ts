@@ -90,7 +90,7 @@ export class ExtendedFieldsMatchResolver {
     async chat(@Root() match: Required<Match>) {
         try {
             const { conversation } = await getMatcheeConversation(match);
-            return { conversation } as Chat;
+            return { conversation, conversationId: conversation.id } as Chat;
         } catch (error) {
             return null;
         }
