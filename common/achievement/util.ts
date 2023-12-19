@@ -1,31 +1,15 @@
-import { ActionID } from '../notification/types';
-import { metricsByAction } from './metrics';
-import { Metric, AchievementContextType, RelationTypes } from './types';
+import 'reflect-metadata';
+// ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
+import { AchievementContextType, RelationTypes } from './types';
 import { prisma } from '../prisma';
-import { getLogger } from '../logger/logger';
 import { Prisma } from '@prisma/client';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
 
-const logger = getLogger('Gamification');
-export function isGamificationFeatureActive(): boolean {
-    const isActive: boolean = JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
-
-    if (!isActive) {
-        logger.warn('Gamification is deactivated');
-    }
-
-    return isActive;
-}
-
-export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
-    return metricsByAction.get(actionId) || [];
-}
-
 export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
+    const validRelationTypes = ['match', 'subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
@@ -33,55 +17,57 @@ export function getRelationTypeAndId(relation: string): [type: RelationTypes, id
     return [relationType as RelationTypes, id];
 }
 
-export async function getBucketContext(relation: string, id: string): Promise<AchievementContextType> {
-    const [userType, userId] = getUserTypeAndIdForUserId(id);
-    const [relationType, relationId] = getRelationTypeAndId(relation);
+// TODO: fix naming
+export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
+    const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
+
+    const whereClause = { [`${userType}Id`]: userId };
+
+    let relationType = null;
+    if (relation) {
+        const [relationTypeTmp, relationId] = getRelationTypeAndId(relation);
+        relationType = relationTypeTmp;
+
+        if (relationId) {
+            whereClause['id'] = Number(relationId);
+        }
+    }
+
+    let matches = [];
+    if (!relationType || relationType === 'match') {
+        matches = await prisma.match.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+            },
+        });
+    }
+
+    let subcourses = [];
+    if (!relationType || relationType === 'subcourse') {
+        subcourses = await prisma.subcourse.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+            },
+        });
+    }
+
     // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
     const achievementContext: AchievementContextType = {
         type: relationType,
-        match:
-            relationType === 'match'
-                ? await prisma.match.findMany({
-                      where: { id: Number(relationId) },
-                      select: {
-                          id: true,
-                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
-                      },
-                  })
-                : null,
-        subcourse:
-            relationType === 'subcourse'
-                ? await prisma.subcourse.findMany({
-                      where: { id: Number(relationId) },
-                      select: {
-                          id: true,
-                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
-                      },
-                  })
-                : null,
-        global_match:
-            relationType === 'global_match'
-                ? await prisma.match.findMany({
-                      where: { [`${userType}Id`]: userId },
-                      select: {
-                          id: true,
-                          lecture: {
-                              where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } },
-                              select: { start: true, duration: true, declinedBy: true },
-                          },
-                      },
-                  })
-                : null,
-        global_subcourse:
-            relationType === 'global_subcourse'
-                ? await prisma.subcourse.findMany({
-                      where: { [`${userType}Id`]: userId },
-                      select: {
-                          id: true,
-                          lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
-                      },
-                  })
-                : null,
+        match: matches.map((match) => ({
+            id: match.id,
+            relation: relationType ? `${relationType}/${match.id}` : null,
+            lecture: match.lecture,
+        })),
+        subcourse: subcourses.map((subcourse) => ({
+            id: subcourse.id,
+            relation: relationType ? `${relationType}/${subcourse.id}` : null,
+            lecture: subcourse.lecture,
+        })),
     };
     return achievementContext;
 }

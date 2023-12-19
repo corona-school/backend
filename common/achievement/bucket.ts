@@ -1,7 +1,21 @@
 import moment from 'moment';
-import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
+
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] | null {
+    if (!data.lecture || data.lecture.length === 0) {
+        return null;
+    }
+    // const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${match['id']}` : null;
+    const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
+        kind: 'time',
+        relation: data.relation,
+        startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
+        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
+    }));
+    return buckets;
+}
 
 // Buckets are needed to pre-sort and aggregate certain events by types / a certain time window (e.g. weekly) etc.
 export const bucketCreatorDefs: BucketCreatorDefs = {
@@ -13,26 +27,11 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     by_lecture_start: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-            const timeBucket: GenericBucketConfig<TimeBucket> = {
-                bucketKind: 'time',
-                buckets: [],
-            };
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            context[context.type].forEach((contextType) => {
-                if (!contextType.lecture || contextType.lecture.length === 0) {
-                    return;
-                }
-                const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${contextType['id']}` : context.type;
-                const buckets: TimeBucket[] = contextType.lecture.map((lecture) => ({
-                    kind: 'time',
-                    relation: relation,
-                    startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
-                    endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
-                }));
-                timeBucket.buckets.push(...buckets);
-            });
-            return timeBucket;
+            const matchBuckets = context.match.map(createLectureBuckets).reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse.map(createLectureBuckets).reduce((acc, val) => acc.concat(val), []);
+            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
     },
     by_weeks: {
@@ -53,26 +52,16 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             Let's imagine our current record: 6
             We now want to see if this record still exists. We want to know whether the last 7 weeks are correct, because the previous record was 6.
             Now it doesn't matter how long the user was inactive or similar. As soon as only one bucket is found among these buckets (7 buckets) that contains nothing, we know that the record has not been surpassed.
-            ---
-            Why do we itterate over context at position context type?
-            The context.type is a relation type (match, subcourse, global_match, global_subcourse) and is used to define what type is used for the bucket (match, subcourse, global_match, global_subcourse)
-            Using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            If a match or subcourse has no lecures held or planned, they are not considered for the bucket creation
             */
-            context[context.type].forEach((contextType) => {
-                if (!contextType.lecture || contextType.lecture.length === 0) {
-                    return;
-                }
-                for (let i = 0; i < weeks + 1; i++) {
-                    const weeksBefore = today.clone().subtract(i, 'week');
-                    timeBucket.buckets.push({
-                        kind: 'time',
-                        relation: `${context.type}/${contextType['id']}`,
-                        startTime: weeksBefore.startOf('week').toDate(),
-                        endTime: weeksBefore.endOf('week').toDate(),
-                    });
-                }
-            });
+            for (let i = 0; i < weeks + 1; i++) {
+                const weeksBefore = today.clone().subtract(i, 'week');
+                timeBucket.buckets.push({
+                    kind: 'time',
+                    relation: null,
+                    startTime: weeksBefore.startOf('week').toDate(),
+                    endTime: weeksBefore.endOf('week').toDate(),
+                });
+            }
 
             return timeBucket;
         },
@@ -89,20 +78,15 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 buckets: [],
             };
 
-            context[context.type].forEach((contextType) => {
-                if (!contextType.lecture || contextType.lecture.length === 0) {
-                    return;
-                }
-                for (let i = 0; i < months + 1; i++) {
-                    const monthsBefore = today.clone().subtract(i, 'month');
-                    timeBucket.buckets.push({
-                        kind: 'time',
-                        relation: `${context.type}/${contextType['id']}`,
-                        startTime: monthsBefore.startOf('month').toDate(),
-                        endTime: monthsBefore.endOf('month').toDate(),
-                    });
-                }
-            });
+            for (let i = 0; i < months + 1; i++) {
+                const monthsBefore = today.clone().subtract(i, 'month');
+                timeBucket.buckets.push({
+                    kind: 'time',
+                    relation: null,
+                    startTime: monthsBefore.startOf('month').toDate(),
+                    endTime: monthsBefore.endOf('month').toDate(),
+                });
+            }
 
             return timeBucket;
         },

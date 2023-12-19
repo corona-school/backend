@@ -1,11 +1,14 @@
 import 'reflect-metadata';
+// ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { ActionID } from '../notification/actions';
 import { Metric } from './types';
 
 export const metricByName: Map<string, Metric> = new Map();
-export const metricsByAction: Map<ActionID, Metric[]> = new Map();
+const metricsByAction: Map<ActionID, Metric[]> = new Map();
 
-export const metricExists = (metricName: string) => metricByName.has(metricName);
+export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {
+    return metricsByAction.get(actionId) || [];
+}
 
 function registerMetric(metric: Metric) {
     const { metricName, onActions } = metric;
@@ -26,10 +29,6 @@ function registerMetric(metric: Metric) {
 
 export function registerAllMetrics(metrics: Metric[]) {
     metrics.forEach((metric) => {
-        const { metricName } = metric;
-        if (metricExists(metricName)) {
-            throw new Error(`Metric '${metricName}' may only be registered once`);
-        }
         registerMetric(metric);
     });
 }

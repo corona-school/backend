@@ -1,5 +1,4 @@
-import { Prisma } from '@prisma/client';
-import { Achievement_event, Achievement_template, Lecture } from '../../graphql/generated';
+import { Achievement_event, Achievement_template, Lecture, User_achievement } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 
@@ -91,14 +90,7 @@ export type ActionEvent<ID extends ActionID> = {
     context: SpecificNotificationContext<ID>;
 };
 
-// This type is used for achievements that are not yet achieved and need to be evaluated
-export type AchievementToCheck = {
-    userId: string;
-    id: number;
-    achievedAt: Date;
-    context: Prisma.JsonValue;
-    template: Achievement_template;
-};
+export type AchievementToCheck = Pick<User_achievement, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template'>;
 
 export type EvaluationResult = {
     conditionIsMet: boolean;
@@ -109,24 +101,21 @@ export type EvaluationResult = {
 export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
 
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+export type ContextMatch = {
+    id: number;
+    relation: string | null; // will be null if searching for all matches
+    lecture: ContextLecture[];
+};
+export type ContextSubcourse = {
+    id: number;
+    relation: string | null; // will be null if searching for all subcourses
+    lecture: ContextLecture[];
+};
 
 export type AchievementContextType = {
+    // TODO: theoretically we can get rid of the type here
     type: RelationTypes;
     user?: User;
-    match?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    subcourse?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    global_match?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
-    global_subcourse?: {
-        id: number;
-        lecture: ContextLecture[];
-    }[];
+    match: ContextMatch[];
+    subcourse: ContextSubcourse[];
 };
