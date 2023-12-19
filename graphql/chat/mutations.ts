@@ -4,12 +4,14 @@ import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
-import { ConversationInfos, markConversationAsReadOnlyForPupils } from '../../common/chat';
+import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils, markConversationAsWriteable } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason } from '../../common/chat/types';
 import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { getCourseImageURL } from '../../common/courses/util';
+import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
+import { PrerequisiteError } from '../../common/util/error';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -109,5 +111,31 @@ export class MutateChatResolver {
         const contactUser = await getUser(contactUserId);
         const contactConversationId = await createContactChat(user, contactUser);
         return contactConversationId;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async chatDeactivate(@Arg('conversationId') conversationId: string) {
+        const conversation = await getConversation(conversationId);
+
+        if (isConversationReadOnly(conversation)) {
+            throw new PrerequisiteError(`Chat is already readonly`);
+        }
+
+        await deactivateConversation(conversation);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async chatReactivate(@Arg('conversationId') conversationId: string) {
+        const conversation = await getConversation(conversationId);
+
+        if (!isConversationReadOnly(conversation)) {
+            throw new PrerequisiteError(`Chat is not readonly`);
+        }
+
+        await markConversationAsWriteable(conversation.id);
+        return true;
     }
 }
