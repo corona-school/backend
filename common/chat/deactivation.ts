@@ -72,6 +72,7 @@ export async function shouldMarkChatAsReadonly(conversation: TJConversation) {
         const allInactive = allSubcoursesActive.every((active) => active === false);
         logger.info(`Conversation ${conversation.id} belongs to subcourses which are ${allInactive ? 'all inactive' : 'active'}`, {
             conversationId: conversation.id,
+            subcourseIds,
         });
         shouldMarkAsReadonly &&= allInactive;
     }
@@ -82,6 +83,7 @@ export async function shouldMarkChatAsReadonly(conversation: TJConversation) {
         const allInactive = allProspectSubcoursesActive.every((active) => active === false);
         logger.info(`Conversation ${conversation.id} belongs to subcourses which are all ${allInactive ? 'all inactive' : 'active'}`, {
             conversationId: conversation.id,
+            prospectSubcourses,
         });
         shouldMarkAsReadonly &&= allInactive;
     }
