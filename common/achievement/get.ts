@@ -21,12 +21,14 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
         where: { userId: user.userID, isSeen: false, template: { type: achievement_type_enum.SEQUENTIAL } },
         include: { template: true },
     });
-    const userAchievementGroups: { [group: string]: User_achievement[] } = {};
+    const userAchievementGroups: { [groupRelation: string]: User_achievement[] } = {};
     userAchievements.forEach((ua) => {
-        if (!userAchievementGroups[ua.template.group]) {
-            userAchievementGroups[ua.template.group] = [];
+        const relation = ua.context['relation'] || null;
+        const key = relation ? `${ua.template.group}/${relation}` : ua.template.group;
+        if (!userAchievementGroups[key]) {
+            userAchievementGroups[key] = [];
         }
-        userAchievementGroups[ua.template.group].push(ua);
+        userAchievementGroups[key].push(ua);
     });
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
@@ -114,7 +116,7 @@ const generateReorderedAchievementData = async (groups: { [group: string]: User_
             return [groupAchievement];
         })
     );
-    return Promise.all(achievements.reduce((a, b) => a.concat(b), []));
+    return achievements.flat();
 };
 
 const assembleAchievementData = async (userAchievements: User_achievement[], user: User): Promise<Achievement> => {
