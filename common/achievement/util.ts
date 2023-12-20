@@ -4,31 +4,69 @@ import { AchievementContextType, RelationTypes } from './types';
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
 import { achievement_state } from '../../graphql/types/achievement';
-import { User } from '../user';
+import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
 
-export function getRelationTypeAndId(relation: string): [type: RelationTypes, id: number] {
-    const validRelationTypes = ['match', 'subcourse'];
+function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
+    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
     }
-    return [relationType as RelationTypes, Number(id)];
+    return [relationType as RelationTypes, id];
 }
 
-export async function getBucketContext(relation: string): Promise<AchievementContextType> {
-    const [type, id] = getRelationTypeAndId(relation);
+// TODO: fix naming
+export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
+    const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
+
+    const whereClause = { [`${userType}Id`]: userId };
+
+    let relationType = null;
+    if (relation) {
+        const [relationTypeTmp, relationId] = getRelationTypeAndId(relation);
+        relationType = relationTypeTmp;
+
+        if (relationId) {
+            whereClause['id'] = Number(relationId);
+        }
+    }
+
+    let matches = [];
+    if (!relationType || relationType === 'match') {
+        matches = await prisma.match.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+            },
+        });
+    }
+
+    let subcourses = [];
+    if (!relationType || relationType === 'subcourse') {
+        subcourses = await prisma.subcourse.findMany({
+            where: whereClause,
+            select: {
+                id: true,
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+            },
+        });
+    }
+
+    // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
     const achievementContext: AchievementContextType = {
-        type: type,
-        match:
-            type === 'match'
-                ? await prisma.match.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
-                : null,
-        subcourse:
-            type === 'subcourse'
-                ? await prisma.subcourse.findFirst({ where: { id }, select: { id: true, lecture: { select: { start: true, duration: true } } } })
-                : null,
+        match: matches.map((match) => ({
+            id: match.id,
+            relation: relationType ? `${relationType}/${match.id}` : null,
+            lecture: match.lecture,
+        })),
+        subcourse: subcourses.map((subcourse) => ({
+            id: subcourse.id,
+            relation: relationType ? `${relationType}/${subcourse.id}` : null,
+            lecture: subcourse.lecture,
+        })),
     };
     return achievementContext;
 }
@@ -38,7 +76,6 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
         return null;
     }
     const transformedJson: AchievementContextType = {
-        type: json['match'] ? 'match' : 'subcourse',
         user: user,
         match: json['match'] ? json['match'] : undefined,
         subcourse: json['subcourse'] ? json['subcourse'] : undefined,

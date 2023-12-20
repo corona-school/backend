@@ -49,6 +49,8 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
 const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
 async function _createAchievement<ID extends ActionID>(currentTemplate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
+    const templatesForGroup = templatesByGroup.get(currentTemplate.group).sort((a, b) => a.groupOrder - b.groupOrder);
+
     const keys = Object.keys(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
@@ -68,9 +70,8 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: Achievem
         orderBy: { template: { groupOrder: 'asc' } },
     });
 
-    const nextStepIndex = userAchievementsByGroup.length > 0 ? userAchievementsByGroup.findIndex((e) => e.groupOrder === currentTemplate.groupOrder) + 1 : 0;
+    const nextStepIndex = userAchievementsByGroup.length > 0 ? templatesForGroup.findIndex((e) => e.groupOrder === currentTemplate.groupOrder) + 1 : 0;
 
-    const templatesForGroup = templatesByGroup.get(currentTemplate.group);
     if (templatesForGroup && templatesForGroup.length > nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, context);
         return createdUserAchievement;

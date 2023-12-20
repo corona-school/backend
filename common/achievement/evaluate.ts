@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { AchievementContextType, BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -17,9 +17,18 @@ async function _evaluateAchievement(
     condition: string,
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
-    recordValue: number
+    recordValue: number,
+    relation?: string | null
 ): Promise<EvaluationResult> {
-    const achievementEvents = await prisma.achievement_event.findMany({ where: { userId, metric: { in: metrics } }, orderBy: { createdAt: 'desc' } });
+    // filter: wenn wir eine richtige relation haben -> filtern nach relation
+    const achievementEvents = await prisma.achievement_event.findMany({
+        where: {
+            userId,
+            metric: { in: metrics },
+            AND: relation ? { relation: { equals: relation } } : {},
+        },
+        orderBy: { createdAt: 'desc' },
+    });
 
     const eventsByMetric: Record<string, Achievement_event[]> = {};
     for (const event of achievementEvents) {
@@ -46,7 +55,6 @@ async function _evaluateAchievement(
 
         const eventsForMetric = eventsByMetric[metricName];
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
-        const relation = eventsForMetric.find((event) => event.relation)?.relation;
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;
@@ -60,12 +68,8 @@ async function _evaluateAchievement(
             return;
         }
 
-        let bucketContext: AchievementContextType;
-        if (relation) {
-            bucketContext = await getBucketContext(relation);
-        }
-
-        const buckets = bucketCreatorFunction({ recordValue: recordValue, context: bucketContext });
+        const bucketContext = await getBucketContext(userId, relation);
+        const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
         const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
@@ -105,7 +109,10 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
-        const filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
+        let filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
+        if (bucket.relation) {
+            filteredEvents = filteredEvents.filter((event) => event.relation === bucket.relation);
+        }
 
         return {
             kind: bucket.kind,

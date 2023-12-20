@@ -27,6 +27,7 @@ export type DefaultBucket = {
 // Bucket containing events from a specific time frame
 export type TimeBucket = {
     kind: 'time';
+    relation: string;
     startTime: Date;
     endTime: Date;
 };
@@ -41,6 +42,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
+// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / monthes
 type BucketCreatorContext = { recordValue: number; context: AchievementContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
@@ -95,19 +97,23 @@ export type EvaluationResult = {
     resultObject: Record<string, number>;
 };
 
-export type RelationTypes = 'match' | 'subcourse';
+// match and subcourse are relation types to point to a specific match or subcourse, whereas global_match and global_subcourse are used to point to all matches/subcourses of a user
+export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
 
 type ContextLecture = Pick<Lecture, 'start' | 'duration'>;
+export type ContextMatch = {
+    id: number;
+    relation: string | null; // will be null if searching for all matches
+    lecture: ContextLecture[];
+};
+export type ContextSubcourse = {
+    id: number;
+    relation: string | null; // will be null if searching for all subcourses
+    lecture: ContextLecture[];
+};
 
 export type AchievementContextType = {
-    type: RelationTypes;
     user?: User;
-    match?: {
-        id: number;
-        lecture: ContextLecture[];
-    };
-    subcourse?: {
-        id: number;
-        lecture: ContextLecture[];
-    };
+    match: ContextMatch[];
+    subcourse: ContextSubcourse[];
 };
