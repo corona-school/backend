@@ -92,7 +92,6 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
         }
         userAchievementGroups[ua.template.group].push(ua);
     });
-    // TODO: when a group has multiple elements and one of the elements is group order null, this element should be deleted. (default achievements after registration)
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
 };
