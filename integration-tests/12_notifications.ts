@@ -1,9 +1,12 @@
 import assert from 'assert';
 import { prisma } from '../common/prisma';
-import { pupilOne } from './01_user';
+import { pupilOne, pupilTwo } from './01_user';
 import { test } from './base';
 import { adminClient } from './base/clients';
-import { createMockNotification } from './base/notifications';
+import { addMockNotification, createMockNotification } from './base/notifications';
+import { expectFetch } from './base/mock';
+
+// ------------------ Scheduling, Cancellation --------------------------------------
 
 void test('Action Notification Timing (Dry Run)', async () => {
     const { pupil } = await pupilOne;
@@ -389,4 +392,259 @@ void test('Duplicate Prevention', async () => {
     });
 
     assert.strictEqual(sentWithSameUniqueId, 3, 'Expected that no additional notification is sent out');
+});
+
+// ---------------------------- Mailjet Channel ------------------------------
+
+void test('Notification sent via Mailjet', async () => {
+    const { pupil, client: pupilClient } = await pupilOne;
+
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateNotification {
+        notificationCreate(notification: {
+            description: "MOCK Campaign1"
+            active: false
+            recipient: 0
+            mailjetTemplateId: 42
+            onActions: { set: ["TEST"]}
+            cancelledOnAction: { set: []}
+            type: chat
+        }) { id }
+    }`);
+
+    await addMockNotification(id);
+
+    expectFetch({
+        url: 'https://api.mailjet.com/v3.1/send',
+        method: 'POST',
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"a":"a","uniqueId":"2","user":{"userID":"${
+            pupil.userID
+        }","firstname":"${pupil.firstname}","lastname":"${pupil.lastname}","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":${
+            pupil.pupil.id
+        },"fullName":"${pupil.firstname} ${
+            pupil.lastname
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
+        responseStatus: 200,
+        response: '{ "Messages": [{ "Status": "success" }]}',
+    });
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
+    }`);
+
+    const sent = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 2 /* SENT */,
+        },
+    });
+
+    assert.strictEqual(sent, 1, 'Expected Notification to be sent');
+
+    await pupilClient.request(`mutation PupilDisabledNotifications {
+        meUpdate(update: { notificationPreferences: { chat: { email: false }}})
+    }`);
+
+    await adminClient.request(`mutation TriggerAction2 {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "3" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
+    }`);
+
+    // As the mail preference was disabled, the notification was not sent via mailjet
+
+    const sent2 = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 2 /* SENT */,
+        },
+    });
+
+    assert.strictEqual(sent2, 2, 'Expected Notification to be sent');
+});
+
+void test('Notification sent via Mailjet to overrideEmail', async () => {
+    const { pupil, client: pupilClient } = await pupilOne;
+
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateNotification {
+        notificationCreate(notification: {
+            description: "MOCK Campaign1"
+            active: false
+            recipient: 0
+            mailjetTemplateId: 42
+            onActions: { set: ["TEST"]}
+            cancelledOnAction: { set: []}
+            type: legacy
+        }) { id }
+    }`);
+
+    await addMockNotification(id);
+
+    expectFetch({
+        url: 'https://api.mailjet.com/v3.1/send',
+        method: 'POST',
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"override@example.org"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"a":"a","uniqueId":"2","overrideReceiverEmail":"override@example.org","user":{"userID":"${
+            pupil.userID
+        }","firstname":"${pupil.firstname}","lastname":"${pupil.lastname}","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":${
+            pupil.pupil.id
+        },"fullName":"${pupil.firstname} ${
+            pupil.lastname
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
+        responseStatus: 200,
+        response: '{ "Messages": [{ "Status": "success" }]}',
+    });
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "2", overrideReceiverEmail: "override@example.org" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
+    }`);
+});
+
+// ---------------------------- Campaigns ------------------------------------
+
+void test('Create Campaign', async () => {
+    const { pupil } = await pupilOne;
+
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateCampaign {
+        notificationCreate(notification: {
+            description: "MOCK Campaign1"
+            active: false
+            recipient: 0
+            onActions: { set: []}
+            cancelledOnAction: { set: []}
+            sample_context: { test: "test" }
+        }) { id }
+    }`);
+
+    await addMockNotification(id);
+
+    const campaignId = `Campaign ${new Date().toISOString()}`;
+
+    await adminClient.requestShallFail(`mutation SendOutWithMissingContext {
+        concreteNotificationBulkCreate(
+        startAt: "${new Date(0).toISOString()}"
+        skipDraft: true
+        context: { }
+        userIds: ["${pupil.userID}"]
+        notificationId: ${id}
+      )
+    }`);
+
+    await adminClient.request(`mutation SendOut {
+        concreteNotificationBulkCreate(
+        startAt: "${new Date(0).toISOString()}"
+        skipDraft: false
+        context: { test: "something", uniqueId: "${campaignId}", campaign: "${campaignId}" }
+        userIds: ["${pupil.userID}"]
+        notificationId: ${id}
+      )
+    }`);
+
+    // Ensure this is not yet picked up by the worker:
+    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+
+    const drafted = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 6 /* DRAFTED */,
+        },
+    });
+
+    assert.strictEqual(drafted, 1, 'Expected Campaign Notification to be drafted');
+
+    await adminClient.request(`mutation PublishCampaign {
+        concreteNotificationPublishDraft(notificationId: ${id} contextID: "${campaignId}")
+    }`);
+
+    const delayed = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 0 /* DELAYED */,
+        },
+    });
+
+    assert.strictEqual(delayed, 1, 'Expected Campaign Notification to be delayed');
+
+    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+
+    const sent = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 2 /* SENT */,
+        },
+    });
+
+    assert.strictEqual(sent, 1, 'Expected Campaign Notification to be sent');
+});
+
+void test('Create Campaign with Overrides', async () => {
+    const { pupil } = await pupilOne;
+    const { pupil: pupil2, client: pupilTwoClient } = await pupilTwo;
+
+    const {
+        notificationCreate: { id },
+    } = await adminClient.request(`mutation CreateCampaign {
+        notificationCreate(notification: {
+            description: "MOCK Campaign1"
+            active: false
+            recipient: 0
+            onActions: { set: []}
+            cancelledOnAction: { set: []}
+            sample_context: { overrideMailjetTemplateID: "1", overrideType: "campaign" }
+        }) { id }
+    }`);
+
+    await addMockNotification(id);
+
+    const campaignId = `Campaign ${new Date().toISOString()}`;
+
+    await adminClient.request(`mutation SendOut {
+        concreteNotificationBulkCreate(
+        startAt: "${new Date(0).toISOString()}"
+        skipDraft: true
+        context: { overrideMailjetTemplateID: "42", overrideType: "suggestion", uniqueId: "${campaignId}", campaign: "${campaignId}" }
+        userIds: ["${pupil.userID}", "${pupil2.userID}"]
+        notificationId: ${id}
+      )
+    }`);
+
+    await pupilTwoClient.request(`mutation PupilDisabledNotifications {
+        meUpdate(update: { notificationPreferences: { suggestion: { email: false }}})
+    }`);
+
+    // Ensures that the notification is sent although it has no mailjetId (but it is overriden)
+    // Also ensures that the overriden mailjet template is used, and the CustomCampaignId is set
+    // Additionally pupil2 is skipped as he turned off mail notifications for the overriden type "suggestion"
+    expectFetch({
+        url: 'https://api.mailjet.com/v3.1/send',
+        method: 'POST',
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"overrideMailjetTemplateID":"42","overrideType":"suggestion","uniqueId":"${campaignId}","campaign":"${campaignId}","user":{"userID":"${
+            pupil.userID
+        }","firstname":"${pupil.firstname}","lastname":"${
+            pupil.lastname
+        }","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":*,"fullName":"${pupil.firstname} ${
+            pupil.lastname
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"${campaignId}"}]}`,
+        responseStatus: 200,
+        response: '{ "Messages": [{ "Status": "success" }]}',
+    });
+
+    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+
+    const sent = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 2 /* SENT */,
+        },
+    });
+
+    assert.strictEqual(sent, 2, 'Expected Campaign Notification to be sent');
 });
