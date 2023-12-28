@@ -5,6 +5,7 @@ import systemMessages from './localization';
 import { TJConversation, FinishedReason, SystemMessage } from './types';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
+import { getLastLecture } from '../courses/lectures';
 
 const logger = getLogger('Chat Deactivation');
 
@@ -19,16 +20,19 @@ async function isActiveMatch(id: number): Promise<boolean> {
 
 async function isActiveSubcourse(id: number): Promise<boolean> {
     const today = moment().endOf('day');
-    const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id }, include: { lecture: true } });
+    const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id } });
     const isSubcourseCancelled = subcourse.cancelled;
 
     if (isSubcourseCancelled) {
         return false;
     }
 
-    const lastLecture = subcourse.lecture.sort((a, b) => moment(a.start).milliseconds() - moment(b.start).milliseconds()).pop();
+    const lastLecture = await getLastLecture(subcourse);
     const lastLecturePlus30Days = moment(lastLecture.start).add(30, 'days');
     const is30DaysBeforeToday = lastLecturePlus30Days.isBefore(today);
+
+    logger.info(`Checked if Subcourse(${subcourse.id}) is active`, { lastLecture, lastLecturePlus30Days, is30DaysBeforeToday });
+
     return !is30DaysBeforeToday;
 }
 
