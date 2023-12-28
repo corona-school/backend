@@ -549,7 +549,7 @@ void test('Create Campaign', async () => {
     }`);
 
     // Ensure this is not yet picked up by the worker:
-    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+    await adminClient.request(`mutation { _executeJob(job: "checkReminders") }`);
 
     const drafted = await prisma.concrete_notification.count({
         where: {
@@ -573,7 +573,7 @@ void test('Create Campaign', async () => {
 
     assert.strictEqual(delayed, 1, 'Expected Campaign Notification to be delayed');
 
-    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+    await adminClient.request(`mutation { _executeJob(job: "checkReminders") }`);
 
     const sent = await prisma.concrete_notification.count({
         where: {
@@ -637,7 +637,7 @@ void test('Create Campaign with Overrides', async () => {
         response: '{ "Messages": [{ "Status": "success" }]}',
     });
 
-    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+    await adminClient.request(`mutation { _executeJob(job: "checkReminders") }`);
 
     const sent = await prisma.concrete_notification.count({
         where: {
