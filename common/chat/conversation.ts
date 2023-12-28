@@ -119,9 +119,8 @@ async function* getAllConversations(): AsyncIterable<TJConversation> {
         }
 
         const result = await response.json();
-        logger.info(`Got all conversations page`, { result });
         const conversations = result.data;
-
+        logger.info(`Got ${conversations.length} conversations on this page, startingAfter: ${startingAfter}`);
         yield* conversations;
 
         if (conversations.length < LIMIT) {

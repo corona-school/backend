@@ -9,6 +9,8 @@ export default async function flagInactiveConversationsAsReadonly() {
     const conversationsToFlag: TJConversation[] = [];
 
     for await (const conversation of getAllConversations()) {
+        logger.info(`Checking conversation ${conversation.id}`, { conversation });
+
         if (isConversationReadOnly(conversation)) {
             logger.info(`Conversation ${conversation.id} is already readonly.`);
             continue;
