@@ -612,7 +612,7 @@ export class StatisticsResolver {
     async numDissolvedMatchesByReason(@Root() statistics, @Arg('reason') reason: dissolve_reason) {
         return await prisma.match.count({
             where: {
-                dissolveReasonEnum: reason,
+                dissolveReasons: { has: reason },
                 AND: [{ dissolvedAt: { gte: new Date(statistics.from) } }, { dissolvedAt: { lt: new Date(statistics.to) } }],
             },
         });
