@@ -113,11 +113,8 @@ export async function publishSubcourse(subcourse: Subcourse) {
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
-    const course = await getCourse(subcourse.courseId);
-    if (course.category !== 'focus') {
-        await sendPupilCoursePromotion(subcourse);
-        logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
-    }
+    await sendPupilCoursePromotion(subcourse);
+    logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
 }
 
 /* ---------------- Subcourse Cancel ------------ */
