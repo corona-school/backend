@@ -5,7 +5,7 @@ type BucketCreatorDefs = Record<string, BucketFormula>;
 
 function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] | null {
     if (!data.lecture || data.lecture.length === 0) {
-        return null;
+        return [];
     }
     // const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${match['id']}` : null;
     const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
