@@ -112,6 +112,7 @@
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-lernfair-lint": "./linter/",
         "jest": "^29.5.0",
+        "jest-mock-extended": "^3.0.5",
         "lint-staged": "^14.0.1",
         "nodemon": "^3.0.1",
         "pre-commit": "^1.2.2",
@@ -164,7 +165,12 @@
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "verbose": true,
+        "clearMocks": true,
+        "setupFilesAfterEnv": [
+            "<rootDir>/jest/singletons.ts"
+        ]
     },
     "nodemonConfig": {
         "verbose": true,

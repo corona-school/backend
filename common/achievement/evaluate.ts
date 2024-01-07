@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -18,8 +18,8 @@ async function _evaluateAchievement(
     dataAggregation: ConditionDataAggregations,
     metrics: string[],
     recordValue: number,
-    relation?: string | null
-): Promise<EvaluationResult> {
+    relation?: string
+): Promise<EvaluationResult | undefined> {
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const achievementEvents = await prisma.achievement_event.findMany({
         where: {
