@@ -1,8 +1,9 @@
 import moment from 'moment';
-import { achievement_event, match, subcourse } from '@prisma/client';
+import { achievement_event, lecture, match, subcourse } from '@prisma/client';
 import { prismaMock } from '../../jest/singletons';
 import { evaluateAchievement } from './evaluate';
 import { ConditionDataAggregations } from './types';
+import { Prisma } from '@prisma/client';
 
 function createTestEvent({ metric, value, relation, ts }: { metric: string; value: number; relation?: string; ts?: Date }): achievement_event {
     const eventTs = ts || new Date();
@@ -211,6 +212,193 @@ describe('evaluate record value condition with time buckets', () => {
         prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
 
         const res = await evaluateAchievement(testUserId, condition, dataAggr, recordValue, undefined);
+
+        expect(res).toBeDefined();
+        expect(res.conditionIsMet).toBe(expectNewRecord);
+    });
+});
+
+type SubcourseWithLectures = Prisma.subcourseGetPayload<{ include: { lecture: true } }>;
+
+function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLectures {
+    return {
+        lecture: lectures,
+
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        minGrade: 1,
+        maxGrade: 13,
+        maxParticipants: 10,
+        joinAfterStart: false,
+        published: true,
+        publishedAt: new Date(),
+        cancelled: false,
+        alreadyPromoted: false,
+        conversationId: null,
+        allowChatContactParticipants: false,
+        allowChatContactProspects: false,
+        groupChatType: 'NORMAL',
+        courseId: 1,
+    };
+}
+
+type MatchWithLectures = Prisma.matchGetPayload<{ include: { lecture: true } }>;
+
+function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectures {
+    return {
+        lecture: lectures,
+
+        id: 1,
+        uuid: 'uuid',
+        dissolved: false,
+        dissolvedAt: null,
+        dissolvedBy: null,
+        dissolveReason: null,
+        dissolveReasonEnum: null,
+        didHaveMeeting: true,
+        proposedTime: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        feedbackToPupilMail: false,
+        feedbackToStudentMail: false,
+        followUpToPupilMail: false,
+        followUpToStudentMail: false,
+        source: 'imported',
+        studentFirstMatchRequest: null,
+        pupilFirstMatchRequest: null,
+        matchPool: null,
+        studentId: null,
+        pupilId: null,
+    };
+}
+
+function createLecture({ start }: { start: Date }): lecture {
+    return {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+
+        start: start,
+        duration: 60,
+        subcourseId: 1,
+        matchId: null,
+
+        appointmentType: 'group',
+        title: null,
+        description: null,
+        isCanceled: false,
+        organizerIds: [],
+        participantIds: [],
+        declinedBy: [],
+        zoomMeetingId: null,
+        zoomMeetingReport: null,
+        instructorId: null,
+        override_meeting_link: null,
+    };
+}
+
+describe('evaluate bucket with match / subcourse context', () => {
+    // TODO: think about setting dow globally
+    moment.updateLocale('de', { week: { dow: 1 } });
+    jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
+
+    const today = moment();
+    const yesterday = moment().subtract(1, 'day');
+    const twoDaysAgo = moment().subtract(2, 'day');
+
+    const testUserId = 'student/1';
+    const tests: {
+        name: string;
+        condition: string;
+        expectNewRecord: boolean;
+        dataAggr: ConditionDataAggregations;
+
+        events?: achievement_event[];
+        matches?: match[];
+        subcourses?: SubcourseWithLectures[];
+    }[] = [
+        {
+            name: 'should get achievement if participated in all lectures of a subcourse',
+            condition: 'participatedLectures == 3',
+            expectNewRecord: true,
+            dataAggr: {
+                participatedLectures: {
+                    aggregator: 'count',
+                    metric: 'matchLectureParticipation',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'count',
+                },
+            },
+            events: [
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: today.subtract(5, 'minute').toDate() }),
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: twoDaysAgo.add(5, 'minute').toDate() }),
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: yesterday.subtract(3, 'minute').toDate() }),
+            ],
+            subcourses: [
+                createSubcourse({
+                    lectures: [
+                        createLecture({ start: twoDaysAgo.toDate() }),
+                        createLecture({ start: yesterday.toDate() }),
+                        createLecture({ start: today.toDate() }),
+                    ],
+                }),
+            ],
+        },
+        {
+            name: 'should get achievement if participated in at least 3 lectures of a match',
+            condition: 'participatedLectures >= 3',
+            expectNewRecord: true,
+            dataAggr: {
+                participatedLectures: {
+                    aggregator: 'count',
+                    metric: 'matchLectureParticipation',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'count',
+                },
+            },
+            events: [
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: today.subtract(5, 'minute').toDate() }),
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: twoDaysAgo.add(5, 'minute').toDate() }),
+                createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: yesterday.subtract(3, 'minute').toDate() }),
+            ],
+            matches: [
+                createTestMatch({
+                    lectures: [
+                        createLecture({ start: twoDaysAgo.toDate() }),
+                        createLecture({ start: yesterday.toDate() }),
+                        createLecture({ start: today.toDate() }),
+                    ],
+                }),
+            ],
+        },
+        {
+            name: 'should not count event if too far away from lecture start',
+            condition: 'participatedLectures > 0',
+            expectNewRecord: true,
+            dataAggr: {
+                participatedLectures: {
+                    aggregator: 'count',
+                    metric: 'matchLectureParticipation',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'count',
+                },
+            },
+            events: [createTestEvent({ metric: 'matchLectureParticipation', value: 1, ts: today.subtract(1, 'hour').toDate() })],
+            matches: [
+                createTestMatch({
+                    lectures: [createLecture({ start: today.toDate() })],
+                }),
+            ],
+        },
+    ];
+
+    it.each(tests)('$name', async ({ expectNewRecord, condition, dataAggr, events, matches, subcourses }) => {
+        prismaMock.achievement_event.findMany.mockResolvedValue(events || []);
+        prismaMock.match.findMany.mockResolvedValue(matches || []);
+        prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
+
+        const res = await evaluateAchievement(testUserId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
         expect(res.conditionIsMet).toBe(expectNewRecord);
