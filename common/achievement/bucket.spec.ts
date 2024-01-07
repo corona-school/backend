@@ -3,10 +3,6 @@ import { bucketCreatorDefs } from './bucket';
 import { BucketCreatorContext, TimeBucket } from './types';
 
 describe('test create buckets by_week', () => {
-    afterAll(() => {
-        jest.clearAllTimers();
-    });
-
     const today = new Date(2023, 7, 15);
 
     // TODO: think about setting dow globally
@@ -64,10 +60,6 @@ describe('test create buckets by_week', () => {
 });
 
 describe('test create buckets by_months', () => {
-    afterAll(() => {
-        jest.clearAllTimers();
-    });
-
     const today = new Date(2023, 7, 15);
 
     // TODO: think about setting dow globally
