@@ -3,7 +3,6 @@ import { bucketCreatorDefs } from './bucket';
 import { BucketCreatorContext, ContextMatch, ContextSubcourse, TimeBucket } from './types';
 
 describe('test create buckets by_lecture_start', () => {
-    // TODO: think about setting dow globally
     moment.updateLocale('de', { week: { dow: 1 } });
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
@@ -168,7 +167,6 @@ describe('test create buckets by_lecture_start', () => {
 describe('test create buckets by_week', () => {
     const today = new Date(2023, 7, 15);
 
-    // TODO: think about setting dow globally
     moment.updateLocale('de', { week: { dow: 1 } });
     jest.useFakeTimers().setSystemTime(today);
 
@@ -225,7 +223,6 @@ describe('test create buckets by_week', () => {
 describe('test create buckets by_months', () => {
     const today = new Date(2023, 7, 15);
 
-    // TODO: think about setting dow globally
     moment.updateLocale('de', { week: { dow: 1 } });
     jest.useFakeTimers().setSystemTime(today);
 

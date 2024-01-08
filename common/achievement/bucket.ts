@@ -3,7 +3,7 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] | null {
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }

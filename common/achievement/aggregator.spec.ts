@@ -97,8 +97,8 @@ describe('test lastStreakLength aggregator', () => {
         },
         {
             name: 'should reset streak if zero in chain',
-            elements: [1, 1, 0, 1, 1],
-            expected: 2,
+            elements: [1, 1, 1, 0, 1],
+            expected: 3,
         },
         {
             name: 'should have a streak of 0 if first element is zero',

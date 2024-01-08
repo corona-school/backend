@@ -94,7 +94,6 @@ describe('evaluate condition without default bucket aggregator', () => {
 });
 
 describe('evaluate record value condition with time buckets', () => {
-    // TODO: think about setting dow globally
     moment.updateLocale('de', { week: { dow: 1 } });
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
@@ -299,7 +298,6 @@ function createLecture({ start }: { start: Date }): lecture {
 }
 
 describe('evaluate bucket with match / subcourse context', () => {
-    // TODO: think about setting dow globally
     moment.updateLocale('de', { week: { dow: 1 } });
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 

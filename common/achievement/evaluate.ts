@@ -54,7 +54,7 @@ async function _evaluateAchievement(
 
         const aggregator = dataAggregationObject.aggregator;
 
-        const eventsForMetric = eventsByMetric[metricName] || [];
+        const eventsForMetric = eventsByMetric[metricName] ?? [];
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
 
         if (!bucketCreatorDefs[bucketCreator] || !aggregators[bucketAggregator] || !aggregators[aggregator]) {
