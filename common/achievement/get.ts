@@ -148,7 +148,6 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
             user.userID,
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
-            currentAchievementTemplate.metrics,
             userAchievements[currentAchievementIndex].recordValue,
             relation
         );

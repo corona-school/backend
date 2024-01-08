@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -16,10 +16,11 @@ async function _evaluateAchievement(
     userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
-    metrics: string[],
     recordValue: number,
-    relation?: string | null
-): Promise<EvaluationResult> {
+    relation?: string
+): Promise<EvaluationResult | undefined> {
+    // We only care about metrics that are used for the data aggregation
+    const metrics = Object.values(dataAggregation).map((entry) => entry.metric);
     // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const achievementEvents = await prisma.achievement_event.findMany({
         where: {
@@ -53,20 +54,20 @@ async function _evaluateAchievement(
 
         const aggregator = dataAggregationObject.aggregator;
 
-        const eventsForMetric = eventsByMetric[metricName];
+        const eventsForMetric = eventsByMetric[metricName] ?? [];
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
 
-        const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
-        const bucketAggregatorFunction = aggregators[bucketAggregator].function;
-
-        const aggregatorFunction = aggregators[aggregator].function;
-
-        if (!bucketCreatorFunction || !bucketAggregatorFunction || !aggregatorFunction) {
+        if (!bucketCreatorDefs[bucketCreator] || !aggregators[bucketAggregator] || !aggregators[aggregator]) {
             logger.error(
                 `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
             );
             return;
         }
+
+        const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
+        const bucketAggregatorFunction = aggregators[bucketAggregator].function;
+
+        const aggregatorFunction = aggregators[aggregator].function;
 
         const bucketContext = await getBucketContext(userId, relation);
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });

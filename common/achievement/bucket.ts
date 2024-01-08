@@ -3,14 +3,15 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] | null {
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
-        return null;
+        return [];
     }
     // const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${match['id']}` : null;
     const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
         kind: 'time',
         relation: data.relation,
+        // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
         startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
         endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
     }));
@@ -36,6 +37,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_weeks: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
+            // TODO: what if the recordValue is not a number or negative?
             const { recordValue: weeks } = bucketContext;
             // the buckets are created in a desc order
             const today = moment();
@@ -67,6 +69,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_months: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
+            // TODO: what if the recordValue is not a number or negative?
             const { recordValue: months } = bucketContext;
 
             // the buckets are created in a desc order

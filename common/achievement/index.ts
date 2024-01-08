@@ -122,7 +122,7 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         userId,
         recordValue,
         context,
-        template: { condition, conditionDataAggregations, metrics },
+        template: { condition, conditionDataAggregations },
     } = achievement;
     if (!condition) {
         logger.error(`No condition found for achievement ${achievement.template.name}`);
@@ -132,7 +132,6 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         userId,
         condition,
         conditionDataAggregations as ConditionDataAggregations,
-        metrics,
         recordValue,
         event.context.relation
     );

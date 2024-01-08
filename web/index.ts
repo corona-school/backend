@@ -11,7 +11,7 @@ import { registerAchievementMetrics } from '../common/achievement/metric';
 const logger = getLogger('WebServer');
 logger.debug('Debug logging enabled');
 
-moment.locale('de'); //set global moment date format
+moment.locale('de', { dow: 1 }); //set global moment date format + ensure that week is starting on monday
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 registerAchievementMetrics();
 

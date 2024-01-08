@@ -12,13 +12,15 @@ export const aggregators: Aggregator = {
     },
     count: {
         function: (elements): number => {
-            return elements.length;
+            // TODO: evaluate if this assumption is correct
+            return elements.filter((num) => num != 0).length;
         },
     },
     // this aggregator should be used to check if min one event exist in a bucket, i.e. if one event happend in one week / one month
     presenceOfEvents: {
         function: (elements): number => {
-            return elements.length > 0 ? 1 : 0;
+            // TODO: evaluate if this assumption is correct
+            return elements.filter((num) => num != 0).length > 0 ? 1 : 0;
         },
     },
     lastStreakLength: {
