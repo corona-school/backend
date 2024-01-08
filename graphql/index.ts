@@ -72,6 +72,7 @@ import { ExtendedFieldsScreenerResolver } from './screener/fields';
 import { ExtendedFieldsCooperationResolver } from './cooperation/fields';
 import { MutateCooperationResolver } from './cooperation/mutation';
 import { MutateAchievementResolver } from './achievement/mutations';
+import { FieldsChatResolver } from './chat/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -179,6 +180,7 @@ const schema = buildSchemaSync({
         ExtendedFieldsOrganizerResolver,
 
         /* Chat */
+        FieldsChatResolver,
         MutateChatResolver,
 
         /* Cooperation */

@@ -25,15 +25,27 @@ export interface NotificationContextExtensions {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress?: Email;
-    // Sometimes it makes sense to send to some other email than the user's
-    // (i.e. when verifying an email change, or when testing mails)
-    overrideReceiverEmail?: Email;
     attachments?: Attachment[];
+
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
+    // The campaign should also be set as the 'uniqueId' to properly prevent campaigns being sent to the same users multiple times
     campaign?: string;
-    // For Campaigns, support sending custom Mailjet Notifications:
+
+    // ---------------------------------------------------------------
+
+    // ATTENTION: These override attributes of the Notification in a Concrete Notification and should
+    // be used with extreme care, as they might come with unintended consequences
+
+    // For Campaigns, support sending custom Mailjet Templates / with a different Type per Campaign,
+    // without having to create a new Notification for each campaign
     overrideMailjetTemplateID?: string;
+    overrideType?: NotificationType;
+
+    // Sometimes it makes sense to send to some other email than the user's
+    // (i.e. when verifying an email change, or when testing mails)
+    // BE CAREFUL: This might otherwise send an email with an auth token to someone else!
+    overrideReceiverEmail?: Email;
     // For Achievements, the match or subcourse is needed as a relation to allocate events to a specific user achievement
     relation?: string;
 }

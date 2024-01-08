@@ -1,5 +1,5 @@
 import { message_translation_language_enum as TranslationLanguage } from '@prisma/client';
-import { getSampleContext } from './notification';
+import { getNotification, getSampleContext } from './notification';
 import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate } from './types';
 import { prisma } from '../prisma';
 import { compileTemplate, renderTemplate } from '../../utils/helpers';
@@ -15,10 +15,7 @@ export async function getMessageForNotification(
     notificationId: number,
     language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessage | null> {
-    const notification = await prisma.notification.findUnique({
-        where: { id: notificationId },
-        select: { type: true },
-    });
+    const notification = await getNotification(notificationId);
 
     if (!notification || !notification.type) {
         return null;
@@ -156,7 +153,7 @@ export async function getMessage(
     }
 
     return {
-        type: template.type,
+        type: context?.overrideType ?? template.type,
         headline,
         body,
         navigateTo,
