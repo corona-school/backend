@@ -33,7 +33,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
     const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
 
-    const whereClause = { [`${userType}Id`]: userId };
+    const whereClause = {};
 
     let relationType = null;
     if (relation) {
@@ -48,7 +48,7 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
     let matches = [];
     if (!relationType || relationType === 'match') {
         matches = await prisma.match.findMany({
-            where: whereClause,
+            where: { ...whereClause, [`${userType}Id`]: userId },
             select: {
                 id: true,
                 lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
@@ -58,8 +58,14 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
 
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
+        let subcourseWhere = whereClause;
+        if (userType === 'student') {
+            subcourseWhere = { ...subcourseWhere, subcourse_instructors_student: { some: { studentId: userId } } };
+        } else {
+            subcourseWhere = { ...subcourseWhere, subcourse_participants_pupil: { some: { pupilId: userId } } };
+        }
         subcourses = await prisma.subcourse.findMany({
-            where: whereClause,
+            where: subcourseWhere,
             select: {
                 id: true,
                 lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
