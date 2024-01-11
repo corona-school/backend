@@ -1,12 +1,24 @@
 import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { AchievementContextType, RelationTypes } from './types';
+import { join } from 'path';
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
+import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
+
+export const ACHIEVEMENT_IMAGE_DEFAULT_PATH = 'gamification/achievements';
+
+export function getAchievementImageKey(imageKey: string) {
+    return join(ACHIEVEMENT_IMAGE_DEFAULT_PATH, `${imageKey}`);
+}
+
+export function getAchievementImageURL(imageKey: string) {
+    return accessURLForKey(imageKey);
+}
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
     const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
