@@ -131,4 +131,5 @@ export enum NotificationType {
     COURSE = 'course',
     CERTIFICATE = 'certificate',
     LEGACY = 'legacy',
+    ACHIEVEMENT = 'achievement',
 }
