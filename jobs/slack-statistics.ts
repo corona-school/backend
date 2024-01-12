@@ -87,9 +87,7 @@ export async function postStatisticsToSlack() {
             createdAt: { gte: begin, lte: end },
             knowsCoronaSchoolFrom: { notIn: [''] },
         },
-        _count: {
-            createdAt: true,
-        },
+        _count: true,
     });
 
     let instructorKnowsCoronaSchoolFromTable: [string, string][] = [];
@@ -129,6 +127,7 @@ export async function postStatisticsToSlack() {
                 every: { start: { lt: end } },
                 some: { start: { gte: begin, lt: end } },
             },
+            published: true,
         },
     });
 
