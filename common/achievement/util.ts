@@ -9,6 +9,9 @@ import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('Achievement');
 
 export const ACHIEVEMENT_IMAGE_DEFAULT_PATH = 'gamification/achievements';
 
@@ -29,9 +32,8 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
     return [relationType as RelationTypes, id];
 }
 
-// TODO: fix naming
-export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
-    const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
+export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
+    const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause = {};
 
@@ -45,13 +47,15 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
         }
     }
 
+    logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
+
     let matches = [];
     if (!relationType || relationType === 'match') {
         matches = await prisma.match.findMany({
-            where: { ...whereClause, [`${userType}Id`]: userId },
+            where: { ...whereClause, [`${userType}Id`]: id },
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
             },
         });
     }
@@ -60,15 +64,15 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
     if (!relationType || relationType === 'subcourse') {
         let subcourseWhere = whereClause;
         if (userType === 'student') {
-            subcourseWhere = { ...subcourseWhere, subcourse_instructors_student: { some: { studentId: userId } } };
+            subcourseWhere = { ...subcourseWhere, subcourse_instructors_student: { some: { studentId: id } } };
         } else {
-            subcourseWhere = { ...subcourseWhere, subcourse_participants_pupil: { some: { pupilId: userId } } };
+            subcourseWhere = { ...subcourseWhere, subcourse_participants_pupil: { some: { pupilId: id } } };
         }
         subcourses = await prisma.subcourse.findMany({
             where: subcourseWhere,
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
             },
         });
     }

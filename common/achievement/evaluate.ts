@@ -58,11 +58,16 @@ async function _evaluateAchievement(
         // we take the relation from the first event, that posesses one, in order to create buckets from it, if needed
 
         if (!bucketCreatorDefs[bucketCreator] || !aggregators[bucketAggregator] || !aggregators[aggregator]) {
-            logger.error(
-                `No bucket creator or aggregator function found for ${bucketCreator}, ${aggregator} or ${bucketAggregator} during the evaluation of achievement`
-            );
+            logger.error(`No bucket creator or aggregator function found during the evaluation of achievement`, null, {
+                bucketCreator,
+                aggregator,
+                bucketAggregator,
+                dataKey: key,
+                metric: metricName,
+            });
             return;
         }
+        logger.info('Using aggregator functions', { bucketCreator, aggregator, bucketAggregator, dataKey: key, metric: metricName });
 
         const bucketCreatorFunction = bucketCreatorDefs[bucketCreator].function;
         const bucketAggregatorFunction = aggregators[bucketAggregator].function;
