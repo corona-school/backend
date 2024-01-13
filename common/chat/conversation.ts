@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { checkResponseStatus, convertConversationInfosToString, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { User, userForPupil, userForStudent } from '../user';
 import { getPupil, getStudent } from '../../graphql/util';
-import { AllConversations, ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
+import { ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, TJConversation } from './types';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
 import { assureChatFeatureActive } from './util';
@@ -91,28 +91,46 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-const getAllConversations = async (direction: ConversationDirectionEnum = ConversationDirectionEnum.ASC, startingAfter?: string): Promise<AllConversations> => {
+async function* getAllConversations(): AsyncIterable<TJConversation> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
-    const apiURL = `${TALKJS_CONVERSATION_API_URL}?limit=30&orderBy=lastActivity&orderDirection=${direction}`;
-    const apiURLPag = `${TALKJS_CONVERSATION_API_URL}?limit=300&orderBy=lastActivity&orderDirection=${direction}&startingAfter=${startingAfter}`;
 
-    const response = await fetch(startingAfter ? apiURLPag : apiURL, {
-        method: 'GET',
-        headers: {
-            Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
-            'Content-Type': 'application/json',
-        },
-    });
+    let startingAfter: string = undefined;
 
-    if (response.status !== 200) {
-        throw new Error(`Failed to get all conversations from TalkJS`);
-    }
+    do {
+        const LIMIT = 30;
+        let url = `${TALKJS_CONVERSATION_API_URL}?limit=${LIMIT}&orderBy=lastActivity&orderDirection=ASC`;
+        if (startingAfter) {
+            url += `&startingAfter=${startingAfter}`;
+        }
 
-    const result = await response.json();
-    logger.info(`Got all conversations`, { result });
-    return result;
-};
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.status !== 200) {
+            const text = await response.text();
+            logger.warn(`Failed to get all conversations from TalkJS`, { status: response.status, text });
+            throw new Error(`Failed to get all conversations from TalkJS`);
+        }
+
+        const result = await response.json();
+        const conversations = result.data;
+        logger.info(`Got ${conversations.length} conversations on this page, startingAfter: ${startingAfter}`);
+        yield* conversations;
+
+        if (conversations.length < LIMIT) {
+            // If the result is smaller than the limit, we have reached the end
+            return;
+        }
+
+        startingAfter = conversations[conversations.length - 1]?.id;
+    } while (true);
+}
 
 async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get last unread conversation.`);

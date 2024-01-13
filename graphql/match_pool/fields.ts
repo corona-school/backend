@@ -131,7 +131,7 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
     async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.confirmInterest) {
+        if (!matchPool.toggles.includes('confirmation-unknown')) {
             return 0;
         }
 
@@ -141,7 +141,7 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     async pupilsToRequestInterest(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.confirmInterest) {
+        if (!matchPool.toggles.includes('confirmation-unknown') && !matchPool.toggles.includes('pupil-screening-unknown')) {
             return [];
         }
 
@@ -151,7 +151,7 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     async pupilsToScreen(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.needsScreening) {
+        if (!matchPool.toggles.includes('pupil-screening-unknown')) {
             return [];
         }
 

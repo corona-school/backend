@@ -34,11 +34,14 @@ export async function createMockNotification(
         }) { id }
     }`);
 
-    await adminClient.request(`mutation Activate${description} { notificationActivate(notificationId: ${id}, active: true)}`);
+    await addMockNotification(id);
+    return { id };
+}
+
+export async function addMockNotification(id: number) {
+    await adminClient.request(`mutation Activate${id} { notificationActivate(notificationId: ${id}, active: true)}`);
 
     currentMockedNotifications.push(id);
-
-    return { id };
 }
 
 export async function cleanupMockedNotifications() {

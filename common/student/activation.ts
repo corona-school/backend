@@ -31,7 +31,7 @@ export async function deactivateStudent(student: Student, silent = false, reason
         },
     });
     for (const match of matches) {
-        await dissolveMatch(match, dissolve_reason.accountDeactivated, student, dissolved_by_enum.student);
+        await dissolveMatch(match, [dissolve_reason.accountDeactivated], student, dissolved_by_enum.student);
     }
 
     // Remove any pending certificates, so that they no longer show up in pupil dashboards

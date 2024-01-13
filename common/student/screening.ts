@@ -17,7 +17,7 @@ interface ScreeningInput {
 
 const logger = getLogger('Student Screening');
 
-export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
+export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
     await prisma.instructor_screening.create({
         data: {
             ...screening,
@@ -27,7 +27,13 @@ export async function addInstructorScreening(screener: Screener, student: Studen
     });
 
     if (screening.success) {
-        await scheduleCoCReminders(student);
+        if (!skipCoC) {
+            await scheduleCoCReminders(student);
+        } else {
+            await logTransaction('skippedCoC', student, { screenerId: screener.id });
+            logger.info(`Skipped CoC for Student (${student.id}) by Screener (${screener.id}) `);
+        }
+
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_success', {});
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
