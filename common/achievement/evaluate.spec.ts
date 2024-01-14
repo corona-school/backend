@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { achievement_event, lecture, match, subcourse } from '@prisma/client';
 import { prismaMock } from '../../jest/singletons';
 import { evaluateAchievement } from './evaluate';
@@ -95,6 +95,7 @@ describe('evaluate condition without default bucket aggregator', () => {
 
 describe('evaluate record value condition with time buckets', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
+    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
     const today = moment();
@@ -300,6 +301,7 @@ function createLecture({ start }: { start: Date }): lecture {
 
 describe('evaluate bucket with match / subcourse context', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
+    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
     const today = moment();
