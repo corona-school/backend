@@ -50,25 +50,6 @@ export class ExtendedFieldsMatchResolver {
         return getOverlappingSubjects(pupil, student);
     }
 
-    // Unfortunately it is difficult to define conditional access on a user's email without raising field level access restrictions,
-    //  which we don't really want as the email is very sensitive data.
-    // Thus in hope that a proper Chat will soon replace email communication, manually release the fields through this indirection:
-    @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER)
-    async pupilEmail(@Root() match: Match) {
-        return await (
-            await prisma.pupil.findUniqueOrThrow({ where: { id: match.pupilId }, select: { email: true } })
-        ).email;
-    }
-
-    @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER)
-    async studentEmail(@Root() match: Match) {
-        return await (
-            await prisma.student.findUniqueOrThrow({ where: { id: match.studentId }, select: { email: true } })
-        ).email;
-    }
-
     @FieldResolver((returns) => [Appointment])
     @Authorized(Role.ADMIN, Role.OWNER)
     async appointments(@Ctx() context: GraphQLContext, @Root() match: Match) {
