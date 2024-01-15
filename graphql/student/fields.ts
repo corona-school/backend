@@ -189,4 +189,29 @@ export class ExtendFieldsStudentResolver {
             take: 100,
         });
     }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.STUDENT)
+    async doesCourseOfferAchievementExist(@Root() student: Required<Student>) {
+        // TODO - add right templateId
+        const courseOfferAchievements = await prisma.user_achievement.findMany({ where: { templateId: 1, userId: userForStudent(student).userID } });
+        if (courseOfferAchievements.length > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.STUDENT, Role.PUPIL)
+    async doesNewMatchAchievementExist(@Root() student: Required<Student>) {
+        // TODO - add right templateIds
+
+        const newMatchAchievements = await prisma.user_achievement.findMany({ where: { templateId: 1, userId: userForStudent(student).userID } });
+        if (newMatchAchievements.length > 0) {
+            return true;
+        }
+
+        return false;
+    }
 }
