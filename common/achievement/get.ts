@@ -54,7 +54,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         },
     });
 
-    const tieredAchievements = tieredTemplates.map((template) => {
+    const tieredAchievements = tieredTemplates.map(async (template) => {
         const dataAggregationKeys = Object.keys(template.conditionDataAggregations);
         const maxValue = dataAggregationKeys
             .map((key) => {
@@ -66,7 +66,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             name: template.name,
             subtitle: template.subtitle,
             description: template.description,
-            image: getAchievementImageURL(template.image),
+            image: await getAchievementImageURL(template),
             alternativeText: 'alternativeText',
             actionType: template.actionType as achievement_action_type_enum,
             achievementType: template.type as achievement_type_enum,
@@ -80,7 +80,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             actionRedirectLink: template.actionRedirectLink,
         };
     });
-    return tieredAchievements;
+    return Promise.all(tieredAchievements);
 };
 // User achievements are already started by the user and are either active or completed.
 const getUserAchievements = async (user: User): Promise<Achievement[]> => {
@@ -179,7 +179,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
-        image: getAchievementImageURL(currentAchievementTemplate.image),
+        image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].context),
         alternativeText: 'alternativeText',
         actionType: currentAchievementTemplate.actionType as achievement_action_type_enum,
         achievementType: currentAchievementTemplate.type as achievement_type_enum,

@@ -11,6 +11,8 @@ import { Achievement_template, User_achievement } from '../../graphql/generated'
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
 
+const courseDefaultImage =
+    process.env.WEBFLOW_COURSE_DEFAULT_IMAGE || 'https://assets.website-files.com/5e3f6ff0f8a9c2a0a1e1f6c6/5e3f6ff0f8a9c2a0a1e1f6f0_default-course-image.png';
 const logger = getLogger('Achievement');
 
 export const ACHIEVEMENT_IMAGE_DEFAULT_PATH = 'gamification/achievements';
@@ -19,8 +21,18 @@ export function getAchievementImageKey(imageKey: string) {
     return join(ACHIEVEMENT_IMAGE_DEFAULT_PATH, `${imageKey}`);
 }
 
-export function getAchievementImageURL(imageKey: string) {
-    return accessURLForKey(imageKey);
+export async function getAchievementImageURL(template: Achievement_template, state?: achievement_state, achievementContext?: Prisma.JsonValue) {
+    const templateIdsForCourseImage = [10];
+    const { id, image, achievedImage } = template;
+    const courseId = achievementContext?.['courseId'];
+    if (courseId && templateIdsForCourseImage.includes(id)) {
+        const { imageKey } = await prisma.course.findUnique({ where: { id: Number(courseId) }, select: { imageKey: true } });
+        return imageKey ? accessURLForKey(imageKey) : courseDefaultImage;
+    }
+    if (state === achievement_state.COMPLETED && achievedImage) {
+        return accessURLForKey(achievedImage);
+    }
+    return accessURLForKey(image);
 }
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
