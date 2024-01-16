@@ -64,7 +64,6 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: add offer course metric listening to 2 actions - screening_success and course_created
     /* OFFER COURSE */
     createMetric('student_create_course', ['instructor_course_created'], () => {
         return 1;

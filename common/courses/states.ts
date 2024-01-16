@@ -21,6 +21,7 @@ import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('Course States');
 
@@ -76,6 +77,15 @@ export async function allowCourse(course: Course, screeningComment: string | nul
             await publishSubcourse(subcourse);
         }
     }
+
+    const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id } });
+    const instructors = await prisma.course_instructors_student.findMany({ where: { courseId: course.id }, select: { student: true } });
+    instructors.forEach(async (instructor) => {
+        await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
+            courseName: course.name,
+            relation: `subcourse/${subcourse.id}`,
+        });
+    });
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
@@ -219,6 +229,12 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
 export async function addCourseInstructor(user: User | null, course: Course, newInstructor: Student) {
     await prisma.course_instructors_student.create({ data: { courseId: course.id, studentId: newInstructor.id } });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Course(${course.id}) by User(${user?.userID})`);
+
+    const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id } });
+    await Notification.actionTaken(user, 'instructor_course_created', {
+        courseName: course.name,
+        relation: `subcourse/${subcourse.id}`,
+    });
 }
 
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {

@@ -100,9 +100,12 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
-        await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
-            courseName: course.name,
-            relation: `subcourse/${result.id}`,
+        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
+        instructors.forEach(async (instructor) => {
+            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_created', {
+                courseName: course.name,
+                relation: `subcourse/${result.id}`,
+            });
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;

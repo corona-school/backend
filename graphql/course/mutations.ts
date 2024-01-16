@@ -185,6 +185,15 @@ export class MutateCourseResolver {
 
         await prisma.course_instructors_student.delete({ where: { courseId_studentId: { courseId, studentId } } });
         logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user.userID})`);
+
+        const metrics = ['student_create_course', 'student_submit_course', 'student_approve_course'];
+        await prisma.user_achievement.deleteMany({
+            where: {
+                template: { metrics: { hasSome: metrics } },
+                userId: `student/${studentId}`,
+            },
+        });
+
         return true;
     }
 
@@ -197,27 +206,20 @@ export class MutateCourseResolver {
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
 
         const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
-        await Notification.actionTaken(context.user, 'instructor_course_submitted', {
-            courseName: course.name,
-            relation: `subcourse/${subcourse.id}`,
+        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
+        instructors.forEach(async (instructor) => {
+            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_created', {
+                courseName: course.name,
+                relation: `subcourse/${subcourse.id}`,
+            });
         });
-        // TODO: Was nutzen? subcourse oder course? Wie unterscheiden die sich?
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
-        const course = await getCourse(courseId);
         await allowCourse(await getCourse(courseId), screeningComment);
-
-        const student = await prisma.course.findUnique({ where: { id: courseId } }).student();
-        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
-        await Notification.actionTaken(userForStudent(student), 'instructor_course_approved', {
-            courseName: course.name,
-            relation: `subcourse/${subcourse.id}`,
-        });
-
         return true;
     }
 
