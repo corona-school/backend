@@ -79,7 +79,7 @@ export async function allowCourse(course: Course, screeningComment: string | nul
     }
 
     const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id } });
-    const instructors = await prisma.course_instructors_student.findMany({ where: { courseId: course.id }, select: { student: true } });
+    const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
     instructors.forEach(async (instructor) => {
         await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
             courseName: course.name,
@@ -162,6 +162,20 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
+
+    const courseInstructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
+    await prisma.user_achievement.deleteMany({
+        where: {
+            userId: {
+                in: courseInstructors.map((instructor) => {
+                    const user = userForStudent(instructor.student);
+                    return user.userID;
+                }),
+            },
+            group: 'student_offer_course',
+            context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
+        },
+    });
 }
 
 /* --------------- Modify Subcourse ------------------- */
@@ -229,12 +243,6 @@ export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcou
 export async function addCourseInstructor(user: User | null, course: Course, newInstructor: Student) {
     await prisma.course_instructors_student.create({ data: { courseId: course.id, studentId: newInstructor.id } });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Course(${course.id}) by User(${user?.userID})`);
-
-    const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id } });
-    await Notification.actionTaken(user, 'instructor_course_created', {
-        courseName: course.name,
-        relation: `subcourse/${subcourse.id}`,
-    });
 }
 
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
@@ -247,5 +255,10 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
         await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
     }
 
+    const { name } = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { name: true } });
+    await Notification.actionTaken(userForStudent(newInstructor), 'instructor_course_created', {
+        courseName: name,
+        relation: `subcourse/${subcourse.id}`,
+    });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }

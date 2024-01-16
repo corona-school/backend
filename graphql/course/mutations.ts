@@ -109,12 +109,24 @@ export class MutateCourseResolver {
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
 
-        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
-        const { context: contextData } = await prisma.user_achievement.findFirst({ where: { group: 'student_offer_course' } });
+        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
+        const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
+        const { context: contextData } = await prisma.user_achievement.findFirst({
+            where: { group: 'student_offer_course', context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
+        });
         contextData['courseName'] = result.name;
         await prisma.user_achievement.updateMany({
-            where: { userId: { in: instructors.map((it) => `student/${it.student}`) } },
-            data: { context: { contextData } },
+            where: {
+                userId: {
+                    in: instructors.map((it) => {
+                        const user = userForStudent(it.student);
+                        return user.userID;
+                    }),
+                },
+                group: 'student_offer_course',
+                context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
+            },
+            data: { context: contextData },
         });
 
         return result;
@@ -194,15 +206,6 @@ export class MutateCourseResolver {
 
         await prisma.course_instructors_student.delete({ where: { courseId_studentId: { courseId, studentId } } });
         logger.info(`Student (${studentId}) was deleted from Course(${courseId}) by User(${context.user.userID})`);
-
-        const metrics = ['student_create_course', 'student_submit_course', 'student_approve_course'];
-        await prisma.user_achievement.deleteMany({
-            where: {
-                template: { metrics: { hasSome: metrics } },
-                userId: `student/${studentId}`,
-            },
-        });
-
         return true;
     }
 
@@ -215,9 +218,9 @@ export class MutateCourseResolver {
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
 
         const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
-        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
+        const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
         instructors.forEach(async (instructor) => {
-            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_created', {
+            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
                 courseName: course.name,
                 relation: `subcourse/${subcourse.id}`,
             });

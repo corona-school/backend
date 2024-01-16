@@ -100,12 +100,9 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
-        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
-        instructors.forEach(async (instructor) => {
-            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_created', {
-                courseName: course.name,
-                relation: `subcourse/${result.id}`,
-            });
+        await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
+            courseName: course.name,
+            relation: `subcourse/${result.id}`,
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;
@@ -118,7 +115,6 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
-        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
@@ -135,7 +131,6 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
-        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
@@ -146,6 +141,16 @@ export class MutateSubcourseResolver {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
+
+        const metrics = ['student_create_course', 'student_submit_course', 'student_approve_course'];
+        await prisma.user_achievement.deleteMany({
+            where: {
+                template: { metrics: { hasSome: metrics } },
+                userId: `student/${studentId}`,
+                context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
+            },
+        });
+
         return true;
     }
 
