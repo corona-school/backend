@@ -33,10 +33,13 @@ export default async function execute() {
         const lastLecture = subcourse.lecture.sort((a, b) => a.start.getTime() - b.start.getTime())[subcourse.lecture.length - 1];
         if (lastLecture.start >= moment().subtract(1, 'day').startOf('day').toDate() && lastLecture.start < moment().startOf('day').toDate()) {
             const notificationCtx = await getNotificationContextForSubcourse(subcourse.course, subcourse);
+
             for (const instructor of subcourse.subcourse_instructors_student) {
                 await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_ended', {
                     uniqueId: String(subcourse.id),
                     relation: `subcourse/${subcourse.id}`,
+                    // TODO - filter cancelled / declined lecture
+                    subcourseLecturesCount: subcourse.lecture.length.toString(),
                     ...notificationCtx,
                 });
             }
@@ -44,6 +47,7 @@ export default async function execute() {
                 await Notification.actionTaken(userForPupil(participant.pupil), 'participant_course_ended', {
                     uniqueId: String(subcourse.id),
                     relation: `subcourse/${subcourse.id}`,
+                    subcourseLecturesCount: subcourse.lecture.length.toString(),
                     ...notificationCtx,
                 });
             }

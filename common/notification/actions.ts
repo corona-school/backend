@@ -204,6 +204,7 @@ const _notificationActions = {
         description: 'Participant / Course ended',
         sampleContext: {
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
             ...sampleCourse,
         },
     },
@@ -246,7 +247,7 @@ const _notificationActions = {
     },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
-        sampleContext: { relation: 'subcourse/1', ...sampleCourse },
+        sampleContext: { relation: 'subcourse/1', subcourseLecturesCount: '5', ...sampleCourse },
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',

@@ -1287,7 +1287,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Wow! Du hast alle geplanten Termine erfolgreich durchgeführt.',
-            condition: '',
+            condition: 'student_joined_meeting_count == {{courseLectureCount}}',
             conditionDataAggregations: {
                 '': { metric: 'student_course_end' },
             },
