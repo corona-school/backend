@@ -108,6 +108,15 @@ export class MutateCourseResolver {
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
+
+        const instructors = await prisma.course_instructors_student.findMany({ where: { courseId }, select: { student: true } });
+        const { context: contextData } = await prisma.user_achievement.findFirst({ where: { group: 'student_offer_course' } });
+        contextData['courseName'] = result.name;
+        await prisma.user_achievement.updateMany({
+            where: { userId: { in: instructors.map((it) => `student/${it.student}`) } },
+            data: { context: { contextData } },
+        });
+
         return result;
     }
 
