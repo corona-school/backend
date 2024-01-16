@@ -94,7 +94,8 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 }
 
 export function transformPrismaJson(user: User, json: Prisma.JsonValue): AchievementContextType | null {
-    if (!json['match'] && !json['subcourse']) {
+    const keys = Object.keys(json);
+    if (!keys) {
         return null;
     }
     const transformedJson: AchievementContextType = {
@@ -102,6 +103,11 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
         match: json['match'] ? json['match'] : undefined,
         subcourse: json['subcourse'] ? json['subcourse'] : undefined,
     };
+    keys.forEach((key) => {
+        if (key !== 'match' && key !== 'subcourse') {
+            transformedJson[key] = json[key];
+        }
+    });
     return transformedJson;
 }
 

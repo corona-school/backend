@@ -11,12 +11,14 @@ import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
+import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
+import { userForStudent } from '../../common/user';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -193,13 +195,29 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
+
+        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
+        await Notification.actionTaken(context.user, 'instructor_course_submitted', {
+            courseName: course.name,
+            relation: `subcourse/${subcourse.id}`,
+        });
+        // TODO: Was nutzen? subcourse oder course? Wie unterscheiden die sich?
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
+        const course = await getCourse(courseId);
         await allowCourse(await getCourse(courseId), screeningComment);
+
+        const student = await prisma.course.findUnique({ where: { id: courseId } }).student();
+        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
+        await Notification.actionTaken(userForStudent(student), 'instructor_course_approved', {
+            courseName: course.name,
+            relation: `subcourse/${subcourse.id}`,
+        });
+
         return true;
     }
 
