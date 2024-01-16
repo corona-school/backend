@@ -36,12 +36,14 @@ export default async function execute() {
             for (const instructor of subcourse.subcourse_instructors_student) {
                 await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_ended', {
                     uniqueId: String(subcourse.id),
+                    relation: `subcourse/${subcourse.id}`,
                     ...notificationCtx,
                 });
             }
             for (const participant of subcourse.subcourse_participants_pupil) {
                 await Notification.actionTaken(userForPupil(participant.pupil), 'participant_course_ended', {
                     uniqueId: String(subcourse.id),
+                    relation: `subcourse/${subcourse.id}`,
                     ...notificationCtx,
                 });
             }

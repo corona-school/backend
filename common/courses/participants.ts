@@ -246,12 +246,18 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
             const context = await getNotificationContextForSubcourse(course, subcourse);
             if (leftWaitingList) {
-                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', context);
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', {
+                    relation: `subcourse/${subcourse.id}`,
+                    ...context,
+                });
             } else {
-                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', context);
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', {
+                    relation: `subcourse/${subcourse.id}`,
+                    ...context,
+                });
             }
 
-            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', context);
+            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', { relation: `subcourse/${subcourse.id}`, ...context });
         } catch (error) {
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }

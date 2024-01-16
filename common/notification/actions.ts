@@ -145,6 +145,7 @@ const _notificationActions = {
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
+            relation: 'subcourse/1',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -152,6 +153,7 @@ const _notificationActions = {
     participant_course_joined_from_waitinglist: {
         description: 'Participant / Joined Course from Waitinglist',
         sampleContext: {
+            relation: 'subcourse/1',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -159,6 +161,7 @@ const _notificationActions = {
     participant_course_joined_directly: {
         description: 'Participant / Joined Course directly (not from Waitinglist)',
         sampleContext: {
+            relation: 'subcourse/1',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -199,7 +202,10 @@ const _notificationActions = {
     },
     participant_course_ended: {
         description: 'Participant / Course ended',
-        sampleContext: sampleCourse,
+        sampleContext: {
+            relation: 'subcourse/1',
+            ...sampleCourse,
+        },
     },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
@@ -209,12 +215,7 @@ const _notificationActions = {
     },
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
-        sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
-        },
+        sampleContext: { relation: 'subcourse/1', ...sampleCourse },
     },
     instructor_course_cancelled: {
         description: 'Instructor / Course cancelled',
@@ -245,7 +246,7 @@ const _notificationActions = {
     },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
-        sampleContext: sampleCourse,
+        sampleContext: { relation: 'subcourse/1', ...sampleCourse },
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
@@ -671,18 +672,21 @@ const _notificationActions = {
         description: 'Student joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
+            relation: 'subcourse/1',
         },
     },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             matchId: '1',
+            relation: 'subcourse/1',
         },
     },
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
             subcourseId: '1',
+            relation: 'subcourse/1',
         },
     },
     TEST: {

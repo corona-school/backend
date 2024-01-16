@@ -30,4 +30,26 @@ export class MutateAchievementResolver {
 
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') subcourseId: number) {
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        if (user.studentId) {
+            await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
+                subcourseId: subcourseId.toString(),
+                relation: `subcourse/${subcourseId}`,
+            });
+        } else if (user.pupilId) {
+            await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
+                subcourseId: subcourseId.toString(),
+                relation: `subcourse/${subcourseId}`,
+            });
+        }
+
+        return true;
+    }
 }

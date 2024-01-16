@@ -64,11 +64,29 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: add offer course metric listening to 2 actions - screening_success and course_created
+    /* COURSE END SUCCESS */
+    // TODO - where can we store that we need joined_subcourse events to evaluate
+    createMetric('student_course_create', ['instructor_course_created'], () => {
+        return 1;
+    }),
+    createMetric('student_course_end', ['instructor_course_ended'], () => {
+        return 1;
+    }),
 
-    // TODO: new match metric listening to 2 actions - screening_success and match_requested
+    createMetric(
+        'pupil_course_joined',
+        ['participant_course_joined', 'participant_course_joined_from_waitinglist', 'participant_course_joined_directly'],
+        () => {
+            return 1;
+        }
+    ),
+    createMetric('pupil_course_end', ['participant_course_ended'], () => {
+        return 1;
+    }),
 
-    // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
+    // TODO: add offer course metric listening to 2 actions - screening_success and course_created?
+
+    // TODO: new match metric listening to 2 actions - screening_success and match_requested?
 ];
 
 export function registerAchievementMetrics() {

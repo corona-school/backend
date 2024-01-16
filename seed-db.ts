@@ -754,10 +754,11 @@ void (async function setupDevDB() {
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 1,
-            stepName: 'Verifizieren',
+            stepName: 'E-Mail verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/empty_state.png',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
@@ -777,8 +778,9 @@ void (async function setupDevDB() {
             groupOrder: 2,
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen. ',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_1.png',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
@@ -798,10 +800,11 @@ void (async function setupDevDB() {
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 3,
-            stepName: 'Screening absolvieren',
+            stepName: 'Kennenlerngespräch absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_2.png',
             achievedImage: '',
             actionName: 'Screening absolvieren',
@@ -821,8 +824,9 @@ void (async function setupDevDB() {
             groupOrder: 4,
             stepName: 'Führungszeugnis einreichen',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_3.png',
             achievedImage: '',
             actionName: 'Zeugnis einreichen',
@@ -842,8 +846,9 @@ void (async function setupDevDB() {
             groupOrder: 5,
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_4.png',
             achievedImage: '',
             actionName: null,
@@ -864,8 +869,9 @@ void (async function setupDevDB() {
             groupOrder: 1,
             stepName: 'Verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/empty_state.png',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
@@ -885,8 +891,9 @@ void (async function setupDevDB() {
             groupOrder: 2,
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen. ',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_1.png',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
@@ -908,8 +915,9 @@ void (async function setupDevDB() {
             groupOrder: 3,
             stepName: 'Screening absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_2.png',
             achievedImage: '',
             actionName: 'Screening absolvieren',
@@ -930,8 +938,9 @@ void (async function setupDevDB() {
             groupOrder: 4,
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            subtitle: 'Willkommen bei Lern-Fair 👋',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_3.png',
             achievedImage: '',
             actionName: null,
@@ -1235,6 +1244,108 @@ void (async function setupDevDB() {
         },
     });
 
+    // STUDENT COURSE END SUCCESS
+    // TODO - conditions!
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs erfolgreich beendet',
+            metrics: ['student_course_create'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_course_end_success',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.TIERED,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: '',
+            achievedImage: '',
+            actionName: 'Schließe alle Lektionen ab, um diesen Erfolg zu erhalten',
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+            condition: 'student_course_create_count > 1',
+            conditionDataAggregations: {
+                student_course_create_count: { metric: 'student_course_create', aggregator: 'count', valueToAchieve: 1 },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs erfolgreich beendet',
+            metrics: ['student_course_end'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_course_end_success',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.TIERED,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: '',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Wow! Du hast alle geplanten Termine erfolgreich durchgeführt.',
+            condition: '',
+            conditionDataAggregations: {
+                '': { metric: 'student_course_end' },
+            },
+            isActive: true,
+        },
+    });
+
+    // PUPIL COURSE END SUCCESS
+    // TODO - conditions!
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs erfolgreich beendet',
+            metrics: ['pupil_course_joined'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'pupil_course_end_success',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.TIERED,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: '',
+            achievedImage: '',
+            actionName: 'Schließe alle Lektionen ab, um diesen Erfolg zu erhalten',
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+            condition: 'pupil_course_joined_count > 1',
+            conditionDataAggregations: {
+                pupil_course_joined_count: { metric: 'pupil_course_joined', aggregator: 'count', valueToAchieve: 1 },
+            },
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs erfolgreich beendet',
+            metrics: ['pupil_course_end'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'pupil_course_end_success',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.TIERED,
+            subtitle: '{{course.name}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: '',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Wow! Du hast alle geplanten Termine erfolgreich durchgeführt.',
+            condition: 'pupil_course_lectures_count == course.lectures',
+            conditionDataAggregations: {
+                pupil_course_lectures_count: { metric: 'pupil_course_end', aggregator: 'count' },
+            },
+            isActive: true,
+        },
+    });
     // PUPIL REGULAR LEARNING
     await prisma.achievement_template.create({
         data: {
