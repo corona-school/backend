@@ -15,15 +15,16 @@ Achievements are a part of the Gamification. They are stored in the database as 
     4. [Check User Achievement](#check-user-achievement)
     5. [Evaluate Achievement](#evaluate-achievement)
 3.  [Buckets](#buckets)
-    1. [Bucket Concept](#bucket-concept)
-    2. [Bucket Types](#bucket-types)
-    3. [Aggregation Functions](#aggregation-functions)
-    4. [Aggregators](#aggregators)
-    5. [Data Aggregation](#data-aggregation)
+    1.  [Bucket Concept](#bucket-concept)
+    2.  [Bucket Types](#bucket-types)
+    3.  [Aggregation Functions](#aggregation-functions)
+    4.  [Aggregators](#aggregators)
+    5.  [Data Aggregation](#data-aggregation)
 4.  [Conditions](#conditions)
-    1. [Used Technologies](#used-technologies)
-    2. [Writing Conditions](#writing-conditions)
-5.  [Tracking Events](#tracking-events)
+    1.  [Used Technologies](#used-technologies)
+    2.  [Writing Conditions](#writing-conditions)
+5.  [Metrics](#metrics)
+6.  [Tracking Events](#tracking-events)
 
 ## 1. Features
 
@@ -43,7 +44,7 @@ Achievements are a part of the Gamification. They are stored in the database as 
 | :------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`                                                                | unique id                                                                                                                                                               |
 | `name`                                                              | displayed name of the template                                                                                                                                          |
-| `metrics`                                                           | used to identify all events related to a achievement template                                                                                                           |
+| <div id="achievement_template_metrics">`metrics`</div>              | used to identify all events related to a achievement template                                                                                                           |
 | `templateFor`                                                       | discriminator to clarify a relation of an achievement template to 1. one match, 2. all matches, 3. one subcourse, 4. all subcourses or no relation                      |
 | `group`                                                             | Affiliation of templates with the same group                                                                                                                            |
 | `groupOrder`                                                        | indexes to keep the templates inside group arrays in order                                                                                                              |
@@ -152,7 +153,7 @@ flowchart TD
 
 The achievement is linked to the pre-existing notification system and therefore triggers the `rewardActionTaken` function when ever the `actionTaken` function for a future notification is executed. This is working since achievements that have newly matched their conditions are announced as a notification, therefore naturally being linked to an action taken call.
 
-Based on the metrics for the action that triggered the `rewardActionTaken` function the templates for this action are fetched and sorted by their group. For every one of these groups the [`getOrCreateUserAchievement`](#get-or-create-user-achievement) function is called to receive the user_achievement from the database that has to be evaluated inside the [`checkUserAchievement`](#check-user-achievement) function, which is subsequently executed using the already received user_achievement.
+Based on the [metrics](#metrics) for the action that triggered the `rewardActionTaken` function the templates for this action are fetched and sorted by their group. For every one of these groups the [`getOrCreateUserAchievement`](#get-or-create-user-achievement) function is called to receive the user_achievement from the database that has to be evaluated inside the [`checkUserAchievement`](#check-user-achievement) function, which is subsequently executed using the already received user_achievement.
 
 ### 2.2. Get or Create User Achievement
 
@@ -176,7 +177,7 @@ The `rewardUser` function is updating the achievement that triggered it by setti
 
 ### 2.5. Evaluate Achievement
 
-In order to evaluate an achievement all related events are sorted by their metric and a potential `recordValue` is taken from the `resultObject`. Thereupon the [aggregations](#data-aggregation) are executed for every condition object found in the user_templates [`conditionDataAggregation`](#conditionDataAggregation).
+In order to evaluate an achievement all related events are sorted by their [metric](#metrics) and a potential `recordValue` is taken from the `resultObject`. Thereupon the [aggregations](#data-aggregation) are executed for every condition object found in the user_templates [`conditionDataAggregation`](#conditionDataAggregation).
 
 #### Evaluation of aggregated Values
 
@@ -285,7 +286,7 @@ When writing conditions for an achievement, keep in mind that the [conditionData
 
 #### How conditionDataAggregations are built
 
-A conditionDataAggregation has the form of a json object and can contain aggregation information for multiple conditions. In order to understand this process, it should be clear what metrics, [aggregators](#aggregators), [bucket aggregators](#bucket-aggregator), and [buckets](#buckets) are. The Objects are structured as shown below:
+A conditionDataAggregation has the form of a json object and can contain aggregation information for multiple conditions. In order to understand this process, it should be clear what [metrics](#metrics), [aggregators](#aggregators), [bucket aggregators](#bucket-aggregator), and [buckets](#buckets) are. The Objects are structured as shown below:
 
     {
         "condition_name": {
@@ -332,7 +333,18 @@ The condition is pretty similar to the one in example 1. This is due to the fact
 
 The object tells us that all events with the **metric** `student_conducted_match_appointment` will be pre sorted by week (**createBuckets**), these buckets will be checked if they contain any element (**presenceOfEvents**). All resulting values from the first bucket aggregation, being 1 or 0, are subsequently added up. This sum then is taken as the value for the variable `student_regular_participation`.
 
-## 5. Tracking Events
+## 5. Metrics
+
+The metric is the core element.  
+It fundamentally defines what is resulting for specific actions and is the connecting element between event and achievement.
+
+The assignment of events to a metric is crucial for proper evaluation, and this information is stored in the [achievement template](#achievement_template_metrics). This process becomes pivotal when assessing achievements, as our goal is to selectively retrieve events that have been specifically created for a particular metric. In essence, we aim to pinpoint the precise events that hold relevance for the achievement under consideration.
+
+The achievement template not only encompasses the metrics, listening to the designated actions but also incorporates a formula responsible for calculating the event value. This calculated value is then stored in the achievement_event.
+
+To illustrate the formula's functionality, consider the scenario of calculating the duration during which a user participated in a meeting. Another example involves a simpler case where the formula returns a value of 1, indicating that a user attended an appointment. These examples highlight the versatility of the formula, adapting to different metrics and actions within the achievement framework.
+
+## 6. Tracking Events
 
 Events can be tracked by using the id of the action, initiating the whole evaluation process for achievements. After selecting all metrics that are related to this action id, for every metric found, achievement events are created and stored in the database. An [achievement_event](#achievement_event) holds all the information necessary for the aggregation, later in the process.
 The value for this achievement_event comes from a function, linked to the metric the event was created for. All metrics, as well as their related actions and functions, are to be found in [metric.ts](#metric.ts).
