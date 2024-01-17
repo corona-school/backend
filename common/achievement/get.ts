@@ -192,7 +192,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                       if (index < achievementTemplates.length - 1 && achievement.isActive) {
                           return {
                               name: achievement.stepName,
-                              isActive: index === currentAchievementIndex + 1,
+                              isActive: index === currentAchievementIndex,
                           };
                       }
                       return null;
