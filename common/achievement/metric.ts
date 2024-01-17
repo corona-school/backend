@@ -65,7 +65,6 @@ const batchOfMetrics = [
     }),
 
     /* COURSE END SUCCESS */
-    // TODO - where can we store that we need joined_subcourse events to evaluate
     createMetric('student_course_create', ['instructor_course_created'], () => {
         return 1;
     }),
@@ -73,14 +72,10 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    createMetric(
-        'pupil_course_joined',
-        ['participant_course_joined', 'participant_course_joined_from_waitinglist', 'participant_course_joined_directly'],
-        () => {
-            return 1;
-        }
-    ),
-    createMetric('pupil_course_end', ['participant_course_ended'], () => {
+    createMetric('pupil_course_joined', ['participant_course_joined'], () => {
+        return 1;
+    }),
+    createMetric('pupil_joined_subcourse_meeting', ['pupil_joined_subcourse_meeting'], () => {
         return 1;
     }),
 

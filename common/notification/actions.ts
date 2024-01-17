@@ -146,6 +146,7 @@ const _notificationActions = {
         description: 'Participant / Joined Course',
         sampleContext: {
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -154,6 +155,7 @@ const _notificationActions = {
         description: 'Participant / Joined Course from Waitinglist',
         sampleContext: {
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -162,6 +164,7 @@ const _notificationActions = {
         description: 'Participant / Joined Course directly (not from Waitinglist)',
         sampleContext: {
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
             ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
@@ -693,8 +696,8 @@ const _notificationActions = {
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     TEST: {

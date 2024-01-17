@@ -245,19 +245,15 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
 
             const context = await getNotificationContextForSubcourse(course, subcourse);
-            if (leftWaitingList) {
-                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', {
-                    relation: `subcourse/${subcourse.id}`,
-                    ...context,
-                });
-            } else {
-                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', {
-                    relation: `subcourse/${subcourse.id}`,
-                    ...context,
-                });
-            }
-
-            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', { relation: `subcourse/${subcourse.id}`, ...context });
+            const lectures = await prisma.lecture.findMany({
+                where: { subcourseId: subcourse.id, isCanceled: false },
+            });
+            const lecturesCount = lectures.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(userForPupil(pupil).userID) ? 0 : 1), 0);
+            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
+                relation: `subcourse/${subcourse.id}`,
+                subcourseLecturesCount: lecturesCount.toString(),
+                ...context,
+            });
         } catch (error) {
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }

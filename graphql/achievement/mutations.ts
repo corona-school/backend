@@ -47,8 +47,8 @@ export class MutateAchievementResolver {
         } else if (user.pupilId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
             await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
-                subcourseId: subcourseId.toString(),
                 relation: `subcourse/${subcourseId}`,
+                subcourseLecturesCount: lecturesCount.toString(),
             });
         }
 

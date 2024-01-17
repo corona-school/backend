@@ -242,5 +242,11 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
         await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
     }
 
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    const lecturesCount = lectures.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
+    await Notification.actionTaken(userForStudent(newInstructor), 'instructor_course_created', {
+        relation: `subcourse/${subcourse.id}`,
+        subcourseLecturesCount: lecturesCount.toString(),
+    });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }

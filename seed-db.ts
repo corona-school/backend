@@ -1245,7 +1245,6 @@ void (async function setupDevDB() {
     });
 
     // STUDENT COURSE END SUCCESS
-    // TODO - conditions!
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs erfolgreich beendet',
@@ -1279,11 +1278,10 @@ void (async function setupDevDB() {
     });
 
     // PUPIL COURSE END SUCCESS
-    // TODO - conditions!
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs erfolgreich beendet',
-            metrics: ['pupil_course_joined'],
+            metrics: ['pupil_course_joined', 'pupil_joined_subcourse_meeting'],
             templateFor: achievement_template_for_enum.Course,
             group: 'pupil_course_end_success',
             groupOrder: 1,
@@ -1297,38 +1295,20 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_course_joined_count > 1',
+            condition: 'pupil_course_joined_count > {{subcourseLecturesCount}}',
             conditionDataAggregations: {
-                pupil_course_joined_count: { metric: 'pupil_course_joined', aggregator: 'count', valueToAchieve: 1 },
+                pupil_course_joined_count: {
+                    metric: 'pupil_joined_subcourse_meeting',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: '{{subcourseLecturesCount}}',
+                },
             },
             isActive: true,
         },
     });
 
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Kurs erfolgreich beendet',
-            metrics: ['pupil_course_end'],
-            templateFor: achievement_template_for_enum.Course,
-            group: 'pupil_course_end_success',
-            groupOrder: 1,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '{{course.name}}',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: '',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Wow! Du hast alle geplanten Termine erfolgreich durchgeführt.',
-            condition: 'pupil_course_lectures_count == course.lectures',
-            conditionDataAggregations: {
-                pupil_course_lectures_count: { metric: 'pupil_course_end', aggregator: 'count' },
-            },
-            isActive: true,
-        },
-    });
     // PUPIL REGULAR LEARNING
     await prisma.achievement_template.create({
         data: {
