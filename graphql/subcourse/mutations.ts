@@ -71,7 +71,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.INSTRUCTOR)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -80,27 +80,39 @@ export class MutateSubcourseResolver {
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-
-        const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
-        const result = await prisma.subcourse.create({
-            data: {
-                courseId,
-                published: false,
-                joinAfterStart,
-                minGrade,
-                maxGrade,
-                maxParticipants,
-                allowChatContactParticipants,
-                allowChatContactProspects,
-                groupChatType,
+        const courseInstructorAssociation = await prisma.course_instructors_student.findFirst({
+            where: {
+                courseId: courseId,
+                studentId: studentId,
             },
         });
+        const isCourseSharedOrOwned = !!courseInstructorAssociation || course.shared;
+        if (!isCourseSharedOrOwned) {
+            logger.error(`Subcourse(${courseId}) is not shared or Student(${studentId}) is not an instructor of this subcourse`);
+            throw new PrerequisiteError('This subcourse is not shared or you are not the instructor of this subcourse!');
+        }
 
-        const student = await getSessionStudent(context, studentId);
-        await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
+        if (isCourseSharedOrOwned) {
+            const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
+            const result = await prisma.subcourse.create({
+                data: {
+                    courseId,
+                    published: false,
+                    joinAfterStart,
+                    minGrade,
+                    maxGrade,
+                    maxParticipants,
+                    allowChatContactParticipants,
+                    allowChatContactProspects,
+                    groupChatType,
+                },
+            });
+            const student = await getSessionStudent(context, studentId);
+            await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
-        logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
-        return result;
+            logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
+            return result;
+        }
     }
 
     @Mutation((returns) => Boolean)
