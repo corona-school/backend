@@ -1248,7 +1248,7 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs erfolgreich beendet',
-            metrics: ['instructor_course_created', 'student_joined_subcourse_meeting'],
+            metrics: ['student_course_create', 'student_joined_subcourse_meeting'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_course_end_success',
             groupOrder: 1,
