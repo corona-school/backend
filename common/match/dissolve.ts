@@ -5,7 +5,7 @@ import { userForStudent, userForPupil } from '../user';
 import { logTransaction } from '../transactionlog/log';
 // eslint-disable-next-line camelcase
 import { Project_match } from '../../graphql/generated';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
@@ -14,16 +14,20 @@ import moment from 'moment';
 
 const logger = getLogger('Match');
 
-export async function dissolveMatch(match: Match, dissolveReason: dissolve_reason, dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
+export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reason[], dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
+    }
+
+    if (dissolveReasons.length === 0) {
+        throw new PrerequisiteError('Must specify at least one dissolve reason');
     }
 
     await prisma.match.update({
         where: { id: match.id },
         data: {
             dissolved: true,
-            dissolveReasonEnum: dissolveReason,
+            dissolveReasons: dissolveReasons,
             dissolvedAt: new Date(),
             dissolvedBy,
         },
@@ -75,7 +79,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
+        data: { dissolved: false, dissolveReasons: [], dissolvedAt: null },
         where: { id: match.id },
     });
 

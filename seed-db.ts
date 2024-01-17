@@ -292,10 +292,15 @@ void (async function setupDevDB() {
     });
     await addTutorScreening(screener1, student1, { success: true });
     await becomeInstructor(student1, {});
-    await addInstructorScreening(screener1, student1, {
-        success: true,
-        comment: 'success',
-    });
+    await addInstructorScreening(
+        screener1,
+        student1,
+        {
+            success: true,
+            comment: 'success',
+        },
+        false
+    );
 
     const student2 = await registerStudent({
         firstname: 'Melanie',
@@ -317,7 +322,7 @@ void (async function setupDevDB() {
     });
     await addTutorScreening(screener1, student2, { success: true });
     await becomeInstructor(student2, {});
-    await addInstructorScreening(screener1, student2, { success: true });
+    await addInstructorScreening(screener1, student2, { success: true }, false);
     await prisma.student.update({
         where: { id: student2.id },
         data: { zoomUserId: 'kLKyaiAyTNC-MWjiWCFFFF' },

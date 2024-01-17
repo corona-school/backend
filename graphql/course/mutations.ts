@@ -189,7 +189,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async courseDeleteInstructor(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);

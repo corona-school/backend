@@ -17,6 +17,7 @@ import { gradeAsInt } from '../../common/util/gradestrings';
 import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
 import { getCourseCapacity } from '../../common/courses/util';
+import { Chat, getChat } from '../chat/fields';
 
 @ObjectType()
 class Participant {
@@ -496,5 +497,15 @@ export class ExtendedFieldsSubcourseResolver {
             },
             orderBy: { start: 'asc' },
         });
+    }
+
+    @FieldResolver((returns) => Chat, { nullable: true })
+    @Authorized(Role.ADMIN)
+    async chat(@Root() subcourse: Required<Subcourse>) {
+        if (!subcourse.conversationId) {
+            return null;
+        }
+
+        return await getChat(subcourse.conversationId);
     }
 }

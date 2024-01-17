@@ -373,11 +373,11 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.OWNER)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
-
         await hasAccess(context, 'Subcourse', subcourse);
+
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);

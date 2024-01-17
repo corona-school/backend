@@ -19,8 +19,8 @@ import { prisma } from '../../common/prisma';
 class MatchDissolveInput {
     @TypeGraphQL.Field((_type) => Int)
     matchId!: number;
-    @TypeGraphQL.Field((_type) => dissolve_reason)
-    dissolveReason!: dissolve_reason;
+    @TypeGraphQL.Field((_type) => [dissolve_reason])
+    dissolveReasons!: dissolve_reason[];
 }
 
 @Resolver((of) => GraphQLModel.Match)
@@ -45,6 +45,7 @@ export class MutateMatchResolver {
     async matchDissolve(@Ctx() context: GraphQLContext, @Arg('info') info: MatchDissolveInput): Promise<boolean> {
         const match = await getMatch(info.matchId);
         await hasAccess(context, 'Match', match);
+
         let dissolvedBy: dissolved_by_enum;
         let dissolver = null;
         if (context.user.pupilId != null) {
@@ -57,15 +58,14 @@ export class MutateMatchResolver {
             dissolvedBy = dissolved_by_enum.admin;
         }
 
-        await dissolveMatch(match, info.dissolveReason, dissolver, dissolvedBy);
+        await dissolveMatch(match, info.dissolveReasons, dissolver, dissolvedBy);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN)
-    async matchReactivate(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
+    @Authorized(Role.ADMIN)
+    async matchReactivate(@Arg('matchId', (type) => Int) matchId: number): Promise<boolean> {
         const match = await getMatch(matchId);
-        await hasAccess(context, 'Match', match);
         await reactivateMatch(match);
         const { conversation, conversationId } = await getMatcheeConversation({
             studentId: match.studentId,

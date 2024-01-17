@@ -34,6 +34,7 @@ import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
+import { ForbiddenError } from '../error';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -324,16 +325,25 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
+    async studentInstructorScreeningCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('studentId') studentId: number,
+        @Arg('screening') screening: ScreeningInput,
+        @Arg('skipCoC', { nullable: true }) skipCoC?: boolean
+    ) {
         const student = await getStudent(studentId);
 
         if (!student.isInstructor) {
             await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
             log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
         }
-
         const screener = await getSessionScreener(context);
-        await addInstructorScreening(screener, student, screening);
+        if (!!skipCoC && !context.user.roles.includes(Role.ADMIN)) {
+            log.warn(`Screener (${screener.id}) tried to skip CoC on Student (${student.id}) even though they're not an admin`);
+            throw new ForbiddenError(`Requiring admin role to skip CoC`);
+        }
+
+        await addInstructorScreening(screener, student, screening, !!skipCoC);
         return true;
     }
 
