@@ -205,7 +205,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
         progressDescription: userAchievements[currentAchievementIndex].achievedAt
             ? 'Hurra! alle Schritte wurden abgeschlossen'
-            : `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            : `Noch ${maxValue - currentValue} Schritte bis zum Abschluss`,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };

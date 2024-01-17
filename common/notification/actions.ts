@@ -216,7 +216,10 @@ const _notificationActions = {
     },
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
-        sampleContext: { relation: 'subcourse/1', ...sampleCourse },
+        sampleContext: {
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+        },
     },
     instructor_course_cancelled: {
         description: 'Instructor / Course cancelled',
@@ -247,7 +250,11 @@ const _notificationActions = {
     },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
-        sampleContext: { relation: 'subcourse/1', subcourseLecturesCount: '5', ...sampleCourse },
+        sampleContext: {
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+            ...sampleCourse,
+        },
     },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
@@ -672,8 +679,8 @@ const _notificationActions = {
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
             relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     pupil_joined_match_meeting: {

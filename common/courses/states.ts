@@ -21,6 +21,7 @@ import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('Course States');
 
@@ -76,6 +77,16 @@ export async function allowCourse(course: Course, screeningComment: string | nul
             await publishSubcourse(subcourse);
         }
     }
+
+    const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id }, include: { lecture: true } });
+    const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
+    const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
+    instructors.forEach(async (instructor) => {
+        await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_created', {
+            relation: `subcourse/${subcourse.id}`,
+            subcourseLecturesCount: lecturesCount.toString(),
+        });
+    });
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {

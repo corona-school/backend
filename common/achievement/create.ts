@@ -11,19 +11,17 @@ async function findUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
-    const keys = context ? Object.keys(context) : [];
+    const relation = context ? context.relation : undefined;
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
-            AND: keys.map((key) => {
-                return {
-                    context: {
-                        path: key,
-                        equals: context[key],
-                    },
-                };
-            }),
+            AND: relation && {
+                context: {
+                    path: ['relation'],
+                    equals: relation,
+                },
+            },
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });

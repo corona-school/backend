@@ -170,6 +170,27 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         }
     }
 
+    const { lecture } = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { lecture: { where: { isCanceled: false } } } });
+    const users = instructors.map((i) => userForStudent(i.student));
+    const { context } = await prisma.user_achievement.findFirst({
+        where: {
+            userId: { in: users.map((u) => u.userID) },
+            template: { group: 'student_course_end_success' },
+            context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
+        },
+        select: { context: true },
+    });
+    context['subcourseLecturesCount'] = lecture.length.toString();
+    await prisma.user_achievement.updateMany({
+        where: {
+            userId: { in: users.map((u) => u.userID) },
+            template: { group: 'student_course_end_success' },
+            context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
+        },
+        data: {
+            context,
+        },
+    });
     for (const instructor of instructors) {
         for (const appointment of createdGroupAppointments) {
             await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {

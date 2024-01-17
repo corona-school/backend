@@ -94,7 +94,8 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 }
 
 export function transformPrismaJson(user: User, json: Prisma.JsonValue): AchievementContextType | null {
-    if (!json['match'] && !json['subcourse']) {
+    const keys = Object.keys(json);
+    if (!keys) {
         return null;
     }
     const transformedJson: AchievementContextType = {
@@ -102,6 +103,11 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
         match: json['match'] ? json['match'] : undefined,
         subcourse: json['subcourse'] ? json['subcourse'] : undefined,
     };
+    keys.forEach((key) => {
+        if (key !== 'match' && key !== 'subcourse') {
+            transformedJson[key] = json[key];
+        }
+    });
     return transformedJson;
 }
 
@@ -114,6 +120,10 @@ export function getCurrentAchievementTemplateWithContext(userAchievement: User_a
                 ? renderTemplate(currentAchievementContext[key], achievementContext)
                 : currentAchievementContext[key];
         currentAchievementContext[key] = updatedElement;
+    });
+    Object.keys(currentAchievementContext.conditionDataAggregations).forEach((aggrValue) => {
+        const updatedValue = renderTemplate(JSON.stringify(currentAchievementContext.conditionDataAggregations[aggrValue]), achievementContext);
+        currentAchievementContext.conditionDataAggregations[aggrValue] = JSON.parse(updatedValue);
     });
     return currentAchievementContext;
 }

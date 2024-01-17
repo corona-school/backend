@@ -13,6 +13,7 @@ import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
 import { achievement_type_enum } from '../../graphql/generated';
 import { isGamificationFeatureActive } from '../../utils/environment';
+import { renderTemplate } from '../../utils/helpers';
 
 const logger = getLogger('Achievement');
 
@@ -151,7 +152,7 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
 
     const { conditionIsMet, resultObject } = await evaluateAchievement(
         userId,
-        condition,
+        renderTemplate(condition, event.context),
         conditionDataAggregations as ConditionDataAggregations,
         recordValue,
         event.context.relation

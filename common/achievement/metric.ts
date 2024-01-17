@@ -66,10 +66,10 @@ const batchOfMetrics = [
 
     /* COURSE END SUCCESS */
     // TODO - where can we store that we need joined_subcourse events to evaluate
-    createMetric('student_course_end_success', ['instructor_course_created', 'student_joined_subcourse_meeting'], () => {
+    createMetric('student_course_create', ['instructor_course_created'], () => {
         return 1;
     }),
-    createMetric('student_course_end', ['instructor_course_ended'], () => {
+    createMetric('student_joined_subcourse_meeting', ['student_joined_subcourse_meeting'], () => {
         return 1;
     }),
 
