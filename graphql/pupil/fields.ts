@@ -179,9 +179,11 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.STUDENT, Role.PUPIL)
     async doesNewMatchAchievementExist(@Root() pupil: Required<Pupil>) {
-        // TODO - add right templateIds
+        // TODO - add right templateIds / group
 
-        const newMatchAchievements = await prisma.user_achievement.findMany({ where: { templateId: 1, userId: userForPupil(pupil).userID } });
+        const newMatchAchievements = await prisma.user_achievement.findMany({
+            where: { templateId: 1, group: 'pupil_new_match', userId: userForPupil(pupil).userID },
+        });
         if (newMatchAchievements.length > 0) {
             return true;
         }
