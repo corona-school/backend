@@ -143,10 +143,6 @@ void test('Reward student conducted match appointment', async () => {
     await createStudentConductedMatchAppointmentTemplates();
     const { student, client } = await studentOne;
     const user = await getUser(student.userID);
-    await _createFixedToken(user, `authtokenStudent`);
-    await client.request(`
-        mutation auth { loginToken(token: "authtokenStudent") }
-    `);
 
     const uuid = generateUUID();
     const match = await prisma.match.create({
@@ -192,7 +188,7 @@ void test('Reward pupil conducted match appointment', async () => {
         select: { id: true },
     });
     await client.request(`
-        mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+        mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
     const pupil_joined_match_meeting_achievements = await prisma.user_achievement.findMany({
         where: {
@@ -205,13 +201,88 @@ void test('Reward pupil conducted match appointment', async () => {
     );
 });
 
+void test('Reward student regular learning', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    await createStudentRegularLearningTemplate();
+
+    const { student, client } = await studentOne;
+    const user = await getUser(student.userID);
+
+    const match = await prisma.match.findFirst({
+        where: {
+            studentId: student.student.id,
+            dissolved: false,
+        },
+        select: { id: true },
+    });
+    // request to generate the achievement with initial record value 1
+    await client.request(`
+        mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    await prisma.achievement_event.create({
+        data: {
+            userId: user.userID,
+            metric: 'student_match_learned_regular',
+            value: 1,
+            createdAt: date,
+            action: 'student_joined_match_meeting',
+            relation: `match/${match.id}`,
+        },
+    });
+    // request to set the achievements record value to 2 due to the past event generated
+    await client.request(`
+        mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const student_match_regular_learning_record = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            group: 'student_match_regular_learning',
+            achievedAt: { not: null },
+            recordValue: 2,
+        },
+    });
+    if (!student_match_regular_learning_record) {
+        throw new Error('There was no achievement created of type student_match_regular_learning when the match meeting was joined');
+    }
+    logger.info('the student has a streak achivement, currently active, claiming them to be a regular learner');
+
+    await prisma.achievement_event.deleteMany({
+        where: {
+            userId: user.userID,
+            metric: 'student_match_learned_regular',
+            relation: `match/${match.id}`,
+        },
+    });
+    await client.request(`
+        mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const student_match_regular_learning = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            group: 'student_match_regular_learning',
+            achievedAt: null,
+            recordValue: 2,
+        },
+    });
+
+    if (!student_match_regular_learning) {
+        throw new Error('There was no achievement found of type student_match_regular_learning that has not reached the current record');
+    }
+    logger.info('the student has a streak achivement, currently inactive, claiming them to not be a regular learner');
+});
+
 /* -------------- additional functions for template and data creation ------------- */
 function createDates(): Date[] {
     const today = new Date();
     const dates: Date[] = [];
     for (let i = 0; i < 5; i++) {
         dates[i] = new Date(today);
-        dates[i].setDate(today.getDate() + i * 7);
+        dates[i].setDate(today.getDate() + (i - 1) * 7);
     }
     return dates;
 }
@@ -731,6 +802,68 @@ const createPupilConductedMatchMeetingTemplates = async () => {
             condition: 'pupil_match_appointments_count > 24',
             conditionDataAggregations: {
                 pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
+            },
+            isActive: true,
+        },
+    });
+};
+const createStudentRegularLearningTemplate = async () => {
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Regelmäßiges Lernen',
+            metrics: ['student_match_learned_regular'],
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_match_regular_learning',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Hat_grey',
+            achievedImage: 'Hat_gold',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Rekord gebrochen.',
+            condition: 'student_match_learning_events > recordValue',
+            conditionDataAggregations: {
+                student_match_learning_events: {
+                    metric: 'student_match_learned_regular',
+                    aggregator: 'lastStreakLength',
+                    createBuckets: 'by_weeks',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+};
+const createPupilRegularLearningTemplate = async () => {
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Regelmäßiges Lernen',
+            metrics: ['pupil_match_learned_regular'],
+            templateFor: achievement_template_for_enum.Match,
+            group: 'pupil_match_regular_learning',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Hat_grey',
+            achievedImage: 'Hat_gold',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: 'Juhu! Rekord gebrochen.',
+            condition: 'pupil_match_learning_events > recordValue',
+            conditionDataAggregations: {
+                pupil_match_learning_events: {
+                    metric: 'pupil_match_learned_regular',
+                    aggregator: 'lastStreakLength',
+                    createBuckets: 'by_weeks',
+                    bucketAggregator: 'presenceOfEvents',
+                },
             },
             isActive: true,
         },
