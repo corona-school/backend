@@ -1,11 +1,12 @@
 import { test } from './base';
 import { adminClient } from './base/clients';
-import { pupilOne } from './01_user';
+import { pupilOne, studentOne } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
+import { prisma } from '../common/prisma';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -21,6 +22,7 @@ const courseOne = test('Create Course One', async () => {
             description: "Why should I test if my users can do that for me in production?"
             category: club
             allowContact: true
+            shared: true
             subject: Informatik
             schooltype: gymnasium
         }) {
@@ -113,6 +115,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     const { client, instructor } = await screenedInstructorOne;
     const { courseId } = await courseOne;
+    const { student } = await studentOne;
 
     const {
         subcourseCreate: { id: subcourseId },
@@ -126,7 +129,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
                 groupChatType: ${ChatType.NORMAL}
-            }) { id }
+            } studentId: ${student.userID}) { id }
         }
     `);
 
@@ -389,4 +392,39 @@ void test('Add / Remove another instructor', async () => {
     await client.request(`mutation RemoveInstructorFromSubcourse {
         subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
     }`);
+});
+
+void test('Find shared course', async () => {
+    const { instructor: instructor1 } = await screenedInstructorTwo;
+    const { instructor, courseId } = await subcourseOne;
+
+    const { courseSearch: courseSearch } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(studentId: ${instructor1.student.id}) { id }
+    }
+`);
+
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+});
+
+void test('Test template course search', async () => {
+    const { instructor: instructor1 } = await screenedInstructorTwo;
+    const { instructor, courseId } = await subcourseOne;
+
+    await prisma.course.update({ where: { id: courseId }, data: { shared: false } });
+
+    const { courseSearch: courseSearch } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(studentId: ${instructor1.student.id}) { id }
+    }
+`);
+
+    assert.ok(courseSearch.every((it) => it.id != courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(studentId: ${instructor.student.id}) { id }
+    }
+`);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
 });
