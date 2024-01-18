@@ -276,6 +276,81 @@ void test('Reward student regular learning', async () => {
     logger.info('the student has a streak achivement, currently inactive, claiming them to not be a regular learner');
 });
 
+void test('Reward pupil regular learning', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    await createPupilRegularLearningTemplate();
+
+    const { pupil, client } = await pupilTwo;
+    const user = await getUser(pupil.userID);
+
+    const match = await prisma.match.findFirst({
+        where: {
+            pupilId: pupil.pupil.id,
+            dissolved: false,
+        },
+        select: { id: true },
+    });
+    // request to generate the achievement with initial record value 1
+    await client.request(`
+        mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    await prisma.achievement_event.create({
+        data: {
+            userId: user.userID,
+            metric: 'pupil_match_learned_regular',
+            value: 1,
+            createdAt: date,
+            action: 'pupil_joined_match_meeting',
+            relation: `match/${match.id}`,
+        },
+    });
+    // request to set the achievements record value to 2 due to the past event generated
+    await client.request(`
+        mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const pupil_match_regular_learning_record = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            group: 'pupil_match_regular_learning',
+            achievedAt: { not: null },
+            recordValue: 2,
+        },
+    });
+    if (!pupil_match_regular_learning_record) {
+        throw new Error('There was no achievement created of type pupil_match_regular_learning when the match meeting was joined');
+    }
+    logger.info('the pupil has a streak achivement, currently active, claiming them to be a regular learner');
+
+    await prisma.achievement_event.deleteMany({
+        where: {
+            userId: user.userID,
+            metric: 'pupil_match_regular_learning',
+            relation: `match/${match.id}`,
+        },
+    });
+    await client.request(`
+        mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
+    `);
+
+    const pupil_match_regular_learning = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            group: 'pupil_match_regular_learning',
+            achievedAt: null,
+            recordValue: 2,
+        },
+    });
+
+    if (!pupil_match_regular_learning) {
+        throw new Error('There was no achievement found of type pupil_match_regular_learning that has not reached the current record');
+    }
+    logger.info('the student has a streak achivement, currently inactive, claiming them to not be a regular learner');
+});
+
 /* -------------- additional functions for template and data creation ------------- */
 function createDates(): Date[] {
     const today = new Date();
