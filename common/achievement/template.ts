@@ -16,7 +16,7 @@ export enum TemplateSelectEnum {
 const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
 async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, Achievement_template[]>> {
-    if (!achievementTemplates.has(select)) {
+    if (!achievementTemplates.has(select) || !achievementTemplates[select]) {
         achievementTemplates.set(select, new Map());
 
         const templatesFromDB = await prisma.achievement_template.findMany({

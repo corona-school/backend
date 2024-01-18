@@ -21,7 +21,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
     const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
 
-    const whereClause = { [`${userType}Id`]: userId };
+    const whereClause = {};
 
     let relationType = null;
     if (relation) {
@@ -35,6 +35,7 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
 
     let matches = [];
     if (!relationType || relationType === 'match') {
+        whereClause[`${userType}Id`] = userId;
         matches = await prisma.match.findMany({
             where: whereClause,
             select: {
@@ -46,6 +47,7 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
 
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
+        delete whereClause[`${userType}Id`];
         subcourses = await prisma.subcourse.findMany({
             where: whereClause,
             select: {
