@@ -9,8 +9,7 @@ import { User, getUser } from '../common/user';
 import { getLogger } from '../common/logger/logger';
 import { Match } from '../graphql/generated';
 import { _createFixedToken } from '../common/secret/token';
-
-const logger = getLogger('Token');
+import assert from 'assert';
 
 void test('Reward student onboarding achievement sequence', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
@@ -28,10 +27,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    if (!student_onboarding_1) {
-        throw new Error(`There was no achievement created or found during or after the email verification process.`);
-    }
-    logger.info('The Achievement 1 for group student_onboarding was created and found when verifying a users E-Mail.');
+    assert.ok(student_onboarding_1);
 
     // Screening
     const { client: screenerClient } = await screenerOne;
@@ -51,10 +47,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    if (!student_onboarding_2) {
-        throw new Error(`There was no achievement created or found during or after the screening process`);
-    }
-    logger.info('The Achievement 3 for group student_onboarding was created and found when screeing a tutor');
+    assert.ok(student_onboarding_2);
 
     // Create Certificate of Conduct
     const newDate = JSON.stringify(new Date());
@@ -83,12 +76,8 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    if (!student_onboarding_3) {
-        throw new Error(`There was no achievement created or found during or after the creation of a CoC`);
-    } else if (!student_onboarding_4) {
-        throw new Error(`There was no final achievement created or found after the creation of a CoC`);
-    }
-    logger.info('The Achievement 4 adn 5 for group student_onboarding were created and found when creating a CoC');
+    assert.ok(student_onboarding_3);
+    assert.ok(student_onboarding_4);
 });
 
 void test('Reward pupil onboarding achievement sequence', async () => {
@@ -107,10 +96,7 @@ void test('Reward pupil onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    if (!pupil_onboarding_1) {
-        throw new Error(`There was no achievement created or found during or after the email verification process.`);
-    }
-    logger.info('The Achievement 1 for group pupil_onboarding was created and found when verifying a users E-Mail.');
+    assert.ok(pupil_onboarding_1);
     // Screening
     await adminClient.request(`
         mutation RequestScreening { pupilCreateScreening(pupilId: ${pupil.pupil.id})}
@@ -130,12 +116,8 @@ void test('Reward pupil onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    if (!pupil_onboarding_2) {
-        throw new Error(`There was no achievement created or found during or after the screening process`);
-    } else if (!pupil_onboarding_3) {
-        throw new Error(`There was no final achievement created or found after the screening process`);
-    }
-    logger.info('The Achievement 3 and 4 for group pupil_onboarding were created and found when screeing a pupil');
+    assert.ok(pupil_onboarding_2);
+    assert.ok(pupil_onboarding_3);
 });
 
 void test('Reward student conducted match appointment', async () => {
@@ -166,12 +148,8 @@ void test('Reward student conducted match appointment', async () => {
             userId: user.userID,
         },
     });
-    if (student_joined_match_meeting_achievements.length === 0) {
-        throw new Error(`There was no achievement created for the tierd achievement of group student_conducted_match_appointment`);
-    }
-    logger.info(
-        `There were ${student_joined_match_meeting_achievements.length} achivements of the group student_conducted_match_appointment found, after joining a match meeting`
-    );
+    assert.ok(student_joined_match_meeting_achievements[0]);
+    assert.notStrictEqual(student_joined_match_meeting_achievements.length, 0);
 });
 
 void test('Reward pupil conducted match appointment', async () => {
@@ -196,9 +174,8 @@ void test('Reward pupil conducted match appointment', async () => {
             userId: user.userID,
         },
     });
-    logger.info(
-        `There were ${pupil_joined_match_meeting_achievements.length} achivements of the group pupil_conducted_match_appointment found, after joining a match meeting`
-    );
+    assert.ok(pupil_joined_match_meeting_achievements);
+    assert.notStrictEqual(pupil_joined_match_meeting_achievements.length, 0);
 });
 
 void test('Reward student regular learning', async () => {
@@ -245,10 +222,7 @@ void test('Reward student regular learning', async () => {
             recordValue: 2,
         },
     });
-    if (!student_match_regular_learning_record) {
-        throw new Error('There was no achievement created of type student_match_regular_learning when the match meeting was joined');
-    }
-    logger.info('the student has a streak achivement, currently active, claiming them to be a regular learner');
+    assert.ok(student_match_regular_learning_record);
 
     await prisma.achievement_event.deleteMany({
         where: {
@@ -269,11 +243,7 @@ void test('Reward student regular learning', async () => {
             recordValue: 2,
         },
     });
-
-    if (!student_match_regular_learning) {
-        throw new Error('There was no achievement found of type student_match_regular_learning that has not reached the current record');
-    }
-    logger.info('the student has a streak achivement, currently inactive, claiming them to not be a regular learner');
+    assert.ok(student_match_regular_learning);
 });
 
 void test('Reward pupil regular learning', async () => {
@@ -320,10 +290,7 @@ void test('Reward pupil regular learning', async () => {
             recordValue: 2,
         },
     });
-    if (!pupil_match_regular_learning_record) {
-        throw new Error('There was no achievement created of type pupil_match_regular_learning when the match meeting was joined');
-    }
-    logger.info('the pupil has a streak achivement, currently active, claiming them to be a regular learner');
+    assert.ok(pupil_match_regular_learning_record);
 
     await prisma.achievement_event.deleteMany({
         where: {
@@ -344,11 +311,141 @@ void test('Reward pupil regular learning', async () => {
             recordValue: 2,
         },
     });
+    assert.ok(pupil_match_regular_learning);
+});
 
-    if (!pupil_match_regular_learning) {
-        throw new Error('There was no achievement found of type pupil_match_regular_learning that has not reached the current record');
-    }
-    logger.info('the student has a streak achivement, currently inactive, claiming them to not be a regular learner');
+void test('Resolver my achievements', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: studentClient } = await studentOne;
+    const { client: pupilClient } = await pupilTwo;
+
+    const { me: studentMe } = await studentClient.request(`
+        query achievements {
+            me {
+                achievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { achievements: studentAchievements } = studentMe;
+    assert.ok(studentAchievements);
+    assert.notStrictEqual(studentAchievements.length, 0);
+
+    const { me: pupilMe } = await pupilClient.request(`
+        query achievements {
+            me {
+                achievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { achievements: pupilAchievements } = pupilMe;
+    assert.ok(pupilAchievements);
+    assert.notStrictEqual(pupilAchievements.length, 0);
+});
+
+void test('Resolver further (INACTIVE) achievements', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: studentClient } = await studentOne;
+    const { client: pupilClient } = await pupilTwo;
+
+    const { me: studentMe } = await studentClient.request(`
+        query furtherAchievements {
+            me {
+                furtherAchievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { furtherAchievements: furtherStudentAchievements } = studentMe;
+    assert.ok(furtherStudentAchievements);
+    assert.notStrictEqual(furtherStudentAchievements.length, 0);
+
+    const { me: pupilMe } = await pupilClient.request(`
+        query furtherAchievements {
+            me {
+                furtherAchievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { furtherAchievements: furtherPupilAchievements } = pupilMe;
+    assert.ok(furtherPupilAchievements);
+    assert.notStrictEqual(furtherPupilAchievements.length, 0);
+});
+
+void test('Resolver next step achievements', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: studentClient } = await studentOne;
+    const { client: pupilClient } = await pupilTwo;
+
+    const { me: studentMe } = await studentClient.request(`
+        query nextStepAchievements {
+            me {
+                nextStepAchievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { nextStepAchievements: nextStepStudentAchievements } = studentMe;
+    assert.ok(nextStepStudentAchievements);
+
+    const { me: pupilMe } = await pupilClient.request(`
+        query nextStepAchievements {
+            me {
+                nextStepAchievements {
+                    id
+                }
+            }
+        }
+    `);
+    const { nextStepAchievements: nextStepPupilAchievements } = pupilMe;
+    assert.ok(nextStepPupilAchievements);
+});
+
+void test('Resolver achievement by id', async () => {
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: studentClient, student } = await studentOne;
+    const { client: pupilClient, pupil } = await pupilTwo;
+
+    const { id: studentAchievementId } = await prisma.user_achievement.findFirst({
+        where: { userId: student.userID },
+        select: { id: true },
+    });
+    const { me: studentMe } = await studentClient.request(`
+        query achievementById {
+            me {
+                achievement(id:${studentAchievementId}) {
+                    id
+                }
+            }
+        }
+    `);
+    const { achievement: studentAchievement } = studentMe;
+    assert.ok(studentAchievement);
+    assert.strictEqual(studentAchievement.id, studentAchievementId);
+
+    const { id: pupilAchievementId } = await prisma.user_achievement.findFirst({
+        where: { userId: pupil.userID },
+        select: { id: true },
+    });
+    const { me: pupilMe } = await pupilClient.request(`
+        query achievementById {
+            me {
+                achievement(id:${pupilAchievementId}) {
+                    id
+                }
+            }
+        }
+    `);
+    const { achievement: pupilAchievement } = pupilMe;
+    assert.ok(pupilAchievement);
+    assert.strictEqual(pupilAchievement.id, pupilAchievementId);
 });
 
 /* -------------- additional functions for template and data creation ------------- */
