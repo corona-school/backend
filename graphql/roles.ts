@@ -23,7 +23,7 @@ export async function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
         return;
     }
 
-    if (process.env.REQUIRE_PUPIL_SCREENING) {
+    if (process.env.REQUIRE_PUPIL_SCREENING === 'true') {
         const wasSuccessfullyScreened = (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'success' } })) > 0;
         if (!wasSuccessfullyScreened) {
             logger.info(`Pupil(${pupil.id}) was not yet successfully screened, no roles granted`);
