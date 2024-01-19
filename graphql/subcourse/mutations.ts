@@ -79,11 +79,13 @@ export class MutateSubcourseResolver {
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
+        const student = await getSessionStudent(context, studentId);
+
         await hasAccess(context, 'Course', course);
         const courseInstructorAssociation = await prisma.course_instructors_student.findFirst({
             where: {
                 courseId: courseId,
-                studentId: studentId,
+                studentId: student.id,
             },
         });
         const isCourseSharedOrOwned = !!courseInstructorAssociation || course.shared;
@@ -106,7 +108,6 @@ export class MutateSubcourseResolver {
                 groupChatType,
             },
         });
-        const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
