@@ -1,9 +1,10 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { bucketCreatorDefs } from './bucket';
 import { BucketCreatorContext, ContextMatch, ContextSubcourse, TimeBucket } from './types';
 
 describe('test create buckets by_lecture_start', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
+    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
     const today = moment();
@@ -168,6 +169,7 @@ describe('test create buckets by_week', () => {
     const today = new Date(2023, 7, 15);
 
     moment.updateLocale('de', { week: { dow: 1 } });
+    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(today);
 
     const tests: {
@@ -224,6 +226,7 @@ describe('test create buckets by_months', () => {
     const today = new Date(2023, 7, 15);
 
     moment.updateLocale('de', { week: { dow: 1 } });
+    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(today);
 
     const tests: {

@@ -87,9 +87,7 @@ export async function postStatisticsToSlack() {
             createdAt: { gte: begin, lte: end },
             knowsCoronaSchoolFrom: { notIn: [''] },
         },
-        _count: {
-            createdAt: true,
-        },
+        _count: true,
     });
 
     let instructorKnowsCoronaSchoolFromTable: [string, string][] = [];
@@ -129,6 +127,7 @@ export async function postStatisticsToSlack() {
                 every: { start: { lt: end } },
                 some: { start: { gte: begin, lt: end } },
             },
+            published: true,
         },
     });
 
@@ -145,7 +144,7 @@ export async function postStatisticsToSlack() {
 
     await sendToSlack(SLACK_CHANNEL.PublicStatistics, {
         blocks: [
-            table(`Statistiken vom ${begin} zum ${end}`, 'Name', 'Wert', [
+            ...table(`Statistiken vom ${begin} zum ${end}`, 'Name', 'Wert', [
                 ['Anzahl registrierter Schüler*innen', '' + pupilRegisteredCount],
                 ['Anzahl registrierter Helfer*innen', '' + studentsRegisteredCount],
                 ['Anzahl erfolgreicher Screenings Schüler*innen', '' + pupilScreeningSuccessCount + ' von ' + pupilScreeningCount],
@@ -155,9 +154,9 @@ export async function postStatisticsToSlack() {
                 ['Anzahl erstellter Kurse', '' + subcourseCreatedCount],
                 ['Anzahl Match-Termine', '' + matchAppointmentCount],
             ]),
-            table('Von uns gehört durch... (Helfer*innen)', 'Name', 'Wert', tutorKnowsCoronaSchoolFromTable),
-            table('Von uns gehört durch... (Kursleiter*innen)', 'Name', 'Wert', instructorKnowsCoronaSchoolFromTable),
-            table('Anzahl der belegten Plätze in den aktuellen Kursen', 'Name', 'Wert', subcourseSeatsTakenTable),
+            ...table('Von uns gehört durch... (Helfer*innen)', 'Name', 'Wert', tutorKnowsCoronaSchoolFromTable),
+            ...table('Von uns gehört durch... (Kursleiter*innen)', 'Name', 'Wert', instructorKnowsCoronaSchoolFromTable),
+            ...table('Anzahl der belegten Plätze in den aktuellen Kursen', 'Name', 'Wert', subcourseSeatsTakenTable),
         ],
     });
 }

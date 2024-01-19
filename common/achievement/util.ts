@@ -1,12 +1,27 @@
 import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { AchievementContextType, RelationTypes } from './types';
+import { join } from 'path';
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
+import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('Achievement');
+
+export const ACHIEVEMENT_IMAGE_DEFAULT_PATH = 'gamification/achievements';
+
+export function getAchievementImageKey(imageKey: string) {
+    return join(ACHIEVEMENT_IMAGE_DEFAULT_PATH, `${imageKey}`);
+}
+
+export function getAchievementImageURL(imageKey: string) {
+    return accessURLForKey(imageKey);
+}
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
     const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
@@ -17,9 +32,8 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
     return [relationType as RelationTypes, id];
 }
 
-// TODO: fix naming
-export async function getBucketContext(myUserID: string, relation?: string): Promise<AchievementContextType> {
-    const [userType, userId] = getUserTypeAndIdForUserId(myUserID);
+export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
+    const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause = {};
 
@@ -33,14 +47,16 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
         }
     }
 
+    logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
+
     let matches = [];
     if (!relationType || relationType === 'match') {
         whereClause[`${userType}Id`] = userId;
         matches = await prisma.match.findMany({
-            where: whereClause,
+            where: { ...whereClause, [`${userType}Id`]: id },
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
             },
         });
     }
@@ -48,11 +64,13 @@ export async function getBucketContext(myUserID: string, relation?: string): Pro
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
         delete whereClause[`${userType}Id`];
+        const userClause = userType === 'student' ? { subcourse_instructors_student: { some: { studentId: userId } } } : { subcourse_participants_pupil: { some: { pupilId: userId } } };
+        const subcourseWhere = { ...whereClause, ...userClause };
         subcourses = await prisma.subcourse.findMany({
-            where: whereClause,
+            where: subcourseWhere,
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${userId}`] } } }, select: { start: true, duration: true } },
+                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
             },
         });
     }

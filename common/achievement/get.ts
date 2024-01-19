@@ -5,6 +5,7 @@ import { User } from '../user';
 import { ConditionDataAggregations } from './types';
 import { getAchievementState, getCurrentAchievementTemplateWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
+import { getAchievementImageURL } from './util';
 
 const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
     const userAchievement = await prisma.user_achievement.findUnique({
@@ -65,7 +66,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             name: template.name,
             subtitle: template.subtitle,
             description: template.description,
-            image: template.image,
+            image: getAchievementImageURL(template.image),
             alternativeText: 'alternativeText',
             actionType: template.actionType as achievement_action_type_enum,
             achievementType: template.type as achievement_type_enum,
@@ -178,7 +179,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
-        image: currentAchievementTemplate.image,
+        image: getAchievementImageURL(currentAchievementTemplate.image),
         alternativeText: 'alternativeText',
         actionType: currentAchievementTemplate.actionType as achievement_action_type_enum,
         achievementType: currentAchievementTemplate.type as achievement_type_enum,
@@ -191,7 +192,7 @@ const assembleAchievementData = async (userAchievements: User_achievement[], use
                       if (index < achievementTemplates.length - 1 && achievement.isActive) {
                           return {
                               name: achievement.stepName,
-                              isActive: index === currentAchievementIndex + 1,
+                              isActive: index === currentAchievementIndex,
                           };
                       }
                       return null;
