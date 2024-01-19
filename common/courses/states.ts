@@ -71,16 +71,18 @@ export async function allowCourse(course: Course, screeningComment: string | nul
     // Usually when a new course is created, instructors also create a proper subcourse with it
     // and then forget to publish it after it was approved. Thus we just publish during approval,
     // assuming the subcourses are ready:
-    const subcourses = await prisma.subcourse.findMany({ where: { courseId: course.id } });
+    const subcourses = await prisma.subcourse.findMany({
+        where: { courseId: course.id },
+        include: { subcourse_instructors_student: { select: { student: true } } },
+    });
     for (const subcourse of subcourses) {
         if (await canPublish(subcourse)) {
             await publishSubcourse(subcourse);
         }
     }
 
-    const subcourse = await prisma.subcourse.findFirst({ where: { courseId: course.id } });
-    const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
-    instructors.forEach(async (instructor) => {
+    const [subcourse] = subcourses;
+    subcourse.subcourse_instructors_student.forEach(async (instructor) => {
         await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
             courseName: course.name,
             relation: `subcourse/${subcourse.id}`,
@@ -167,12 +169,8 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     await prisma.user_achievement.deleteMany({
         where: {
             userId: {
-                in: courseInstructors.map((instructor) => {
-                    const user = userForStudent(instructor.student);
-                    return user.userID;
-                }),
+                in: courseInstructors.map((instructor) => userForStudent(instructor.student).userID),
             },
-            group: 'student_offer_course',
             context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
         },
     });

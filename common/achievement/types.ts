@@ -114,6 +114,6 @@ export type ContextSubcourse = {
 
 export type AchievementContextType = {
     user?: User;
-    match: ContextMatch[];
-    subcourse: ContextSubcourse[];
+    match?: ContextMatch[];
+    subcourse?: ContextSubcourse[];
 };

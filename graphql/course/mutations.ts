@@ -109,8 +109,11 @@ export class MutateCourseResolver {
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
 
-        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
-        const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
+        const subcourse = await prisma.subcourse.findFirst({
+            where: { courseId: courseId },
+            include: { subcourse_instructors_student: { select: { student: true } } },
+        });
+        const { subcourse_instructors_student: instructors } = subcourse;
         const { context: contextData } = await prisma.user_achievement.findFirst({
             where: { group: 'student_offer_course', context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
         });
@@ -217,9 +220,11 @@ export class MutateCourseResolver {
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
 
-        const subcourse = await prisma.subcourse.findFirst({ where: { courseId: courseId } });
-        const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
-        instructors.forEach(async (instructor) => {
+        const subcourse = await prisma.subcourse.findFirst({
+            where: { courseId: courseId },
+            include: { subcourse_instructors_student: { select: { student: true } } },
+        });
+        subcourse.subcourse_instructors_student.forEach(async (instructor) => {
             await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
                 courseName: course.name,
                 relation: `subcourse/${subcourse.id}`,

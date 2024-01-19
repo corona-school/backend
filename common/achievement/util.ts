@@ -98,15 +98,9 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
     if (!keys) {
         return null;
     }
-    const transformedJson: AchievementContextType = {
-        user: user,
-        match: json['match'] ? json['match'] : undefined,
-        subcourse: json['subcourse'] ? json['subcourse'] : undefined,
-    };
+    const transformedJson: AchievementContextType = { user: user };
     keys.forEach((key) => {
-        if (key !== 'match' && key !== 'subcourse') {
-            transformedJson[key] = json[key];
-        }
+        transformedJson[key] = json[key];
     });
     return transformedJson;
 }

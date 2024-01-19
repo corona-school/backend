@@ -142,10 +142,8 @@ export class MutateSubcourseResolver {
         }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
 
-        const metrics = ['student_create_course', 'student_submit_course', 'student_approve_course'];
         await prisma.user_achievement.deleteMany({
             where: {
-                template: { metrics: { hasSome: metrics } },
                 userId: `student/${studentId}`,
                 context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
             },
