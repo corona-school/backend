@@ -10,6 +10,7 @@ const logger = getLogger('Achievement Template');
 export enum TemplateSelectEnum {
     BY_GROUP = 'group',
     BY_METRIC = 'metrics',
+    BY_COURSE_RELATION = 'templateFor',
 }
 
 // string == metricId, group
@@ -62,4 +63,11 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
     return templatesForAction;
 }
 
-export { getAchievementTemplates, getTemplatesByMetrics };
+async function getTemplatesWithCourseRelation(): Promise<Achievement_template[]> {
+    const templatesByCourseRelation = await getAchievementTemplates(TemplateSelectEnum.BY_COURSE_RELATION);
+    const courseTemplates: Achievement_template[] = templatesByCourseRelation ? Array.from(templatesByCourseRelation['Subcourse']) : [];
+
+    return courseTemplates;
+}
+
+export { getAchievementTemplates, getTemplatesByMetrics, getTemplatesWithCourseRelation };

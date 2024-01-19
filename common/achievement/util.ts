@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { AchievementContextType, RelationTypes } from './types';
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, achievement_type_enum } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
@@ -11,6 +11,7 @@ import { Achievement_template, User_achievement } from '../../graphql/generated'
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
 import { getCourseImageURL } from '../courses/util';
+import { getTemplatesWithCourseRelation } from './template';
 
 const logger = getLogger('Achievement');
 
@@ -21,7 +22,9 @@ export function getAchievementImageKey(imageKey: string) {
 }
 
 export async function getAchievementImageURL(template: Achievement_template, state?: achievement_state, achievementContext?: Prisma.JsonValue) {
-    const templateIdsForCourseImage = [10];
+    const templateIdsForCourseImage = (await getTemplatesWithCourseRelation())
+        .filter((courseTemplate) => courseTemplate.type === achievement_type_enum.TIERED)
+        .map((courseTemplate) => courseTemplate.id);
     const { id, image, achievedImage } = template;
     const courseId = achievementContext?.['courseId'];
     if (courseId && templateIdsForCourseImage.includes(id)) {
