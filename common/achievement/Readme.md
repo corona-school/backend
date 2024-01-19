@@ -153,6 +153,8 @@ flowchart TD
 
 The achievement is linked to the pre-existing notification system and therefore triggers the `rewardActionTaken` function when ever the `actionTaken` function for a future notification is executed. This is working since achievements that have newly matched their conditions are announced as a notification, therefore naturally being linked to an action taken call.
 
+Each action tied to a metric, where metrics have the capability to store multiple action-ids, entails the monitoring of a specific event created for the action that was taken. The retrieval of these events can be facilitated either through an action-id or by employing a metric, thereby allowing the potential cross-reference of events associated with varying action-ids. This versatility is due to the fact that these metrics can be interconnected with an array of action-ids, effectively tracking a diverse range of events.
+
 Based on the [metrics](#metrics) for the action that triggered the `rewardActionTaken` function the templates for this action are fetched and sorted by their group. For every one of these groups the [`getOrCreateUserAchievement`](#get-or-create-user-achievement) function is called to receive the user_achievement from the database that has to be evaluated inside the [`checkUserAchievement`](#check-user-achievement) function, which is subsequently executed using the already received user_achievement.
 
 ### 2.2. Get or Create User Achievement
