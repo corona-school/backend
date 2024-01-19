@@ -57,7 +57,10 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
         return [];
     }
     for (const metric of metricsForAction) {
-        templatesForAction = [...templatesForAction, ...templatesByMetric.get(metric.metricName)];
+        const templatesForMetric = templatesByMetric.get(metric.metricName);
+        if (templatesForMetric) {
+            templatesForAction = [...templatesForAction, ...templatesForMetric];
+        }
     }
     return templatesForAction;
 }

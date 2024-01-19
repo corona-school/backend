@@ -33,7 +33,7 @@ export class MutateAchievementResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') subcourseId: number) {
+    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
         const { user } = context;
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true, lecture: true } });
         await hasAccess(context, 'Subcourse', subcourse);
