@@ -4,7 +4,6 @@ import { BucketCreatorContext, ContextMatch, ContextSubcourse, TimeBucket } from
 
 describe('test create buckets by_lecture_start', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
-    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(new Date(2023, 7, 15));
 
     const today = moment();
@@ -23,8 +22,8 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -35,14 +34,14 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-13T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:10:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -62,8 +61,8 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -74,14 +73,14 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-13T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:10:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T23:10:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -101,26 +100,26 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T22:40:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:40:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-07-31T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-07-31T22:55:00.000Z').toDate(),
+                    startTime: moment('2023-07-31T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-01T00:55:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-13T23:55:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:55:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-07T21:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-08T03:00:00.000Z').toDate(),
+                    startTime: moment('2023-08-07T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-08T05:00:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -169,7 +168,6 @@ describe('test create buckets by_week', () => {
     const today = new Date(2023, 7, 15);
 
     moment.updateLocale('de', { week: { dow: 1 } });
-    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(today);
 
     const tests: {
@@ -181,24 +179,24 @@ describe('test create buckets by_week', () => {
             name: 'should create one bucket if recordValue is 0',
             recordValue: 0,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-13T22:00:00.000Z').toDate(), endTime: moment('2023-08-20T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999').toDate(), relation: null },
             ],
         },
         {
             name: 'should create two buckets if recordValue is 1. Elements should be ordered desc',
             recordValue: 1,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-13T22:00:00.000Z').toDate(), endTime: moment('2023-08-20T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-08-06T22:00:00.000Z').toDate(), endTime: moment('2023-08-13T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-07T00:00:00.000Z').toDate(), endTime: moment('2023-08-13T23:59:59.999Z').toDate(), relation: null },
             ],
         },
         {
             name: 'should create three buckets if recordValue is 2. Elements should be ordered desc',
             recordValue: 2,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-13T22:00:00.000Z').toDate(), endTime: moment('2023-08-20T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-08-06T22:00:00.000Z').toDate(), endTime: moment('2023-08-13T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-07-30T22:00:00.000Z').toDate(), endTime: moment('2023-08-06T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-07T00:00:00.000Z').toDate(), endTime: moment('2023-08-13T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-07-31T00:00:00.000Z').toDate(), endTime: moment('2023-08-06T23:59:59.999Z').toDate(), relation: null },
             ],
         },
     ];
@@ -226,7 +224,6 @@ describe('test create buckets by_months', () => {
     const today = new Date(2023, 7, 15);
 
     moment.updateLocale('de', { week: { dow: 1 } });
-    moment.tz.setDefault('Europe/Berlin');
     jest.useFakeTimers().setSystemTime(today);
 
     const tests: {
@@ -238,24 +235,24 @@ describe('test create buckets by_months', () => {
             name: 'should create one bucket if recordValue is 0',
             recordValue: 0,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-07-31T22:00:00.000Z').toDate(), endTime: moment('2023-08-31T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
             ],
         },
         {
             name: 'should create two buckets if recordValue is 1. Elements should be ordered desc',
             recordValue: 1,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-07-31T22:00:00.000Z').toDate(), endTime: moment('2023-08-31T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-06-30T22:00:00.000Z').toDate(), endTime: moment('2023-07-31T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-07-01T00:00:00.000').toDate(), endTime: moment('2023-07-31T23:59:59.999Z').toDate(), relation: null },
             ],
         },
         {
             name: 'should create three buckets if recordValue is 2. Elements should be ordered desc',
             recordValue: 2,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-07-31T22:00:00.000Z').toDate(), endTime: moment('2023-08-31T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-06-30T22:00:00.000Z').toDate(), endTime: moment('2023-07-31T21:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-05-31T22:00:00.000Z').toDate(), endTime: moment('2023-06-30T21:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-07-01T00:00:00.000Z').toDate(), endTime: moment('2023-07-31T23:59:59.999Z').toDate(), relation: null },
+                { kind: 'time', startTime: moment('2023-06-01T00:00:00.000Z').toDate(), endTime: moment('2023-06-30T23:59:59.999Z').toDate(), relation: null },
             ],
         },
     ];
