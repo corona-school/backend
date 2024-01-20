@@ -670,7 +670,8 @@ const _notificationActions = {
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     pupil_joined_match_meeting: {
@@ -682,7 +683,8 @@ const _notificationActions = {
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     TEST: {

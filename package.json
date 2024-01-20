@@ -28,7 +28,7 @@
         "heroku:release": "./release.sh",
         "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
         "integration-tests:debug": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests.debug",
-        "test": "jest",
+        "test": "TZ=UTC jest",
         "db:reset": "prisma migrate reset --skip-generate",
         "db:reset-hard": "prisma migrate reset -f --skip-generate",
         "db:seed": "node -r dotenv/config ./built/seed-db.js",
