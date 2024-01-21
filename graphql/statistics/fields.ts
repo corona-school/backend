@@ -48,6 +48,15 @@ class Statistics {
     to: string; // ISO Date String
 }
 
+@ObjectType()
+class MedianTimeToMatch {
+    @Field((type) => Float)
+    median_days_pupil: number;
+
+    @Field((type) => Float)
+    median_days_student: number;
+}
+
 @Resolver((of) => Statistics)
 export class StatisticsResolver {
     @Query((returns) => Statistics)
@@ -282,7 +291,7 @@ export class StatisticsResolver {
                                       WHERE "start" > ${statistics.from}::timestamp
                                         AND "start" < ${statistics.to}::timestamp
                                         AND "appointmentType" = 'group'
-                                        AND course.category = ${category}
+                                        AND course.category = ${category}::course_category_enum
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -317,7 +326,7 @@ export class StatisticsResolver {
             LEFT JOIN course ON subcourse."courseId" = course.id
             WHERE row_num = 1
                 AND course."courseState" = 'allowed'
-                AND course.category = ${category}
+                AND course.category = ${category}::course_category_enum
                 AND first_lecture."start" >= ${statistics.from}::timestamp
                 AND first_lecture."start" < ${statistics.to}::timestamp
             GROUP BY "year", "month"
@@ -580,14 +589,17 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async rateSuccessfulCoCsTutors(@Root() statistics: Statistics) {
         const mustHaveTurnedInCoC = await prisma.$queryRaw`
-            SELECT count(*) FROM screening
-            WHERE ("createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from} AND ${statistics.to};
+            SELECT count(*)::int FROM screening
+            WHERE ("createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp;
         `;
+        if (mustHaveTurnedInCoC[0].count === 0) {
+            return -1;
+        }
 
         const actuallyTurnedIn = await prisma.$queryRaw`
-            SELECT count(*) FROM screening
+            SELECT count(*)::int FROM screening
                  LEFT JOIN certificate_of_conduct ON certificate_of_conduct."studentId" = screening."studentId"
-            WHERE (screening."createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from} AND ${statistics.to}
+            WHERE (screening."createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
                 AND certificate_of_conduct."studentId" IS NOT NULL
                 AND certificate_of_conduct."createdAt" BETWEEN (screening."createdAt") AND (screening."createdAt" + INTERVAL '8 weeks');
         `;
@@ -599,14 +611,16 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async rateSuccessfulCoCsInstructors(@Root() statistics: Statistics) {
         const mustHaveTurnedInCoC = await prisma.$queryRaw`
-            SELECT count(*) FROM instructor_screening
-            WHERE ("createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from} AND ${statistics.to};
+            SELECT count(*):int FROM instructor_screening
+            WHERE ("createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp;
         `;
-
+        if (mustHaveTurnedInCoC[0].count === 0) {
+            return -1;
+        }
         const actuallyTurnedIn = await prisma.$queryRaw`
-            SELECT count(*) FROM instructor_screening
+            SELECT count(*)::int FROM instructor_screening
                  LEFT JOIN certificate_of_conduct ON certificate_of_conduct."studentId" = instructor_screening."studentId"
-            WHERE (instructor_screening."createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from} AND ${statistics.to}
+            WHERE (instructor_screening."createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
                 AND certificate_of_conduct."studentId" IS NOT NULL
                 AND certificate_of_conduct."createdAt" BETWEEN (instructor_screening."createdAt") AND (instructor_screening."createdAt" + INTERVAL '8 weeks');
         `;
@@ -807,7 +821,8 @@ export class StatisticsResolver {
     @FieldResolver(() => Int)
     @Authorized(Role.ADMIN)
     async helpersWithoutScreening(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw`
+        return (
+            await prisma.$queryRaw`
             SELECT COUNT(*)::int AS value
             FROM student
             LEFT JOIN instructor_screening ON student.id = instructor_screening."studentId"
@@ -815,13 +830,15 @@ export class StatisticsResolver {
                 AND student."createdAt" >= ${statistics.from}::timestamp
                 AND student."createdAt" < ${statistics.to}::timestamp
                 AND student.verification IS NULL;
-        `;
+        `
+        )[0].value;
     }
 
-    @FieldResolver(() => Float)
+    @FieldResolver(() => MedianTimeToMatch)
     @Authorized(Role.ADMIN, Role.USER)
     async medianTimeToMatch() {
-        return await prisma.$queryRaw`
+        return (
+            await prisma.$queryRaw`
             SELECT
                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_student) AS median_days_student,
                 PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_pupil) AS median_days_pupil
@@ -833,6 +850,7 @@ export class StatisticsResolver {
                     match
                 WHERE
                     "createdAt" >= now() - INTERVAL '1 month'
-            ) AS durations;`;
+            ) AS durations;`
+        )[0];
     }
 }
