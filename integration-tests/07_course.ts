@@ -129,7 +129,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
                 groupChatType: ${ChatType.NORMAL}
-            } studentId: ${student.userID}) { id }
+            } { id }
         }
     `);
 
