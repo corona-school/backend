@@ -15,8 +15,12 @@ export enum TemplateSelectEnum {
 // string == metricId, group
 const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
+export function purgeAchievementTemplates() {
+    achievementTemplates.clear();
+}
+
 async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, Achievement_template[]>> {
-    if (!achievementTemplates.has(select) || !achievementTemplates[select]) {
+    if (!achievementTemplates.has(select)) {
         achievementTemplates.set(select, new Map());
 
         const templatesFromDB = await prisma.achievement_template.findMany({

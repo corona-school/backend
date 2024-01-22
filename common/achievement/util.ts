@@ -51,7 +51,6 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     let matches = [];
     if (!relationType || relationType === 'match') {
-        whereClause[`${userType}Id`] = id;
         matches = await prisma.match.findMany({
             where: { ...whereClause, [`${userType}Id`]: id },
             select: {
@@ -63,7 +62,6 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
-        delete whereClause[`${userType}Id`];
         const userClause =
             userType === 'student'
                 ? { subcourse_instructors_student: { some: { studentId: id } } }

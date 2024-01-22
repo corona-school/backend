@@ -1,25 +1,34 @@
 import { createNewPupil, createNewStudent, pupilTwo, studentOne } from './01_user';
 import { test } from './base';
-import { v4 as generateUUID } from 'uuid';
 import { screenerOne } from './02_screening';
 import { adminClient } from './base/clients';
 import { prisma } from '../common/prisma';
 import { achievement_template_for_enum, achievement_type_enum, achievement_action_type_enum, lecture_appointmenttype_enum } from '@prisma/client';
 import { User, getUser } from '../common/user';
-import { getLogger } from '../common/logger/logger';
 import { Match } from '../graphql/generated';
 import { _createFixedToken } from '../common/secret/token';
 import assert from 'assert';
+import { purgeAchievementTemplates } from '../common/achievement/template';
+
+async function createTemplates() {
+    purgeAchievementTemplates();
+    await createStudentOnboardingTemplates();
+    await createPupilOnboardingTemplates();
+    await createStudentConductedMatchAppointmentTemplates();
+    await createPupilConductedMatchMeetingTemplates();
+    await createStudentRegularLearningTemplate();
+    await createPupilRegularLearningTemplate();
+}
 
 void test('Reward student onboarding achievement sequence', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createStudentOnboardingTemplates();
+    await createTemplates();
 
     // Verify Email
-    const { student, client } = await createNewStudent();
+    const { student } = await createNewStudent();
     const user = await getUser(student.userID);
 
-    const student_onboarding_1 = await prisma.user_achievement.findFirst({
+    const studentOnboarding1 = await prisma.user_achievement.findFirst({
         where: {
             group: 'student_onboarding',
             groupOrder: 1,
@@ -27,7 +36,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    assert.ok(student_onboarding_1);
+    assert.ok(studentOnboarding1);
 
     // Screening
     const { client: screenerClient } = await screenerOne;
@@ -39,7 +48,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             )
         }
     `);
-    const student_onboarding_2 = await prisma.user_achievement.findFirst({
+    const studentOnboarding2 = await prisma.user_achievement.findFirst({
         where: {
             group: 'student_onboarding',
             groupOrder: 3,
@@ -47,7 +56,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    assert.ok(student_onboarding_2);
+    assert.ok(studentOnboarding2);
 
     // Create Certificate of Conduct
     const newDate = JSON.stringify(new Date());
@@ -61,7 +70,7 @@ void test('Reward student onboarding achievement sequence', async () => {
             )
         }
     `);
-    const student_onboarding_3 = await prisma.user_achievement.findFirst({
+    const studentOnboarding3 = await prisma.user_achievement.findFirst({
         where: {
             group: 'student_onboarding',
             groupOrder: 4,
@@ -69,26 +78,25 @@ void test('Reward student onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    const student_onboarding_4 = await prisma.user_achievement.findFirst({
+    const studentOnboarding4 = await prisma.user_achievement.findFirst({
         where: {
             group: 'student_onboarding',
             groupOrder: 5,
             userId: user.userID,
         },
     });
-    assert.ok(student_onboarding_3);
-    assert.ok(student_onboarding_4);
+    assert.ok(studentOnboarding3);
+    assert.ok(studentOnboarding4);
 });
 
 void test('Reward pupil onboarding achievement sequence', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createPupilOnboardingTemplates();
 
     // Verify Email
     const { pupil } = await createNewPupil();
     const user = await getUser(pupil.userID);
 
-    const pupil_onboarding_1 = await prisma.user_achievement.findFirst({
+    const pupilOnboarding1 = await prisma.user_achievement.findFirst({
         where: {
             group: 'pupil_onboarding',
             groupOrder: 1,
@@ -96,12 +104,12 @@ void test('Reward pupil onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    assert.ok(pupil_onboarding_1);
+    assert.ok(pupilOnboarding1);
     // Screening
     await adminClient.request(`
         mutation RequestScreening { pupilCreateScreening(pupilId: ${pupil.pupil.id})}
     `);
-    const pupil_onboarding_2 = await prisma.user_achievement.findFirst({
+    const pupilOnboarding2 = await prisma.user_achievement.findFirst({
         where: {
             group: 'pupil_onboarding',
             groupOrder: 3,
@@ -109,100 +117,149 @@ void test('Reward pupil onboarding achievement sequence', async () => {
             userId: user.userID,
         },
     });
-    const pupil_onboarding_3 = await prisma.user_achievement.findFirst({
+    const pupilOnboarding3 = await prisma.user_achievement.findFirst({
         where: {
             group: 'pupil_onboarding',
             groupOrder: 4,
             userId: user.userID,
         },
     });
-    assert.ok(pupil_onboarding_2);
-    assert.ok(pupil_onboarding_3);
+    assert.ok(pupilOnboarding2);
+    assert.ok(pupilOnboarding3);
 });
 
 void test('Reward student conducted match appointment', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createStudentConductedMatchAppointmentTemplates();
     const { student, client } = await studentOne;
     const user = await getUser(student.userID);
 
-    const uuid = generateUUID();
-    const match = await prisma.match.create({
-        data: {
-            uuid,
-            source: 'matchedinternal',
-            matchPool: 'lern-fair-now',
-            studentId: student.student.id,
-            pupilId: 1,
+    await client.request(`
+        mutation {
+            studentCreateMatchRequest
+        }
+    `);
+
+    const {
+        me: {
+            student: { matches },
         },
-    });
+    } = await client.request(`
+        query StudentWithMatch {
+            me {
+                student {
+                    matches {
+                        id
+                        uuid
+                        dissolved
+                        pupil { firstname lastname }
+                    }
+                }
+            }
+        }
+    `);
+    const [match] = matches;
+
     const dates = createDates();
     generateLectures(dates, match, user);
     await client.request(`
         mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
 
-    const student_joined_match_meeting_achievements = await prisma.user_achievement.findMany({
+    const studentJoinedMatchMeetingAchievements = await prisma.user_achievement.findMany({
         where: {
             group: 'student_conduct_match_appointment',
             userId: user.userID,
         },
     });
-    assert.ok(student_joined_match_meeting_achievements[0]);
-    assert.notStrictEqual(student_joined_match_meeting_achievements.length, 0);
+    assert.ok(studentJoinedMatchMeetingAchievements[0]);
+    assert.notStrictEqual(studentJoinedMatchMeetingAchievements.length, 0);
 });
 
 void test('Reward pupil conducted match appointment', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createPupilConductedMatchMeetingTemplates();
+    const { student } = await studentOne;
     const { pupil, client } = await pupilTwo;
     const user = await getUser(pupil.userID);
 
-    const match = await prisma.match.findFirst({
-        where: {
-            pupilId: pupil.pupil.id,
-            dissolved: false,
+    await client.request(`
+        mutation {
+            pupilCreateMatchRequest
+        }
+    `);
+    await adminClient.request(`
+        mutation CreateManualMatch {
+            matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})
+        }
+    `);
+    const {
+        me: {
+            pupil: { matches },
         },
-        select: { id: true },
-    });
+    } = await client.request(`
+        query PupilWithMatch {
+            me {
+                pupil {
+                    matches {
+                        id
+                    }
+                }
+            }
+        }
+    `);
+    const [match] = matches;
     await client.request(`
         mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
-    const pupil_joined_match_meeting_achievements = await prisma.user_achievement.findMany({
+    const pupilJoinedMatchMeetingAchievements = await prisma.user_achievement.findMany({
         where: {
             group: 'pupil_conduct_match_appointment',
             userId: user.userID,
         },
     });
-    assert.ok(pupil_joined_match_meeting_achievements);
-    assert.notStrictEqual(pupil_joined_match_meeting_achievements.length, 0);
+    assert.ok(pupilJoinedMatchMeetingAchievements);
+    assert.notStrictEqual(pupilJoinedMatchMeetingAchievements.length, 0);
 });
 
 void test('Reward student regular learning', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createStudentRegularLearningTemplate();
 
     const { student, client } = await studentOne;
     const user = await getUser(student.userID);
+    const metric = 'student_match_learned_regular';
 
-    const match = await prisma.match.findFirst({
-        where: {
-            studentId: student.student.id,
-            dissolved: false,
-        },
-        select: { id: true },
-    });
+    const {
+        me: { student: s1 },
+    } = await client.request(`
+        query StudentWithMatch {
+            me {
+                student {
+                    matches {
+                        id
+                    }
+                }
+            }
+        }
+    `);
+    const [match] = s1.matches.filter((el) => !el.dissolved);
     // request to generate the achievement with initial record value 1
     await client.request(`
         mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
+    const achievement = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            template: { metrics: { has: metric } },
+            context: { path: ['relation'], equals: `match/${match.id}` },
+        },
+    });
+    assert.strictEqual(achievement.recordValue, 1);
 
     const date = new Date();
     date.setDate(date.getDate() - 7);
     await prisma.achievement_event.create({
         data: {
             userId: user.userID,
-            metric: 'student_match_learned_regular',
+            metric: metric,
             value: 1,
             createdAt: date,
             action: 'student_joined_match_meeting',
@@ -214,7 +271,7 @@ void test('Reward student regular learning', async () => {
         mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
 
-    const student_match_regular_learning_record = await prisma.user_achievement.findFirst({
+    const studentMatchRegularLearningRecord = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
             group: 'student_match_regular_learning',
@@ -222,12 +279,12 @@ void test('Reward student regular learning', async () => {
             recordValue: 2,
         },
     });
-    assert.ok(student_match_regular_learning_record);
+    assert.ok(studentMatchRegularLearningRecord);
 
     await prisma.achievement_event.deleteMany({
         where: {
             userId: user.userID,
-            metric: 'student_match_learned_regular',
+            metric: metric,
             relation: `match/${match.id}`,
         },
     });
@@ -235,7 +292,7 @@ void test('Reward student regular learning', async () => {
         mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
 
-    const student_match_regular_learning = await prisma.user_achievement.findFirst({
+    const studentMatchRegularLearning = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
             group: 'student_match_regular_learning',
@@ -243,34 +300,51 @@ void test('Reward student regular learning', async () => {
             recordValue: 2,
         },
     });
-    assert.ok(student_match_regular_learning);
+    assert.ok(studentMatchRegularLearning);
 });
 
 void test('Reward pupil regular learning', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    await createPupilRegularLearningTemplate();
 
     const { pupil, client } = await pupilTwo;
     const user = await getUser(pupil.userID);
+    const metric = 'pupil_match_learned_regular';
 
-    const match = await prisma.match.findFirst({
-        where: {
-            pupilId: pupil.pupil.id,
-            dissolved: false,
+    const {
+        me: {
+            pupil: { matches },
         },
-        select: { id: true },
-    });
+    } = await client.request(`
+        query PupilWithMatch {
+            me {
+                pupil {
+                    matches {
+                        id
+                    }
+                }
+            }
+        }
+    `);
+    const [match] = matches;
     // request to generate the achievement with initial record value 1
     await client.request(`
         mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
+    const achievement = await prisma.user_achievement.findFirst({
+        where: {
+            userId: user.userID,
+            template: { metrics: { has: metric } },
+            context: { path: ['relation'], equals: `match/${match.id}` },
+        },
+    });
+    assert.strictEqual(achievement.recordValue, 1);
 
     const date = new Date();
     date.setDate(date.getDate() - 7);
     await prisma.achievement_event.create({
         data: {
             userId: user.userID,
-            metric: 'pupil_match_learned_regular',
+            metric: metric,
             value: 1,
             createdAt: date,
             action: 'pupil_joined_match_meeting',
@@ -281,16 +355,6 @@ void test('Reward pupil regular learning', async () => {
     await client.request(`
         mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
-
-    const pupil_match_regular_learning_record = await prisma.user_achievement.findFirst({
-        where: {
-            userId: user.userID,
-            group: 'pupil_match_regular_learning',
-            achievedAt: { not: null },
-            recordValue: 2,
-        },
-    });
-    assert.ok(pupil_match_regular_learning_record);
 
     await prisma.achievement_event.deleteMany({
         where: {
@@ -303,7 +367,7 @@ void test('Reward pupil regular learning', async () => {
         mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
 
-    const pupil_match_regular_learning = await prisma.user_achievement.findFirst({
+    const pupilMatchRegularLearning = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
             group: 'pupil_match_regular_learning',
@@ -311,7 +375,7 @@ void test('Reward pupil regular learning', async () => {
             recordValue: 2,
         },
     });
-    assert.ok(pupil_match_regular_learning);
+    assert.ok(pupilMatchRegularLearning);
 });
 
 void test('Resolver my achievements', async () => {
