@@ -159,6 +159,8 @@ async function updateConversation(conversationToBeUpdated: { id: string } & Conv
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to update conversation ${conversationToBeUpdated.id}.`);
     assureChatFeatureActive();
 
+    logger.info(`UPDATED DATA: ${conversationToBeUpdated}`);
+
     try {
         if (!(await getConversation(conversationToBeUpdated.id))) {
             throw new Error(`Cannot update Chat(${conversationToBeUpdated.id}) as it does not exist`);

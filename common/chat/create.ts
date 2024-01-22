@@ -81,6 +81,12 @@ async function handleExistingConversation(
     conversation: TJConversation,
     conversationInfos: ConversationInfos
 ): Promise<void> {
+    const {
+        custom: { intro, ...customWithoutIntro },
+        ...newConversationInfo
+    } = conversationInfos;
+    const conversationInfoWithoutIntro = { ...newConversationInfo, custom: customWithoutIntro };
+
     if (reason === ContactReason.MATCH) {
         await updateMatchConversation(conversationId, conversationInfos.custom.match);
     } else if (reason === ContactReason.PARTICIPANT) {
@@ -88,7 +94,7 @@ async function handleExistingConversation(
     } else if (reason === ContactReason.PROSPECT) {
         await updateProspectConversation(conversationId, subcourseId, conversation);
     } else if (reason === ContactReason.CONTACT) {
-        await updateContactConversation(conversationId, conversationInfos);
+        await updateContactConversation(conversationId, conversationInfoWithoutIntro);
     }
 }
 
@@ -196,6 +202,7 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
 
     const conversationInfos: ConversationInfos = {
         custom: {
+            intro: 'true',
             ...(contact.match && { match: { matchId: contact.match.matchId } }),
             ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
         },

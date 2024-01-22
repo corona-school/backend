@@ -7,7 +7,7 @@ import { prisma } from '../../common/prisma';
 import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
-import { ChatType, ContactReason, FinishedReason } from '../../common/chat/types';
+import { ChatType, CleanedConversationInfo, ContactReason, FinishedReason } from '../../common/chat/types';
 import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { getCourseImageURL } from '../../common/courses/util';
 import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
@@ -28,6 +28,7 @@ export class MutateChatResolver {
 
         const conversationInfos: ConversationInfos = {
             custom: {
+                intro: 'true',
                 match: { matchId: match.id },
             },
         };
@@ -44,7 +45,9 @@ export class MutateChatResolver {
 
         const allowed = await isSubcourseParticipant([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
-            custom: {},
+            custom: {
+                intro: 'true',
+            },
         };
 
         if (subcourseId) {
@@ -75,6 +78,7 @@ export class MutateChatResolver {
                 start: subcourse.lecture[0].start.toISOString(),
                 groupType: groupChatType,
                 subcourse: [subcourseId],
+                intro: 'true',
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
@@ -92,7 +96,9 @@ export class MutateChatResolver {
         const instructorUser = await getUser(instructorUserId);
 
         const conversationInfos: ConversationInfos = {
-            custom: {},
+            custom: {
+                intro: 'true',
+            },
         };
 
         if (subcourseId) {
@@ -147,5 +153,38 @@ export class MutateChatResolver {
         });
 
         return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.USER)
+    async chatClearIntroFlag(@Arg('conversationId') conversationId: string) {
+        const conversation = await getConversation(conversationId);
+
+        if (conversation.custom.intro === 'true') {
+            logger.info('CONVERSATION UPDATE');
+            await updateConversation({
+                id: conversation.id,
+                custom: {
+                    ...conversation.custom,
+                    intro: 'false',
+                },
+            });
+
+            return true;
+        } else {
+            return false;
+        }
+        // const { intro, ...updatedCustom } = conversation.custom;
+
+        // const updatedObject: CleanedConversationInfo = {
+        //     custom: updatedCustom,
+        // };
+
+        // await updateConversation({
+        //     id: conversation.id,
+        //     ...updatedObject,
+        // });
+
+        // return true;
     }
 }

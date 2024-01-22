@@ -25,6 +25,11 @@ export type ChatMetaData = {
     subcourse?: number[];
     prospectSubcourse?: number[];
     finished?: FinishedReason;
+    intro?: string; // "true"
+};
+
+export type CleanedConversationInfo = {
+    custom: Omit<ConversationInfos['custom'], 'intro'>;
 };
 
 export type TJConversation = Conversation & {
@@ -43,6 +48,7 @@ export type TJChatMetaData = {
     subcourse?: string;
     prospectSubcourse?: string;
     finished?: FinishedReason;
+    intro?: string; // "true"
 };
 export type ConversationInfos = {
     subject?: string;
