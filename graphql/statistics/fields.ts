@@ -628,35 +628,29 @@ export class StatisticsResolver {
         return actuallyTurnedIn[0].count / mustHaveTurnedInCoC[0].count;
     }
 
-    @FieldResolver((returns) => Float)
+    @FieldResolver(() => Float)
     @Authorized(Role.ADMIN)
-    async rateTutorFirstMatchStillActiveAfterOneMonth(@Root() statistics: Statistics) {
-        const now = new Date();
-        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-        const students = await prisma.student.findMany({
-            where: {
-                createdAt: { lte: oneMonthAgo },
-                match: { some: {} },
-            },
-            select: {
-                match: true,
-            },
-        });
-
-        let counterweight = 0; // due to historical reasons we have lost the dissolvedAt date of some (3772) dissolved matches. If we encounter such a match, we should remove the student from the denominator to avoid bias.
-
-        const relevantStudents = students.filter((s) => {
-            const firstMatch = s.match.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
-            if (firstMatch.dissolved && firstMatch.dissolvedAt == null) {
-                counterweight++;
-                return false;
-            }
-            return (
-                (firstMatch.dissolved ? firstMatch.dissolvedAt.getTime() : new Date().getTime()) - firstMatch.createdAt.getTime() >= 30 * 24 * 60 * 60 * 1000
-            );
-        });
-
-        return relevantStudents.length / (students.length - counterweight);
+    async rateDissolvedMatchesLasted30Days(@Root() statistics: Statistics) {
+        const numTotalDissolvedMatches = (
+            await prisma.$queryRaw`
+            SELECT count(*)::int FROM match
+            WHERE
+                "dissolvedAt" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+                AND dissolved = TRUE`
+        )[0].count;
+        if (numTotalDissolvedMatches === 0) {
+            return -1;
+        }
+        const numLastedLongerThan30Days = (
+            await prisma.$queryRaw`
+            SELECT count(*)::int FROM match
+            WHERE
+                "dissolvedAt" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+                AND dissolved = TRUE
+                AND "dissolvedAt" - "createdAt" >= INTERVAL '30 days';
+        `
+        )[0].count;
+        return numLastedLongerThan30Days / numTotalDissolvedMatches;
     }
 
     @FieldResolver((returns) => Float)
@@ -816,22 +810,6 @@ export class StatisticsResolver {
         beginingOfTheDay.setMinutes(0);
 
         return await prisma.secret.count({ where: { lastUsed: { gte: beginingOfTheDay } } });
-    }
-
-    @FieldResolver(() => Int)
-    @Authorized(Role.ADMIN)
-    async helpersWithoutScreening(@Root() statistics: Statistics) {
-        return (
-            await prisma.$queryRaw`
-            SELECT COUNT(*)::int AS value
-            FROM student
-            LEFT JOIN instructor_screening ON student.id = instructor_screening."studentId"
-            WHERE instructor_screening."studentId" IS NULL
-                AND student."createdAt" >= ${statistics.from}::timestamp
-                AND student."createdAt" < ${statistics.to}::timestamp
-                AND student.verification IS NULL;
-        `
-        )[0].value;
     }
 
     @FieldResolver(() => MedianTimeToMatch)
