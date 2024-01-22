@@ -1,4 +1,4 @@
-import { course_category_enum } from '@prisma/client';
+import { course_category_enum, user_achievement } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
 import { getFile, removeFile } from '../files';
 import { getLogger } from '../../common/logger/logger';
@@ -92,6 +92,7 @@ export class MutateCourseResolver {
         @Arg('course') data: PublicCourseEditInput
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
+        const user = context.user;
         await hasAccess(context, 'Course', course);
 
         if (course.courseState === 'allowed') {
@@ -111,25 +112,25 @@ export class MutateCourseResolver {
 
         const subcourse = await prisma.subcourse.findFirst({
             where: { courseId: courseId },
-            include: { subcourse_instructors_student: { select: { student: true } } },
         });
-        const { subcourse_instructors_student: instructors } = subcourse;
-        const { context: contextData } = await prisma.user_achievement.findFirst({
-            where: { group: 'student_offer_course', context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
+        const usersSubcourseAchievements = await prisma.user_achievement.findMany({
+            where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` }, userId: user.userID },
+            include: { template: true },
         });
-        contextData['courseName'] = result.name;
-        await prisma.user_achievement.updateMany({
-            where: {
-                userId: {
-                    in: instructors.map((it) => {
-                        const user = userForStudent(it.student);
-                        return user.userID;
-                    }),
-                },
-                group: 'student_offer_course',
-                context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
-            },
-            data: { context: contextData },
+        const subcourseAchievements = await Promise.all(
+            usersSubcourseAchievements.map(async (usersSubcourseAchievement) => {
+                return await prisma.user_achievement.findMany({
+                    where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` }, templateId: usersSubcourseAchievement.template.id },
+                });
+            })
+        );
+        subcourseAchievements.flat().forEach(async (achievement) => {
+            const { context } = achievement;
+            context['courseName'] = result.name;
+            await prisma.user_achievement.update({
+                where: { id: achievement.id },
+                data: { context },
+            });
         });
 
         return result;
