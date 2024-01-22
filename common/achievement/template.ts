@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
-import { Achievement_template } from '../../graphql/generated';
+import { Achievement_template, achievement_template_for_enum } from '../../graphql/generated';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { Metric } from './types';
@@ -65,7 +65,9 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
 
 async function getTemplatesWithCourseRelation(): Promise<Achievement_template[]> {
     const templatesByCourseRelation = await getAchievementTemplates(TemplateSelectEnum.BY_COURSE_RELATION);
-    const courseTemplates: Achievement_template[] = templatesByCourseRelation ? Array.from(templatesByCourseRelation[achievement_template_for_enum.Course]) : [];
+    const courseTemplates: Achievement_template[] = templatesByCourseRelation
+        ? Array.from(templatesByCourseRelation[achievement_template_for_enum.Course])
+        : [];
 
     return courseTemplates;
 }

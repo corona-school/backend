@@ -26,9 +26,10 @@ export async function getAchievementImageURL(template: Achievement_template, sta
         .filter((courseTemplate) => courseTemplate.type === achievement_type_enum.TIERED)
         .map((courseTemplate) => courseTemplate.id);
     const { id, image, achievedImage } = template;
-    const courseId = achievementContext?.['courseId'];
-    if (courseId && templateIdsForCourseImage.includes(id)) {
-        const course = await prisma.course.findUnique({ where: { id: Number(courseId) }, select: { imageKey: true } });
+    const subcourseId = achievementContext?.['relation'].split('/')[1];
+    if (subcourseId && templateIdsForCourseImage.includes(id)) {
+        const { courseId } = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { courseId: true } });
+        const course = await prisma.course.findUnique({ where: { id: courseId }, select: { imageKey: true } });
         return getCourseImageURL(course);
     }
     if (state === achievement_state.COMPLETED && achievedImage) {
