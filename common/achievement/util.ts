@@ -105,7 +105,7 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
     return transformedJson;
 }
 
-export function getCurrentAchievementTemplateWithContext(userAchievement: User_achievement, achievementContext: AchievementContextType): Achievement_template {
+export function renderAchievementWithContext(userAchievement: User_achievement, achievementContext: AchievementContextType): Achievement_template {
     const currentAchievementContext = userAchievement.template as Achievement_template;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
