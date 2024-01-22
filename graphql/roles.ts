@@ -24,8 +24,13 @@ export async function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
     }
 
     if (process.env.REQUIRE_PUPIL_SCREENING === 'true') {
+        // From Q1 2024 onwards we require pupils to be screened before they can join courses or get a match
         const wasSuccessfullyScreened = (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'success' } })) > 0;
-        if (!wasSuccessfullyScreened) {
+        // Pupils that registered before and were not yet screened can continue to use the app as they used to
+        const alreadyHasMatch = (await prisma.match.count({ where: { pupilId: pupil.id } })) > 0;
+        const alreadyJoinedCourse = (await prisma.subcourse_participants_pupil.count({ where: { pupilId: pupil.id } })) > 0;
+
+        if (!wasSuccessfullyScreened && !alreadyHasMatch && !alreadyJoinedCourse) {
             logger.info(`Pupil(${pupil.id}) was not yet successfully screened, no roles granted`);
             return;
         }
