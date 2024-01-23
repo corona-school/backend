@@ -181,10 +181,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                       })
                       .reduce((a, b) => a + b, 0);
     } else {
-        const achievementTemplates = await prisma.achievement_template.findMany({
-            where: { group: currentAchievementTemplate.group, isActive: true },
-            orderBy: { groupOrder: 'asc' },
-        });
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }

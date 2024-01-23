@@ -89,9 +89,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     }
     const nextStepTemplate = templatesForGroup[nextStepIndex];
     const achievedAt =
-        templatesForGroup.length === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL
-            ? JSON.stringify(new Date())
-            : null;
+        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
