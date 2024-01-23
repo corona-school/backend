@@ -1384,7 +1384,7 @@ void (async function setupDevDB() {
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: '',
             actionName: 'Kurs anlegen',
-            actionRedirectLink: '/create-course/{{subcourseId}}',
+            actionRedirectLink: '/create-course',
             actionType: achievement_action_type_enum.Action,
             condition: 'student_create_course_events > 0',
             conditionDataAggregations: {
