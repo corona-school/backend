@@ -33,7 +33,7 @@ async function findUserAchievement<ID extends ActionID>(
 async function getOrCreateUserAchievement<ID extends ActionID>(
     template: Achievement_template,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
     const isGlobal =
         template.templateFor === achievement_template_for_enum.Global ||

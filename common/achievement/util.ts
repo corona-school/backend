@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { AchievementContextType, RelationTypes } from './types';
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma, achievement_template, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
@@ -104,9 +104,20 @@ export function transformPrismaJson(user: User, json: Prisma.JsonValue): Achieve
     });
     return transformedJson;
 }
+export async function getUserAchievementWithTemplate(id: number) {
+    return await prisma.user_achievement.findUnique({
+        where: { id },
+        include: { template: true },
+    });
+}
+type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+export type achievement_with_template = ThenArg<ReturnType<typeof getUserAchievementWithTemplate>>;
 
-export function getCurrentAchievementTemplateWithContext(userAchievement: User_achievement, achievementContext: AchievementContextType): Achievement_template {
-    const currentAchievementContext = userAchievement.template as Achievement_template;
+export function renderAchievementWithContext(
+    userAchievement: user_achievement & { template: achievement_template },
+    achievementContext: AchievementContextType
+): Achievement_template {
+    const currentAchievementContext = userAchievement.template;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
         const updatedElement =
@@ -118,7 +129,7 @@ export function getCurrentAchievementTemplateWithContext(userAchievement: User_a
     return currentAchievementContext;
 }
 
-export function getAchievementState(userAchievements: User_achievement[], currentAchievementIndex: number) {
+export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number) {
     return userAchievements.length === 0
         ? achievement_state.INACTIVE
         : userAchievements[currentAchievementIndex].achievedAt
