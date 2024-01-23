@@ -218,6 +218,7 @@ const _notificationActions = {
         description: 'Instructor / Course submitted for review',
         sampleContext: {
             courseName: 'Beispielkurs',
+            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },
@@ -225,6 +226,7 @@ const _notificationActions = {
         description: 'Instructor / Course approved',
         sampleContext: {
             courseName: 'Beispielkurs',
+            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },

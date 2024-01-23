@@ -225,12 +225,15 @@ export class MutateCourseResolver {
             where: { courseId: courseId },
             include: { subcourse_instructors_student: { select: { student: true } } },
         });
-        subcourse.subcourse_instructors_student.forEach(async (instructor) => {
-            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
-                courseName: course.name,
-                relation: `subcourse/${subcourse.id}`,
+        if (subcourse && subcourse.subcourse_instructors_student) {
+            subcourse.subcourse_instructors_student.forEach(async (instructor) => {
+                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
+                    courseName: course.name,
+                    subcourseId: subcourse.id.toString(),
+                    relation: `subcourse/${subcourse.id}`,
+                });
             });
-        });
+        }
         return true;
     }
 
