@@ -1297,6 +1297,115 @@ void (async function setupDevDB() {
         },
     });
 
+    // STUDENT OFFER COURSE
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_create_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 1,
+            stepName: 'Kurs entwerfen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Vermittle Wissen',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: 'Kurs anlegen',
+            actionRedirectLink: '/create-course',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_create_course_events > 0',
+            conditionDataAggregations: {
+                student_create_course_events: {
+                    metric: 'student_create_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_submit_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 2,
+            stepName: 'Kurs zur Prüfung freigeben',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: 'Kurs freigeben',
+            actionRedirectLink: '/single-course/{{courseId}}',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_submit_course_events > 0',
+            conditionDataAggregations: {
+                student_submit_course_events: {
+                    metric: 'student_submit_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_approve_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 3,
+            stepName: 'Freigabe erhalten',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: 'Kurs absagen',
+            actionRedirectLink: '/single-course/{{courseId}}',
+            actionType: achievement_action_type_enum.Wait,
+            condition: 'student_approve_course_events > 0',
+            conditionDataAggregations: {
+                student_approve_course_events: {
+                    metric: 'student_approve_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_approve_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 4,
+            stepName: 'Kurs erstellt!',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_approve_course_events > 0',
+            conditionDataAggregations: {
+                student_approve_course_events: {
+                    metric: 'student_approve_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);
