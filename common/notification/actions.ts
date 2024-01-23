@@ -211,6 +211,7 @@ const _notificationActions = {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
             courseName: 'Beispielkurs',
+            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },

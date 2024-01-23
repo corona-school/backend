@@ -102,6 +102,7 @@ export class MutateSubcourseResolver {
 
         await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
             courseName: course.name,
+            subcourseId: result.id.toString(),
             relation: `subcourse/${result.id}`,
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
