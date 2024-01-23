@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, achievement_type_enum } from '@prisma/client';
 import { Achievement_template, achievement_template_for_enum } from '../../graphql/generated';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
@@ -33,7 +33,7 @@ async function findUserAchievement<ID extends ActionID>(
 async function getOrCreateUserAchievement<ID extends ActionID>(
     template: Achievement_template,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
     const isGlobal =
         template.templateFor === achievement_template_for_enum.Global ||
@@ -88,6 +88,10 @@ async function createNextUserAchievement<ID extends ActionID>(
         return;
     }
     const nextStepTemplate = templatesForGroup[nextStepIndex];
+    const achievedAt =
+        templatesForGroup.length === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL
+            ? JSON.stringify(new Date())
+            : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
@@ -99,13 +103,12 @@ async function createNextUserAchievement<ID extends ActionID>(
                 context: context ? context : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
+                achievedAt: achievedAt,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });
         return createdUserAchievement;
     }
-    const nextUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex + 1, userId, context);
-    return nextUserAchievement;
 }
 
 export { getOrCreateUserAchievement, createAchievement };

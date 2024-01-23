@@ -165,7 +165,7 @@ export class MutateMeResolver {
             const updatedPupil = await deactivatePupil(pupil, reason);
 
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
 
             logger.info(`Pupil(${pupil.id}) deactivated their account`);
@@ -196,7 +196,7 @@ export class MutateMeResolver {
             const updatedPupil = await activatePupil(pupil);
 
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
 
             logger.info(`Pupil(${pupil.id}) reactivated their account`);
@@ -257,7 +257,7 @@ export class MutateMeResolver {
         const updatedPupil = await becomeTutee(pupil, data);
         if (!byAdmin) {
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
         }
 
@@ -273,7 +273,7 @@ export class MutateMeResolver {
 
         const updatedPupil = await becomeStatePupil(pupil, data);
         const roles: Role[] = [];
-        evaluatePupilRoles(updatedPupil, roles);
+        await evaluatePupilRoles(updatedPupil, roles);
         context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
@@ -288,7 +288,7 @@ export class MutateMeResolver {
 
         const updatedPupil = await becomeParticipant(pupil);
         const roles: Role[] = [];
-        evaluatePupilRoles(updatedPupil, roles);
+        await evaluatePupilRoles(updatedPupil, roles);
         context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);

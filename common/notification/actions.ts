@@ -210,10 +210,22 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_submitted: {
+        description: 'Instructor / Course submitted for review',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_approved: {
+        description: 'Instructor / Course approved',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
         },
     },
     instructor_course_cancelled: {
@@ -663,7 +675,6 @@ const _notificationActions = {
         description: 'Student joined a match meeting',
         sampleContext: {
             matchId: '1',
-            pupil: { firstname: 'Pupil' }, // = matchpartner
             relation: 'match/1',
         },
     },
