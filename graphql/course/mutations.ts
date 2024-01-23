@@ -229,6 +229,7 @@ export class MutateCourseResolver {
             subcourse.subcourse_instructors_student.forEach(async (instructor) => {
                 await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
                     courseName: course.name,
+                    subcourseId: subcourse.id.toString(),
                     relation: `subcourse/${subcourse.id}`,
                 });
             });

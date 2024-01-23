@@ -1339,7 +1339,7 @@ void (async function setupDevDB() {
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: '',
             actionName: 'Kurs freigeben',
-            actionRedirectLink: '/single-course/{{courseId}}',
+            actionRedirectLink: '/single-course/{{subcourseId}}',
             actionType: achievement_action_type_enum.Action,
             condition: 'student_submit_course_events > 0',
             conditionDataAggregations: {
@@ -1366,7 +1366,7 @@ void (async function setupDevDB() {
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: '',
             actionName: 'Kurs absagen',
-            actionRedirectLink: '/single-course/{{courseId}}',
+            actionRedirectLink: '/single-course/{{subcourseId}}',
             actionType: achievement_action_type_enum.Wait,
             condition: 'student_approve_course_events > 0',
             conditionDataAggregations: {
