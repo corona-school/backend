@@ -27,7 +27,7 @@ import {
     course_subject_enum as CourseSubject,
     lecture_appointmenttype_enum as AppointmentType,
 } from '@prisma/client';
-import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from './graphql/generated';
+import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
 
 const logger = getLogger('DevSetup');
 
