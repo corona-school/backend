@@ -1437,8 +1437,8 @@ void (async function setupDevDB() {
                 'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: '',
-            actionName: 'Kurs absagen',
-            actionRedirectLink: '/single-course/{{subcourseId}}',
+            actionName: null,
+            actionRedirectLink: null,
             actionType: achievement_action_type_enum.Wait,
             condition: 'student_approve_course_events > 0',
             conditionDataAggregations: {

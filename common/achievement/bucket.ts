@@ -22,7 +22,7 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
         relation: data.relation,
         // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
         startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
-        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
+        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(5, 'minutes').toDate(),
     }));
     return buckets;
 }
