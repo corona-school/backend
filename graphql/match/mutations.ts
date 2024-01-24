@@ -105,9 +105,15 @@ export class MutateMatchResolver {
                 matchId: matchId.toString(),
                 relation: `match/${matchId}`,
             });
+            await Notification.actionTaken(user, 'student_presence_in_meeting', {
+                relation: `match/${matchId}`,
+            });
         } else if (user.pupilId) {
             await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
                 matchId: matchId.toString(),
+                relation: `match/${matchId}`,
+            });
+            await Notification.actionTaken(user, 'pupil_presence_in_meeting', {
                 relation: `match/${matchId}`,
             });
         }

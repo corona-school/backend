@@ -1478,6 +1478,68 @@ void (async function setupDevDB() {
         },
     });
 
+    // STUDENT PARTICIPATION STREAK
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Anwesenheits',
+            metrics: ['student_participation_streak'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'student_participation',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Du warst bei {{recordValue}} Termin(en) in Folge anwesend!',
+            description:
+                'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
+            image: 'gamification/achievements/tmp/streaks/presence_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/presence_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_presence_events > 0',
+            conditionDataAggregations: {
+                student_presence_events: {
+                    metric: 'student_participation_streak',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_participation',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
+    // STUDENT PARTICIPATION STREAK
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Anwesenheit',
+            metrics: ['pupil_participation_streak'],
+            templateFor: achievement_template_for_enum.Global,
+            group: 'pupil_participation',
+            groupOrder: 1,
+            stepName: '',
+            type: achievement_type_enum.STREAK,
+            subtitle: 'Du warst bei {{recordValue}} Termin(en) in Folge anwesend!',
+            description:
+                'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
+            image: 'gamification/achievements/tmp/streaks/presence_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/presence_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'pupil_presence_events > 0',
+            conditionDataAggregations: {
+                pupil_presence_events: {
+                    metric: 'pupil_participation_streak',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_participation',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);

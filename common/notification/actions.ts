@@ -688,6 +688,12 @@ const _notificationActions = {
             subcourseLecturesCount: '5',
         },
     },
+    student_presence_in_meeting: {
+        description: 'Student joined a meeting',
+        sampleContext: {
+            relation: 'match/1 || subcourse/1',
+        },
+    },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
@@ -699,6 +705,12 @@ const _notificationActions = {
         sampleContext: {
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
+        },
+    },
+    pupil_presence_in_meeting: {
+        description: 'Pupil joined a meeting',
+        sampleContext: {
+            relation: 'match/1 || subcourse/1',
         },
     },
     TEST: {
