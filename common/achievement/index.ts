@@ -3,7 +3,7 @@ import { User } from '../user';
 import { sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { getTemplatesByMetrics } from './template';
+import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
 import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
@@ -171,8 +171,21 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
         select: { id: true, userId: true, achievedAt: true, template: true },
     });
 
-    await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
-        achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
-    });
+    const { type, group, groupOrder } = updatedAchievement.template;
+
+    if (type === achievement_type_enum.SEQUENTIAL) {
+        const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
+        const groupTemplates = templatesByGroup.get(group);
+        const lastTemplate = groupTemplates[groupTemplates.length - 2];
+        if (groupOrder === lastTemplate.groupOrder) {
+            await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+                achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+            });
+        }
+    } else {
+        await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+            achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+        });
+    }
     return updatedAchievement;
 }
