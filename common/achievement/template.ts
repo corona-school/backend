@@ -15,7 +15,7 @@ export enum TemplateSelectEnum {
 // string == metricId, group
 const achievementTemplates: Map<TemplateSelectEnum, Map<string, Achievement_template[]>> = new Map();
 
-export function purgeAchievementTemplates() {
+export function purgeAchievementTemplateCache() {
     achievementTemplates.clear();
 }
 
