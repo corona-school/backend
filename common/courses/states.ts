@@ -81,14 +81,15 @@ export async function allowCourse(course: Course, screeningComment: string | nul
         }
     }
 
-    const [subcourse] = subcourses;
-    subcourse.subcourse_instructors_student.forEach(async (instructor) => {
-        await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-            courseName: course.name,
-            subcourseId: subcourse.id.toString(),
-            relation: `subcourse/${subcourse.id}`,
+    for (const subcourse of subcourses) {
+        subcourse.subcourse_instructors_student.forEach(async (instructor) => {
+            await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
+                courseName: course.name,
+                subcourseId: subcourse.id.toString(),
+                relation: `subcourse/${subcourse.id}`,
+            });
         });
-    });
+    }
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
