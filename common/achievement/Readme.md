@@ -38,56 +38,83 @@ Achievements are a part of the Gamification. They are stored in the database as 
 | :------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
 | predefined blueprint in the database that is used to create new achievements from it. | achievement data related to a user that stores information about the achievement, its status and when it was achieved |
 
-#### achievement_template
+```mermaid
+erDiagram
+	achievement_template  }o--||  achievement_template_for_enum  : ""
+	achievement_template  }o--||  achievement_type_enum  : ""
+	achievement_template  }o--||  achievement_action_type_enum  : ""
+	achievement_template  ||--o{  user_achievement: ""
+	achievement_event  }o--||  User  : ""
+	user_achievement  }o--||  User  : ""
 
-| field                                                               | description                                                                                                                                                             |
-| :------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                                                                | unique id                                                                                                                                                               |
-| `name`                                                              | displayed name of the template                                                                                                                                          |
-| <div id="achievement_template_metrics">`metrics`</div>              | used to identify all events related to a achievement template                                                                                                           |
-| `templateFor`                                                       | discriminator to clarify a relation of an achievement template to 1. one match, 2. all matches, 3. one subcourse, 4. all subcourses or no relation                      |
-| `group`                                                             | Affiliation of templates with the same group                                                                                                                            |
-| `groupOrder`                                                        | indexes to keep the templates inside group arrays in order                                                                                                              |
-| `stepName`                                                          | exclusively used for sequential achievements to be displayed as a step of this template group                                                                           |
-| `type`                                                              | achievement types `SEQUENTIAL`, `TIERED` and `STREAK`                                                                                                                   |
-| `subtitle`                                                          | subtitle of an achievement                                                                                                                                              |
-| `description`                                                       | description text of an achievement                                                                                                                                      |
-| `image`                                                             | image of a achievement / an achievement step                                                                                                                            |
-| `achievedImage`                                                     | exclusively used for streak achievements that are currently achieved                                                                                                    |
-| `actionName`                                                        | optional button label                                                                                                                                                   |
-| `actionRedirectLink`                                                | optional redirect reference for buttons                                                                                                                                 |
-| `actionType`                                                        | type to define what icon is displayed for an achievement action                                                                                                         |
-| `actionName`                                                        | label text for an achievement action                                                                                                                                    |
-| `condition`                                                         | condition to be met for a reward to be issued for an achievement                                                                                                        |
-| <div id="conditionDataAggregation">`conditionDataAggregation`</div> | context information on what buckets to create for the achievements metrics and how to aggregate action events for these conditions to check if they have been fulfilled |
-| `user_achievement`                                                  | all user_achievements that share a relation with this achievement_template                                                                                              |
+	achievement_template  {
+		id number  PK
+		name string
+		metrics string[]
+		achievement_template_for_enum  templateFor
+		group string
+		groupOrder number
+		stepName string
+		type achievement_type_enum
+		subtitle string
+		description string
+		image string
+		achievedImage string
+		actionName string
+		actionRedirectLink string
+		actionType achievement_action_type_enum
+		actionName string
+		condition string
+		conditionDataAggregation json
+		isActive boolean
+		user_achievement[] user_achievement
+	}
 
-#### user_achievement
+	achievement_template_for_enum  {
+		Course Course
+		Global_Courses  Global_Courses
+		Match Match
+		Global_Matches  Global_Matches
+		Global Global
+	}
 
-| field         | description                                                                    |
-| :------------ | :----------------------------------------------------------------------------- |
-| `id`          | unique id                                                                      |
-| `templateId`  | id of the related achievement_template                                         |
-| `template`    | related achievement_template found by the templateId                           |
-| `userId`      | id of the related user                                                         |
-| `group`       | copy of the related templates group field                                      |
-| `groupOrder`  | copy of the related templates groupOrder field                                 |
-| `isSeen`      | set true when a user has viewed an achieved achievement on their progress page |
-| `achievedAt`  | timestamp set, if a achievements condition was met                             |
-| `recordValue` | record value on how long the longest streak was held up                        |
-| `context`     | relations to matches, subcourses, pupils and students by their id              |
+	achievement_type_enum  {
+		SEQUENTIAL SEQUENTIAL
+		TIERED TIERED
+		STREAK STREAK
+	}
 
-#### achievement_event
+	achievement_action_type_enum  {
+		Appointment Appointment
+		Action Action
+		Wait Wait
+		Info Info
+	}
 
-| field     | description                                                                                                                     |
-| :-------- | :------------------------------------------------------------------------------------------------------------------------------ |
-| id        | unique id                                                                                                                       |
-| userId    | id of the user, that triggered the event                                                                                        |
-| metric    | relation to dependent achievements data aggregation condition                                                                   |
-| value     | value of event used in the [aggregation](#data-aggregation) process, has a default of 1, but can also depict a certain duration |
-| createdAt | timestamp from when the event was triggered                                                                                     |
-| action    | the action triggered by this event                                                                                              |
-| relation  | the match or subcourse this event was triggered for                                                                             |
+	user_achievement  {
+		id number  PK
+		templateId number  FK
+		template achievement_template
+		userId string  FK
+		group string
+		groupOrder number
+		isSeen boolean
+		achievedAt date
+		recordValue number
+		context json
+	}
+
+	achievement_event  {
+		id number  PK
+		userId string  FK
+		metric string
+		value number
+		createdAt date
+		action string
+		relation string
+	}
+	User
+```
 
 ### 1.2. Components
 
@@ -96,7 +123,7 @@ Achievements are a part of the Gamification. They are stored in the database as 
 | `aggregator.ts`                       | Aggregators are functions used to process values, passed inside events triggered by user action. They can sum, count, check for existance of events or check the number of events for an achievement                                 |
 | `bucket.ts`                           | Buckets are functions to pre-sort and / or aggregate events by their type or timestamp                                                                                                                                               |
 | `create.ts`                           | functions to find certain achievements, get achievements, create achievements based on previously missing ones or to create an achievement as a follow-up achievement to a previous one                                              |
-| `evaluate.ts`                         | functions to evaluate if an achievements conditions are met based on the [conditionDataAggregation](#conditionDataAggregation) of the related achievement_template                                                                   |
+| `evaluate.ts`                         | functions to evaluate if an achievements conditions are met based on the [conditionDataAggregation](#database-models) of the related achievement_template                                                                            |
 | `get.ts`                              | resolver functions to get all achievements, get certain achievements to be displayed as next steps, get achievements that are yet to be initialized, get achievements by their id and assemble the achievement data for the frontend |
 | `index.ts`                            | functions to initialize the evaluation process when an action was taken, cache metrics for events, and reward users when achievement conditions are met                                                                              |
 | <div id="metric.ts">`metric.ts`</div> | functions to create metrics together with their related actions when building the project                                                                                                                                            |
@@ -120,31 +147,21 @@ The achievement system is set up as follows
 
 ```mermaid
 flowchart TD
-	A(actionTaken) --> B(rewardActionTaken)
-	C[Achievement Template] --> getOrCreateUserAchievement
-	D[User Id] --> getOrCreateUserAchievement
-	E[Action Event Context] --> getOrCreateUserAchievement
-	B --> getOrCreateUserAchievement
-	getOrCreateUserAchievement --> F[User Achievement]
-	F --> G(checkUserAchievement)
-	G --> isAchievementConditionMet
-	isAchievementConditionMet --> H[Evaluation Result]
+	A(actionTaken) --> B[rewardActionTaken]
+	C[/Achievement Template/] --> N
+	D[/User Id/] --> N
+	E[/Action Event Context/] --> N
+	B --> N
+	N --> F[/User Achievement/]
+	F --> G[checkUserAchievement]
+	G --> H[/Evaluation Result/]
 	H --> L{condition Met}
 	L -->|true| I
-	L -->|false| M(updateUserAchievement)
-	I(rewardUser) --> J[Awarded Achievement]
-	J --> K(createUserAchievement)
+	L -->|false| M[updateUserAchievement]
+	I[rewardUser] --> J[/Awarded Achievement/]
+	J --> K[createUserAchievement]
 
-	subgraph getOrCreateUserAchievement
-		AA(findUserAchievement) -.-> AB{User Achievement ?}
-		AB -.-> |true| AD(return User Achievement)
-		AB -.-> |false| AC(createUserAchievement)
-		AC -.-> AD
-	end
-	subgraph isAchievementConditionMet
-		BA(isAchievementConditionMet) -.-> BB(evaluateAchievement)
-		BB -.-> |return evaluation result| BC[Data Aggregation - Chapter 2.5]
-	end
+	N[getOrCreateUserAchievement]
 ```
 
 [Go to Data Aggregation - Chapter 2.5](#data-aggregation)
@@ -152,8 +169,6 @@ flowchart TD
 ### 2.1. Reward Action
 
 The achievement is linked to the pre-existing notification system and therefore triggers the `rewardActionTaken` function when ever the `actionTaken` function for a future notification is executed. This is working since achievements that have newly matched their conditions are announced as a notification, therefore naturally being linked to an action taken call.
-
-Each action tied to a metric, where metrics have the capability to store multiple action-ids, entails the monitoring of a specific event created for the action that was taken. The retrieval of these events can be facilitated either through an action-id or by employing a metric, thereby allowing the potential cross-reference of events associated with varying action-ids. This versatility is due to the fact that these metrics can be interconnected with an array of action-ids, effectively tracking a diverse range of events.
 
 Based on the [metrics](#metrics) for the action that triggered the `rewardActionTaken` function the templates for this action are fetched and sorted by their group. For every one of these groups the [`getOrCreateUserAchievement`](#get-or-create-user-achievement) function is called to receive the user_achievement from the database that has to be evaluated inside the [`checkUserAchievement`](#check-user-achievement) function, which is subsequently executed using the already received user_achievement.
 
@@ -179,7 +194,7 @@ The `rewardUser` function is updating the achievement that triggered it by setti
 
 ### 2.5. Evaluate Achievement
 
-In order to evaluate an achievement all related events are sorted by their [metric](#metrics) and a potential `recordValue` is taken from the `resultObject`. Thereupon the [aggregations](#data-aggregation) are executed for every condition object found in the user_templates [`conditionDataAggregation`](#conditionDataAggregation).
+In order to evaluate an achievement all related events are sorted by their [metric](#metrics) and a potential `recordValue` is taken from the `resultObject`. Thereupon the [aggregations](#data-aggregation) are executed for every condition object found in the user_templates [`conditionDataAggregation`](#database-models).
 
 #### Evaluation of aggregated Values
 
@@ -284,7 +299,7 @@ All operations and and types can be found in the [swan-js documentation](https:/
 
 ### 4.2. Writing Conditions
 
-When writing conditions for an achievement, keep in mind that the [conditionDataAggregation](#conditionDataAggregation) will produce values that should be used for such conditions.
+When writing conditions for an achievement, keep in mind that the [conditionDataAggregation](#database-models) will produce values that should be used for such conditions.
 
 #### How conditionDataAggregations are built
 
@@ -340,7 +355,7 @@ The object tells us that all events with the **metric** `student_conducted_match
 The metric is the core element.  
 It fundamentally defines what is resulting for specific actions and is the connecting element between event and achievement.
 
-The assignment of events to a metric is crucial for proper evaluation, and this information is stored in the [achievement template](#achievement_template_metrics). This process becomes pivotal when assessing achievements, as our goal is to selectively retrieve events that have been specifically created for a particular metric. In essence, we aim to pinpoint the precise events that hold relevance for the achievement under consideration.
+The assignment of events to a metric is crucial for proper evaluation, and this information is stored in the [achievement template](#database-models). This process becomes pivotal when assessing achievements, as our goal is to selectively retrieve events that have been specifically created for a particular metric. In essence, we aim to pinpoint the precise events that hold relevance for the achievement under consideration.
 
 The achievement template not only encompasses the metrics, listening to the designated actions but also incorporates a formula responsible for calculating the event value. This calculated value is then stored in the achievement_event.
 
