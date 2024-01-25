@@ -4,7 +4,7 @@ import { test } from './base';
 import { adminClient, createUserClient } from './base/clients';
 import { instructorOne, instructorTwo, pupilOne, studentOne } from './01_user';
 
-const screenerOne = test('Admin can create Screener Account', async () => {
+export const screenerOne = test('Admin can create Screener Account', async () => {
     const email = `test+${randomBytes(10).toString('base64')}@lern-fair.de`;
     const firstname = randomBytes(10).toString('base64');
     const lastname = randomBytes(10).toString('base64');

@@ -211,7 +211,6 @@ const _notificationActions = {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
             courseName: 'Beispielkurs',
-            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },
@@ -219,7 +218,6 @@ const _notificationActions = {
         description: 'Instructor / Course submitted for review',
         sampleContext: {
             courseName: 'Beispielkurs',
-            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },
@@ -227,7 +225,6 @@ const _notificationActions = {
         description: 'Instructor / Course approved',
         sampleContext: {
             courseName: 'Beispielkurs',
-            subcourseId: '1',
             relation: 'subcourse/1',
         },
     },
@@ -525,13 +522,6 @@ const _notificationActions = {
             matchId: '1',
         },
     },
-    student_add_appointments_match: {
-        description: 'Student / Match Appointments Added',
-        sampleContext: {
-            student: sampleUser,
-            matchId: '1',
-        },
-    },
     pupil_decline_appointment_group: {
         description: 'Instructor / Group Appointment declined by Participant',
         sampleContext: {
@@ -677,7 +667,6 @@ const _notificationActions = {
     student_joined_match_meeting: {
         description: 'Student joined a match meeting',
         sampleContext: {
-            matchId: '1',
             relation: 'match/1',
         },
     },
@@ -697,7 +686,7 @@ const _notificationActions = {
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
-            matchId: '1',
+            relation: 'match/1',
         },
     },
     pupil_joined_subcourse_meeting: {
