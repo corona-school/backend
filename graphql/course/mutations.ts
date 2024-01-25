@@ -114,7 +114,7 @@ export class MutateCourseResolver {
             where: { courseId: courseId },
         });
         const usersSubcourseAchievements = await prisma.user_achievement.findMany({
-            where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` }, userId: user.userID },
+            where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
             include: { template: true },
         });
         const subcourseAchievements = await Promise.all(
@@ -124,14 +124,14 @@ export class MutateCourseResolver {
                 });
             })
         );
-        subcourseAchievements.flat().forEach(async (achievement) => {
+        for (const achievement of subcourseAchievements.flat()) {
             const { context } = achievement;
             context['courseName'] = result.name;
             await prisma.user_achievement.update({
                 where: { id: achievement.id },
                 data: { context },
             });
-        });
+        }
 
         return result;
     }
@@ -229,7 +229,6 @@ export class MutateCourseResolver {
             subcourse.subcourse_instructors_student.forEach(async (instructor) => {
                 await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
                     courseName: course.name,
-                    subcourseId: subcourse.id.toString(),
                     relation: `subcourse/${subcourse.id}`,
                 });
             });

@@ -102,7 +102,6 @@ export class MutateSubcourseResolver {
 
         await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
             courseName: course.name,
-            subcourseId: result.id.toString(),
             relation: `subcourse/${result.id}`,
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
@@ -381,6 +380,30 @@ export class MutateSubcourseResolver {
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true, lecture: true } });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        if (user.studentId) {
+            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
+            await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
+                relation: `subcourse/${subcourseId}`,
+                subcourseLecturesCount: lecturesCount.toString(),
+            });
+        } else if (user.pupilId) {
+            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
+            await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
+                relation: `subcourse/${subcourseId}`,
+                subcourseLecturesCount: lecturesCount.toString(),
+            });
+        }
+
         return true;
     }
 }

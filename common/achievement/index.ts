@@ -176,6 +176,12 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
     if (type === achievement_type_enum.SEQUENTIAL) {
         const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
         const groupTemplates = templatesByGroup.get(group);
+        /**
+         * Templates are evaluated in sequence, starting from the first and progressing towards the last.
+         * The @param lastTemplate requiring evaluation is the second-to-last one in the group.
+         * The final template in the sequence serves solely to display information about the sequential achievement being rewarded.
+         * Before generating the reward achievement for a sequential achievement, the system checks if the last achievement to be evaluated has been achieved.
+         */
         const lastTemplate = groupTemplates[groupTemplates.length - 2];
         if (groupOrder === lastTemplate.groupOrder) {
             await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
