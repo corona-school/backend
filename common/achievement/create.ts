@@ -1,29 +1,33 @@
-import { Prisma } from '@prisma/client';
-import { Achievement_template, achievement_template_for_enum } from '../../graphql/generated';
+import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
 import { AchievementToCheck } from './types';
 
-async function findUserAchievement<ID extends ActionID>(
+function createRelationContextFilter<ID extends ActionID>(context: SpecificNotificationContext<ID>): Prisma.JsonFilter {
+    if (context.relation) {
+        return { path: ['relation'], equals: context.relation };
+    }
+    return { path: ['relation'], equals: Prisma.AnyNull };
+}
+
+export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
-    const keys = context ? Object.keys(context) : [];
+    const contextHasRelation = context && Object.keys(context).includes('relation');
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
-            AND: keys.map((key) => {
-                return {
-                    context: {
-                        path: key,
-                        equals: context[key],
-                    },
-                };
-            }),
+            AND: contextHasRelation && {
+                context: {
+                    path: ['relation'],
+                    equals: context['relation'],
+                },
+            },
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
@@ -31,9 +35,9 @@ async function findUserAchievement<ID extends ActionID>(
 }
 
 async function getOrCreateUserAchievement<ID extends ActionID>(
-    template: Achievement_template,
+    template: achievement_template,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
     const isGlobal =
         template.templateFor === achievement_template_for_enum.Global ||
@@ -47,25 +51,25 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
 }
 
 const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
-async function _createAchievement<ID extends ActionID>(currentTemplate: Achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
+async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const templatesForGroup = templatesByGroup.get(currentTemplate.group).sort((a, b) => a.groupOrder - b.groupOrder);
 
-    const keys = Object.keys(context);
+    const contextHasRelation = Object.keys(context).includes('relation');
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
             template: {
                 group: currentTemplate.group,
             },
             userId,
-            AND: keys.map((key) => {
-                return {
-                    context: {
-                        path: key,
-                        equals: context[key],
-                    },
-                };
-            }),
+            ...(contextHasRelation
+                ? {
+                      context: {
+                          path: ['relation'],
+                          equals: context['relation'],
+                      },
+                  }
+                : {}),
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
@@ -79,7 +83,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: Achievem
 }
 
 async function createNextUserAchievement<ID extends ActionID>(
-    templatesForGroup: Achievement_template[],
+    templatesForGroup: achievement_template[],
     nextStepIndex: number,
     userId: string,
     context: SpecificNotificationContext<ID>
@@ -88,6 +92,8 @@ async function createNextUserAchievement<ID extends ActionID>(
         return;
     }
     const nextStepTemplate = templatesForGroup[nextStepIndex];
+    const achievedAt =
+        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
@@ -99,13 +105,12 @@ async function createNextUserAchievement<ID extends ActionID>(
                 context: context ? context : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
+                achievedAt: achievedAt,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
         });
         return createdUserAchievement;
     }
-    const nextUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex + 1, userId, context);
-    return nextUserAchievement;
 }
 
 export { getOrCreateUserAchievement, createAchievement };

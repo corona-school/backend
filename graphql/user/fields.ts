@@ -1,16 +1,4 @@
-import {
-    Student,
-    Pupil,
-    Screener,
-    Secret,
-    Concrete_notification as ConcreteNotification,
-    Lecture,
-    StudentWhereInput,
-    PupilWhereInput,
-    Achievement_event,
-    User_achievement,
-    Achievement_template,
-} from '../generated';
+import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
