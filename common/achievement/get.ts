@@ -7,7 +7,7 @@ import { getAchievementState, renderAchievementWithContext, transformPrismaJson 
 import { evaluateAchievement } from './evaluate';
 import { getAchievementImageURL } from './util';
 
-export async function getUserAchievementsWithTemplates(user: User) {
+async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
         where: { userId: user.userID, AND: { template: { isActive: true } } },
         include: { template: true },
@@ -191,7 +191,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     // TODO: create a function to get the course image path for an array given templateIds. If the result of this function is undefined, use the template image.
 
-    return {
+    const res = {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
@@ -226,6 +226,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
+    return res;
 };
 
 export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };

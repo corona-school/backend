@@ -71,9 +71,7 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
 
 async function getTemplatesWithCourseRelation(): Promise<achievement_template[]> {
     const templatesByCourseRelation = await getAchievementTemplates(TemplateSelectEnum.BY_COURSE_RELATION);
-    const courseTemplates: achievement_template[] = templatesByCourseRelation
-        ? Array.from(templatesByCourseRelation[achievement_template_for_enum.Course])
-        : [];
+    const courseTemplates: achievement_template[] = templatesByCourseRelation ? templatesByCourseRelation.get(achievement_template_for_enum.Course) : [];
 
     return courseTemplates;
 }
