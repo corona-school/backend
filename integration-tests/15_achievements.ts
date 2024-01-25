@@ -8,10 +8,10 @@ import { User, getUser } from '../common/user';
 import { Match } from '../graphql/generated';
 import { _createFixedToken } from '../common/secret/token';
 import assert from 'assert';
-import { purgeAchievementTemplates } from '../common/achievement/template';
+import { purgeAchievementTemplateCache } from '../common/achievement/template';
 
 async function createTemplates() {
-    purgeAchievementTemplates();
+    purgeAchievementTemplateCache();
     await createStudentOnboardingTemplates();
     await createPupilOnboardingTemplates();
     await createStudentConductedMatchAppointmentTemplates();
