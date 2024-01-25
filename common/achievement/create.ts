@@ -6,24 +6,24 @@ import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
 import { AchievementToCheck } from './types';
 
-async function findUserAchievement<ID extends ActionID>(
+function createRelationContextFilter<ID extends ActionID>(context: SpecificNotificationContext<ID>): Prisma.JsonFilter {
+    if (context.relation) {
+        return { path: ['relation'], equals: context.relation };
+    }
+    return { path: ['relation'], equals: Prisma.AnyNull };
+}
+
+export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
-    const keys = context ? Object.keys(context) : [];
+    const contextFilter = createRelationContextFilter(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
-            AND: keys.map((key) => {
-                return {
-                    context: {
-                        path: key,
-                        equals: context[key],
-                    },
-                };
-            }),
+            context: contextFilter,
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
@@ -51,21 +51,14 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: Achievem
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const templatesForGroup = templatesByGroup.get(currentTemplate.group).sort((a, b) => a.groupOrder - b.groupOrder);
 
-    const keys = Object.keys(context);
+    const contextFilter = createRelationContextFilter(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
             template: {
                 group: currentTemplate.group,
             },
             userId,
-            AND: keys.map((key) => {
-                return {
-                    context: {
-                        path: key,
-                        equals: context[key],
-                    },
-                };
-            }),
+            context: contextFilter,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
