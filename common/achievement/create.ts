@@ -55,19 +55,21 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const templatesForGroup = templatesByGroup.get(currentTemplate.group).sort((a, b) => a.groupOrder - b.groupOrder);
 
-    const contextHasRelation = context && Object.keys(context).includes('relation');
+    const contextHasRelation = Object.keys(context).includes('relation');
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
             template: {
                 group: currentTemplate.group,
             },
             userId,
-            AND: contextHasRelation && {
-                context: {
-                    path: ['relation'],
-                    equals: context['relation'],
-                },
-            },
+            ...(contextHasRelation
+                ? {
+                      context: {
+                          path: ['relation'],
+                          equals: context['relation'],
+                      },
+                  }
+                : {}),
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });

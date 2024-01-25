@@ -61,12 +61,11 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
-        let subcourseWhere = whereClause;
-        if (userType === 'student') {
-            subcourseWhere = { ...subcourseWhere, subcourse_instructors_student: { some: { studentId: id } } };
-        } else {
-            subcourseWhere = { ...subcourseWhere, subcourse_participants_pupil: { some: { pupilId: id } } };
-        }
+        const userClause =
+            userType === 'student'
+                ? { subcourse_instructors_student: { some: { studentId: id } } }
+                : { subcourse_participants_pupil: { some: { pupilId: id } } };
+        const subcourseWhere = { ...whereClause, ...userClause };
         subcourses = await prisma.subcourse.findMany({
             where: subcourseWhere,
             select: {
