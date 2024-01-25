@@ -28,8 +28,7 @@ export async function getAchievementImageURL(template: Achievement_template, sta
     const { id, image, achievedImage } = template;
     const subcourseId = achievementContext?.['relation'].split('/')[1];
     if (subcourseId && templateIdsForCourseImage.includes(id)) {
-        const { courseId } = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { courseId: true } });
-        const course = await prisma.course.findUnique({ where: { id: courseId }, select: { imageKey: true } });
+        const { course } = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
         return getCourseImageURL(course);
     }
     if (state === achievement_state.COMPLETED && achievedImage) {
