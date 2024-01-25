@@ -21,6 +21,7 @@ import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import * as Notification from '../../common/notification';
 
 const logger = getLogger('Course States');
 
@@ -70,12 +71,27 @@ export async function allowCourse(course: Course, screeningComment: string | nul
     // Usually when a new course is created, instructors also create a proper subcourse with it
     // and then forget to publish it after it was approved. Thus we just publish during approval,
     // assuming the subcourses are ready:
-    const subcourses = await prisma.subcourse.findMany({ where: { courseId: course.id } });
+    const subcourses = await prisma.subcourse.findMany({
+        where: { courseId: course.id },
+        include: { subcourse_instructors_student: { select: { student: true, subcourseId: true } } },
+    });
     for (const subcourse of subcourses) {
         if (await canPublish(subcourse)) {
             await publishSubcourse(subcourse);
         }
     }
+
+    await Promise.all(
+        subcourses
+            .map((subcourse) => subcourse.subcourse_instructors_student)
+            .flat()
+            .map(async (instructor) => {
+                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
+                    courseName: course.name,
+                    relation: `subcourse/${instructor.subcourseId}`,
+                });
+            })
+    );
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
@@ -152,6 +168,16 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
+
+    const courseInstructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
+    await prisma.user_achievement.deleteMany({
+        where: {
+            userId: {
+                in: courseInstructors.map((instructor) => userForStudent(instructor.student).userID),
+            },
+            context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
+        },
+    });
 }
 
 /* --------------- Modify Subcourse ------------------- */
@@ -231,5 +257,10 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
         await addParticipant(newInstructorUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
     }
 
+    const { name } = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { name: true } });
+    await Notification.actionTaken(userForStudent(newInstructor), 'instructor_course_created', {
+        courseName: name,
+        relation: `subcourse/${subcourse.id}`,
+    });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }
