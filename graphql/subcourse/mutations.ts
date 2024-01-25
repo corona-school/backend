@@ -396,18 +396,14 @@ export class MutateSubcourseResolver {
                 relation: `subcourse/${subcourseId}`,
                 subcourseLecturesCount: lecturesCount.toString(),
             });
-            await Notification.actionTaken(user, 'student_presence_in_meeting', {
-                relation: `subcourse/${subcourseId}`,
-            });
+            await Notification.actionTaken(user, 'student_presence_in_meeting', {});
         } else if (user.pupilId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
             await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
                 relation: `subcourse/${subcourseId}`,
                 subcourseLecturesCount: lecturesCount.toString(),
             });
-            await Notification.actionTaken(user, 'pupil_presence_in_meeting', {
-                relation: `subcourse/${subcourseId}`,
-            });
+            await Notification.actionTaken(user, 'pupil_presence_in_meeting', {});
         }
 
         return true;

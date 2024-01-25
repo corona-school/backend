@@ -1481,14 +1481,14 @@ void (async function setupDevDB() {
     // STUDENT PARTICIPATION STREAK
     await prisma.achievement_template.create({
         data: {
-            name: 'Anwesenheits',
+            name: 'Teilnahme-Triumph',
             metrics: ['student_participation_streak'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_participation',
             groupOrder: 1,
             stepName: '',
             type: achievement_type_enum.STREAK,
-            subtitle: 'Du warst bei {{recordValue}} Termin(en) in Folge anwesend!',
+            subtitle: 'Noch {{recordValue}} Termin(e) bis zum neuen Rekord!',
             description:
                 'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
             image: 'gamification/achievements/tmp/streaks/presence_set.png',
@@ -1496,7 +1496,8 @@ void (async function setupDevDB() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            condition: 'student_presence_events > 0',
+            achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
+            condition: 'student_presence_events > recordValue',
             conditionDataAggregations: {
                 student_presence_events: {
                     metric: 'student_participation_streak',
@@ -1509,17 +1510,17 @@ void (async function setupDevDB() {
         },
     });
 
-    // STUDENT PARTICIPATION STREAK
+    // PUPIL PARTICIPATION STREAK
     await prisma.achievement_template.create({
         data: {
-            name: 'Anwesenheit',
+            name: 'Teilnahme-Triumph',
             metrics: ['pupil_participation_streak'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_participation',
             groupOrder: 1,
             stepName: '',
             type: achievement_type_enum.STREAK,
-            subtitle: 'Du warst bei {{recordValue}} Termin(en) in Folge anwesend!',
+            subtitle: 'Noch {{recordValue}} Termin(e) bis zum neuen Rekord!',
             description:
                 'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
             image: 'gamification/achievements/tmp/streaks/presence_set.png',
@@ -1527,7 +1528,8 @@ void (async function setupDevDB() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            condition: 'pupil_presence_events > 0',
+            achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
+            condition: 'pupil_presence_events > recordValue',
             conditionDataAggregations: {
                 pupil_presence_events: {
                     metric: 'pupil_participation_streak',

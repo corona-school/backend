@@ -679,9 +679,7 @@ const _notificationActions = {
     },
     student_presence_in_meeting: {
         description: 'Student joined a meeting',
-        sampleContext: {
-            relation: 'match/1 || subcourse/1',
-        },
+        sampleContext: {},
     },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
@@ -698,9 +696,7 @@ const _notificationActions = {
     },
     pupil_presence_in_meeting: {
         description: 'Pupil joined a meeting',
-        sampleContext: {
-            relation: 'match/1 || subcourse/1',
-        },
+        sampleContext: {},
     },
     TEST: {
         description: 'For Tests',

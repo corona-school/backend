@@ -61,7 +61,9 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     by_lecture_participation: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-            const matchBuckets = context.match.map((match) => createLectureBuckets(match, LectureFilter.start)).reduce((acc, val) => acc.concat(val), []);
+            const matchBuckets = context.match
+                .map((match) => createLectureBuckets(match, LectureFilter.participation))
+                .reduce((acc, val) => acc.concat(val), []);
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
                 .reduce((acc, val) => acc.concat(val), []);
