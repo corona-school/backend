@@ -27,7 +27,7 @@ import {
     course_subject_enum as CourseSubject,
     lecture_appointmenttype_enum as AppointmentType,
 } from '@prisma/client';
-import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from './graphql/generated';
+import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
 
 const logger = getLogger('DevSetup');
 
@@ -294,10 +294,15 @@ void (async function setupDevDB() {
     });
     await addTutorScreening(screener1, student1, { success: true });
     await becomeInstructor(student1, {});
-    await addInstructorScreening(screener1, student1, {
-        success: true,
-        comment: 'success',
-    });
+    await addInstructorScreening(
+        screener1,
+        student1,
+        {
+            success: true,
+            comment: 'success',
+        },
+        false
+    );
 
     const student2 = await registerStudent({
         firstname: 'Melanie',
@@ -319,7 +324,7 @@ void (async function setupDevDB() {
     });
     await addTutorScreening(screener1, student2, { success: true });
     await becomeInstructor(student2, {});
-    await addInstructorScreening(screener1, student2, { success: true });
+    await addInstructorScreening(screener1, student2, { success: true }, false);
     await prisma.student.update({
         where: { id: student2.id },
         data: { zoomUserId: 'kLKyaiAyTNC-MWjiWCFFFF' },
@@ -753,7 +758,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_00',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/empty_state.png',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
             actionRedirectLink: '',
@@ -774,7 +779,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_01',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_1.png',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
             actionRedirectLink: 'https://calendly.com',
@@ -797,7 +802,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_02',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_2.png',
             achievedImage: '',
             actionName: 'Screening absolvieren',
             actionRedirectLink: '',
@@ -818,10 +823,10 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_02',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_3.png',
             achievedImage: '',
             actionName: 'Zeugnis einreichen',
-            actionRedirectLink: 'mailto:fz@lern-fair.de',
+            actionRedirectLink: '/certificate-of-conduct',
             actionType: achievement_action_type_enum.Action,
             condition: 'student_coc_success_events > 0',
             conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
@@ -839,7 +844,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Flugticket',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_4.png',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -861,7 +866,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_00',
+            image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/empty_state.png',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
             actionRedirectLink: '',
@@ -882,7 +887,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_01',
+            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_1.png',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
             actionRedirectLink: 'https://calendly.com',
@@ -905,7 +910,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Puzzle_02',
+            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_2.png',
             achievedImage: '',
             actionName: 'Screening absolvieren',
             actionRedirectLink: '',
@@ -927,7 +932,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Flugticket',
+            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_3.png',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -950,7 +955,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_01',
+            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
             achievedImage: '',
             actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
             actionRedirectLink: null,
@@ -958,7 +963,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 0',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 1,
+                },
             },
             isActive: true,
         },
@@ -974,7 +985,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_02',
+            image: 'gamification/achievements/tmp/x_lectures_held/three_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -982,7 +993,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 2',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 3,
+                },
             },
             isActive: true,
         },
@@ -998,7 +1015,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_03',
+            image: 'gamification/achievements/tmp/x_lectures_held/five_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1006,7 +1023,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 4',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 5,
+                },
             },
             isActive: true,
         },
@@ -1022,7 +1045,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_04',
+            image: 'gamification/achievements/tmp/x_lectures_held/ten_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1030,7 +1053,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 9',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 10,
+                },
             },
             isActive: true,
         },
@@ -1046,7 +1075,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_05',
+            image: 'gamification/achievements/tmp/x_lectures_held/fifteen_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1054,7 +1083,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 14',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 15,
+                },
             },
             isActive: true,
         },
@@ -1070,7 +1105,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_06',
+            image: 'gamification/achievements/tmp/x_lectures_held/twentyfive_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1078,7 +1113,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'student_match_appointments_count > 24',
             conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
+                student_match_appointments_count: {
+                    metric: 'student_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 25,
+                },
             },
             isActive: true,
         },
@@ -1096,7 +1137,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_01',
+            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
             achievedImage: '',
             actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
             actionRedirectLink: null,
@@ -1104,7 +1145,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 0',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 1,
+                },
             },
             isActive: true,
         },
@@ -1120,7 +1167,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_02',
+            image: 'gamification/achievements/tmp/x_lectures_held/three_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1128,7 +1175,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 2',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 3,
+                },
             },
             isActive: true,
         },
@@ -1144,7 +1197,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_03',
+            image: 'gamification/achievements/tmp/x_lectures_held/five_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1152,7 +1205,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 4',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 5,
+                },
             },
             isActive: true,
         },
@@ -1168,7 +1227,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_04',
+            image: 'gamification/achievements/tmp/x_lectures_held/ten_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1176,7 +1235,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 9',
             conditionDataAggregations: {
-                student_conducted_match_appointments: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
+                student_conducted_match_appointments: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 10,
+                },
             },
             isActive: true,
         },
@@ -1192,7 +1257,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_05',
+            image: 'gamification/achievements/tmp/x_lectures_held/fifteen_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1200,7 +1265,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 14',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 15,
+                },
             },
             isActive: true,
         },
@@ -1216,7 +1287,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.TIERED,
             subtitle: '1:1 Lernunterstützungen',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_06',
+            image: 'gamification/achievements/tmp/x_lectures_held/twentyfive_lectures_held.jpg',
             achievedImage: '',
             actionName: null,
             actionRedirectLink: null,
@@ -1224,7 +1295,13 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 24',
             conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
+                pupil_match_appointments_count: {
+                    metric: 'pupil_conducted_match_appointment',
+                    aggregator: 'count',
+                    createBuckets: 'by_lecture_start',
+                    bucketAggregator: 'presenceOfEvents',
+                    valueToAchieve: 25,
+                },
             },
             isActive: true,
         },
@@ -1242,7 +1319,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: 'Nachhilfe mit {{matchpartner}}',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Hat_grey',
+            image: 'gamification/achievements/tmp/finished_course_sucessfully/finished_course_sucessfully.jpg',
             achievedImage: 'Hat_gold',
             actionName: null,
             actionRedirectLink: null,
@@ -1273,7 +1350,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: 'Nachhilfe mit {{matchpartner}}',
             description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Hat_grey',
+            image: 'gamification/achievements/tmp/finished_course_sucessfully/finished_course_sucessfully.jpg',
             achievedImage: 'Hat_gold',
             actionName: null,
             actionRedirectLink: null,
@@ -1286,6 +1363,115 @@ void (async function setupDevDB() {
                     aggregator: 'lastStreakLength',
                     createBuckets: 'by_weeks',
                     bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
+    // STUDENT OFFER COURSE
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_create_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 1,
+            stepName: 'Kurs entwerfen',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: 'Vermittle Wissen',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: 'Kurs anlegen',
+            actionRedirectLink: '/create-course',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_create_course_events > 0',
+            conditionDataAggregations: {
+                student_create_course_events: {
+                    metric: 'student_create_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_submit_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 2,
+            stepName: 'Kurs zur Prüfung freigeben',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: 'Kurs freigeben',
+            actionRedirectLink: '/single-course/{{subcourseId}}',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_submit_course_events > 0',
+            conditionDataAggregations: {
+                student_submit_course_events: {
+                    metric: 'student_submit_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_approve_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 3,
+            stepName: 'Freigabe erhalten',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: achievement_action_type_enum.Wait,
+            condition: 'student_approve_course_events > 0',
+            conditionDataAggregations: {
+                student_approve_course_events: {
+                    metric: 'student_approve_course',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs anbieten',
+            metrics: ['student_approve_course'],
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_offer_course',
+            groupOrder: 4,
+            stepName: 'Kurs erstellt!',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{courseName}}',
+            description:
+                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
+            achievedImage: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_approve_course_events > 0',
+            conditionDataAggregations: {
+                student_approve_course_events: {
+                    metric: 'student_approve_course',
+                    aggregator: 'count',
                 },
             },
             isActive: true,

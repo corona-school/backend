@@ -22,7 +22,7 @@ import {
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForPupil } from '../../common/user';
+import { userForPupil, userForScreener } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
@@ -328,6 +328,20 @@ export class MutatePupilResolver {
     ): Promise<boolean> {
         const screener = await getSessionScreener(context);
         await updatePupilScreening(screener, pupilScreeningId, data);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN, Role.SCREENER)
+    async pupilMissedScreening(
+        @Ctx() context: GraphQLContext,
+        @Arg('pupilScreeningId') pupilScreeningId: number,
+        @Arg('comment') comment: string
+    ): Promise<boolean> {
+        const screener = await getSessionScreener(context);
+        const { pupil } = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: pupilScreeningId }, include: { pupil: true } });
+        await updatePupilScreening(screener, pupilScreeningId, { status: PupilScreeningStatus.pending, comment });
+        await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_missed', {});
         return true;
     }
 

@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { ActionID } from '../notification/actions';
 import { Metric } from './types';
 
-export const metricByName: Map<string, Metric> = new Map();
+const metricByName: Map<string, Metric> = new Map();
 const metricsByAction: Map<ActionID, Metric[]> = new Map();
 
 export function getMetricsByAction<ID extends ActionID>(actionId: ID): Metric[] {

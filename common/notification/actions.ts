@@ -102,6 +102,10 @@ const _notificationActions = {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
         sampleContext: {},
     },
+    pupil_screening_missed: {
+        description: 'Pupil / Screening was missed',
+        sampleContext: {},
+    },
     pupil_screening_dispute: {
         description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
         sampleContext: {},
@@ -206,10 +210,22 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_submitted: {
+        description: 'Instructor / Course submitted for review',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_approved: {
+        description: 'Instructor / Course approved',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
         },
     },
     instructor_course_cancelled: {
@@ -506,13 +522,6 @@ const _notificationActions = {
             matchId: '1',
         },
     },
-    student_add_appointments_match: {
-        description: 'Student / Match Appointments Added',
-        sampleContext: {
-            student: sampleUser,
-            matchId: '1',
-        },
-    },
     pupil_decline_appointment_group: {
         description: 'Instructor / Group Appointment declined by Participant',
         sampleContext: {
@@ -658,27 +667,27 @@ const _notificationActions = {
     student_joined_match_meeting: {
         description: 'Student joined a match meeting',
         sampleContext: {
-            matchId: '1',
-            pupil: { firstname: 'Pupil' }, // = matchpartner
             relation: 'match/1',
         },
     },
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
-            matchId: '1',
+            relation: 'match/1',
         },
     },
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
-            subcourseId: '1',
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
         },
     },
     TEST: {

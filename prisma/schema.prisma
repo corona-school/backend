@@ -377,6 +377,7 @@ model match {
   // dissolveReason is DEPRECATED, use dissolveReasonEnum instead
   dissolveReason        Int?
   dissolveReasonEnum    dissolve_reason?
+  dissolveReasons       dissolve_reason[]  @default([])
   didHaveMeeting        Boolean   @default(false)  // whether the match partners did actually have an initial meeting
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
@@ -1018,6 +1019,7 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestSent
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
+  skippedCoC
 }
 
 // DEPRECATED
@@ -1135,6 +1137,8 @@ enum pupil_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
@@ -1166,6 +1170,8 @@ enum school_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
@@ -1225,6 +1231,8 @@ enum student_state_enum {
   st
   sh
   th
+  at
+  ch
   other
 }
 
@@ -1322,6 +1330,7 @@ enum notification_type_enum {
   course
   certificate
   legacy
+  achievement
 }
 
 enum important_information_language_enum {

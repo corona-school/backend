@@ -45,7 +45,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
     });
 
     for (const match of matches) {
-        await dissolveMatch(match, dissolve_reason.accountDeactivated, pupil, dissolved_by_enum.pupil);
+        await dissolveMatch(match, [dissolve_reason.accountDeactivated], pupil, dissolved_by_enum.pupil);
         logger.info(`Match(${match.id}) was dissolved as Pupil(${pupil.id}) was deactivated`);
     }
 

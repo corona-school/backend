@@ -10,7 +10,7 @@ import { sendInactivityNotification } from './periodic/redact-inactive-accounts/
 import syncToWebflow from './periodic/sync-to-webflow';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
-
+import migrateDissolveReasonEnum from './migrate-dissolve-reason-enum';
 export const allJobs = {
     cleanupSecrets,
     dropOldNotificationContexts,
@@ -24,6 +24,7 @@ export const allJobs = {
     flagInactiveConversationsAsReadonly,
     notificationsEndedYesterday,
     checkReminders,
+    migrateDissolveReasonEnum,
 
     // For Integration Tests only:
     NOTHING_DO_NOT_USE: async () => {

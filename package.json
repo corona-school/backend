@@ -28,7 +28,7 @@
         "heroku:release": "./release.sh",
         "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
         "integration-tests:debug": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests.debug",
-        "test": "jest",
+        "test": "TZ=UTC jest",
         "db:reset": "prisma migrate reset --skip-generate",
         "db:reset-hard": "prisma migrate reset -f --skip-generate",
         "db:seed": "node -r dotenv/config ./built/seed-db.js",
@@ -112,6 +112,7 @@
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-lernfair-lint": "./linter/",
         "jest": "^29.5.0",
+        "jest-mock-extended": "^3.0.5",
         "lint-staged": "^14.0.1",
         "nodemon": "^3.0.1",
         "pre-commit": "^1.2.2",
@@ -164,7 +165,12 @@
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "verbose": true,
+        "clearMocks": true,
+        "setupFilesAfterEnv": [
+            "<rootDir>/jest/singletons.ts"
+        ]
     },
     "nodemonConfig": {
         "verbose": true,

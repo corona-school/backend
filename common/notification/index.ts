@@ -66,21 +66,18 @@ async function createConcreteNotification(
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const notification = await getNotification(concreteNotification.notificationID);
 
-    let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
 
-    // TODO: Remove after all users where migrated
-    if (notificationPreferences && typeof notificationPreferences === 'string') {
-        notificationPreferences = JSON.parse(notificationPreferences);
-    }
+    const type = (concreteNotification.context as Context)?.overrideType ?? notification.type;
 
-    const channelsBasePreference = ALL_PREFERENCES[notification.type];
+    const channelsBasePreference = ALL_PREFERENCES[type];
     assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
 
-    const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
+    const channelsUserPreference = notificationPreferences?.[type] ?? {};
 
     const result = Object.assign({}, channelsBasePreference, channelsUserPreference);
     logger.info(`Got Notification preferences for User(${user.userID})`, {
-        type: notification.type,
+        type,
         notificationPreferences,
         channelsBasePreference,
         result,
@@ -111,6 +108,7 @@ async function deliverNotification(
     let activeChannels: Channel[] = [];
 
     try {
+        // Always trigger the hook, no matter whether we actually send something to the user
         if (notification.hookID) {
             await triggerHook(notification.hookID, user);
         }
@@ -259,8 +257,13 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
+// overrideType and overrideMailjetTemplateId are not listed here, they need to be specified
+// in the Notification.sample_context to be overridable
 const allowedExtensions = ['uniqueId', 'campaign', 'overrideReceiverEmail'];
 
+// ATTENTION: This currently allows very powerful extensions needed for Campaign Notifications
+// This should only be used to validate contexts from trusted sources (Admins), for other users
+// prohibit the use of the "allowedExtensions"
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
 

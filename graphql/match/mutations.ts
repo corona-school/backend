@@ -1,6 +1,7 @@
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
+import * as Notification from '../../common/notification';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
 import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
@@ -19,8 +20,8 @@ import { prisma } from '../../common/prisma';
 class MatchDissolveInput {
     @TypeGraphQL.Field((_type) => Int)
     matchId!: number;
-    @TypeGraphQL.Field((_type) => dissolve_reason)
-    dissolveReason!: dissolve_reason;
+    @TypeGraphQL.Field((_type) => [dissolve_reason])
+    dissolveReasons!: dissolve_reason[];
 }
 
 @Resolver((of) => GraphQLModel.Match)
@@ -45,6 +46,7 @@ export class MutateMatchResolver {
     async matchDissolve(@Ctx() context: GraphQLContext, @Arg('info') info: MatchDissolveInput): Promise<boolean> {
         const match = await getMatch(info.matchId);
         await hasAccess(context, 'Match', match);
+
         let dissolvedBy: dissolved_by_enum;
         let dissolver = null;
         if (context.user.pupilId != null) {
@@ -57,7 +59,7 @@ export class MutateMatchResolver {
             dissolvedBy = dissolved_by_enum.admin;
         }
 
-        await dissolveMatch(match, info.dissolveReason, dissolver, dissolvedBy);
+        await dissolveMatch(match, info.dissolveReasons, dissolver, dissolvedBy);
         return true;
     }
 
@@ -89,5 +91,25 @@ export class MutateMatchResolver {
             return { id, appointmentType };
         }
         throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async matchMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number) {
+        const { user } = context;
+        const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true, student: true } });
+        await hasAccess(context, 'Match', match);
+
+        if (user.studentId) {
+            await Notification.actionTaken(user, 'student_joined_match_meeting', {
+                relation: `match/${matchId}`,
+            });
+        } else if (user.pupilId) {
+            await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
+                relation: `match/${matchId}`,
+            });
+        }
+
+        return true;
     }
 }

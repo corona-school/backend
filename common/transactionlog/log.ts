@@ -43,6 +43,7 @@ type LogData<Type extends LogType> = {
     pupilInterestConfirmationRequestSent: never;
     pupilInterestConfirmationRequestReminderSent: never;
     pupilInterestConfirmationRequestStatusChange: { changeDate: number; newStatus: InterestConfirmationStatus; previousStatus: InterestConfirmationStatus };
+    skippedCoC: { screenerId: number };
 }[Type];
 
 const logger = getLogger();

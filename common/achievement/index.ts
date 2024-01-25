@@ -3,7 +3,7 @@ import { User } from '../user';
 import { sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { getTemplatesByMetrics } from './template';
+import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
 import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
@@ -26,9 +26,14 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
     const templatesForAction = await tracer.trace('achievement.getTemplatesByMetrics', () => getTemplatesByMetrics(metricsForAction));
 
     if (templatesForAction.length === 0) {
-        logger.debug(`No achievement found for action '${actionId}'`);
+        logger.debug(`No achievement found for action`, { actionId });
         return;
     }
+    logger.info('found achievement templates for action', {
+        actionId,
+        metrics: metricsForAction.map((metric) => metric.metricName),
+        templates: templatesForAction.map((temp) => temp.name),
+    });
 
     const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
 
@@ -40,7 +45,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
     };
     const isEventTracked = await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent));
     if (!isEventTracked) {
-        logger.warn(`Can't track event for action '${actionId}' for user '${user.userID}'`);
+        logger.warn(`Can't track action for user`, { actionId, userId: user.userID });
         return;
     }
 
@@ -48,12 +53,19 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
         try {
             await tracer.trace('achievement.evaluateAchievementGroups', async (span) => {
                 span.setTag('achievement.group', groupName);
+                logger.info('evaluate achievement group', { groupName });
+
                 let achievementToCheck: AchievementToCheck;
                 for (const template of group) {
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
                         getOrCreateUserAchievement(template, user.userID, context)
                     );
                     if (userAchievement.achievedAt === null || userAchievement.template.type === achievement_type_enum.STREAK) {
+                        logger.info('found achievement to check', {
+                            achievementId: userAchievement.id,
+                            achievementName: userAchievement.template.name,
+                            type: userAchievement.template.type,
+                        });
                         achievementToCheck = userAchievement;
                         break;
                     }
@@ -65,9 +77,10 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                         checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent)
                     );
                 }
+                logger.info('group evaluation done', { groupName });
             });
         } catch (e) {
-            logger.error(`Error occurred while checking achievement for user '${user.userID}'`, e);
+            logger.error(`Error occurred while checking achievement for user`, e, { userId: user.userID });
         }
     }
 }
@@ -76,7 +89,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
 
     if (metricsForEvent.length === 0) {
-        logger.warn(`Can't track event, because no metrics found for action '${event.actionId}'`);
+        logger.warn(`Can't track event, because no metrics found for action`, { actionId: event.actionId });
         return false;
     }
 
@@ -84,6 +97,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
         const formula = metric.formula;
         const value = formula(event.context);
 
+        logger.info('track event', { metric: metric.metricName, action: event.actionId, value, relation: event.context.relation ?? '', createdAt: event.at });
         await prisma.achievement_event.create({
             data: {
                 metric: metric.metricName,
@@ -101,6 +115,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
 
 async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     const evaluationResult = await isAchievementConditionMet(userAchievement, event);
+    logger.info('sucessfully evaluated achievement condition', {
+        actionId: event.actionId,
+        achievementId: userAchievement.id,
+        condition: userAchievement.template.condition,
+        conditionIsMet: evaluationResult.conditionIsMet,
+        resultObject: JSON.stringify(evaluationResult.resultObject, null, 4),
+    });
 
     if (evaluationResult.conditionIsMet) {
         const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
@@ -121,18 +142,17 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
     const {
         userId,
         recordValue,
-        context,
-        template: { condition, conditionDataAggregations, metrics },
+        template: { condition, conditionDataAggregations },
     } = achievement;
     if (!condition) {
-        logger.error(`No condition found for achievement ${achievement.template.name}`);
+        logger.error(`No condition found for achievement`, null, { template: achievement.template.name, achievementId: achievement.id });
+        return { conditionIsMet: false, resultObject: null };
     }
 
     const { conditionIsMet, resultObject } = await evaluateAchievement(
         userId,
         condition,
         conditionDataAggregations as ConditionDataAggregations,
-        metrics,
         recordValue,
         event.context.relation
     );
@@ -144,14 +164,34 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
     }
+    logger.info('reward user', { achievementId: userAchievement.id, userId: userAchievement.userId, recordValue: newRecordValue, achievedAt: new Date() });
     const updatedAchievement = await prisma.user_achievement.update({
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
         select: { id: true, userId: true, achievedAt: true, template: true },
     });
 
-    await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
-        achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
-    });
+    const { type, group, groupOrder } = updatedAchievement.template;
+
+    if (type === achievement_type_enum.SEQUENTIAL) {
+        const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
+        const groupTemplates = templatesByGroup.get(group);
+        /**
+         * Templates are evaluated in sequence, starting from the first and progressing towards the last.
+         * The @param lastTemplate requiring evaluation is the second-to-last one in the group.
+         * The final template in the sequence serves solely to display information about the sequential achievement being rewarded.
+         * Before generating the reward achievement for a sequential achievement, the system checks if the last achievement to be evaluated has been achieved.
+         */
+        const lastTemplate = groupTemplates[groupTemplates.length - 2];
+        if (groupOrder === lastTemplate.groupOrder) {
+            await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+                achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+            });
+        }
+    } else {
+        await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+            achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+        });
+    }
     return updatedAchievement;
 }
