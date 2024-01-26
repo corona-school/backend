@@ -29,7 +29,7 @@ const getAchievementById = async (user: User, achievementId: number): Promise<Ac
 // Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
 const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, isSeen: false, template: { type: achievement_type_enum.SEQUENTIAL } },
+        where: { userId: user.userID, template: { type: achievement_type_enum.SEQUENTIAL } },
         include: { template: true },
     });
     const userAchievementGroups: { [groupRelation: string]: achievements_with_template } = {};
@@ -40,6 +40,10 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
             userAchievementGroups[key] = [];
         }
         userAchievementGroups[key].push(ua);
+    });
+    Object.keys(userAchievementGroups).forEach((groupName) => {
+        const group = userAchievementGroups[groupName].sort((a, b) => a.groupOrder - b.groupOrder);
+        group[group.length - 1].achievedAt && delete userAchievementGroups[groupName];
     });
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
@@ -181,10 +185,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                       })
                       .reduce((a, b) => a + b, 0);
     } else {
-        const achievementTemplates = await prisma.achievement_template.findMany({
-            where: { group: currentAchievementTemplate.group, isActive: true },
-            orderBy: { groupOrder: 'asc' },
-        });
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }
@@ -221,8 +221,8 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         isNewAchievement: isNewAchievement,
         // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
         progressDescription: userAchievements[currentAchievementIndex].achievedAt
-            ? 'Hurra! alle Schritte wurden abgeschlossen'
-            : `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            ? 'Hurra! alle Termin(e) wurden abgeschlossen'
+            : `Noch ${maxValue - currentValue} Termin(e) bis zum Abschluss`,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };

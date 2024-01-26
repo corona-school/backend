@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse, ContextLecture } from './types';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -7,13 +7,22 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }
+    data.lecture.sort((a, b) => a.start.getTime() - b.start.getTime());
+    const filteredLectures: ContextLecture[] = data.lecture.filter((lecture, index, array) => {
+        if (index === 0) {
+            return true;
+        }
+        const previousEndTime = new Date(array[index - 1].start.getTime() + array[index - 1].duration * 60000);
+        return lecture.start >= previousEndTime;
+    });
+
     // const relation = context.type === ('match' || 'subcourse') ? `${context.type}/${match['id']}` : null;
-    const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
+    const buckets: TimeBucket[] = filteredLectures.map((lecture) => ({
         kind: 'time',
         relation: data.relation,
         // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
         startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
-        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(10, 'minutes').toDate(),
+        endTime: moment(lecture.start).add(lecture.duration, 'minutes').add(5, 'minutes').toDate(),
     }));
     return buckets;
 }

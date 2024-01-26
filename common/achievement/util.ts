@@ -1,15 +1,14 @@
 import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
-import { AchievementContextType, RelationTypes } from './types';
 import { join } from 'path';
 import { prisma } from '../prisma';
 import { Prisma, achievement_template, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
-import { Achievement_template, User_achievement } from '../../graphql/generated';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
+import { RelationTypes, AchievementContextType } from './types';
 
 const logger = getLogger('Achievement');
 
@@ -62,12 +61,11 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     let subcourses = [];
     if (!relationType || relationType === 'subcourse') {
-        let subcourseWhere = whereClause;
-        if (userType === 'student') {
-            subcourseWhere = { ...subcourseWhere, subcourse_instructors_student: { some: { studentId: id } } };
-        } else {
-            subcourseWhere = { ...subcourseWhere, subcourse_participants_pupil: { some: { pupilId: id } } };
-        }
+        const userClause =
+            userType === 'student'
+                ? { subcourse_instructors_student: { some: { studentId: id } } }
+                : { subcourse_participants_pupil: { some: { pupilId: id } } };
+        const subcourseWhere = { ...whereClause, ...userClause };
         subcourses = await prisma.subcourse.findMany({
             where: subcourseWhere,
             select: {
@@ -94,29 +92,22 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 }
 
 export function transformPrismaJson(user: User, json: Prisma.JsonValue): AchievementContextType | null {
-    const keys = Object.keys(json);
-    if (!keys) {
-        return null;
-    }
     const transformedJson: AchievementContextType = { user: user };
+    if (json['relation']) {
+        const [relationType, relationId] = getRelationTypeAndId(json['relation']);
+        transformedJson[`${relationType}Id`] = relationId;
+    }
+    const keys = Object.keys(json) || [];
     keys.forEach((key) => {
         transformedJson[key] = json[key];
     });
     return transformedJson;
 }
-export async function getUserAchievementWithTemplate(id: number) {
-    return await prisma.user_achievement.findUnique({
-        where: { id },
-        include: { template: true },
-    });
-}
-type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
-export type achievement_with_template = ThenArg<ReturnType<typeof getUserAchievementWithTemplate>>;
 
 export function renderAchievementWithContext(
     userAchievement: user_achievement & { template: achievement_template },
     achievementContext: AchievementContextType
-): Achievement_template {
+): achievement_template {
     const currentAchievementContext = userAchievement.template;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
@@ -137,8 +128,8 @@ export function getAchievementState(userAchievements: user_achievement[], curren
         : achievement_state.ACTIVE;
 }
 
-export function sortActionTemplatesToGroups(templatesForAction: Achievement_template[]) {
-    const templatesByGroups: Map<string, Achievement_template[]> = new Map();
+export function sortActionTemplatesToGroups(templatesForAction: achievement_template[]) {
+    const templatesByGroups: Map<string, achievement_template[]> = new Map();
     for (const template of templatesForAction) {
         if (!templatesByGroups.has(template.group)) {
             templatesByGroups.set(template.group, []);

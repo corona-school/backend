@@ -73,7 +73,7 @@ export async function allowCourse(course: Course, screeningComment: string | nul
     // assuming the subcourses are ready:
     const subcourses = await prisma.subcourse.findMany({
         where: { courseId: course.id },
-        include: { subcourse_instructors_student: { select: { student: true } } },
+        include: { subcourse_instructors_student: { select: { student: true, subcourseId: true } } },
     });
     for (const subcourse of subcourses) {
         if (await canPublish(subcourse)) {
@@ -81,14 +81,17 @@ export async function allowCourse(course: Course, screeningComment: string | nul
         }
     }
 
-    const [subcourse] = subcourses;
-    subcourse.subcourse_instructors_student.forEach(async (instructor) => {
-        await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-            courseName: course.name,
-            subcourseId: subcourse.id.toString(),
-            relation: `subcourse/${subcourse.id}`,
-        });
-    });
+    await Promise.all(
+        subcourses
+            .map((subcourse) => subcourse.subcourse_instructors_student)
+            .flat()
+            .map(async (instructor) => {
+                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
+                    courseName: course.name,
+                    relation: `subcourse/${instructor.subcourseId}`,
+                });
+            })
+    );
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {

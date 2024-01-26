@@ -34,5 +34,6 @@ import './12_notifications';
 /* Account Deactivation - Independent, but needs to be last */
 import './13_deactivation';
 import './14_redaction';
+import './15_achievements';
 
 void finalizeTests();
