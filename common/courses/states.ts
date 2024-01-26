@@ -21,6 +21,8 @@ import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
+import { isElevated } from '../../graphql/authentication';
+import { GraphQLContext } from '../../graphql/context';
 
 const logger = getLogger('Course States');
 
@@ -122,13 +124,17 @@ export async function publishSubcourse(subcourse: Subcourse) {
 
 /* ---------------- Subcourse Cancel ------------ */
 
-export async function canCancel(subcourse: Subcourse): Promise<Decision> {
+export async function canCancel(subcourse: Subcourse, context: GraphQLContext): Promise<Decision> {
     if (!subcourse.published) {
         return { allowed: false, reason: 'not-published' };
     }
 
     if (subcourse.cancelled) {
         return { allowed: false, reason: 'already-cancelled' };
+    }
+
+    if (isElevated(context)) {
+        return { allowed: true };
     }
 
     if (await subcourseOver(subcourse)) {
@@ -138,8 +144,8 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(user: User, subcourse: Subcourse) {
-    const can = await canCancel(subcourse);
+export async function cancelSubcourse(user: User, subcourse: Subcourse, context: GraphQLContext) {
+    const can = await canCancel(subcourse, context);
     if (!can.allowed) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
@@ -156,7 +162,10 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
 
 /* --------------- Modify Subcourse ------------------- */
 
-export async function canEditSubcourse(subcourse: Subcourse): Promise<Decision> {
+export async function canEditSubcourse(subcourse: Subcourse, context: GraphQLContext): Promise<Decision> {
+    if (isElevated(context)) {
+        return { allowed: true };
+    }
     if (subcourse.published && (await subcourseOver(subcourse))) {
         return { allowed: false, reason: 'course-ended' };
     }
@@ -164,8 +173,8 @@ export async function canEditSubcourse(subcourse: Subcourse): Promise<Decision> 
     return { allowed: true };
 }
 
-export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcourse>) {
-    const can = await canEditSubcourse(subcourse);
+export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcourse>, context: GraphQLContext) {
+    const can = await canEditSubcourse(subcourse, context);
     if (!can.allowed) {
         throw new Error(`Cannot edit Subcourse(${subcourse.id}) reason: ${can.reason}`);
     }

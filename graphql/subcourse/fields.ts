@@ -459,14 +459,14 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canCancel(@Root() subcourse: Required<Subcourse>) {
-        return await canCancel(subcourse);
+    async canCancel(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        return await canCancel(subcourse, context);
     }
 
     @FieldResolver((returns) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
-    async canEdit(@Root() subcourse: Required<Subcourse>) {
-        return await canEditSubcourse(subcourse);
+    async canEdit(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        return await canEditSubcourse(subcourse, context);
     }
 
     @FieldResolver((returns) => Decision)

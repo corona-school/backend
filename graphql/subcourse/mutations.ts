@@ -172,7 +172,7 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         logger.info(`Subcourse(${subcourseId}) was edited by User(${context.user.userID})`);
-        return await editSubcourse(subcourse, data);
+        return await editSubcourse(subcourse, data, context);
     }
 
     @Mutation((returns) => Boolean)
@@ -182,7 +182,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        await cancelSubcourse(user, subcourse);
+        await cancelSubcourse(user, subcourse, context);
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
