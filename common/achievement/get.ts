@@ -219,9 +219,8 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
-        // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
         progressDescription: userAchievements[currentAchievementIndex].achievedAt
-            ? 'Hurra! alle Termin(e) wurden abgeschlossen'
+            ? currentAchievementTemplate.achievedText
             : `Noch ${maxValue - currentValue} Termin(e) bis zum Abschluss`,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
