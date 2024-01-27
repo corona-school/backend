@@ -76,11 +76,15 @@ export class MutateUserResolver {
     @Mutation(() => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async markAchievementAsSeen(@Ctx() context: GraphQLContext, @Arg('achievementId') achievementId: number) {
-        const acheivement = await prisma.user_achievement.update({
+        const achievement = await prisma.user_achievement.findFirstOrThrow({
+            where: { id: achievementId },
+        });
+        await hasAccess(context, 'User_achievement', achievement);
+
+        await prisma.user_achievement.update({
             where: { id: achievementId },
             data: { isSeen: true },
         });
-        await hasAccess(context, 'User_achievement', acheivement);
         return true;
     }
 }
