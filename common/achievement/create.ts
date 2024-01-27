@@ -17,17 +17,12 @@ export async function findUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck> {
-    const contextHasRelation = context && Object.keys(context).includes('relation');
+    const contextFilter = createRelationContextFilter(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
-            AND: contextHasRelation && {
-                context: {
-                    path: ['relation'],
-                    equals: context['relation'],
-                },
-            },
+            context: contextFilter,
         },
         select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
     });
@@ -55,21 +50,14 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     const templatesForGroup = templatesByGroup.get(currentTemplate.group).sort((a, b) => a.groupOrder - b.groupOrder);
 
-    const contextHasRelation = Object.keys(context).includes('relation');
+    const contextFilter = createRelationContextFilter(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
             template: {
                 group: currentTemplate.group,
             },
             userId,
-            ...(contextHasRelation
-                ? {
-                      context: {
-                          path: ['relation'],
-                          equals: context['relation'],
-                      },
-                  }
-                : {}),
+            context: contextFilter,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
