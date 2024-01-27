@@ -46,7 +46,10 @@ async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<
         }
         logger.info(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
     }
-    return achievementTemplates.get(select);
+    if (!achievementTemplates.has(select)) {
+        logger.warn(`No achievement templates were found in the database`, { select });
+    }
+    return achievementTemplates.get(select) ?? new Map();
 }
 
 async function getTemplatesByMetrics(metricsForAction: Metric[]) {

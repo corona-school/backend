@@ -1,5 +1,5 @@
 import { Achievement_event } from '../../graphql/generated';
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult } from './types';
+import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -16,7 +16,7 @@ async function _evaluateAchievement(
     userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
-    recordValue: number,
+    recordValue?: number,
     relation?: string
 ): Promise<EvaluationResult | undefined> {
     // We only care about metrics that are used for the data aggregation
@@ -40,7 +40,9 @@ async function _evaluateAchievement(
     }
 
     const resultObject: Record<string, number> = {};
-    resultObject['recordValue'] = recordValue;
+    if (recordValue !== undefined) {
+        resultObject['recordValue'] = recordValue;
+    }
 
     for (const key in dataAggregation) {
         if (!dataAggregation[key]) {
@@ -111,7 +113,7 @@ const createDefaultBuckets = (events: Achievement_event[]): BucketEvents[] => {
     }));
 };
 
-const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] => {
+const createTimeBuckets = (events: Achievement_event[], bucketConfig: GenericBucketConfig<TimeBucket>): BucketEvents[] => {
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
@@ -124,6 +126,7 @@ const createTimeBuckets = (events: Achievement_event[], bucketConfig: BucketConf
             kind: bucket.kind,
             startTime: bucket.startTime,
             endTime: bucket.endTime,
+            relation: bucket.relation,
             events: filteredEvents,
         };
     });
