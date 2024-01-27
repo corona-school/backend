@@ -1,11 +1,12 @@
 import { prisma } from '../prisma';
 import { achievement_type_enum, Prisma } from '@prisma/client';
-import { Achievement, achievement_state } from '../../graphql/types/achievement';
+import { Achievement, achievement_state, Step } from '../../graphql/types/achievement';
 import { User } from '../user';
 import { ConditionDataAggregations } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 import { getAchievementImageURL } from './util';
+import { isDefined } from './util';
 
 export async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
@@ -18,7 +19,7 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
 
 const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
-    const userAchievement = await prisma.user_achievement.findUnique({
+    const userAchievement = await prisma.user_achievement.findUniqueOrThrow({
         where: { id: achievementId },
         include: { template: true },
     });
@@ -34,7 +35,7 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
     });
     const userAchievementGroups: { [groupRelation: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
-        const relation = ua.context['relation'] || null;
+        const relation = (ua.context as Prisma.JsonObject)['relation'] || null;
         const key = relation ? `${ua.template.group}/${relation}` : ua.template.group;
         if (!userAchievementGroups[key]) {
             userAchievementGroups[key] = [];
@@ -69,10 +70,11 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
     });
 
     const tieredAchievements = tieredTemplates.map((template) => {
-        const dataAggregationKeys = Object.keys(template.conditionDataAggregations);
-        const maxValue = dataAggregationKeys
+        const dataAggr = template.conditionDataAggregations as Prisma.JsonObject;
+        const maxValue = Object.keys(dataAggr)
             .map((key) => {
-                return Number(template.conditionDataAggregations[key].valueToAchieve);
+                const val = dataAggr[key] as number;
+                return Number(val);
             })
             .reduce((a, b) => a + b, 0);
         const achievement: Achievement = {
@@ -82,7 +84,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             description: template.description,
             image: getAchievementImageURL(template.image),
             alternativeText: 'alternativeText',
-            actionType: template.actionType,
+            actionType: template.actionType ?? undefined,
             achievementType: template.type,
             achievementState: achievement_state.INACTIVE,
             steps: null,
@@ -141,11 +143,12 @@ const generateReorderedAchievementData = async (groups: { [group: string]: achie
     return achievements.flat();
 };
 
+// TODO: refactor
 const assembleAchievementData = async (userAchievements: achievements_with_template, user: User): Promise<Achievement> => {
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    const achievementContext = transformPrismaJson(user, userAchievements[currentAchievementIndex].context);
+    const achievementContext = transformPrismaJson(user, userAchievements[currentAchievementIndex].context as Prisma.JsonObject);
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
     const achievementTemplates = await prisma.achievement_template.findMany({
@@ -157,33 +160,40 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
-    const condition = currentAchievementTemplate.condition.includes('recordValue')
-        ? currentAchievementTemplate.condition.replace('recordValue', (userAchievements[currentAchievementIndex].recordValue + 1).toString())
-        : currentAchievementTemplate.condition;
+    // TODO: check if this is needed?
+    const condition =
+        currentAchievementTemplate.condition.includes('recordValue') && userAchievements[currentAchievementIndex].recordValue !== null
+            ? currentAchievementTemplate.condition.replace('recordValue', (userAchievements[currentAchievementIndex].recordValue! + 1).toString())
+            : currentAchievementTemplate.condition;
 
-    let maxValue: number;
-    let currentValue: number;
+    let maxValue: number = 0;
+    let currentValue: number = 0;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
-        const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations);
-        const relation = userAchievements[currentAchievementIndex].context['relation'] || null;
+        const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations as Prisma.JsonObject);
+        const currentAchievementContext = userAchievements[currentAchievementIndex].context as Prisma.JsonObject;
+        const relation = currentAchievementContext['relation'] as string;
         const evaluationResult = await evaluateAchievement(
             user.userID,
             condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
-            userAchievements[currentAchievementIndex].recordValue,
+            userAchievements[currentAchievementIndex].recordValue || undefined,
             relation
         );
-        currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
-        maxValue =
-            currentAchievementTemplate.type === achievement_type_enum.STREAK
-                ? userAchievements[currentAchievementIndex].recordValue > currentValue
-                    ? userAchievements[currentAchievementIndex].recordValue
-                    : currentValue
-                : dataAggregationKeys
-                      .map((key) => {
-                          return Number(currentAchievementTemplate.conditionDataAggregations[key].valueToAchieve);
-                      })
-                      .reduce((a, b) => a + b, 0);
+        // TODO: check if this will still include the recodValue
+        if (evaluationResult) {
+            currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
+            maxValue =
+                currentAchievementTemplate.type === achievement_type_enum.STREAK
+                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue! > currentValue
+                        ? userAchievements[currentAchievementIndex].recordValue!
+                        : currentValue
+                    : dataAggregationKeys
+                          .map((key) => {
+                              // TODO: check if we can remove valueToAchieve
+                              return Number((currentAchievementTemplate.conditionDataAggregations as any)[key].valueToAchieve as string);
+                          })
+                          .reduce((a, b) => a + b, 0);
+        }
     } else {
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
@@ -203,7 +213,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         achievementState: state,
         steps: currentAchievementTemplate.stepName
             ? achievementTemplates
-                  .map((achievement, index) => {
+                  .map((achievement, index): Step | null => {
                       // if a achievementTemplate has a stepName, it means that it must have multiple steps resulting in it having a sequence of achievements / templates
                       // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
                       if (index < achievementTemplates.length - 1 && achievement.isActive) {
@@ -214,7 +224,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                       }
                       return null;
                   })
-                  .filter((step) => step)
+                  .filter(isDefined)
             : null,
         maxSteps: maxValue,
         currentStep: currentValue,
