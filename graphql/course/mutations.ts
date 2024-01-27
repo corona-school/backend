@@ -92,7 +92,6 @@ export class MutateCourseResolver {
         @Arg('course') data: PublicCourseEditInput
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
-        const user = context.user;
         await hasAccess(context, 'Course', course);
 
         if (course.courseState === 'allowed') {
@@ -110,27 +109,23 @@ export class MutateCourseResolver {
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
 
-        const subcourse = await prisma.subcourse.findFirst({
+        const subcourses = await prisma.subcourse.findMany({
             where: { courseId: courseId },
         });
-        const usersSubcourseAchievements = await prisma.user_achievement.findMany({
-            where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
-            include: { template: true },
-        });
-        const subcourseAchievements = await Promise.all(
-            usersSubcourseAchievements.map(async (usersSubcourseAchievement) => {
-                return await prisma.user_achievement.findMany({
-                    where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` }, templateId: usersSubcourseAchievement.template.id },
-                });
-            })
-        );
-        for (const achievement of subcourseAchievements.flat()) {
-            const { context } = achievement;
-            context['courseName'] = result.name;
-            await prisma.user_achievement.update({
-                where: { id: achievement.id },
-                data: { context },
+
+        for (const subcourse of subcourses) {
+            const usersSubcourseAchievements = await prisma.user_achievement.findMany({
+                where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
+                include: { template: true },
             });
+            for (const achievement of usersSubcourseAchievements) {
+                const { context } = achievement;
+                context['courseName'] = result.name;
+                await prisma.user_achievement.update({
+                    where: { id: achievement.id },
+                    data: { context },
+                });
+            }
         }
 
         return result;
@@ -221,17 +216,20 @@ export class MutateCourseResolver {
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
 
-        const subcourse = await prisma.subcourse.findFirst({
+        const subcourses = await prisma.subcourse.findMany({
             where: { courseId: courseId },
             include: { subcourse_instructors_student: { select: { student: true } } },
         });
-        if (subcourse && subcourse.subcourse_instructors_student) {
-            subcourse.subcourse_instructors_student.forEach(async (instructor) => {
-                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_submitted', {
+        for (const subcourse of subcourses) {
+            if (!subcourse.subcourse_instructors_student) {
+                continue;
+            }
+            for (const subcourseInstructor of subcourse.subcourse_instructors_student) {
+                await Notification.actionTaken(userForStudent(subcourseInstructor.student), 'instructor_course_submitted', {
                     courseName: course.name,
                     relation: `subcourse/${subcourse.id}`,
                 });
-            });
+            }
         }
         return true;
     }
