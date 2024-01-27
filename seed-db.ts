@@ -1,14 +1,12 @@
 /* eslint-disable comma-dangle */
 import 'reflect-metadata';
 import { createHash, randomBytes } from 'crypto';
-import { hashPassword } from './common/util/hashing';
 import { getNotifications, importMessageTranslations, importNotifications } from './common/notification/notification';
 import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
-import { userForStudent, userForPupil, updateUser, refetchPupil, refetchStudent, userForScreener } from './common/user';
+import { userForStudent, userForPupil, refetchPupil, refetchStudent, userForScreener } from './common/user';
 import { getLogger } from './common/logger/logger';
-import { becomeTutee, registerPupil } from './common/pupil/registration';
+import { registerPupil } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
-import { updatePupil } from './graphql/pupil/mutations';
 import { prisma } from './common/prisma';
 import { becomeInstructor, becomeTutor, registerStudent } from './common/student/registration';
 import { addInstructorScreening, addTutorScreening } from './common/student/screening';
@@ -16,7 +14,6 @@ import { createMatch } from './common/match/create';
 import { TEST_POOL } from './common/match/pool';
 import { createRemissionRequest } from './common/remission-request';
 import { joinSubcourse, joinSubcourseWaitinglist } from './common/courses/participants';
-import { create as createCoC } from './common/certificate-of-conduct/certificateOfConduct';
 import { addCourseInstructor, addSubcourseInstructor } from './common/courses/states';
 import { createPupilMatchRequest, createStudentMatchRequest } from './common/match/request';
 import { createCourseTag } from './common/courses/tags';
@@ -750,7 +747,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_verified'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 1,
@@ -771,7 +767,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_appointment_booked'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 2,
@@ -794,7 +789,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 3,
@@ -815,7 +809,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_coc_success'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 4,
@@ -836,7 +829,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_coc_success'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 5,
@@ -858,7 +850,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_verified'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 1,
@@ -879,7 +870,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_appointment_booked'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 2,
@@ -902,7 +892,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 3,
@@ -924,7 +913,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 4,
@@ -947,7 +935,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '1. durchgeführter Termin',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 1,
@@ -977,7 +964,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '3 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 2,
@@ -1007,7 +993,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '5 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 3,
@@ -1037,7 +1022,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '10 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 4,
@@ -1067,7 +1051,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '15 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 5,
@@ -1097,7 +1080,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '25 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 6,
@@ -1129,7 +1111,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '1. durchgeführter Termin',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 1,
@@ -1159,7 +1140,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '3 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 2,
@@ -1189,7 +1169,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '5 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 3,
@@ -1219,7 +1198,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '10 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 4,
@@ -1249,7 +1227,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '15 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 5,
@@ -1279,7 +1256,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: '25 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 6,
@@ -1311,7 +1287,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            metrics: ['pupil_match_learned_regular'],
             templateFor: achievement_template_for_enum.Match,
             group: 'pupil_match_regular_learning',
             groupOrder: 1,
@@ -1342,7 +1317,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            metrics: ['student_match_learned_regular'],
             templateFor: achievement_template_for_enum.Match,
             group: 'student_match_regular_learning',
             groupOrder: 1,
@@ -1373,7 +1347,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_create_course'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
             groupOrder: 1,
@@ -1399,7 +1372,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_submit_course'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
             groupOrder: 2,
@@ -1426,7 +1398,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_approve_course'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
             groupOrder: 3,
@@ -1453,7 +1424,6 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Kurs anbieten',
-            metrics: ['student_approve_course'],
             templateFor: achievement_template_for_enum.Course,
             group: 'student_offer_course',
             groupOrder: 4,

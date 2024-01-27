@@ -9,6 +9,19 @@ import { Match } from '../graphql/generated';
 import { _createFixedToken } from '../common/secret/token';
 import assert from 'assert';
 import { purgeAchievementTemplateCache } from '../common/achievement/template';
+import { achievement_with_template, ConditionDataAggregations } from '../common/achievement/types';
+
+function findTemplateByMetric(achievements: achievement_with_template[], metric: string) {
+    for (const achievement of achievements) {
+        const dataAggr = achievement.template.conditionDataAggregations as ConditionDataAggregations;
+        for (const key in dataAggr) {
+            if (dataAggr[key].metric === metric) {
+                return achievement;
+            }
+        }
+    }
+    return null;
+}
 
 async function createTemplates() {
     purgeAchievementTemplateCache();
@@ -245,14 +258,16 @@ void test('Reward student regular learning', async () => {
     await client.request(`
         mutation StudentJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
-    const achievement = await prisma.user_achievement.findFirst({
+    const allAchievements = await prisma.user_achievement.findMany({
         where: {
             userId: user.userID,
-            template: { metrics: { has: metric } },
             context: { path: ['relation'], equals: `match/${match.id}` },
         },
+        include: { template: true },
     });
-    assert.strictEqual(achievement.recordValue, 1);
+    const achievement = findTemplateByMetric(allAchievements, metric);
+    assert.notStrictEqual(achievement, null);
+    assert.strictEqual(achievement!.recordValue, 1);
 
     const date = new Date();
     date.setDate(date.getDate() - 7);
@@ -330,13 +345,15 @@ void test('Reward pupil regular learning', async () => {
     await client.request(`
         mutation PupilJoinMatchMeeting { matchMeetingJoin(matchId:${match.id}) }
     `);
-    const achievement = await prisma.user_achievement.findFirst({
+    const achievements = await prisma.user_achievement.findMany({
         where: {
             userId: user.userID,
-            template: { metrics: { has: metric } },
             context: { path: ['relation'], equals: `match/${match.id}` },
         },
+        include: { template: true },
     });
+    const achievement = findTemplateByMetric(achievements, metric);
+    assert.notStrictEqual(achievement, null);
     assert.strictEqual(achievement.recordValue, 1);
 
     const date = new Date();
@@ -557,7 +574,6 @@ const createStudentOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_verified'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 1,
@@ -578,7 +594,6 @@ const createStudentOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_appointment_booked'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 2,
@@ -601,7 +616,6 @@ const createStudentOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 3,
@@ -622,7 +636,6 @@ const createStudentOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_coc_success'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 4,
@@ -643,7 +656,6 @@ const createStudentOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['student_onboarding_coc_success'],
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 5,
@@ -666,7 +678,6 @@ const createPupilOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_verified'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 1,
@@ -687,7 +698,6 @@ const createPupilOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_appointment_booked'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 2,
@@ -710,7 +720,6 @@ const createPupilOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 3,
@@ -732,7 +741,6 @@ const createPupilOnboardingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
-            metrics: ['pupil_onboarding_screened'],
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 4,
@@ -755,7 +763,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '1. durchgeführter Termin',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 1,
@@ -779,7 +786,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '3 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 2,
@@ -803,7 +809,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '5 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 3,
@@ -827,7 +832,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '10 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 4,
@@ -851,7 +855,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '15 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 5,
@@ -875,7 +878,6 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '25 durchgeführte Termine',
-            metrics: ['student_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 6,
@@ -901,7 +903,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '1. durchgeführter Termin',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 1,
@@ -925,7 +926,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '3 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 2,
@@ -949,7 +949,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '5 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 3,
@@ -973,7 +972,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '10 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 4,
@@ -997,7 +995,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '15 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 5,
@@ -1021,7 +1018,6 @@ const createPupilConductedMatchMeetingTemplates = async () => {
     await prisma.achievement_template.create({
         data: {
             name: '25 durchgeführte Termine',
-            metrics: ['pupil_conducted_match_appointment'],
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'pupil_conduct_match_appointment',
             groupOrder: 6,
@@ -1047,7 +1043,6 @@ const createStudentRegularLearningTemplate = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            metrics: ['student_match_learned_regular'],
             templateFor: achievement_template_for_enum.Match,
             group: 'student_match_regular_learning',
             groupOrder: 1,
@@ -1078,7 +1073,6 @@ const createPupilRegularLearningTemplate = async () => {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            metrics: ['pupil_match_learned_regular'],
             templateFor: achievement_template_for_enum.Match,
             group: 'pupil_match_regular_learning',
             groupOrder: 1,

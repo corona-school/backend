@@ -28,7 +28,6 @@ datasource db {
 model achievement_template {
   id                        Int                           @id @default(autoincrement())
   name                      String                        @db.VarChar
-  metrics                   String[]
   templateFor               achievement_template_for_enum
   // Achievements can
   // - cross-platform (i.e. for one user) 
