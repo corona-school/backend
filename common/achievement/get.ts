@@ -19,8 +19,8 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
 
 const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
-    const userAchievement = await prisma.user_achievement.findUniqueOrThrow({
-        where: { id: achievementId },
+    const userAchievement = await prisma.user_achievement.findFirstOrThrow({
+        where: { id: achievementId, userId: user.userID },
         include: { template: true },
     });
     const achievement = await assembleAchievementData([userAchievement], user);
@@ -160,12 +160,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
-    // TODO: check if this is needed?
-    const condition =
-        currentAchievementTemplate.condition.includes('recordValue') && userAchievements[currentAchievementIndex].recordValue !== null
-            ? currentAchievementTemplate.condition.replace('recordValue', (userAchievements[currentAchievementIndex].recordValue! + 1).toString())
-            : currentAchievementTemplate.condition;
-
     let maxValue: number = 0;
     let currentValue: number = 0;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
@@ -174,12 +168,11 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         const relation = currentAchievementContext['relation'] as string;
         const evaluationResult = await evaluateAchievement(
             user.userID,
-            condition,
+            currentAchievementTemplate.condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             userAchievements[currentAchievementIndex].recordValue || undefined,
             relation
         );
-        // TODO: check if this will still include the recodValue
         if (evaluationResult) {
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =
