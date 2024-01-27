@@ -124,7 +124,7 @@ export async function publishSubcourse(subcourse: Subcourse) {
 
 /* ---------------- Subcourse Cancel ------------ */
 
-export async function canCancel(subcourse: Subcourse, context: GraphQLContext): Promise<Decision> {
+export async function canCancel(subcourse: Subcourse, isAdmin: boolean): Promise<Decision> {
     if (!subcourse.published) {
         return { allowed: false, reason: 'not-published' };
     }
@@ -133,8 +133,8 @@ export async function canCancel(subcourse: Subcourse, context: GraphQLContext): 
         return { allowed: false, reason: 'already-cancelled' };
     }
 
-    if (isElevated(context)) {
-        return { allowed: true };
+    if (isAdmin) {
+        return { allowed: true, reason: 'user-is-admin' };
     }
 
     if (await subcourseOver(subcourse)) {
@@ -144,8 +144,8 @@ export async function canCancel(subcourse: Subcourse, context: GraphQLContext): 
     return { allowed: true };
 }
 
-export async function cancelSubcourse(user: User, subcourse: Subcourse, context: GraphQLContext) {
-    const can = await canCancel(subcourse, context);
+export async function cancelSubcourse(user: User, subcourse: Subcourse, isAdmin: boolean) {
+    const can = await canCancel(subcourse, isAdmin);
     if (!can.allowed) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
@@ -162,9 +162,9 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse, context:
 
 /* --------------- Modify Subcourse ------------------- */
 
-export async function canEditSubcourse(subcourse: Subcourse, context: GraphQLContext): Promise<Decision> {
-    if (isElevated(context)) {
-        return { allowed: true };
+export async function canEditSubcourse(subcourse: Subcourse, isAdmin: boolean): Promise<Decision> {
+    if (isAdmin) {
+        return { allowed: true, reason: 'user-is-admin' };
     }
     if (subcourse.published && (await subcourseOver(subcourse))) {
         return { allowed: false, reason: 'course-ended' };
@@ -173,8 +173,8 @@ export async function canEditSubcourse(subcourse: Subcourse, context: GraphQLCon
     return { allowed: true };
 }
 
-export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcourse>, context: GraphQLContext) {
-    const can = await canEditSubcourse(subcourse, context);
+export async function editSubcourse(subcourse: Subcourse, update: Partial<Subcourse>, isAdmin: boolean) {
+    const can = await canEditSubcourse(subcourse, isAdmin);
     if (!can.allowed) {
         throw new Error(`Cannot edit Subcourse(${subcourse.id}) reason: ${can.reason}`);
     }

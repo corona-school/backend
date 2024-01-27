@@ -3,7 +3,7 @@ import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/st
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { prisma } from '../../common/prisma';
-import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
@@ -460,13 +460,15 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
     async canCancel(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
-        return await canCancel(subcourse, context);
+        const isanAdmin = await isAdmin(context);
+        return await canCancel(subcourse, isanAdmin);
     }
 
     @FieldResolver((returns) => Decision)
     @Authorized(Role.ADMIN, Role.OWNER)
     async canEdit(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
-        return await canEditSubcourse(subcourse, context);
+        const isanAdmin = await isAdmin(context);
+        return await canEditSubcourse(subcourse, isanAdmin);
     }
 
     @FieldResolver((returns) => Decision)

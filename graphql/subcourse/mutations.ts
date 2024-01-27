@@ -8,7 +8,7 @@ import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
 import { PrerequisiteError } from '../../common/util/error';
-import { getSessionPupil, getSessionStudent } from '../authentication';
+import { getSessionPupil, getSessionStudent, isAdmin } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
@@ -169,10 +169,11 @@ export class MutateSubcourseResolver {
         @Arg('subcourse') data: PublicSubcourseEditInput
     ): Promise<GraphQLModel.Subcourse> {
         const subcourse = await getSubcourse(subcourseId, true);
+        const isanAdmin = await isAdmin(context);
         await hasAccess(context, 'Subcourse', subcourse);
 
         logger.info(`Subcourse(${subcourseId}) was edited by User(${context.user.userID})`);
-        return await editSubcourse(subcourse, data, context);
+        return await editSubcourse(subcourse, data, isanAdmin);
     }
 
     @Mutation((returns) => Boolean)
@@ -180,9 +181,9 @@ export class MutateSubcourseResolver {
     async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
+        const isanAdmin = await isAdmin(context);
         await hasAccess(context, 'Subcourse', subcourse);
-
-        await cancelSubcourse(user, subcourse, context);
+        await cancelSubcourse(user, subcourse, isanAdmin);
         if (subcourse.conversationId) {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
