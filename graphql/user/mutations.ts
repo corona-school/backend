@@ -1,4 +1,4 @@
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { RateLimit } from '../rate-limit';
 import { Mutation, Resolver, Arg, Authorized, Ctx, InputType, Field } from 'type-graphql';
 import { UserType } from '../types/user';
@@ -12,6 +12,7 @@ import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
+import { prisma } from '../../common/prisma';
 
 @InputType()
 class SupportMessage {
@@ -70,6 +71,20 @@ export class MutateUserResolver {
             /* reply to name */ getFullName(context.user)
         );
 
+        return true;
+    }
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async markAchievementAsSeen(@Ctx() context: GraphQLContext, @Arg('achievementId') achievementId: number) {
+        const achievement = await prisma.user_achievement.findFirstOrThrow({
+            where: { id: achievementId },
+        });
+        await hasAccess(context, 'User_achievement', achievement);
+
+        await prisma.user_achievement.update({
+            where: { id: achievementId },
+            data: { isSeen: true },
+        });
         return true;
     }
 }
