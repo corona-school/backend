@@ -4,27 +4,20 @@ import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
 import { AchievementToCheck } from './types';
-
-function createRelationContextFilter<ID extends ActionID>(context?: SpecificNotificationContext<ID>): Prisma.JsonFilter {
-    if (context && context.relation) {
-        return { path: ['relation'], equals: context.relation };
-    }
-    return { path: ['relation'], equals: Prisma.AnyNull };
-}
+import { transformEventContextToUserAchievementContext } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     userId: string,
     context?: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
-    const contextFilter = createRelationContextFilter(context);
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
             userId,
-            context: contextFilter,
+            relation: context?.relation,
         },
-        select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
+        select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
     });
     return userAchievement;
 }
@@ -54,14 +47,13 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
 
     const templatesForGroup = templatesByGroup.get(currentTemplate.group)!.sort((a, b) => a.groupOrder - b.groupOrder);
 
-    const contextFilter = createRelationContextFilter(context);
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {
             template: {
                 group: currentTemplate.group,
             },
             userId,
-            context: contextFilter,
+            relation: context.relation,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
@@ -85,6 +77,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     if (templatesForGroup.length <= nextStepIndex) {
         return null;
     }
+
     const nextStepTemplate = templatesForGroup[nextStepIndex];
     const achievedAt =
         templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL ? new Date() : null;
@@ -94,12 +87,14 @@ async function createNextUserAchievement<ID extends ActionID>(
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {
                 userId: userId,
-                context: context ? context : Prisma.JsonNull,
+                // This ensures that the relation will set to null even if context.relation is an empty string
+                relation: context.relation || null,
+                context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
                 achievedAt: achievedAt,
             },
-            select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true },
+            select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
         });
         return createdUserAchievement;
     }

@@ -115,7 +115,7 @@ export class MutateCourseResolver {
 
         for (const subcourse of subcourses) {
             const usersSubcourseAchievements = await prisma.user_achievement.findMany({
-                where: { context: { path: ['relation'], equals: `subcourse/${subcourse.id}` } },
+                where: { relation: `subcourse/${subcourse.id}` },
                 include: { template: true },
             });
             for (const achievement of usersSubcourseAchievements) {
