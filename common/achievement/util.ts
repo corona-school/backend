@@ -148,8 +148,8 @@ export function sortActionTemplatesToGroups(templatesForAction: achievement_temp
     return templatesByGroups;
 }
 
-export function isDefined<T>(arugment: T | undefined | null): arugment is T {
-    return arugment !== undefined && arugment !== null;
+export function isDefined<T>(argument: T | undefined | null): argument is T {
+    return argument !== undefined && argument !== null;
 }
 
 export function transformEventContextToUserAchievementContext<T extends ActionID>(ctx: SpecificNotificationContext<T>): object {

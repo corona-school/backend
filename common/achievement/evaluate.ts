@@ -21,7 +21,6 @@ async function _evaluateAchievement(
 ): Promise<EvaluationResult | undefined> {
     // We only care about metrics that are used for the data aggregation
     const metrics = Object.values(dataAggregation).map((entry) => entry.metric);
-    // filter: wenn wir eine richtige relation haben -> filtern nach relation
     const achievementEvents = await prisma.achievement_event.findMany({
         where: {
             userId,

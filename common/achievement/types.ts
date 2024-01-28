@@ -21,7 +21,7 @@ export type Metric = {
 
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
-// Used to destinguish between different types of buckets
+// Used to distinguish between different types of buckets
 export type GenericBucketConfig<T extends Bucket> = {
     bucketKind: T['kind'];
     buckets: T[];
@@ -50,7 +50,7 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / monthes
+// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / months
 export type BucketCreatorContext = { recordValue?: number; context: AchievementContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 

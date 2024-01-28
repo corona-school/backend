@@ -49,7 +49,7 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
     return achievements;
 };
 
-// Inactive achievements are acheievements that are not yet existing but could be achieved in the future.
+// Inactive achievements are achievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
 const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
