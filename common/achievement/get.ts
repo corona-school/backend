@@ -43,7 +43,7 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
         userAchievementGroups[key].push(ua);
     });
     Object.keys(userAchievementGroups).forEach((groupName) => {
-        const group = userAchievementGroups[groupName].sort((a, b) => a.groupOrder - b.groupOrder);
+        const group = userAchievementGroups[groupName].sort((a, b) => a.template.groupOrder - b.template.groupOrder);
         group[group.length - 1].achievedAt && delete userAchievementGroups[groupName];
     });
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
@@ -122,7 +122,7 @@ const generateReorderedAchievementData = async (groups: { [group: string]: achie
     const achievements = await Promise.all(
         groupKeys.map(async (key) => {
             const group = groups[key];
-            const sortedGroupAchievements = group.sort((a, b) => a.groupOrder - b.groupOrder);
+            const sortedGroupAchievements = group.sort((a, b) => a.template.groupOrder - b.template.groupOrder);
             /**
              * This Assembles individual achievements for tiered milestones. Tiered achievements represent steps on the path to higher scores.
              * Unlike sequential achievements, each tier is processed separately and displayed on the frontend as a distinct achievement.
