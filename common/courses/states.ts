@@ -1,4 +1,4 @@
-import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState, Prisma, student } from '@prisma/client';
+import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState, Prisma } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -22,6 +22,7 @@ import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
+import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
 
 const logger = getLogger('Course States');
 
@@ -166,15 +167,7 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 
-    const courseInstructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
-    await prisma.user_achievement.deleteMany({
-        where: {
-            userId: {
-                in: courseInstructors.map((instructor) => userForStudent(instructor.student).userID),
-            },
-            relation: `subcourse/${subcourse.id}`,
-        },
-    });
+    await deleteAchievementsForSubcourse(subcourse.id);
 }
 
 /* --------------- Modify Subcourse ------------------- */

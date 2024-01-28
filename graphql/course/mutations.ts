@@ -1,4 +1,4 @@
-import { course_category_enum, user_achievement } from '@prisma/client';
+import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
 import { getFile, removeFile } from '../files';
 import { getLogger } from '../../common/logger/logger';
@@ -13,12 +13,13 @@ import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
 import * as Notification from '../../common/notification';
 
-import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 import { userForStudent } from '../../common/user';
+import { updateAchievementCTXByCourse } from '../../common/achievement/update';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -109,24 +110,7 @@ export class MutateCourseResolver {
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
 
-        const subcourses = await prisma.subcourse.findMany({
-            where: { courseId: courseId },
-        });
-
-        for (const subcourse of subcourses) {
-            const usersSubcourseAchievements = await prisma.user_achievement.findMany({
-                where: { relation: `subcourse/${subcourse.id}` },
-                include: { template: true },
-            });
-            for (const achievement of usersSubcourseAchievements) {
-                const { context } = achievement;
-                context['courseName'] = result.name;
-                await prisma.user_achievement.update({
-                    where: { id: achievement.id },
-                    data: { context },
-                });
-            }
-        }
+        await updateAchievementCTXByCourse(result);
 
         return result;
     }

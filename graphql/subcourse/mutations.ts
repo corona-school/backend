@@ -18,6 +18,7 @@ import { chat_type } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
+import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -142,12 +143,7 @@ export class MutateSubcourseResolver {
         }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
 
-        await prisma.user_achievement.deleteMany({
-            where: {
-                userId: `student/${studentId}`,
-                relation: `subcourse/${subcourseId}`,
-            },
-        });
+        await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
 
         return true;
     }
