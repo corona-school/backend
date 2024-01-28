@@ -100,7 +100,7 @@ export type ActionEvent<ID extends ActionID> = {
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievement_with_template = ThenArg<ReturnType<typeof getUserAchievementWithTemplate>>;
-export type AchievementToCheck = Pick<achievement_with_template, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template'>;
+export type AchievementToCheck = Pick<achievement_with_template, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template' | 'relation'>;
 
 export type EvaluationResult = {
     conditionIsMet: boolean;

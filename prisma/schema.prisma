@@ -68,6 +68,7 @@ model achievement_template {
 
 model user_achievement {
   id          Int                  @id @default(autoincrement())
+  relation    String?
   // the id of the relating achievement_template
   templateId  Int
   template    achievement_template @relation(fields: [templateId], references: [id])
@@ -78,6 +79,7 @@ model user_achievement {
   // Streaks: we have to store the highest record for streaks
   recordValue Int?
   context     Json                 @db.Json
+  @@unique([relation, userId, templateId], name: "unique_user_achievement")
 }
 
 // Save (tracked) event as raw data in DB and evaluate at runtime

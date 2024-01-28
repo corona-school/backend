@@ -263,7 +263,7 @@ void test('Reward student regular learning', async () => {
     const allAchievements = await prisma.user_achievement.findMany({
         where: {
             userId: user.userID,
-            context: { path: ['relation'], equals: `match/${match.id}` },
+            relation: `match/${match.id}`,
         },
         include: { template: true },
     });
@@ -352,7 +352,7 @@ void test('Reward pupil regular learning', async () => {
     const achievements = await prisma.user_achievement.findMany({
         where: {
             userId: user.userID,
-            context: { path: ['relation'], equals: `match/${match.id}` },
+            relation: `match/${match.id}`,
         },
         include: { template: true },
     });

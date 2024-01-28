@@ -9,6 +9,7 @@ import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
 import { RelationTypes, AchievementContextType } from './types';
+import { SpecificNotificationContext, ActionID } from '../notification/actions';
 
 const logger = getLogger('Achievement');
 
@@ -93,12 +94,13 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     return achievementContext;
 }
 
-export function transformPrismaJson(user: User, json: Prisma.JsonObject): AchievementContextType {
+export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): AchievementContextType {
     // TODO: find proper type?
     const transformedJson: any = { user: user };
-    if (json['relation']) {
-        const [relationType, relationId] = getRelationTypeAndId(json['relation'] as string);
+    if (relation) {
+        const [relationType, relationId] = getRelationTypeAndId(relation);
         transformedJson[`${relationType}Id`] = relationId;
+        transformedJson['relation'] = relation;
     }
     const keys = Object.keys(json) || [];
     keys.forEach((key) => {
@@ -148,4 +150,13 @@ export function sortActionTemplatesToGroups(templatesForAction: achievement_temp
 
 export function isDefined<T>(arugment: T | undefined | null): arugment is T {
     return arugment !== undefined && arugment !== null;
+}
+
+export function transformEventContextToUserAchievementContext<T extends ActionID>(ctx: SpecificNotificationContext<T>): object {
+    // Copy the context to not mutate the original one.
+    const uaCtx = { ...ctx };
+    // The relation will be stored directly in the user_achievement table.
+    // To make sure we are not misusing the one in the context, we delete it here.
+    delete uaCtx.relation;
+    return uaCtx;
 }

@@ -175,7 +175,7 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
             userId: {
                 in: courseInstructors.map((instructor) => userForStudent(instructor.student).userID),
             },
-            context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
+            relation: `subcourse/${subcourse.id}`,
         },
     });
 }

@@ -35,8 +35,7 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
     });
     const userAchievementGroups: { [groupRelation: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
-        const relation = (ua.context as Prisma.JsonObject)['relation'] || null;
-        const key = relation ? `${ua.template.group}/${relation}` : ua.template.group;
+        const key = ua.relation ? `${ua.template.group}/${ua.relation}` : ua.template.group;
         if (!userAchievementGroups[key]) {
             userAchievementGroups[key] = [];
         }
@@ -148,7 +147,11 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    const achievementContext = transformPrismaJson(user, userAchievements[currentAchievementIndex].context as Prisma.JsonObject);
+    const achievementContext = transformPrismaJson(
+        user,
+        userAchievements[currentAchievementIndex].relation,
+        userAchievements[currentAchievementIndex].context as Prisma.JsonObject
+    );
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext);
 
     const achievementTemplates = await prisma.achievement_template.findMany({
@@ -164,14 +167,12 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     let currentValue: number = 0;
     if (currentAchievementTemplate.type === achievement_type_enum.STREAK || currentAchievementTemplate.type === achievement_type_enum.TIERED) {
         const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations as Prisma.JsonObject);
-        const currentAchievementContext = userAchievements[currentAchievementIndex].context as Prisma.JsonObject;
-        const relation = currentAchievementContext['relation'] as string;
         const evaluationResult = await evaluateAchievement(
             user.userID,
             currentAchievementTemplate.condition,
             currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
             userAchievements[currentAchievementIndex].recordValue || undefined,
-            relation
+            userAchievements[currentAchievementIndex].relation || undefined
         );
         if (evaluationResult) {
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);

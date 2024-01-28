@@ -145,7 +145,7 @@ export class MutateSubcourseResolver {
         await prisma.user_achievement.deleteMany({
             where: {
                 userId: `student/${studentId}`,
-                context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
+                relation: `subcourse/${subcourseId}`,
             },
         });
 
