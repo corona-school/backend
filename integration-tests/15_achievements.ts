@@ -43,11 +43,11 @@ void test('Reward student onboarding achievement sequence', async () => {
 
     const studentOnboarding1 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'student_onboarding',
-            groupOrder: 1,
             achievedAt: { not: null },
             userId: user.userID,
+            template: { group: 'student_onboarding', groupOrder: 1 },
         },
+        include: { template: true },
     });
     assert.ok(studentOnboarding1);
 
@@ -63,11 +63,11 @@ void test('Reward student onboarding achievement sequence', async () => {
     `);
     const studentOnboarding2 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'student_onboarding',
-            groupOrder: 3,
             achievedAt: { not: null },
             userId: user.userID,
+            template: { group: 'student_onboarding', groupOrder: 3 },
         },
+        include: { template: true },
     });
     assert.ok(studentOnboarding2);
 
@@ -85,18 +85,18 @@ void test('Reward student onboarding achievement sequence', async () => {
     `);
     const studentOnboarding3 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'student_onboarding',
-            groupOrder: 4,
             achievedAt: { not: null },
             userId: user.userID,
+            template: { group: 'student_onboarding', groupOrder: 4 },
         },
+        include: { template: true },
     });
     const studentOnboarding4 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'student_onboarding',
-            groupOrder: 5,
             userId: user.userID,
+            template: { group: 'student_onboarding', groupOrder: 5 },
         },
+        include: { template: true },
     });
     assert.ok(studentOnboarding3);
     assert.ok(studentOnboarding4);
@@ -111,11 +111,11 @@ void test('Reward pupil onboarding achievement sequence', async () => {
 
     const pupilOnboarding1 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'pupil_onboarding',
-            groupOrder: 1,
             achievedAt: { not: null },
             userId: user.userID,
+            template: { group: 'pupil_onboarding', groupOrder: 1 },
         },
+        include: { template: true },
     });
     assert.ok(pupilOnboarding1);
     // Screening
@@ -124,18 +124,18 @@ void test('Reward pupil onboarding achievement sequence', async () => {
     `);
     const pupilOnboarding2 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'pupil_onboarding',
-            groupOrder: 3,
             achievedAt: { not: null },
             userId: user.userID,
+            template: { group: 'pupil_onboarding', groupOrder: 3 },
         },
+        include: { template: true },
     });
     const pupilOnboarding3 = await prisma.user_achievement.findFirst({
         where: {
-            group: 'pupil_onboarding',
-            groupOrder: 4,
             userId: user.userID,
+            template: { group: 'pupil_onboarding', groupOrder: 4 },
         },
+        include: { template: true },
     });
     assert.ok(pupilOnboarding2);
     assert.ok(pupilOnboarding3);
@@ -180,9 +180,10 @@ void test('Reward student conducted match appointment', async () => {
 
     const studentJoinedMatchMeetingAchievements = await prisma.user_achievement.findMany({
         where: {
-            group: 'student_conduct_match_appointment',
             userId: user.userID,
+            template: { group: 'student_conduct_match_appointment' },
         },
+        include: { template: true },
     });
     assert.ok(studentJoinedMatchMeetingAchievements[0]);
     assert.notStrictEqual(studentJoinedMatchMeetingAchievements.length, 0);
@@ -225,9 +226,10 @@ void test('Reward pupil conducted match appointment', async () => {
     `);
     const pupilJoinedMatchMeetingAchievements = await prisma.user_achievement.findMany({
         where: {
-            group: 'pupil_conduct_match_appointment',
             userId: user.userID,
+            template: { group: 'pupil_conduct_match_appointment' },
         },
+        include: { template: true },
     });
     assert.ok(pupilJoinedMatchMeetingAchievements);
     assert.notStrictEqual(pupilJoinedMatchMeetingAchievements.length, 0);
@@ -289,10 +291,11 @@ void test('Reward student regular learning', async () => {
     const studentMatchRegularLearningRecord = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
-            group: 'student_match_regular_learning',
             achievedAt: { not: null },
             recordValue: 2,
+            template: { group: 'student_match_regular_learning' },
         },
+        include: { template: true },
     });
     assert.ok(studentMatchRegularLearningRecord);
 
@@ -310,10 +313,11 @@ void test('Reward student regular learning', async () => {
     const studentMatchRegularLearning = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
-            group: 'student_match_regular_learning',
             achievedAt: null,
             recordValue: 2,
+            template: { group: 'student_match_regular_learning' },
         },
+        include: { template: true },
     });
     assert.ok(studentMatchRegularLearning);
 });
@@ -387,10 +391,11 @@ void test('Reward pupil regular learning', async () => {
     const pupilMatchRegularLearning = await prisma.user_achievement.findFirst({
         where: {
             userId: user.userID,
-            group: 'pupil_match_regular_learning',
             achievedAt: null,
             recordValue: 2,
+            template: { group: 'pupil_match_regular_learning' },
         },
+        include: { template: true },
     });
     assert.ok(pupilMatchRegularLearning);
 });

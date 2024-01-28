@@ -94,8 +94,6 @@ async function createNextUserAchievement<ID extends ActionID>(
         const createdUserAchievement = await prisma.user_achievement.create({
             data: {
                 userId: userId,
-                group: nextStepTemplate.group,
-                groupOrder: nextStepTemplate.groupOrder,
                 context: context ? context : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
