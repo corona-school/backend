@@ -72,7 +72,6 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_weeks: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
-            // TODO: what if the recordValue is not a number or negative?
             const { recordValue: weeks } = bucketContext;
             // the buckets are created in a desc order
             const today = moment();
@@ -80,6 +79,10 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 bucketKind: 'time',
                 buckets: [],
             };
+
+            if (weeks === undefined || weeks === null) {
+                return timeBucket;
+            }
 
             /*
             This is to look at the last few weeks before the current event so that we can evaluate whether the streak has been interrupted for the last few weeks or whether we have a new record.
@@ -93,7 +96,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 const weeksBefore = today.clone().subtract(i, 'week');
                 timeBucket.buckets.push({
                     kind: 'time',
-                    relation: null,
+                    relation: undefined,
                     startTime: weeksBefore.startOf('week').toDate(),
                     endTime: weeksBefore.endOf('week').toDate(),
                 });
@@ -104,7 +107,6 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     },
     by_months: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
-            // TODO: what if the recordValue is not a number or negative?
             const { recordValue: months } = bucketContext;
 
             // the buckets are created in a desc order
@@ -114,11 +116,15 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 buckets: [],
             };
 
+            if (months === undefined || months === null) {
+                return timeBucket;
+            }
+
             for (let i = 0; i < months + 1; i++) {
                 const monthsBefore = today.clone().subtract(i, 'month');
                 timeBucket.buckets.push({
                     kind: 'time',
-                    relation: null,
+                    relation: undefined,
                     startTime: monthsBefore.startOf('month').toDate(),
                     endTime: monthsBefore.endOf('month').toDate(),
                 });

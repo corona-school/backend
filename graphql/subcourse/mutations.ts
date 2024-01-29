@@ -18,6 +18,7 @@ import { chat_type } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
+import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -142,12 +143,7 @@ export class MutateSubcourseResolver {
         }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
 
-        await prisma.user_achievement.deleteMany({
-            where: {
-                userId: `student/${studentId}`,
-                context: { path: ['relation'], equals: `subcourse/${subcourseId}` },
-            },
-        });
+        await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
 
         return true;
     }
@@ -155,7 +151,10 @@ export class MutateSubcourseResolver {
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const subcourse = await getSubcourse(subcourseId);
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({
+            where: { id: subcourseId },
+            include: { subcourse_instructors_student: { include: { student: true } } },
+        });
         await hasAccess(context, 'Subcourse', subcourse);
         await publishSubcourse(subcourse);
         return true;
@@ -251,7 +250,11 @@ export class MutateSubcourseResolver {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (participantCount >= subcourse.maxParticipants) {
             // Course is full, create one single place for the pupil
-            subcourse = await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } }, include: { lecture: true } });
+            subcourse = await prisma.subcourse.update({
+                where: { id: subcourse.id },
+                data: { maxParticipants: { increment: 1 } },
+                include: { lecture: true, subcourse_instructors_student: false },
+            });
         }
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
