@@ -9,9 +9,8 @@ import { transformEventContextToUserAchievementContext } from './util';
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     userId: string,
-    context: SpecificNotificationContext<ID>
-): Promise<AchievementToCheck> {
-    const contextHasRelation = context && Object.keys(context).includes('relation');
+    context?: SpecificNotificationContext<ID>
+): Promise<AchievementToCheck | null> {
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,

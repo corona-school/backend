@@ -3,13 +3,14 @@ import 'reflect-metadata';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { ConditionDataAggregations, Metric } from './types';
-import { achievement_template } from '@prisma/client';
+import { achievement_template, achievement_template_for_enum } from '@prisma/client';
 
 const logger = getLogger('Achievement Template');
 
 export enum TemplateSelectEnum {
     BY_GROUP = 'group',
     BY_METRIC = 'metrics',
+    BY_COURSE_RELATION = 'templateFor',
 }
 
 // string == metricId, group
@@ -26,6 +27,7 @@ async function buildCache() {
 
     buildGroupCache(templates);
     buildMetricCache(templates);
+    buildCourseRelationCache(templates);
 
     logger.info(`Loaded ${templates.length} achievement templates into the cache`);
 }
@@ -43,7 +45,6 @@ function buildGroupCache(templates: achievement_template[]) {
 
 function buildMetricCache(templates: achievement_template[]) {
     achievementTemplates.set(TemplateSelectEnum.BY_METRIC, new Map());
-
     for (const template of templates) {
         const dataAggr = template.conditionDataAggregations as ConditionDataAggregations;
 
@@ -53,6 +54,18 @@ function buildMetricCache(templates: achievement_template[]) {
                 achievementTemplates.get(TemplateSelectEnum.BY_METRIC)?.set(metric, []);
             }
             achievementTemplates.get(TemplateSelectEnum.BY_METRIC)?.get(metric)?.push(template);
+        }
+    }
+}
+
+function buildCourseRelationCache(templates: achievement_template[]) {
+    achievementTemplates.set(TemplateSelectEnum.BY_COURSE_RELATION, new Map());
+    for (const template of templates) {
+        if (template.templateFor === achievement_template_for_enum.Course) {
+            if (achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.has(template.templateFor)) {
+                achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.set(template.templateFor, []);
+            }
+            achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.get(template.templateFor)?.push(template);
         }
     }
 }
@@ -88,4 +101,11 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
     return templatesForAction;
 }
 
-export { getAchievementTemplates, getTemplatesByMetrics };
+async function getTemplatesWithCourseRelation(): Promise<achievement_template[]> {
+    const templatesByCourseRelation = await getAchievementTemplates(TemplateSelectEnum.BY_COURSE_RELATION);
+    const courseTemplates: achievement_template[] = templatesByCourseRelation ? templatesByCourseRelation.get(achievement_template_for_enum.Course) : [];
+
+    return courseTemplates;
+}
+
+export { getAchievementTemplates, getTemplatesByMetrics, getTemplatesWithCourseRelation };

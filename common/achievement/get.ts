@@ -68,7 +68,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         },
     });
 
-    const tieredAchievements = tieredTemplates.map((template) => {
+    const tieredAchievements = tieredTemplates.map(async (template) => {
         const dataAggr = template.conditionDataAggregations as Prisma.JsonObject;
         const maxValue = Object.keys(dataAggr)
             .map((key) => {
@@ -81,7 +81,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             name: template.name,
             subtitle: template.subtitle,
             description: template.description,
-            image: getAchievementImageURL(template.image),
+            image: await getAchievementImageURL(template),
             alternativeText: 'alternativeText',
             actionType: template.actionType ?? undefined,
             achievementType: template.type,
@@ -96,7 +96,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         };
         return achievement;
     });
-    return tieredAchievements;
+    return Promise.all(tieredAchievements);
 };
 
 // User achievements are already started by the user and are either active or completed.
@@ -210,12 +210,12 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         recordValue: maxValue.toString(),
     });
 
-    return {
+    const resultAchievement = {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
-        image: getAchievementImageURL(currentAchievementTemplate.image),
+        image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].relation),
         alternativeText: 'alternativeText',
         actionType: currentAchievementTemplate.actionType,
         achievementType: currentAchievementTemplate.type,
@@ -244,6 +244,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
+    return resultAchievement;
 };
 
 export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };
