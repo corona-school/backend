@@ -2,7 +2,7 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { Metric } from './types';
+import { ConditionDataAggregations, Metric } from './types';
 import { achievement_template, achievement_template_for_enum } from '@prisma/client';
 
 const logger = getLogger('Achievement Template');
@@ -20,34 +20,54 @@ export function purgeAchievementTemplateCache() {
     achievementTemplates.clear();
 }
 
-async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, achievement_template[]>> {
-    if (!achievementTemplates.has(select)) {
-        achievementTemplates.set(select, new Map());
+async function buildCache() {
+    const templates = await prisma.achievement_template.findMany({
+        where: { isActive: true },
+    });
 
-        const templatesFromDB = await prisma.achievement_template.findMany({
-            where: { isActive: true },
-        });
+    buildGroupCache(templates);
+    buildMetricCache(templates);
 
-        for (const template of templatesFromDB) {
-            const selection = template[select];
+    logger.info(`Loaded ${templates.length} achievement templates into the cache`);
+}
 
-            if (Array.isArray(selection)) {
-                for (const value of selection) {
-                    if (!achievementTemplates.get(select)?.has(value)) {
-                        achievementTemplates.get(select)?.set(value, []);
-                    }
-                    achievementTemplates.get(select)?.get(value)?.push(template);
-                }
-            } else {
-                if (!achievementTemplates.get(select)?.has(selection)) {
-                    achievementTemplates.get(select)?.set(selection, []);
-                }
-                achievementTemplates.get(select)?.get(selection)?.push(template);
-            }
+function buildGroupCache(templates: achievement_template[]) {
+    achievementTemplates.set(TemplateSelectEnum.BY_GROUP, new Map());
+    for (const template of templates) {
+        const group = template.group;
+        if (!achievementTemplates.get(TemplateSelectEnum.BY_GROUP)?.has(group)) {
+            achievementTemplates.get(TemplateSelectEnum.BY_GROUP)?.set(group, []);
         }
-        logger.info(`Loaded ${templatesFromDB.length} achievement templates into the cache`);
+        achievementTemplates.get(TemplateSelectEnum.BY_GROUP)?.get(group)?.push(template);
     }
-    return achievementTemplates.get(select);
+}
+
+function buildMetricCache(templates: achievement_template[]) {
+    achievementTemplates.set(TemplateSelectEnum.BY_METRIC, new Map());
+
+    for (const template of templates) {
+        const dataAggr = template.conditionDataAggregations as ConditionDataAggregations;
+
+        for (const aggr in dataAggr) {
+            const metric = dataAggr[aggr].metric;
+            if (!achievementTemplates.get(TemplateSelectEnum.BY_METRIC)?.has(metric)) {
+                achievementTemplates.get(TemplateSelectEnum.BY_METRIC)?.set(metric, []);
+            }
+            achievementTemplates.get(TemplateSelectEnum.BY_METRIC)?.get(metric)?.push(template);
+        }
+    }
+}
+
+async function getAchievementTemplates(select: TemplateSelectEnum): Promise<Map<string, achievement_template[]>> {
+    if (achievementTemplates.size === 0) {
+        await buildCache();
+    }
+
+    if (!achievementTemplates.has(select)) {
+        logger.warn(`No achievement templates were found in the database`, { select });
+    }
+
+    return achievementTemplates.get(select) ?? new Map();
 }
 
 async function getTemplatesByMetrics(metricsForAction: Metric[]) {

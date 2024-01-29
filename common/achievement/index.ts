@@ -52,27 +52,27 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
     for (const [groupName, group] of templatesByGroups) {
         try {
             await tracer.trace('achievement.evaluateAchievementGroups', async (span) => {
-                span.setTag('achievement.group', groupName);
+                span?.setTag('achievement.group', groupName);
                 logger.info('evaluate achievement group', { groupName });
 
-                let achievementToCheck: AchievementToCheck;
+                let achievementToCheck: AchievementToCheck | undefined = undefined;
                 for (const template of group) {
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
                         getOrCreateUserAchievement(template, user.userID, context)
                     );
-                    if (userAchievement.achievedAt === null || userAchievement.template.type === achievement_type_enum.STREAK) {
+                    if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === achievement_type_enum.STREAK)) {
                         logger.info('found achievement to check', {
                             achievementId: userAchievement.id,
-                            achievementName: userAchievement.template.name,
-                            type: userAchievement.template.type,
+                            achievementName: userAchievement.template?.name,
+                            type: userAchievement.template?.type,
                         });
                         achievementToCheck = userAchievement;
                         break;
                     }
                 }
-                span.setTag('achievement.foundToCheck', !!achievementToCheck);
+                span?.setTag('achievement.foundToCheck', !!achievementToCheck);
                 if (achievementToCheck) {
-                    span.setTag('achievement.id', achievementToCheck.id);
+                    span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
                         checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent)
                     );
@@ -80,7 +80,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 logger.info('group evaluation done', { groupName });
             });
         } catch (e) {
-            logger.error(`Error occurred while checking achievement for user`, e, { userId: user.userID });
+            logger.error(`Error occurred while checking achievement for user`, e as Error, { userId: user.userID });
         }
     }
 }
@@ -119,9 +119,14 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
         actionId: event.actionId,
         achievementId: userAchievement.id,
         condition: userAchievement.template.condition,
-        conditionIsMet: evaluationResult.conditionIsMet,
-        resultObject: JSON.stringify(evaluationResult.resultObject, null, 4),
+        conditionIsMet: evaluationResult?.conditionIsMet,
+        resultObject: JSON.stringify(evaluationResult?.resultObject, null, 4),
     });
+
+    if (evaluationResult === null) {
+        // TODO: handle this case
+        return;
+    }
 
     if (evaluationResult.conditionIsMet) {
         const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
@@ -145,21 +150,18 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         template: { condition, conditionDataAggregations },
     } = achievement;
     if (!condition) {
-        logger.error(`No condition found for achievement`, null, { template: achievement.template.name, achievementId: achievement.id });
-        return { conditionIsMet: false, resultObject: null };
+        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
+        return { conditionIsMet: false, resultObject: {} };
     }
 
-    const { conditionIsMet, resultObject } = await evaluateAchievement(
-        userId,
-        condition,
-        conditionDataAggregations as ConditionDataAggregations,
-        recordValue,
-        event.context.relation
-    );
-    return { conditionIsMet, resultObject };
+    const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
+    if (result === undefined) {
+        return null;
+    }
+    return result;
 }
 
-async function rewardUser<ID extends ActionID>(evaluationResult: number, userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
+async function rewardUser<ID extends ActionID>(evaluationResult: number | null, userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
@@ -182,6 +184,9 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number, userAch
          * The final template in the sequence serves solely to display information about the sequential achievement being rewarded.
          * Before generating the reward achievement for a sequential achievement, the system checks if the last achievement to be evaluated has been achieved.
          */
+        if (!groupTemplates) {
+            return updatedAchievement;
+        }
         const lastTemplate = groupTemplates[groupTemplates.length - 2];
         if (groupOrder === lastTemplate.groupOrder) {
             await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {

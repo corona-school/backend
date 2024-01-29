@@ -23,7 +23,7 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -35,13 +35,13 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -62,7 +62,7 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -74,13 +74,13 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:10:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -100,26 +100,26 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T00:40:00.000Z').toDate(),
-                    relation: 'match',
-                },
-                {
-                    kind: 'time',
                     startTime: moment('2023-07-31T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-01T00:55:00.000Z').toDate(),
+                    endTime: moment('2023-08-01T00:50:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:55:00.000Z').toDate(),
-                    relation: 'subcourse',
+                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:35:00.000Z').toDate(),
+                    relation: 'match',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-07T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-08T05:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-08T04:55:00.000Z').toDate(),
+                    relation: 'subcourse',
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T01:50:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -179,24 +179,54 @@ describe('test create buckets by_week', () => {
             name: 'should create one bucket if recordValue is 0',
             recordValue: 0,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-14T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-20T23:59:59.999').toDate(),
+                    relation: undefined,
+                },
             ],
         },
         {
             name: 'should create two buckets if recordValue is 1. Elements should be ordered desc',
             recordValue: 1,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-08-07T00:00:00.000Z').toDate(), endTime: moment('2023-08-13T23:59:59.999Z').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-14T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-20T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-07T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-13T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
             ],
         },
         {
             name: 'should create three buckets if recordValue is 2. Elements should be ordered desc',
             recordValue: 2,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-14T00:00:00.000Z').toDate(), endTime: moment('2023-08-20T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-08-07T00:00:00.000Z').toDate(), endTime: moment('2023-08-13T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-07-31T00:00:00.000Z').toDate(), endTime: moment('2023-08-06T23:59:59.999Z').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-14T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-20T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-07T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-13T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-07-31T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-06T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
             ],
         },
     ];
@@ -235,24 +265,54 @@ describe('test create buckets by_months', () => {
             name: 'should create one bucket if recordValue is 0',
             recordValue: 0,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-01T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-31T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
             ],
         },
         {
             name: 'should create two buckets if recordValue is 1. Elements should be ordered desc',
             recordValue: 1,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-07-01T00:00:00.000').toDate(), endTime: moment('2023-07-31T23:59:59.999Z').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-01T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-31T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-07-01T00:00:00.000').toDate(),
+                    endTime: moment('2023-07-31T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
             ],
         },
         {
             name: 'should create three buckets if recordValue is 2. Elements should be ordered desc',
             recordValue: 2,
             expectedBuckets: [
-                { kind: 'time', startTime: moment('2023-08-01T00:00:00.000Z').toDate(), endTime: moment('2023-08-31T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-07-01T00:00:00.000Z').toDate(), endTime: moment('2023-07-31T23:59:59.999Z').toDate(), relation: null },
-                { kind: 'time', startTime: moment('2023-06-01T00:00:00.000Z').toDate(), endTime: moment('2023-06-30T23:59:59.999Z').toDate(), relation: null },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-01T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-31T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-07-01T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-07-31T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-06-01T00:00:00.000Z').toDate(),
+                    endTime: moment('2023-06-30T23:59:59.999Z').toDate(),
+                    relation: undefined,
+                },
             ],
         },
     ];

@@ -21,7 +21,7 @@ function registerMetric(metric: Metric) {
         if (!metricsByAction.has(actionID)) {
             metricsByAction.set(actionID, []);
         }
-        metricsByAction.get(actionID).push(metric);
+        metricsByAction.get(actionID)!.push(metric);
     });
 
     metricByName.set(metricName, metric);
