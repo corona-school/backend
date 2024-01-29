@@ -186,6 +186,7 @@ const schema = buildSchemaSync({
         ExtendedFieldsCooperationResolver,
         MutateCooperationResolver,
 
+        /* Admin */
         AdminMutationsResolver,
     ],
     authChecker,
