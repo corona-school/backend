@@ -199,7 +199,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     // TODO: create a function to get the course image path for an array given templateIds. If the result of this function is undefined, use the template image.
 
-    const res = {
+    const resultAchievement = {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
@@ -234,7 +234,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
-    return res;
+    return resultAchievement;
 };
 
 export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };
