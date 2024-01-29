@@ -1301,6 +1301,7 @@ enum course_subject_enum {
   Niederl_ndisch           @map("Niederländisch")
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Religion
+  Lernen_lernen            @map("Lernen lernen")
 }
 
 enum message_translation_language_enum {
