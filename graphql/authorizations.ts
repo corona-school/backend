@@ -25,6 +25,7 @@ import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
+import { subcourse } from '@prisma/client';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -342,7 +343,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Pupil_screening: allAdmin,
     Waiting_list_enrollment: allAdmin,
     Achievement_template: allAdmin,
-    User_achievement: allAdmin, // TODO change
+    User_achievement: allAdmin,
     Achievement_event: allAdmin,
     Job_run: { _all: nobody },
 };
@@ -590,24 +591,25 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        fields: withPublicFields<Lecture, 'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled'>(
-            {
-                course_attendance_log: nobody,
-                subcourseId: nobody,
-                subcourse: nobody,
-                student: nobody,
-                instructorId: nobody,
-                _count: nobody,
-                match: adminOrOwner,
-                matchId: participantOrOwnerOrAdmin,
-                participantIds: adminOrOwner,
-                organizerIds: adminOrOwner,
-                declinedBy: participantOrOwnerOrAdmin,
-                zoomMeetingId: participantOrOwnerOrAdmin,
-                zoomMeetingReport: adminOrOwner,
-                override_meeting_link: participantOrOwnerOrAdmin,
-            }
-        ),
+        fields: withPublicFields<
+            Lecture,
+            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'matchId' | 'subcourseId'
+        >({
+            course_attendance_log: nobody,
+            // subcourseId: nobody,
+            subcourse: nobody,
+            student: nobody,
+            instructorId: nobody,
+            _count: nobody,
+            match: adminOrOwner,
+            // matchId: participantOrOwnerOrAdmin,
+            participantIds: adminOrOwner,
+            organizerIds: adminOrOwner,
+            declinedBy: participantOrOwnerOrAdmin,
+            zoomMeetingId: participantOrOwnerOrAdmin,
+            zoomMeetingReport: adminOrOwner,
+            override_meeting_link: participantOrOwnerOrAdmin,
+        }),
     },
     Participation_certificate: {
         fields: {
