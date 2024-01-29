@@ -425,7 +425,9 @@ const _notificationActions = {
 
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
-        sampleContext: {},
+        sampleContext: {
+            date: '20. Juli 1969',
+        },
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',

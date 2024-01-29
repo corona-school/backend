@@ -4,6 +4,7 @@ import { deactivateStudent } from '../student/activation';
 import { getStudent } from '../../graphql/util';
 import * as Notification from '../notification';
 import { userForStudent } from '../user';
+import { predictedHookActionDate } from '../notification';
 
 const logger = getLogger('Certificate of Conduct');
 
@@ -17,8 +18,11 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
             studentId: studentId,
         },
     });
+    const date = await predictedHookActionDate('student_coc_updated', 'deactivate-student', userForStudent(student));
     logger.info(`Certificate of Conduct (${result.id}) created\n`);
-    await Notification.actionTaken(userForStudent(student), 'student_coc_updated', {});
+    await Notification.actionTaken(userForStudent(student), 'student_coc_updated', {
+        date: date.toString(),
+    });
     if (criminalRecords) {
         await deactivateStudent(student);
     }
