@@ -7,11 +7,12 @@ import { prisma } from '../../common/prisma';
 import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils, markConversationAsWriteable, updateConversation } from '../../common/chat';
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
-import { ChatType, CleanedConversationInfo, ContactReason, FinishedReason } from '../../common/chat/types';
+import { ChatType, ContactReason, FinishedReason } from '../../common/chat/types';
 import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { getCourseImageURL } from '../../common/courses/util';
 import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
 import { PrerequisiteError } from '../../common/util/error';
+import systemMessages from '../../common/chat/localization';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -27,8 +28,9 @@ export class MutateChatResolver {
         await hasAccess(context, 'Match', match);
 
         const conversationInfos: ConversationInfos = {
+            welcomeMessages: [systemMessages.de.oneOnOne],
             custom: {
-                intro: 'true',
+                createdBy: user.userID,
                 match: { matchId: match.id },
             },
         };
@@ -45,8 +47,9 @@ export class MutateChatResolver {
 
         const allowed = await isSubcourseParticipant([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
+            welcomeMessages: [systemMessages.de.oneOnOne],
             custom: {
-                intro: 'true',
+                createdBy: user.userID,
             },
         };
 
@@ -64,6 +67,7 @@ export class MutateChatResolver {
     @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
     async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('groupChatType') groupChatType: ChatType) {
+        const { user } = context;
         const subcourse = await prisma.subcourse.findUnique({
             where: { id: subcourseId },
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
@@ -74,11 +78,12 @@ export class MutateChatResolver {
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,
             photoUrl: courseImage,
+            welcomeMessages: [systemMessages.de.groupChat],
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
                 groupType: groupChatType,
                 subcourse: [subcourseId],
-                intro: 'true',
+                createdBy: user.userID,
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
@@ -96,8 +101,9 @@ export class MutateChatResolver {
         const instructorUser = await getUser(instructorUserId);
 
         const conversationInfos: ConversationInfos = {
+            welcomeMessages: [systemMessages.de.oneOnOne],
             custom: {
-                intro: 'true',
+                createdBy: prospectUser.userID,
             },
         };
 
@@ -153,38 +159,5 @@ export class MutateChatResolver {
         });
 
         return true;
-    }
-
-    @Mutation(() => Boolean)
-    @Authorized(Role.USER)
-    async chatClearIntroFlag(@Arg('conversationId') conversationId: string) {
-        const conversation = await getConversation(conversationId);
-
-        if (conversation.custom.intro === 'true') {
-            logger.info('CONVERSATION UPDATE');
-            await updateConversation({
-                id: conversation.id,
-                custom: {
-                    ...conversation.custom,
-                    intro: 'false',
-                },
-            });
-
-            return true;
-        } else {
-            return false;
-        }
-        // const { intro, ...updatedCustom } = conversation.custom;
-
-        // const updatedObject: CleanedConversationInfo = {
-        //     custom: updatedCustom,
-        // };
-
-        // await updateConversation({
-        //     id: conversation.id,
-        //     ...updatedObject,
-        // });
-
-        // return true;
     }
 }

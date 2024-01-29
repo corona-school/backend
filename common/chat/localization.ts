@@ -20,10 +20,6 @@ const systemMessages = {
 export default systemMessages;
 
 // * ALL POSSIBLE SYSTEM MESSAGE
-// * FIRST
-// await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
-// await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
-
 // * GROUP CHAT TYPE CHANGED
 // await sendSystemMessage(systemMessages.de.toGroupChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
 // await sendSystemMessage(systemMessages.de.toAnnouncementChat, subcourse.conversationId, SystemMessage.GROUP_CHANGED);
