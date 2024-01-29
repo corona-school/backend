@@ -1300,6 +1300,8 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
+            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {
                 pupil_match_learning_events: {
@@ -1330,6 +1332,8 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
+            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
                 student_match_learning_events: {
@@ -1459,13 +1463,15 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: '',
             description:
-                'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
+                'Du warst bei {{progress}} Termin(en) in Folge dabei!<br><br>Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
             image: 'gamification/achievements/tmp/streaks/presence_set.png',
             achievedImage: 'gamification/achievements/tmp/streaks/presence_achieved.png',
-            actionName: 'Noch {{recordValue}} Termin(e) bis zum neuen Rekord!',
+            actionName: null,
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
+            progressDescription: 'Noch {{leftProgress}} Termin(e) bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei {{progress}} Terminen in Folge anwesend!',
             condition: 'student_presence_events > recordValue',
             conditionDataAggregations: {
                 student_presence_events: {
@@ -1490,13 +1496,15 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: '',
             description:
-                'Du warst bei {{recordValue}} Termin(en) in Folge dabei! Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
+                'Du warst bei {{progress}} Termin(en) in Folge dabei!<br><br>Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
             image: 'gamification/achievements/tmp/streaks/presence_set.png',
             achievedImage: 'gamification/achievements/tmp/streaks/presence_achieved.png',
-            actionName: 'Noch {{recordValue}} Termin(e) bis zum neuen Rekord!',
+            actionName: null,
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
+            progressDescription: 'Noch <strong>{{leftProgress}} Termin(e)</strong> bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei <strong>{{progress}} Termin(en)</strong> in Folge anwesend!',
             condition: 'pupil_presence_events > recordValue',
             conditionDataAggregations: {
                 pupil_presence_events: {

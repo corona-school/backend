@@ -95,8 +95,11 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 }
 
 export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): AchievementContextType {
-    // TODO: find proper type?
-    const transformedJson: any = { user: user };
+    const transformedJson: AchievementContextType = {
+        user: user,
+        match: [],
+        subcourse: [],
+    };
     if (relation) {
         const [relationType, relationId] = getRelationTypeAndId(relation);
         transformedJson[`${relationType}Id`] = relationId;
@@ -111,14 +114,15 @@ export function transformPrismaJson(user: User, relation: string | null, json: P
 
 export function renderAchievementWithContext(
     userAchievement: user_achievement & { template: achievement_template },
-    achievementContext: AchievementContextType
+    achievementContext: AchievementContextType,
+    additionalContext?: { [key: string]: string }
 ): achievement_template {
     const currentAchievementContext = userAchievement.template as any;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
         const updatedElement =
             currentAchievementContext[key] && typeof currentAchievementContext[key] === 'string'
-                ? renderTemplate(currentAchievementContext[key], achievementContext)
+                ? renderTemplate(currentAchievementContext[key], { ...achievementContext, ...additionalContext })
                 : currentAchievementContext[key];
         currentAchievementContext[key] = updatedElement;
     });

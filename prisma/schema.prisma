@@ -56,6 +56,8 @@ model achievement_template {
   actionType                achievement_action_type_enum?
   // Tiered: If a tiered achievement has been achieved, the text changes
   achievedText              String?                       @db.VarChar
+  progressDescription       String?                       @db.VarChar
+  streakProgress            String?                       @db.VarChar
   // defines what value must be reached to receive the achievement, 
   // e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
   condition                 String                        @db.VarChar

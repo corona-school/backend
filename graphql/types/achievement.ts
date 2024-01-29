@@ -61,7 +61,13 @@ class Achievement {
     isNewAchievement?: boolean | null;
 
     @Field({ nullable: true })
+    achievedText?: string | null;
+
+    @Field({ nullable: true })
     progressDescription?: string | null;
+
+    @Field({ nullable: true })
+    streakProgress?: string | null;
 
     @Field({ nullable: true })
     actionName?: string | null;
