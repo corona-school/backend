@@ -182,7 +182,7 @@ void test('Create Chat for Match', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
         method: 'PUT',
-        body: `{"welcomeMessage":"["${systemMessages.de.oneOnOne}"]","custom":{"createdBy":"pupil/${pupil.pupil.id}","match":"{\\\\"matchId\\\\":${id}}"},"participants":["pupil_${pupil.pupil.id}","student_${student.student.id}"]}`,
+        body: `{"welcomeMessages":"["${systemMessages.de.oneOnOne}"]","custom":{"createdBy":"pupil/${pupil.pupil.id}","match":"{\\\\"matchId\\\\":${id}}"},"participants":["pupil_${pupil.pupil.id}","student_${student.student.id}"]}`,
         responseStatus: 200,
     });
 
