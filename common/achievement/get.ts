@@ -72,7 +72,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         const dataAggr = template.conditionDataAggregations as Prisma.JsonObject;
         const maxValue = Object.keys(dataAggr)
             .map((key) => {
-                const val = dataAggr[key] as number;
+                const val = dataAggr[key]['valueToAchieve'] as number;
                 return Number(val);
             })
             .reduce((a, b) => a + b, 0);
@@ -90,7 +90,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             maxSteps: maxValue,
             currentStep: 0,
             isNewAchievement: null,
-            progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            progressDescription: template.progressDescription,
             actionName: template.actionName,
             actionRedirectLink: template.actionRedirectLink,
         };
@@ -208,11 +208,11 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         userAchievements[currentAchievementIndex].relation,
         userAchievements[currentAchievementIndex].context as Prisma.JsonObject
     );
-    const leftProgress = maxValue - currentValue;
+    const leftProgress = maxValue - currentValue + 1;
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
         leftProgress: leftProgress.toString(),
         progress: currentValue.toString(),
-        recordValue: maxValue.toString(),
+        maxValue: maxValue.toString(),
     });
 
     const resultAchievement = {

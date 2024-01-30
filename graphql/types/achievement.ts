@@ -27,8 +27,8 @@ class Achievement {
     @Field()
     name: string;
 
-    @Field()
-    subtitle: string;
+    @Field({ nullable: true })
+    subtitle?: string;
 
     @Field()
     description: string;

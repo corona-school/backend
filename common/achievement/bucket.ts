@@ -55,7 +55,8 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
                 .reduce((acc, val) => acc.concat(val), []);
-            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
+            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+            return { bucketKind: 'time', buckets: buckets };
         },
     },
     by_lecture_participation: {
@@ -69,7 +70,8 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
                 .reduce((acc, val) => acc.concat(val), [])
                 .filter((bucket) => bucket.startTime.getTime() <= new Date().getTime() + 30 * 60000);
-            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
+            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+            return { bucketKind: 'time', buckets: buckets };
         },
     },
     by_weeks: {
