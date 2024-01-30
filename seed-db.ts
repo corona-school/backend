@@ -1476,7 +1476,7 @@ void (async function setupDevDB() {
             conditionDataAggregations: {
                 student_presence_events: {
                     metric: 'student_participation_streak',
-                    aggregator: 'count',
+                    aggregator: 'lastStreakLength',
                     createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                 },
@@ -1509,7 +1509,7 @@ void (async function setupDevDB() {
             conditionDataAggregations: {
                 pupil_presence_events: {
                     metric: 'pupil_participation_streak',
-                    aggregator: 'count',
+                    aggregator: 'lastStreakLength',
                     createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                 },

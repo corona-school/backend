@@ -152,10 +152,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
-
-    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
-
     const condition = userAchievements[currentAchievementIndex].recordValue
         ? userAchievements[currentAchievementIndex].template.condition.replace(
               'recordValue',
@@ -181,8 +177,8 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =
                 userAchievements[currentAchievementIndex].template.type === achievement_type_enum.STREAK
-                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue! > currentValue
-                        ? userAchievements[currentAchievementIndex].recordValue!
+                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue > currentValue
+                        ? userAchievements[currentAchievementIndex].recordValue
                         : currentValue
                     : dataAggregationKeys
                           .map((key) => {
@@ -192,11 +188,20 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                               );
                           })
                           .reduce((a, b) => a + b, 0);
+            if (currentValue < maxValue && userAchievements[currentAchievementIndex].achievedAt) {
+                await prisma.user_achievement.update({
+                    where: { id: userAchievements[currentAchievementIndex].id },
+                    data: { achievedAt: null, isSeen: false },
+                });
+            }
         }
     } else {
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }
+
+    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
+    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
     const achievementContext = transformPrismaJson(
         user,

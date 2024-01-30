@@ -63,10 +63,12 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const { context } = bucketContext;
             const matchBuckets = context.match
                 .map((match) => createLectureBuckets(match, LectureFilter.participation))
-                .reduce((acc, val) => acc.concat(val), []);
+                .reduce((acc, val) => acc.concat(val), [])
+                .filter((bucket) => bucket.startTime.getTime() <= new Date().getTime() + 30 * 60000);
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
-                .reduce((acc, val) => acc.concat(val), []);
+                .reduce((acc, val) => acc.concat(val), [])
+                .filter((bucket) => bucket.startTime.getTime() <= new Date().getTime() + 30 * 60000);
             return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
     },
