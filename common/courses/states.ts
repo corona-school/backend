@@ -118,11 +118,9 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
-
     const course = await getCourse(subcourse.courseId);
     await sendPupilCoursePromotion(subcourse);
     logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
-    
 
     await Promise.all(
         subcourse.subcourse_instructors_student.map((instructor) =>
