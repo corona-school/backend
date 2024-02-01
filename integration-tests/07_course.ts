@@ -22,7 +22,6 @@ const courseOne = test('Create Course One', async () => {
             description: "Why should I test if my users can do that for me in production?"
             category: club
             allowContact: true
-            shared: true
             subject: Informatik
             schooltype: gymnasium
         }) {
@@ -395,8 +394,17 @@ void test('Add / Remove another instructor', async () => {
 });
 
 void test('Find shared course', async () => {
-    const { instructor: instructor1 } = await screenedInstructorTwo;
+    const { client, instructor: instructor1 } = await screenedInstructorTwo;
     const { instructor, courseId } = await subcourseOne;
+
+    await client.request(`
+        mutation MarkCourseShared {
+            courseMarkShared(
+                courseId: ${courseId},
+                shared: true
+        ) 
+        }
+    `);
 
     const { courseSearch: courseSearch } = await adminClient.request(`
     query FindSharedCourses {
