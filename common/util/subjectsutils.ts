@@ -41,6 +41,7 @@ export const SUBJECTS = [
     'Sachkunde',
     'Spanisch',
     'Wirtschaft',
+    'Lernen lernen',
 ] as const;
 
 export const isValidSubjectName = (subject: string) => SUBJECTS.includes(subject as any);
@@ -109,14 +110,4 @@ export function parseSubjectString(subjects: string): Subject[] {
             mandatory: it.mandatory,
         };
     });
-}
-
-export function checkCoDuSubjectRequirements(subjects: Subject[]) {
-    // CoDu requires that one of Math, English, German is selected and that this
-    // is taught in one of the grades 8 to 10
-    const relevantSubjects = subjects.filter(
-        (s) => ['mathematik', 'deutsch', 'englisch'].includes(s.name.toLowerCase()) && (!s.grade || (s.grade.min <= 10 && s.grade.max >= 8))
-    );
-
-    return relevantSubjects.length > 0;
 }

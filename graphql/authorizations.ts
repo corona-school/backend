@@ -591,7 +591,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         }),
     },
     Lecture: {
-        // TODO: This is a workaround for presentation purposes
         fields: withPublicFields<
             Lecture,
             'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'matchId' | 'subcourseId'

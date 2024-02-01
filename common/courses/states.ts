@@ -1,4 +1,4 @@
-import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState } from '@prisma/client';
+import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState, Prisma } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -22,6 +22,7 @@ import { User, userForStudent } from '../user';
 import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
+import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
 
 const logger = getLogger('Course States');
 
@@ -73,7 +74,7 @@ export async function allowCourse(course: Course, screeningComment: string | nul
     // assuming the subcourses are ready:
     const subcourses = await prisma.subcourse.findMany({
         where: { courseId: course.id },
-        include: { subcourse_instructors_student: { select: { student: true, subcourseId: true } } },
+        include: { subcourse_instructors_student: { include: { student: true } } },
     });
     for (const subcourse of subcourses) {
         if (await canPublish(subcourse)) {
@@ -121,7 +122,7 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function publishSubcourse(subcourse: Subcourse) {
+export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ include: { subcourse_instructors_student: { include: { student: true } } } }>) {
     const can = await canPublish(subcourse);
     if (!can.allowed) {
         throw new Error(`Cannot Publish Subcourse(${subcourse.id}), reason: ${can.reason}`);
@@ -130,10 +131,17 @@ export async function publishSubcourse(subcourse: Subcourse) {
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
     const course = await getCourse(subcourse.courseId);
-    if (course.category !== 'focus') {
-        await sendPupilCoursePromotion(subcourse);
-        logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
-    }
+    await sendPupilCoursePromotion(subcourse);
+    logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
+
+    await Promise.all(
+        subcourse.subcourse_instructors_student.map((instructor) =>
+            Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
+                courseName: course.name,
+                relation: `subcourse/${subcourse.id}`,
+            })
+        )
+    );
 }
 
 /* ---------------- Subcourse Cancel ------------ */
@@ -169,15 +177,7 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 
-    const courseInstructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, select: { student: true } });
-    await prisma.user_achievement.deleteMany({
-        where: {
-            userId: {
-                in: courseInstructors.map((instructor) => userForStudent(instructor.student).userID),
-            },
-            context: { path: ['relation'], equals: `subcourse/${subcourse.id}` },
-        },
-    });
+    await deleteAchievementsForSubcourse(subcourse.id);
 }
 
 /* --------------- Modify Subcourse ------------------- */

@@ -40,7 +40,7 @@ class Achievement {
     alternativeText: string;
 
     @Field(() => achievement_action_type_enum, { nullable: true })
-    actionType?: achievement_action_type_enum;
+    actionType?: achievement_action_type_enum | null;
 
     @Field(() => achievement_type_enum)
     achievementType: achievement_type_enum;
@@ -49,7 +49,7 @@ class Achievement {
     achievementState: achievement_state;
 
     @Field(() => [Step], { nullable: true })
-    steps?: Step[];
+    steps?: Step[] | null;
 
     @Field(() => Int)
     maxSteps: number;
@@ -58,16 +58,16 @@ class Achievement {
     currentStep?: number;
 
     @Field({ nullable: true })
-    isNewAchievement?: boolean;
+    isNewAchievement?: boolean | null;
 
     @Field({ nullable: true })
-    progressDescription?: string;
+    progressDescription?: string | null;
 
     @Field({ nullable: true })
-    actionName?: string;
+    actionName?: string | null;
 
     @Field({ nullable: true })
-    actionRedirectLink?: string;
+    actionRedirectLink?: string | null;
 }
 
 @ObjectType()
@@ -76,7 +76,7 @@ class Step {
     name: string;
 
     @Field({ nullable: true })
-    isActive?: boolean;
+    isActive?: boolean | null;
 }
 
 export { Achievement, Step, achievement_state };
