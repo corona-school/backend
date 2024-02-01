@@ -168,7 +168,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
     if (subcourse.conversationId === null) {
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
-        // await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
+        await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
 
         await prisma.subcourse.update({
             where: { id: subcourseId },

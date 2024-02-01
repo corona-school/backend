@@ -78,7 +78,6 @@ export class MutateChatResolver {
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,
             photoUrl: courseImage,
-            welcomeMessages: [systemMessages.de.groupChat],
             custom: {
                 start: subcourse.lecture[0].start.toISOString(),
                 groupType: groupChatType,
