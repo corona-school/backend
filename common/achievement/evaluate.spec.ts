@@ -11,7 +11,7 @@ function createTestEvent({ metric, value, relation, ts }: { metric: string; valu
         id: 1,
         action: 'test',
         metric: metric,
-        relation: relation,
+        relation: relation ?? '',
         value: value,
         userId: 'student/1',
         createdAt: eventTs,
@@ -89,7 +89,7 @@ describe('evaluate condition without default bucket aggregator', () => {
         const res = await evaluateAchievement(userId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
-        expect(res.conditionIsMet).toBe(expectedResult);
+        expect(res?.conditionIsMet).toBe(expectedResult);
     });
 });
 
@@ -213,7 +213,7 @@ describe('evaluate record value condition with time buckets', () => {
         const res = await evaluateAchievement(testUserId, condition, dataAggr, recordValue, undefined);
 
         expect(res).toBeDefined();
-        expect(res.conditionIsMet).toBe(expectNewRecord);
+        expect(res?.conditionIsMet).toBe(expectNewRecord);
     });
 });
 
@@ -292,7 +292,7 @@ function createLecture({ start }: { start: Date }): lecture {
         participantIds: [],
         declinedBy: [],
         zoomMeetingId: null,
-        zoomMeetingReport: null,
+        zoomMeetingReport: [],
         instructorId: null,
         override_meeting_link: null,
     };
@@ -400,6 +400,6 @@ describe('evaluate bucket with match / subcourse context', () => {
         const res = await evaluateAchievement(testUserId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
-        expect(res.conditionIsMet).toBe(expectNewRecord);
+        expect(res?.conditionIsMet).toBe(expectNewRecord);
     });
 });

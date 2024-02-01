@@ -1,19 +1,9 @@
-import { ActionID, SpecificNotificationContext } from '../notification/actions';
+import { ActionID } from '../notification/actions';
 import { registerAllMetrics } from './metrics';
-import { Metric } from './types';
-
-// Maps A | B to A & B (using contra-variant position - c.f. https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types)
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
-
-// Derives the context for a given list of ActionIDs
-type ContextForActions<ActionIDs extends ActionID[]> = UnionToIntersection<
-    // By using UnionToIntersection, it combines specific contexts for the provided ActionIDs
-    // Creating a union of all specific contexts for the given ActionIDs
-    { [Index in keyof ActionIDs]: SpecificNotificationContext<ActionIDs[Index]> }[number]
->;
+import { FormulaFunction, Metric } from './types';
 
 // This function utilizes generics to ensure flexibility in the ActionIDs and their respective contexts, allowing for dynamic metric creation.
-function createMetric<T extends ActionID[], K extends ContextForActions<T>>(metricName: string, onActions: T, formula: (context: K) => number): Metric {
+function createMetric<T extends ActionID>(metricName: string, onActions: T[], formula: FormulaFunction<T>): Metric {
     return {
         metricName,
         onActions,
@@ -83,9 +73,13 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: new match metric listening to 2 actions - screening_success and match_requested
-
-    // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
+    /* PARTICIPATION STREAK */
+    createMetric('student_participation_streak', ['student_presence_in_meeting'], () => {
+        return 1;
+    }),
+    createMetric('pupil_participation_streak', ['pupil_presence_in_meeting'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {

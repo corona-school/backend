@@ -28,7 +28,6 @@ datasource db {
 model achievement_template {
   id                        Int                           @id @default(autoincrement())
   name                      String                        @db.VarChar
-  metrics                   String[]
   templateFor               achievement_template_for_enum
   // Achievements can
   // - cross-platform (i.e. for one user) 
@@ -57,6 +56,8 @@ model achievement_template {
   actionType                achievement_action_type_enum?
   // Tiered: If a tiered achievement has been achieved, the text changes
   achievedText              String?                       @db.VarChar
+  progressDescription       String?                       @db.VarChar
+  streakProgress            String?                       @db.VarChar
   // defines what value must be reached to receive the achievement, 
   // e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
   condition                 String                        @db.VarChar
@@ -69,21 +70,18 @@ model achievement_template {
 
 model user_achievement {
   id          Int                  @id @default(autoincrement())
+  relation    String?
   // the id of the relating achievement_template
   templateId  Int
   template    achievement_template @relation(fields: [templateId], references: [id])
   userId      String
-  // the description of group and groupOrder can be found in the achievement_template. 
-  // It needs to be stored in user_achievement, as the group contains templating. 
-  // The correctly assigned achievement for a match / a course is therefore stored in the user_achievement.
-  group       String               @db.VarChar
-  groupOrder  Int
   isSeen      Boolean              @default(false)
   // achievedAt == null => not achieved, achievedAt != null => achieved
   achievedAt  DateTime?            @db.Timestamp(6)
   // Streaks: we have to store the highest record for streaks
   recordValue Int?
   context     Json                 @db.Json
+  @@unique([relation, userId, templateId], name: "unique_user_achievement")
 }
 
 // Save (tracked) event as raw data in DB and evaluate at runtime
@@ -1305,6 +1303,7 @@ enum course_subject_enum {
   Niederl_ndisch           @map("Niederländisch")
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Religion
+  Lernen_lernen            @map("Lernen lernen")
 }
 
 enum message_translation_language_enum {

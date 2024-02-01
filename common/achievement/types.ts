@@ -7,7 +7,7 @@ import { prisma } from '../prisma';
 // formula: FormulaFunction<ActionIDUnion<Metric['onActions']>>;
 
 async function getUserAchievementWithTemplate(id: number) {
-    return await prisma.user_achievement.findUnique({
+    return await prisma.user_achievement.findUniqueOrThrow({
         where: { id },
         include: { template: true },
     });
@@ -21,7 +21,7 @@ export type Metric = {
 
 export type FormulaFunction<ID extends ActionID> = (context: SpecificNotificationContext<ID>) => number;
 
-// Used to destinguish between different types of buckets
+// Used to distinguish between different types of buckets
 export type GenericBucketConfig<T extends Bucket> = {
     bucketKind: T['kind'];
     buckets: T[];
@@ -35,7 +35,7 @@ export type DefaultBucket = {
 // Bucket containing events from a specific time frame
 export type TimeBucket = {
     kind: 'time';
-    relation: string;
+    relation?: string;
     startTime: Date;
     endTime: Date;
 };
@@ -50,8 +50,8 @@ export type BucketEventsWithAggr = BucketEvents & {
     aggregation: number;
 };
 
-// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / monthes
-export type BucketCreatorContext = { recordValue: number; context: AchievementContextType };
+// The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / months
+export type BucketCreatorContext = { recordValue?: number; context: AchievementContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
 export type BucketFormula = {
@@ -100,7 +100,7 @@ export type ActionEvent<ID extends ActionID> = {
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievement_with_template = ThenArg<ReturnType<typeof getUserAchievementWithTemplate>>;
-export type AchievementToCheck = Pick<achievement_with_template, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template'>;
+export type AchievementToCheck = Pick<achievement_with_template, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template' | 'relation'>;
 
 export type EvaluationResult = {
     conditionIsMet: boolean;
@@ -113,17 +113,17 @@ export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_sub
 export type ContextLecture = Pick<lecture, 'start' | 'duration'>;
 export type ContextMatch = {
     id: number;
-    relation: string | null; // will be null if searching for all matches
+    relation?: string; // will be null if searching for all matches
     lecture: ContextLecture[];
 };
 export type ContextSubcourse = {
     id: number;
-    relation: string | null; // will be null if searching for all subcourses
+    relation?: string; // will be null if searching for all subcourses
     lecture: ContextLecture[];
 };
 
 export type AchievementContextType = {
     user?: User;
-    match?: ContextMatch[];
-    subcourse?: ContextSubcourse[];
+    match: ContextMatch[];
+    subcourse: ContextSubcourse[];
 };
