@@ -1,6 +1,7 @@
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
+import * as Notification from '../../common/notification';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { getMatch, getPupil, getStudent } from '../util';
 import { dissolveMatch, reactivateMatch } from '../../common/match/dissolve';
@@ -90,5 +91,25 @@ export class MutateMatchResolver {
             return { id, appointmentType };
         }
         throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async matchMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number) {
+        const { user } = context;
+        const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true, student: true } });
+        await hasAccess(context, 'Match', match);
+
+        if (user.studentId) {
+            await Notification.actionTaken(user, 'student_joined_match_meeting', {
+                relation: `match/${matchId}`,
+            });
+        } else if (user.pupilId) {
+            await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
+                relation: `match/${matchId}`,
+            });
+        }
+
+        return true;
     }
 }

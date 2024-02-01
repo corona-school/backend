@@ -11,12 +11,15 @@ import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
+import * as Notification from '../../common/notification';
 
-import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState, Course } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
+import { userForStudent } from '../../common/user';
+import { updateAchievementCTXByCourse } from '../../common/achievement/update';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -120,6 +123,9 @@ export class MutateCourseResolver {
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
+
+        await updateAchievementCTXByCourse(result);
+
         return result;
     }
 
@@ -207,6 +213,22 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
+
+        const subcourses = await prisma.subcourse.findMany({
+            where: { courseId: courseId },
+            include: { subcourse_instructors_student: { select: { student: true } } },
+        });
+        for (const subcourse of subcourses) {
+            if (!subcourse.subcourse_instructors_student) {
+                continue;
+            }
+            for (const subcourseInstructor of subcourse.subcourse_instructors_student) {
+                await Notification.actionTaken(userForStudent(subcourseInstructor.student), 'instructor_course_submitted', {
+                    courseName: course.name,
+                    relation: `subcourse/${subcourse.id}`,
+                });
+            }
+        }
         return true;
     }
 

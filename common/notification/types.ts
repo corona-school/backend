@@ -46,6 +46,8 @@ export interface NotificationContextExtensions {
     // (i.e. when verifying an email change, or when testing mails)
     // BE CAREFUL: This might otherwise send an email with an auth token to someone else!
     overrideReceiverEmail?: Email;
+    // For Achievements, the match or subcourse is needed as a relation to allocate events to a specific user achievement
+    relation?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {
@@ -129,4 +131,5 @@ export enum NotificationType {
     COURSE = 'course',
     CERTIFICATE = 'certificate',
     LEGACY = 'legacy',
+    ACHIEVEMENT = 'achievement',
 }

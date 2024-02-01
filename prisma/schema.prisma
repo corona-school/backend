@@ -28,7 +28,6 @@ datasource db {
 model achievement_template {
   id                        Int                           @id @default(autoincrement())
   name                      String                        @db.VarChar
-  metrics                   String[]
   templateFor               achievement_template_for_enum
   // Achievements can
   // - cross-platform (i.e. for one user) 
@@ -49,6 +48,7 @@ model achievement_template {
   subtitle                  String                        @db.VarChar
   description               String                        @db.VarChar
   image                     String                        @db.VarChar
+  achievedImage             String                        @db.VarChar
   // some achievements show actions that a user can/must perform next.
   // therefore we need the action name, type (for the icon) and a redirect link
   actionName                String?                       @db.VarChar
@@ -68,21 +68,18 @@ model achievement_template {
 
 model user_achievement {
   id          Int                  @id @default(autoincrement())
+  relation    String?
   // the id of the relating achievement_template
   templateId  Int
   template    achievement_template @relation(fields: [templateId], references: [id])
   userId      String
-  // the description of group and groupOrder can be found in the achievement_template. 
-  // It needs to be stored in user_achievement, as the group contains templating. 
-  // The correctly assigned achievement for a match / a course is therefore stored in the user_achievement.
-  group       String               @unique @db.VarChar
-  groupOrder  Int
   isSeen      Boolean              @default(false)
   // achievedAt == null => not achieved, achievedAt != null => achieved
   achievedAt  DateTime?            @db.Timestamp(6)
   // Streaks: we have to store the highest record for streaks
   recordValue Int?
   context     Json                 @db.Json
+  @@unique([relation, userId, templateId], name: "unique_user_achievement")
 }
 
 // Save (tracked) event as raw data in DB and evaluate at runtime
@@ -1306,6 +1303,7 @@ enum course_subject_enum {
   Niederl_ndisch           @map("Niederländisch")
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Religion
+  Lernen_lernen            @map("Lernen lernen")
 }
 
 enum message_translation_language_enum {
@@ -1331,6 +1329,7 @@ enum notification_type_enum {
   course
   certificate
   legacy
+  achievement
 }
 
 enum important_information_language_enum {

@@ -10,6 +10,7 @@ export const ENABLED_NOTIFICATIONS: Preferences = {
     course: { email: true },
     certificate: { email: true },
     legacy: { email: true },
+    achievement: { email: false },
 };
 
 export const ENABLED_NEWSLETTER: Preferences = {
@@ -72,6 +73,7 @@ const categories = [
     'event',
     'request',
     'alternative',
+    'achievement',
 ];
 
 export const ALL_PREFERENCES: Preferences = Object.assign(ENABLED_NOTIFICATIONS, DEFAULT_PREFERENCES);
