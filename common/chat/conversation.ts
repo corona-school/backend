@@ -91,15 +91,21 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-async function* getAllConversations(): AsyncIterable<TJConversation> {
+async function* getAllConversations(onlyActive?: boolean): AsyncIterable<TJConversation> {
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
+
+    const filter = { custom: { finished: '!exists' } };
+
+    const encodedFilter = encodeURIComponent(JSON.stringify(filter));
 
     let startingAfter: string = undefined;
 
     do {
         const LIMIT = 30;
-        let url = `${TALKJS_CONVERSATION_API_URL}?limit=${LIMIT}&orderBy=lastActivity&orderDirection=ASC`;
+        let url = onlyActive
+            ? `${TALKJS_CONVERSATION_API_URL}?filter=${encodedFilter}&limit=${LIMIT}&orderBy=lastActivity&orderDirection=ASC`
+            : `${TALKJS_CONVERSATION_API_URL}?limit=${LIMIT}&orderBy=lastActivity&orderDirection=ASC`;
         if (startingAfter) {
             url += `&startingAfter=${startingAfter}`;
         }
