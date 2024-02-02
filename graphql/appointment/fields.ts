@@ -10,6 +10,7 @@ import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user'
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
+import { getZoomUrl } from '../../common/zoom/user';
 
 @ObjectType()
 class AppointmentParticipant {
@@ -167,6 +168,16 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getZoomMeeting(appointment);
+    }
+    @FieldResolver((returns) => String)
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.INSTRUCTOR)
+    async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
+        const { user } = context;
+        if (!appointment.zoomMeetingId) {
+            return null;
+        }
+
+        return await getZoomUrl(user, appointment);
     }
 
     @FieldResolver((returns) => Match, { nullable: true })

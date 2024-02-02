@@ -7,6 +7,8 @@ import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
 import { assureZoomFeatureActive } from './util';
 import { ZoomUserResponse, ZoomUserType } from './type';
+import { User } from '../user';
+import { Lecture as Appointment } from '../../graphql/generated';
 
 const logger = getLogger('Zoom User');
 
@@ -262,4 +264,18 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
         return null;
     }
 }
-export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUserInfos as getZoomUsers };
+
+async function getZoomUrl(user: User, appointment: Appointment) {
+    const basicStartUrl = 'https://lern-fair.zoom.us/s';
+    const basicJoinUrl = 'https://lern-fair.zoom.us/j';
+    const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
+    const isAppointmentParticipant = appointment.participantIds.includes(user.userID);
+
+    if (isAppointmentOrganizer) {
+        const zoomOrganizerZak = (await getUserZAK(user.email)).token;
+        return `${basicStartUrl}/${appointment.zoomMeetingId}?zak=${zoomOrganizerZak}`;
+    } else if (isAppointmentParticipant) {
+        return `${basicJoinUrl}/${appointment.zoomMeetingId}`;
+    }
+}
+export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUrl, getZoomUserInfos as getZoomUsers };
