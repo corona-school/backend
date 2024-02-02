@@ -1,4 +1,4 @@
-import { course_category_enum, user_achievement } from '@prisma/client';
+import { course_category_enum } from '@prisma/client';
 import { UserInputError } from 'apollo-server-express';
 import { getFile, removeFile } from '../files';
 import { getLogger } from '../../common/logger/logger';
@@ -93,7 +93,6 @@ export class MutateCourseResolver {
         @Arg('course') data: PublicCourseEditInput
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
-        const user = context.user;
         await hasAccess(context, 'Course', course);
 
         if (course.courseState === 'allowed') {
