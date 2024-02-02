@@ -18,10 +18,9 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
             studentId: studentId,
         },
     });
-    const date = await predictedHookActionDate('student_coc_updated', 'deactivate-student', userForStudent(student));
     logger.info(`Certificate of Conduct (${result.id}) created\n`);
     await Notification.actionTaken(userForStudent(student), 'student_coc_updated', {
-        date: date.toString(),
+        date: dateOfIssue.toString(),
     });
     if (criminalRecords) {
         await deactivateStudent(student);
