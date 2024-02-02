@@ -6,6 +6,8 @@ import { jobExists } from '../jobs/list';
 import { UserInputError } from 'apollo-server-express';
 import { runJob } from '../jobs/execute';
 import { Doc } from './util';
+import { getUser } from '../common/user';
+import { actionTaken } from '../common/notification';
 
 // Mutations for managing the backend, should usually only be used for testing purposes
 
@@ -44,6 +46,15 @@ export class AdminMutationsResolver {
     @Authorized(Role.ADMIN)
     _resetRateLimits() {
         resetRateLimits();
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    @Doc('Triggers actionTaken for the given user; Will be used for gamification testing.')
+    async _userActionTaken(@Arg('action') action: string, @Arg('userID') userID: string) {
+        const user = await getUser(userID);
+        await actionTaken(user, action as any, {});
         return true;
     }
 }

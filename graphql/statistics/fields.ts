@@ -611,7 +611,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async rateSuccessfulCoCsInstructors(@Root() statistics: Statistics) {
         const mustHaveTurnedInCoC = await prisma.$queryRaw`
-            SELECT count(*)::int FROM instructor_screening
+            SELECT count(*):int FROM instructor_screening
             WHERE ("createdAt" + INTERVAL '8 weeks') BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp;
         `;
         if (mustHaveTurnedInCoC[0].count === 0) {

@@ -17,6 +17,8 @@ import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { chat_type } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
+import * as Notification from '../../common/notification';
+import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -99,6 +101,10 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
+        await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
+            courseName: course.name,
+            relation: `subcourse/${result.id}`,
+        });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);
         return result;
     }
@@ -110,7 +116,6 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
-        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
@@ -127,7 +132,6 @@ export class MutateSubcourseResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('studentId') studentId: number
     ): Promise<boolean> {
-        const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
@@ -138,13 +142,19 @@ export class MutateSubcourseResolver {
             await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
         }
         logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
+
+        await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
+
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
-        const subcourse = await getSubcourse(subcourseId);
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({
+            where: { id: subcourseId },
+            include: { subcourse_instructors_student: { include: { student: true } } },
+        });
         await hasAccess(context, 'Subcourse', subcourse);
         await publishSubcourse(subcourse);
         return true;
@@ -240,7 +250,11 @@ export class MutateSubcourseResolver {
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         if (participantCount >= subcourse.maxParticipants) {
             // Course is full, create one single place for the pupil
-            subcourse = await prisma.subcourse.update({ where: { id: subcourse.id }, data: { maxParticipants: { increment: 1 } }, include: { lecture: true } });
+            subcourse = await prisma.subcourse.update({
+                where: { id: subcourse.id },
+                data: { maxParticipants: { increment: 1 } },
+                include: { lecture: true, subcourse_instructors_student: false },
+            });
         }
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
@@ -369,6 +383,30 @@ export class MutateSubcourseResolver {
         await sendPupilCoursePromotion(subcourse);
         await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
+        const { user } = context;
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true, lecture: true } });
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        if (user.studentId) {
+            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
+            await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
+                relation: `subcourse/${subcourseId}`,
+                subcourseLecturesCount: lecturesCount.toString(),
+            });
+        } else if (user.pupilId) {
+            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
+            await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
+                relation: `subcourse/${subcourseId}`,
+                subcourseLecturesCount: lecturesCount.toString(),
+            });
+        }
+
         return true;
     }
 }

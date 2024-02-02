@@ -210,10 +210,22 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_submitted: {
+        description: 'Instructor / Course submitted for review',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_approved: {
+        description: 'Instructor / Course approved',
+        sampleContext: {
+            courseName: 'Beispielkurs',
+            relation: 'subcourse/1',
         },
     },
     instructor_course_cancelled: {
@@ -510,13 +522,6 @@ const _notificationActions = {
             matchId: '1',
         },
     },
-    student_add_appointments_match: {
-        description: 'Student / Match Appointments Added',
-        sampleContext: {
-            student: sampleUser,
-            matchId: '1',
-        },
-    },
     pupil_decline_appointment_group: {
         description: 'Instructor / Group Appointment declined by Participant',
         sampleContext: {
@@ -617,6 +622,73 @@ const _notificationActions = {
     screening_suggestion: {
         description: 'Screener suggests a Ressource for a User',
         sampleContext: {},
+    },
+
+    // ACHIEVEMENT ACTIONS
+
+    /* ONBOARDING */
+    student_screening_appointment_done: {
+        description: 'Student has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_screening_appointment_done: {
+        description: 'Pupil has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_registration_verified_email: {
+        description: 'Pupil / E-Mail verified',
+        sampleContext: {},
+    },
+    student_registration_verified_email: {
+        description: 'Student / E-Mail verified',
+        sampleContext: {},
+    },
+
+    user_achievement_reward_issued: {
+        description: 'Reward issued',
+        sampleContext: {
+            achievement: {
+                id: '0',
+                name: 'achievement',
+            },
+        },
+    },
+    student_calendly_appointment_booked: {
+        description: 'Student booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    /* MEETINGS */
+    student_joined_match_meeting: {
+        description: 'Student joined a match meeting',
+        sampleContext: {
+            relation: 'match/1',
+        },
+    },
+    student_joined_subcourse_meeting: {
+        description: 'Student joined subcourse meeting',
+        sampleContext: {
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+        },
+    },
+    pupil_joined_match_meeting: {
+        description: 'Pupil joined a match meeting',
+        sampleContext: {
+            relation: 'match/1',
+        },
+    },
+    pupil_joined_subcourse_meeting: {
+        description: 'Pupil joined subcourse meeting',
+        sampleContext: {
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+        },
     },
     TEST: {
         description: 'For Tests',

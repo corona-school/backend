@@ -15,17 +15,19 @@ import http from 'http';
 
 // Ensure Notification hooks are always loaded
 import './../common/notification/hooks';
+import { registerAchievementMetrics } from '../common/achievement/metric';
 
 //SETUP: logger
 const log = getLogger();
 log.info('Backend started');
 
 //SETUP: moment
-moment.locale('de'); //set global moment date format
+moment.locale('de', { dow: 1 }); //set global moment date format + ensure that week is starting on monday
 moment.tz.setDefault('Europe/Berlin'); //set global timezone (which is then used also for cron job scheduling and moment.format calls)
 
 //SETUP: Add a graceful shutdown to the scheduler used
 configureGracefulShutdown(scheduler);
+registerAchievementMetrics();
 
 // Add Metrics Server to Jobs Dyno
 async function startMetricsServer() {
