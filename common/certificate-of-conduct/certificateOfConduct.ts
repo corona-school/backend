@@ -4,7 +4,6 @@ import { deactivateStudent } from '../student/activation';
 import { getStudent } from '../../graphql/util';
 import * as Notification from '../notification';
 import { userForStudent } from '../user';
-import { predictedHookActionDate } from '../notification';
 
 const logger = getLogger('Certificate of Conduct');
 
