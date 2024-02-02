@@ -639,11 +639,17 @@ const _notificationActions = {
     },
     pupil_registration_verified_email: {
         description: 'Pupil / E-Mail verified',
-        sampleContext: {},
+        sampleContext: {
+            date: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            email: 'max-mustermann@abc.de',
+        },
     },
     student_registration_verified_email: {
         description: 'Student / E-Mail verified',
-        sampleContext: {},
+        sampleContext: {
+            date: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            email: 'max-mustermann@abc.de',
+        },
     },
 
     user_achievement_reward_issued: {

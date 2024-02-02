@@ -1303,10 +1303,10 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: 'Nachhilfe mit {{matchpartner}}',
             description:
-                'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
+                'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
             achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
-            actionName: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
+            actionName: 'Noch {{progress}} Woche(n) bis zum neuen Rekord!',
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',

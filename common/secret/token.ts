@@ -158,6 +158,9 @@ export async function loginToken(token: string): Promise<User | never> {
 }
 
 export async function verifyEmail(user: User) {
+    const concreteNotification = await prisma.concrete_notification.findFirst({
+        where: { id: 1, userId: user.userID },
+    });
     if (user.studentId) {
         const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
             where: { id: user.studentId },
@@ -168,7 +171,16 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.studentId },
             });
-            await Notification.actionTaken(user, 'student_registration_verified_email', {});
+            await Notification.actionTaken(user, 'student_registration_verified_email', {
+                date: concreteNotification.sentAt
+                    .toLocaleDateString('de-DE', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                    })
+                    .replace('.', ''),
+                email: user.email,
+            });
 
             logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
         }
@@ -184,7 +196,16 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.pupilId },
             });
-            await Notification.actionTaken(user, 'pupil_registration_verified_email', {});
+            await Notification.actionTaken(user, 'pupil_registration_verified_email', {
+                date: concreteNotification.sentAt
+                    .toLocaleDateString('de-DE', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                    })
+                    .replace('.', ''),
+                email: user.email,
+            });
 
             logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
         }
