@@ -218,7 +218,7 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Prom
         1000
     );
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 404) {
         throw new Error(`Zoom failed to delete user for Student(${student.id}): ${await response.text()}`);
     }
 
