@@ -219,7 +219,7 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Prom
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${response.text()}`);
+        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${await response.text()}`);
     }
 
     await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: null } });
