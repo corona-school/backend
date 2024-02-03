@@ -1,8 +1,7 @@
 import { prisma } from '../prisma';
 import { achievement_type_enum, Prisma } from '@prisma/client';
-import { Achievement, achievement_state, Step } from '../../graphql/types/achievement';
 import { User } from '../user';
-import { ConditionDataAggregations } from './types';
+import { AchievementState, ConditionDataAggregations, PublicAchievement, PublicStep } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
 import { evaluateAchievement } from './evaluate';
 import { getAchievementImageURL } from './util';
@@ -18,7 +17,7 @@ export async function getUserAchievementsWithTemplates(user: User) {
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
 
-const getAchievementById = async (user: User, achievementId: number): Promise<Achievement> => {
+const getAchievementById = async (user: User, achievementId: number): Promise<PublicAchievement> => {
     const userAchievement = await prisma.user_achievement.findFirstOrThrow({
         where: { id: achievementId, userId: user.userID },
         include: { template: true },
@@ -28,7 +27,7 @@ const getAchievementById = async (user: User, achievementId: number): Promise<Ac
 };
 
 // Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
-const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
+const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID, template: { type: achievement_type_enum.SEQUENTIAL } },
         include: { template: true },
@@ -45,13 +44,13 @@ const getNextStepAchievements = async (user: User): Promise<Achievement[]> => {
         const group = userAchievementGroups[groupName].sort((a, b) => a.template.groupOrder - b.template.groupOrder);
         group[group.length - 1].achievedAt && delete userAchievementGroups[groupName];
     });
-    const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
+    const achievements: PublicAchievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
 };
 
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
-const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
+const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> => {
     const userAchievements = await prisma.user_achievement.findMany({
         where: { userId: user.userID, template: { isActive: true } },
         include: { template: true },
@@ -76,7 +75,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
                 return Number(val);
             })
             .reduce((a, b) => a + b, 0);
-        const achievement: Achievement = {
+        const achievement: PublicAchievement = {
             id: template.id,
             name: template.name,
             subtitle: template.subtitle,
@@ -85,7 +84,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             alternativeText: 'alternativeText',
             actionType: template.actionType ?? undefined,
             achievementType: template.type,
-            achievementState: achievement_state.INACTIVE,
+            achievementState: AchievementState.INACTIVE,
             steps: null,
             maxSteps: maxValue,
             currentStep: 0,
@@ -100,7 +99,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
 };
 
 // User achievements are already started by the user and are either active or completed.
-const getUserAchievements = async (user: User): Promise<Achievement[]> => {
+const getUserAchievements = async (user: User): Promise<PublicAchievement[]> => {
     const userAchievements = await getUserAchievementsWithTemplates(user);
     const userAchievementGroups: { [group: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
@@ -109,14 +108,14 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
         }
         userAchievementGroups[ua.template.group].push(ua);
     });
-    const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
+    const achievements: PublicAchievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
 };
 
 export const achievement_with_template = Prisma.validator<Prisma.user_achievementArgs>()({
     include: { template: true },
 });
-const generateReorderedAchievementData = async (groups: { [group: string]: achievements_with_template }, user: User): Promise<Achievement[]> => {
+const generateReorderedAchievementData = async (groups: { [group: string]: achievements_with_template }, user: User): Promise<PublicAchievement[]> => {
     const groupKeys = Object.keys(groups);
     const achievements = await Promise.all(
         groupKeys.map(async (key) => {
@@ -130,12 +129,12 @@ const generateReorderedAchievementData = async (groups: { [group: string]: achie
             if (sortedGroupAchievements[0].template.type === achievement_type_enum.TIERED) {
                 return await Promise.all(
                     sortedGroupAchievements.map(async (groupAchievement) => {
-                        const achievement: Achievement = await assembleAchievementData([groupAchievement], user);
+                        const achievement: PublicAchievement = await assembleAchievementData([groupAchievement], user);
                         return achievement;
                     })
                 );
             }
-            const groupAchievement: Achievement = await assembleAchievementData(sortedGroupAchievements, user);
+            const groupAchievement: PublicAchievement = await assembleAchievementData(sortedGroupAchievements, user);
             return [groupAchievement];
         })
     );
@@ -143,7 +142,7 @@ const generateReorderedAchievementData = async (groups: { [group: string]: achie
 };
 
 // TODO: refactor
-const assembleAchievementData = async (userAchievements: achievements_with_template, user: User): Promise<Achievement> => {
+const assembleAchievementData = async (userAchievements: achievements_with_template, user: User): Promise<PublicAchievement> => {
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
@@ -159,9 +158,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
+    const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);
 
-    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
+    const isNewAchievement = state === AchievementState.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
     let maxValue: number = 0;
     let currentValue: number = 0;
@@ -208,7 +207,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         steps:
             achievementTemplates.length > 1
                 ? achievementTemplates
-                      .map((achievement, index): Step | null => {
+                      .map((achievement, index): PublicStep | null => {
                           // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (description) and isActive property for the achievement step currently active but unachieved
                           if (index < achievementTemplates.length - 1 && achievement.isActive) {
                               return {

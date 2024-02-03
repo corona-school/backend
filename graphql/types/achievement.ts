@@ -1,26 +1,14 @@
 import { ObjectType, Field, Int, registerEnumType } from 'type-graphql';
-import { achievement_type_enum, achievement_action_type_enum } from '@prisma/client';
+import { achievement_action_type_enum as GraphQLAchievementActionTypeEnum, achievement_type_enum as GraphQLAchievementTypeEnum } from '../generated';
+import { PublicAchievement, PublicStep, AchievementState } from '../../common/achievement/types';
+import { achievement_action_type_enum, achievement_type_enum } from '@prisma/client';
 
-enum achievement_state {
-    INACTIVE = 'INACTIVE',
-    ACTIVE = 'ACTIVE',
-    COMPLETED = 'COMPLETED',
-}
-
-registerEnumType(achievement_state, {
+registerEnumType(AchievementState, {
     name: 'achievement_state',
 });
 
-registerEnumType(achievement_action_type_enum, {
-    name: 'achievement_action_type_enum',
-});
-
-registerEnumType(achievement_type_enum, {
-    name: 'achievement_type_enum',
-});
-
 @ObjectType()
-class Achievement {
+export class Achievement implements PublicAchievement {
     @Field()
     id: number;
 
@@ -39,14 +27,14 @@ class Achievement {
     @Field()
     alternativeText: string;
 
-    @Field(() => achievement_action_type_enum, { nullable: true })
+    @Field(() => GraphQLAchievementActionTypeEnum, { nullable: true })
     actionType?: achievement_action_type_enum | null;
 
-    @Field(() => achievement_type_enum)
+    @Field(() => GraphQLAchievementTypeEnum)
     achievementType: achievement_type_enum;
 
-    @Field(() => achievement_state)
-    achievementState: achievement_state;
+    @Field(() => AchievementState)
+    achievementState: AchievementState;
 
     @Field(() => [Step], { nullable: true })
     steps?: Step[] | null;
@@ -71,12 +59,10 @@ class Achievement {
 }
 
 @ObjectType()
-class Step {
+export class Step implements PublicStep {
     @Field()
     name: string;
 
     @Field({ nullable: true })
     isActive?: boolean | null;
 }
-
-export { Achievement, Step, achievement_state };
