@@ -18,6 +18,7 @@ import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
 import { getAchievementById, getFurtherAchievements, getNextStepAchievements, getUserAchievements } from '../../common/achievement/get';
 import { Achievement } from '../types/achievement';
+import { Doc } from '../util';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -113,6 +114,8 @@ export class UserFieldsResolver {
         return fakeContext.user.roles;
     }
 
+    // -------- Notifications ---------------------
+
     @FieldResolver((returns) => [ConcreteNotification])
     @Authorized(Role.OWNER, Role.ADMIN)
     @LimitedQuery()
@@ -140,6 +143,8 @@ export class UserFieldsResolver {
     async notificationPreferences(@Root() user: User) {
         return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
     }
+
+    // ------------- User Queries ----------------
 
     @Query((returns) => [UserType])
     @Authorized(Role.ADMIN, Role.SCREENER)
@@ -198,6 +203,8 @@ export class UserFieldsResolver {
         return result;
     }
 
+    // ------------ Appointments --------------
+
     @FieldResolver((returns) => [Lecture], { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitedQuery()
@@ -209,31 +216,6 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
-    }
-
-    @FieldResolver((returns) => Achievement)
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async achievement(@Ctx() context: GraphQLContext, @Arg('id') id: number): Promise<Achievement> {
-        const achievement = await getAchievementById(context.user, id);
-        return achievement;
-    }
-    @FieldResolver((returns) => [Achievement])
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async nextStepAchievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
-        const achievements = await getNextStepAchievements(context.user);
-        return achievements;
-    }
-    @FieldResolver((returns) => [Achievement])
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async furtherAchievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
-        const achievements = await getFurtherAchievements(context.user);
-        return achievements;
-    }
-    @FieldResolver((returns) => [Achievement])
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async achievements(@Ctx() context: GraphQLContext): Promise<Achievement[]> {
-        const achievements = await getUserAchievements(context.user);
-        return achievements;
     }
 
     @FieldResolver((returns) => Boolean)
@@ -248,12 +230,62 @@ export class UserFieldsResolver {
         return await getLastAppointmentId(user);
     }
 
+    // ------------- Achievements ------------
+
+    @FieldResolver((returns) => Achievement)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievement(@Root() user: User, @Arg('id') id: number): Promise<Achievement> {
+        const achievement = await getAchievementById(user, id);
+        return achievement;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async nextStepAchievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getNextStepAchievements(user);
+        return achievements;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async furtherAchievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getFurtherAchievements(user);
+        return achievements;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getUserAchievements(user);
+        return achievements;
+    }
+
+    // Also expose the underlying data to simplify debugging
+    @FieldResolver((returns) => [JSONResolver])
+    @Authorized(Role.ADMIN)
+    @Doc(`Internal - Do not use!`)
+    async _achievementEvents(@Root() user: User) {
+        return await prisma.achievement_event.findMany({
+            where: { userId: user.userID },
+        });
+    }
+
+    @FieldResolver((returns) => [JSONResolver])
+    @Authorized(Role.ADMIN)
+    @Doc(`Internal - Do not use!`)
+    async _achievementData(@Root() user: User) {
+        return await prisma.user_achievement.findMany({
+            where: { userId: user.userID },
+        });
+    }
+
+    // ----------- Chat ----------------
+
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
         return await getMyContacts(user);
     }
+
+    // ------------ Zoom ---------------
 
     @FieldResolver((returns) => String)
     @Authorized(Role.ADMIN, Role.OWNER)
