@@ -205,21 +205,21 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionType: currentAchievementTemplate.actionType,
         achievementType: currentAchievementTemplate.type,
         achievementState: state,
-        steps: currentAchievementTemplate.stepName
-            ? achievementTemplates
-                  .map((achievement, index): Step | null => {
-                      // if a achievementTemplate has a stepName, it means that it must have multiple steps resulting in it having a sequence of achievements / templates
-                      // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (descirption) and isActive property for the achievement step currently active but unachieved
-                      if (index < achievementTemplates.length - 1 && achievement.isActive) {
-                          return {
-                              name: achievement.stepName,
-                              isActive: index === currentAchievementIndex,
-                          };
-                      }
-                      return null;
-                  })
-                  .filter(isDefined)
-            : null,
+        steps:
+            achievementTemplates.length > 1
+                ? achievementTemplates
+                      .map((achievement, index): Step | null => {
+                          // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (description) and isActive property for the achievement step currently active but unachieved
+                          if (index < achievementTemplates.length - 1 && achievement.isActive) {
+                              return {
+                                  name: achievement.stepName,
+                                  isActive: index === currentAchievementIndex,
+                              };
+                          }
+                          return null;
+                      })
+                      .filter(isDefined)
+                : null,
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
