@@ -102,7 +102,7 @@ export const getTemplateGroup = (group: string) => prisma.achievement_template.f
 // The metadata consists of values that are safe to update at runtime
 export type AchievementTemplateMetadata = Pick<
     AchievementTemplate,
-    'name' | 'achievedText' | 'actionName' | 'actionRedirectLink' | 'actionType' | 'description' | 'subtitle' | 'stepName' | 'image'
+    'name' | 'achievedText' | 'actionName' | 'actionRedirectLink' | 'actionType' | 'description' | 'subtitle' | 'stepName' | 'image' | 'achievedImage'
 >;
 // The logic fields are unsafe to update while a template is active
 export type AchievementTemplateLogicFields = Pick<
@@ -119,6 +119,7 @@ export async function createTemplate(data: AchievementTemplateCreate) {
 
     // No need to purge caches as the template is not yet active
     logger.info(`Created inactive AchievementTemplate(${result.id})`, { data });
+    return result.id;
 }
 
 const logicFields: (keyof AchievementTemplateLogicFields)[] = ['condition', 'conditionDataAggregations', 'group', 'groupOrder', 'templateFor', 'type'];
@@ -171,7 +172,9 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
         // TODO: How to evaluate the aggregators?
     }
 
-    const sampleResult = swan.parse(template.condition)(Object.fromEntries(aggregations.map((it) => [it, 0])));
+    // TODO: Does the template.type imply any prerequisities?
+
+    const sampleResult = await swan.parse(template.condition)(Object.fromEntries(aggregations.map((it) => [it, 0])));
     if (typeof sampleResult !== 'boolean') {
         throw new PrerequisiteError(
             `AchievementTemplate condition does not evaluate to a boolean - This could be as it references to non existent aggregations`
@@ -183,7 +186,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     // Thus also inconsistencies of not yet enabled achievement templates might show up here (this is easier to check)
 
     // Check that groupOrders are sequential without gaps and that they are activated in sequence
-    let currentOrder = 0;
+    let currentOrder = 1;
     for (const groupTemplate of group) {
         if (groupTemplate.groupOrder !== currentOrder) {
             throw new PrerequisiteError(`Inconsistency in groupOrder, must be sequential`);

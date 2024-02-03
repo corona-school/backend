@@ -1,23 +1,18 @@
 import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
-import {
-    Achievement_template as AchievementTemplate,
-    achievement_template_for_enum as AchievementTemplateForEnum,
-    achievement_type_enum as AchievementTypeEnum,
-    Achievement_templateUpdateInput,
-} from '../generated';
+import { Achievement_template as AchievementTemplate, achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '../generated';
 import { Role } from '../roles';
 import { GraphQLInt } from 'graphql';
 import {
     AchievementTemplateCreate,
     AchievementTemplateUpdate,
     activateAchievementTemplate,
+    createTemplate,
     deactivateAchievementTemplate,
-    getTemplate,
-    purgeAchievementTemplateCache,
     updateAchievementTemplate,
 } from '../../common/achievement/template';
-import { achievement_action_type_enum, Prisma, achievement_type_enum, achievement_template_for_enum } from '@prisma/client';
 import { ensureNoNullObject } from '../util';
+import { ConditionDataAggregations } from '../../common/achievement/types';
+import { JSONResolver } from 'graphql-scalars';
 
 @InputType()
 class AchievementTemplateCreateInput implements AchievementTemplateCreate {
@@ -25,6 +20,8 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     name: string;
     @Field({ nullable: true })
     achievedText: string | null;
+    @Field({ nullable: true })
+    achievedImage: string | null;
     @Field()
     description: string;
     @Field()
@@ -36,8 +33,8 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
 
     @Field()
     condition: string;
-    @Field()
-    conditionDataAggregations: Prisma.JsonValue;
+    @Field((type) => JSONResolver)
+    conditionDataAggregations: ConditionDataAggregations;
     @Field()
     type: achievement_type_enum;
     @Field()
@@ -72,8 +69,8 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
 
     @Field({ nullable: true })
     condition: string | null;
-    @Field({ nullable: true })
-    conditionDataAggregations: Prisma.JsonValue | null;
+    @Field((type) => JSONResolver, { nullable: true })
+    conditionDataAggregations: ConditionDataAggregations | null;
     @Field({ nullable: true })
     type: achievement_type_enum | null;
     @Field({ nullable: true })
@@ -93,14 +90,11 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
 
 @Resolver((of) => AchievementTemplate)
 export class MutateAchievementTemplateResolver {
-    @Mutation((returns) => Boolean)
+    @Mutation((returns) => GraphQLInt)
     @Authorized(Role.ADMIN)
-    async achievementTemplateCreate(
-        @Arg('achievementTemplateId', (type) => GraphQLInt) achievementTemplateId: number,
-        @Arg('data') data: AchievementTemplateCreateInput
-    ) {
-        await activateAchievementTemplate(achievementTemplateId);
-        return true;
+    async achievementTemplateCreate(@Arg('data') data: AchievementTemplateCreateInput) {
+        const id = await createTemplate(data);
+        return id;
     }
 
     @Mutation((returns) => Boolean)

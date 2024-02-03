@@ -4,11 +4,10 @@ import { join } from 'path';
 import { prisma } from '../prisma';
 import { Prisma, achievement_template, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
-import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType } from './types';
+import { RelationTypes, AchievementContextType, AchievementState } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 
 const logger = getLogger('Achievement');
@@ -127,10 +126,10 @@ export function renderAchievementWithContext(
 
 export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number) {
     return userAchievements.length === 0
-        ? achievement_state.INACTIVE
+        ? AchievementState.INACTIVE
         : userAchievements[currentAchievementIndex].achievedAt
-        ? achievement_state.COMPLETED
-        : achievement_state.ACTIVE;
+        ? AchievementState.COMPLETED
+        : AchievementState.ACTIVE;
 }
 
 export function sortActionTemplatesToGroups(templatesForAction: achievement_template[]) {
