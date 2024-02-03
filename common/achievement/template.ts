@@ -94,6 +94,7 @@ export async function getTemplatesByMetrics(metricsForAction: Metric[]) {
 }
 
 export const getTemplate = (id: number) => prisma.achievement_template.findUniqueOrThrow({ where: { id } });
+export const getAllTemplates = () => prisma.achievement_template.findMany();
 export const getTemplateGroup = (group: string) => prisma.achievement_template.findMany({ where: { group }, orderBy: { groupOrder: 'asc' } });
 
 // ------------------- Achievement Template Create & Update -------------------
