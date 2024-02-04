@@ -242,7 +242,7 @@ export const TEST_POOL = {
 const _pools = [
     {
         name: 'lern-fair-now',
-        autoInviteForScreening: false, // TODO: Turn on
+        autoInviteForScreening: true,
         toggles: [...INTEREST_CONFIRMATION_TOGGLES, ...PUPIL_SCREENING_TOGGLES],
 
         pupilsToMatch: (toggles: (InterestConfirmationToggle | PupilScreeningToggle)[]): Prisma.pupilWhereInput => {
