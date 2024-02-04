@@ -5,6 +5,7 @@ import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { NotFoundError } from '@prisma/client/runtime';
 import { userForPupil } from '../user';
+import { invalidateSessionsOfUser } from '../user/session';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
@@ -60,7 +61,9 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_rejected', {});
             break;
         case PupilScreeningStatus.success:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_succeeded', {});
+            const asUser = userForPupil(screening.pupil);
+            await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+            invalidateSessionsOfUser(asUser.userID);
             break;
 
         case PupilScreeningStatus.dispute:

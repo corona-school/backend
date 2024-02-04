@@ -7,6 +7,7 @@ import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { userForStudent } from '../user';
+import { invalidateSessionsOfUser } from '../user/session';
 
 interface ScreeningInput {
     success: boolean;
@@ -34,7 +35,9 @@ export async function addInstructorScreening(screener: Screener, student: Studen
             logger.info(`Skipped CoC for Student (${student.id}) by Screener (${screener.id}) `);
         }
 
-        await Notification.actionTaken(userForStudent(student), 'instructor_screening_success', {});
+        const asUser = userForStudent(student);
+        await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        invalidateSessionsOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
     }

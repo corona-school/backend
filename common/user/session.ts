@@ -5,6 +5,9 @@ import Keyv from 'keyv';
 import { User } from '.';
 import { v4 as uuid } from 'uuid';
 import { DEFAULT_PREFERENCES } from '../notification/defaultPreferences';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('Session');
 
 // As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
 export interface GraphQLUser extends User {
@@ -39,4 +42,15 @@ export const toPublicToken = (token: string) => token.slice(0, -5);
 
 export async function getUserForSession(sessionToken: string) {
     return await userSessions.get(sessionToken);
+}
+
+// As roles are only evaluated once per session, sometimes it makes sense to flush sessions
+// so that clients reauthenticate and roles are reevaluated
+export async function invalidateSessionsOfUser(userID: string) {
+    for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
+        if (user.userID === userID) {
+            userSessions.delete(sessionToken);
+            logger.info(`Invalidated Session(${sessionToken}) of User(${userID})`);
+        }
+    }
 }
