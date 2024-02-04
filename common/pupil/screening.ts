@@ -56,18 +56,18 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
         return;
     }
 
+    const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_rejected', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
             break;
         case PupilScreeningStatus.success:
-            const asUser = userForPupil(screening.pupil);
             await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
-            invalidateSessionsOfUser(asUser.userID);
+            await invalidateSessionsOfUser(asUser.userID);
             break;
 
         case PupilScreeningStatus.dispute:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_dispute', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_dispute', {});
             break;
 
         case PupilScreeningStatus.pending:

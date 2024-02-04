@@ -37,7 +37,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
 
         const asUser = userForStudent(student);
         await Notification.actionTaken(asUser, 'instructor_screening_success', {});
-        invalidateSessionsOfUser(asUser.userID);
+        await invalidateSessionsOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
     }
