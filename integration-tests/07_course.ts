@@ -120,7 +120,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
         subcourseCreate: { id: subcourseId },
     } = await client.request(`
         mutation CreateSubcourse {
-            subcourseCreate(courseId: ${courseId} subcourse: {
+            subcourseCreate(courseId: ${courseId} studentId: ${student.userID} subcourse: {
                 minGrade: 5
                 maxGrade: 10
                 maxParticipants: 1
