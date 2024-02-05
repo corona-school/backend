@@ -715,13 +715,18 @@ export class StatisticsResolver {
         `;
 
         return data.map(({ reason, value }) => {
-            const avg = averages.find((a) => a.dissolve_reason === reason).average_matches;
+            const avg = averages.find((a) => a.dissolve_reason === reason)?.average_matches;
+            let trend: number;
+            if (avg) {
+                trend = value / ((avg / 30) * selectedDuration) - 1.0;
+            } else {
+                trend = -1;
+            }
             // the average is an average over a month; we need an average for the selected number of days.
-            const avg_in_timeframe = (avg / 30) * selectedDuration;
             return {
                 label: reason,
                 value,
-                trend: value / avg_in_timeframe - 1.0,
+                trend,
             };
         });
     }
