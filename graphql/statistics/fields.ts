@@ -519,6 +519,9 @@ export class StatisticsResolver {
                 match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } },
             },
         });
+        if (tuteesWithMatch === 0) {
+            return -1;
+        }
         const matchesTotal = await prisma.match.count({
             where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
         });
@@ -535,6 +538,9 @@ export class StatisticsResolver {
                 match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } },
             },
         });
+        if (tutorsWithMatch === 0) {
+            return -1;
+        }
         const matchesTotal = await prisma.match.count({
             where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
         });
@@ -696,6 +702,10 @@ export class StatisticsResolver {
                 AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
+
+        if (numPupils === 0) {
+            return -1;
+        }
 
         const successfulScreeningsCount: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
             FROM "pupil_screening"
