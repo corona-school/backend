@@ -9,11 +9,12 @@ Achievements are a part of the Gamification. They are stored in the database as 
     2. [Components](#components)
     3. [Resolvers](#resolvers)
 2.  [Achievement System](#achievement-system)
-    1. [Reward Action](#reward-action)
-    2. [Get or Create User Achievement](#get-or-create-user-achievement)
-    3. [Create Achievement](#create-achievement)
-    4. [Check User Achievement](#check-user-achievement)
-    5. [Evaluate Achievement](#evaluate-achievement)
+    1. [Achievement Types](#achievement-types)
+    2. [Reward Action](#reward-action)
+    3. [Get or Create User Achievement](#get-or-create-user-achievement)
+    4. [Create Achievement](#create-achievement)
+    5. [Check User Achievement](#check-user-achievement)
+    6. [Evaluate Achievement](#evaluate-achievement)
 3.  [Buckets](#buckets)
     1.  [Bucket Concept](#bucket-concept)
     2.  [Bucket Types](#bucket-types)
@@ -166,21 +167,58 @@ flowchart TD
 
 [Go to Data Aggregation - Chapter 2.5](#data-aggregation)
 
-### 2.1. Reward Action
+### 2.1 Achievement Types
+
+There are 3 different achievement types that can be issued as rewards to a user. The system differs between Streak Achievements, Tiered Achievements and Sequential Achievements.
+
+#### Streak Achievements
+
+Streak achievements are an integral part of our rewards system, designed to motivate users to maintain consistent engagement with our platform.
+In our rewards system, a streak represents a consecutive series of desired actions performed by a user within a defined timeframe. These actions could include logging into the platform, completing tasks, or achieving specific milestones. Streaks serve as a means to encourage users to sustain their engagement over time.
+The system tracks users' actions and counts streaks based on the consecutive days or instances in which the desired action is performed. For example, if a user logs into the platform daily for five consecutive days, they would have a streak of five days.
+In addition to counting the current streak, we also save the maximum streak accomplished by each user. This represents the longest consecutive series of desired actions performed by the user since they started using the platform.
+
+#### Tiered Achievements
+
+Tiered achievements are an essential component of our rewards system, representing milestones of actions performed by users.
+In our rewards system, tiered achievements consist of predefined milestones that users can reach by performing specific actions. These actions could include participating in meetings, completing tasks, or reaching certain levels of engagement on our platform.
+Tiered achievements are structured in a hierarchical manner, with each tier representing a higher level of accomplishment. For example:
+
+-   Tier 1: 1 meeting joined
+-   Tier 2: 3 meetings joined
+-   Tier 3: 5 meetings joined
+-   Tier 4: 10 meetings joined
+-   ...
+
+As users perform the specified actions and reach each milestone, they unlock the corresponding tiered achievement.
+
+#### Sequential Achievements
+
+Sequential achievements are a unique type of reward in our system, issued to users who successfully complete a series of predefined actions in a sequential manner.
+In our rewards system, sequential achievements are earned by users who complete a series of actions in a specific order. These actions are typically milestones in a user journey, such as registering on our platform:
+
+1. Register on the platform
+2. Verify email address
+3. Absolve screening process
+4. Hand in certificate of conduct
+
+Upon completing all the actions in the specified order, the user is rewarded with the sequential achievement.
+
+### 2.2. Reward Action
 
 The achievement is linked to the pre-existing notification system and therefore triggers the `rewardActionTaken` function when ever the `actionTaken` function for a future notification is executed. This is working since achievements that have newly matched their conditions are announced as a notification, therefore naturally being linked to an action taken call.
 
 Based on the [metrics](#metrics) for the action that triggered the `rewardActionTaken` function the templates for this action are fetched and sorted by their group. For every one of these groups the [`getOrCreateUserAchievement`](#get-or-create-user-achievement) function is called to receive the user_achievement from the database that has to be evaluated inside the [`checkUserAchievement`](#check-user-achievement) function, which is subsequently executed using the already received user_achievement.
 
-### 2.2. Get or Create User Achievement
+### 2.3. Get or Create User Achievement
 
 The `getOrCreateUserAchievement` function is trying to find a pre-existing user achievement that matches the values passed, in order to return this achievement to our [`rewardActionTaken`](#reward-action) function. If no user achievement was found the [`createAchievement`](#create-achievement) function is triggered to return the newly create user_achievement instead.
 
-### 2.3. Create Achievement
+### 2.4. Create Achievement
 
 Inside the `createAchievement` function all of the users pre-existing achievements for the template, passed down from the [`rewardActionTaken`](#reward-action) function, are taken to determine the groupOrder of the following achievement that has to be created. The `groupOrder` value then is used to create a new user_achievement in the database for the achievement_template inside the achievement template group array, that has the matching value in its `groupOrder` field. The creation process is not finished, if the groupOrder of the subsequent achievement was outside the given range of group elements, meaning the group was already finished and in no need to be continued.
 
-### 2.4. Check User Achievement
+### 2.5. Check User Achievement
 
 The `checkUserAchievement` function checks whether the conditions for rewarding the user are met. If this is the case, the evaluations result object, returned from the [`isAchievementContidionMet`](#isachievementconditionmet) function is used to reward the user ([`rewardUser`](#rewarduser)) and to create the subsequent user_achievement
 
@@ -192,7 +230,7 @@ This function is taking all necessary values from the passed achievement and eve
 
 The `rewardUser` function is updating the achievement that triggered it by setting a timestamp in the `achievedAt` field, updating the optional `recordValue` field if one was given and setting the `isSeen` field to false so a user can identify their new achievement. The updated achievement is then used to trigger the creation of a notification that is displayed to the user.
 
-### 2.5. Evaluate Achievement
+### 2.6. Evaluate Achievement
 
 In order to evaluate an achievement all related events are sorted by their [metric](#metrics) and a potential `recordValue` is taken from the `resultObject`. Thereupon the [aggregations](#data-aggregation) are executed for every condition object found in the user_templates [`conditionDataAggregation`](#database-models).
 
