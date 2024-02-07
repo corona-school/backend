@@ -94,7 +94,7 @@ export class MutateChatResolver {
     }
 
     @Mutation(() => String)
-    @Authorized(Role.PUPIL)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
     async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('instructorUserId') instructorUserId: string, @Arg('subcourseId') subcourseId: number) {
         const { user: prospectUser } = context;
         const instructorUser = await getUser(instructorUserId);
