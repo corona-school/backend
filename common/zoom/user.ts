@@ -266,16 +266,25 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
 }
 
 async function getZoomUrl(user: User, appointment: Appointment) {
+    if (!appointment.zoomMeetingId) {
+        logger.error(`No zoom meeting ID found for appointment ID: ${appointment.id}`);
+        return null;
+    }
     const basicStartUrl = 'https://lern-fair.zoom.us/s';
     const basicJoinUrl = 'https://lern-fair.zoom.us/j';
     const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
     const isAppointmentParticipant = appointment.participantIds.includes(user.userID);
 
+    // The start_url always includes the ZAK from the host, who created the meeting and so every host and alternativHost would use the same identity
+    // The workaround with creating own start_urls with the ZAK is an undocumented feature of zoom
     if (isAppointmentOrganizer) {
         const zoomOrganizerZak = (await getUserZAK(user.email)).token;
         return `${basicStartUrl}/${appointment.zoomMeetingId}?zak=${zoomOrganizerZak}`;
     } else if (isAppointmentParticipant) {
+        // participants have to manually set their name for the zoom meeting
         return `${basicJoinUrl}/${appointment.zoomMeetingId}`;
+    } else {
+        throw new Error(`User with the ID ${user.userID} is no appointment organizer or participant `);
     }
 }
 export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUrl, getZoomUserInfos as getZoomUsers };
