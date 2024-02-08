@@ -65,7 +65,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 .map((match) => createLectureBuckets(match, LectureFilter.participation))
                 .reduce((acc, val) => acc.concat(val), []);
             const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
+                .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.participation))
                 .reduce((acc, val) => acc.concat(val), []);
             return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
