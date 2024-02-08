@@ -81,18 +81,6 @@ export async function allowCourse(course: Course, screeningComment: string | nul
             await publishSubcourse(subcourse);
         }
     }
-
-    await Promise.all(
-        subcourses
-            .map((subcourse) => subcourse.subcourse_instructors_student)
-            .flat()
-            .map(async (instructor) => {
-                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-                    courseName: course.name,
-                    relation: `subcourse/${instructor.subcourseId}`,
-                });
-            })
-    );
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {

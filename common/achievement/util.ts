@@ -2,15 +2,15 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma, achievement_template, achievement_type_enum, user_achievement } from '@prisma/client';
+import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType } from './types';
+import { RelationTypes, AchievementContextType, ExtendedAchievementContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
-import { getTemplatesWithCourseRelation } from './template';
+import { getTemplatesWithRelation } from './template';
 import { getCourseImageURL } from '../courses/util';
 
 const logger = getLogger('Achievement');
@@ -22,16 +22,15 @@ export function getAchievementImageKey(imageKey: string) {
 }
 
 export async function getAchievementImageURL(template: achievement_template, state?: achievement_state, relation?: string) {
-    const templatesWithCourseRelation = await getTemplatesWithCourseRelation();
-    const { id, image, achievedImage } = template;
+    const templatesWithCourseRelation = await getTemplatesWithRelation(achievement_template_for_enum.Course);
+    const { image, achievedImage } = template;
     if (templatesWithCourseRelation && relation) {
         const subcourseId = relation.split('/')[1];
-        const templateIdsForCourseImage = templatesWithCourseRelation
-            .filter((courseTemplate) => courseTemplate.type === achievement_type_enum.TIERED)
-            .map((courseTemplate) => courseTemplate.id);
-        if (subcourseId && templateIdsForCourseImage.includes(id)) {
-            const { course } = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
-            return getCourseImageURL(course);
+        if (subcourseId && template.templateFor === achievement_template_for_enum.Course && template.type === achievement_type_enum.TIERED) {
+            const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
+            if (subcourse) {
+                return getCourseImageURL(subcourse.course);
+            }
         }
     }
     if (state === achievement_state.COMPLETED && achievedImage) {
@@ -111,8 +110,8 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     return achievementContext;
 }
 
-export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): AchievementContextType {
-    const transformedJson: AchievementContextType = {
+export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): ExtendedAchievementContextType {
+    const transformedJson: ExtendedAchievementContextType = {
         user: user,
         match: [],
         subcourse: [],

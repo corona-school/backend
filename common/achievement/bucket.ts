@@ -3,7 +3,7 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-enum LectureFilter {
+enum LectureBucketMessuringType {
     start = 'start',
     participation = 'participation',
 }
@@ -20,7 +20,7 @@ function filterLectureData<T extends ContextMatch | ContextSubcourse>(data: T) {
     return filteredLectures;
 }
 
-function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T, filter: LectureFilter): TimeBucket[] {
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T, filter: LectureBucketMessuringType): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }
@@ -32,7 +32,7 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
         // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
         startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
         endTime:
-            filter === LectureFilter.start
+            filter === LectureBucketMessuringType.start
                 ? moment(lecture.start).add(5, 'minutes').toDate()
                 : moment(lecture.start).add(lecture.duration, 'minutes').add(5, 'minutes').toDate(),
     }));
@@ -51,9 +51,11 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const { context } = bucketContext;
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            const matchBuckets = context.match.map((match) => createLectureBuckets(match, LectureFilter.start)).reduce((acc, val) => acc.concat(val), []);
+            const matchBuckets = context.match
+                .map((match) => createLectureBuckets(match, LectureBucketMessuringType.start))
+                .reduce((acc, val) => acc.concat(val), []);
             const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
+                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMessuringType.start))
                 .reduce((acc, val) => acc.concat(val), []);
             return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
@@ -62,10 +64,10 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
             const matchBuckets = context.match
-                .map((match) => createLectureBuckets(match, LectureFilter.participation))
+                .map((match) => createLectureBuckets(match, LectureBucketMessuringType.participation))
                 .reduce((acc, val) => acc.concat(val), []);
             const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureFilter.start))
+                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMessuringType.participation))
                 .reduce((acc, val) => acc.concat(val), []);
             return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },

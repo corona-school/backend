@@ -93,7 +93,6 @@ export class MutateCourseResolver {
         @Arg('course') data: PublicCourseEditInput
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
-        const user = context.user;
         await hasAccess(context, 'Course', course);
 
         if (course.courseState === 'allowed') {
