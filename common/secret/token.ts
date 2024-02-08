@@ -10,6 +10,7 @@ import { Email } from '../notification/types';
 import { isEmailAvailable } from '../user/email';
 import { secret_type_enum as SecretType } from '@prisma/client';
 import { createSecretEmailToken } from './emailToken';
+import moment from 'moment';
 
 const logger = getLogger('Token');
 
@@ -158,13 +159,6 @@ export async function loginToken(token: string): Promise<User | never> {
 }
 
 export async function verifyEmail(user: User) {
-    const { id: notificationID } = await prisma.notification.findFirst({
-        where: { onActions: { has: 'user-verify-email' } },
-        select: { id: true },
-    });
-    const concreteNotification = await prisma.concrete_notification.findFirst({
-        where: { notificationID: notificationID, userId: user.userID },
-    });
     if (user.studentId) {
         const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
             where: { id: user.studentId },
@@ -175,18 +169,10 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.studentId },
             });
-            if (concreteNotification.sentAt) {
-                await Notification.actionTaken(user, 'student_registration_verified_email', {
-                    date: concreteNotification.sentAt
-                        .toLocaleDateString('de-DE', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })
-                        .replace('.', ''),
-                    email: user.email,
-                });
-            }
+            await Notification.actionTaken(user, 'student_registration_verified_email', {
+                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                email: user.email,
+            });
 
             logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
         }
@@ -202,18 +188,10 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.pupilId },
             });
-            if (concreteNotification.sentAt) {
-                await Notification.actionTaken(user, 'pupil_registration_verified_email', {
-                    date: concreteNotification.sentAt
-                        .toLocaleDateString('de-DE', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                        })
-                        .replace('.', ''),
-                    email: user.email,
-                });
-            }
+            await Notification.actionTaken(user, 'pupil_registration_verified_email', {
+                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                email: user.email,
+            });
             logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
         }
     }
