@@ -64,6 +64,9 @@ erDiagram
 		actionName string
 		actionRedirectLink string
 		actionType achievement_action_type_enum
+		achievedText string
+		progressDescription string
+		streakProgress string
 		actionName string
 		condition string
 		conditionDataAggregation json
