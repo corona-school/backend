@@ -210,7 +210,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         recordValue: maxValue.toString(),
     });
 
-    const resultAchievement = {
+    return {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
@@ -244,7 +244,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
-    return resultAchievement;
 };
 
 export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };

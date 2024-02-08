@@ -127,3 +127,7 @@ export type AchievementContextType = {
     match: ContextMatch[];
     subcourse: ContextSubcourse[];
 };
+
+export type ExtendedAchievementContextType = AchievementContextType & {
+    [key: string]: any;
+};

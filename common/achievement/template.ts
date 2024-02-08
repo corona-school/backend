@@ -10,7 +10,7 @@ const logger = getLogger('Achievement Template');
 export enum TemplateSelectEnum {
     BY_GROUP = 'group',
     BY_METRIC = 'metrics',
-    BY_COURSE_RELATION = 'templateFor',
+    BY_RELATION = 'templateFor',
 }
 
 // string == metricId, group
@@ -27,7 +27,7 @@ async function buildCache() {
 
     buildGroupCache(templates);
     buildMetricCache(templates);
-    buildCourseRelationCache(templates);
+    buildRelationCache(templates);
 
     logger.info(`Loaded ${templates.length} achievement templates into the cache`);
 }
@@ -58,15 +58,14 @@ function buildMetricCache(templates: achievement_template[]) {
     }
 }
 
-function buildCourseRelationCache(templates: achievement_template[]) {
-    achievementTemplates.set(TemplateSelectEnum.BY_COURSE_RELATION, new Map());
+function buildRelationCache(templates: achievement_template[]) {
+    achievementTemplates.set(TemplateSelectEnum.BY_RELATION, new Map());
+    achievementTemplates[TemplateSelectEnum.BY_RELATION] = new Map();
     for (const template of templates) {
-        if (template.templateFor === achievement_template_for_enum.Course) {
-            if (achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.has(template.templateFor)) {
-                achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.set(template.templateFor, []);
-            }
-            achievementTemplates.get(TemplateSelectEnum.BY_COURSE_RELATION)?.get(template.templateFor)?.push(template);
+        if (achievementTemplates.get(TemplateSelectEnum.BY_RELATION)?.has(template.templateFor)) {
+            achievementTemplates.get(TemplateSelectEnum.BY_RELATION)?.set(template.templateFor, []);
         }
+        achievementTemplates.get(TemplateSelectEnum.BY_RELATION)?.get(template.templateFor)?.push(template);
     }
 }
 
@@ -101,11 +100,11 @@ async function getTemplatesByMetrics(metricsForAction: Metric[]) {
     return templatesForAction;
 }
 
-async function getTemplatesWithCourseRelation(): Promise<achievement_template[]> {
-    const templatesByCourseRelation = await getAchievementTemplates(TemplateSelectEnum.BY_COURSE_RELATION);
-    const courseTemplates: achievement_template[] = templatesByCourseRelation ? templatesByCourseRelation.get(achievement_template_for_enum.Course) : [];
+async function getTemplatesWithRelation(relation: achievement_template_for_enum): Promise<achievement_template[]> {
+    const templatesByRelation = await getAchievementTemplates(TemplateSelectEnum.BY_RELATION)[relation];
+    const relatedTemplates: achievement_template[] = templatesByRelation ? templatesByRelation.get(relation) : [];
 
-    return courseTemplates;
+    return relatedTemplates;
 }
 
-export { getAchievementTemplates, getTemplatesByMetrics, getTemplatesWithCourseRelation };
+export { getAchievementTemplates, getTemplatesByMetrics, getTemplatesWithRelation };
