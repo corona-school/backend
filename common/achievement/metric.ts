@@ -74,7 +74,7 @@ const batchOfMetrics = [
     }),
 
     /* PARTICIPATION STREAK */
-    createMetric('student_participation_streak', ['student_presence_in_meeting'], () => {
+    createMetric('student_participated_in_meeting', ['student_presence_in_meeting'], () => {
         return 1;
     }),
     createMetric('pupil_participation_streak', ['pupil_presence_in_meeting'], () => {
