@@ -210,12 +210,12 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     );
     const leftProgress = maxValue - currentValue + 1;
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
-        leftProgress: leftProgress.toString(),
+        remainingProgress: leftProgress.toString(),
         progress: currentValue.toString(),
         maxValue: maxValue.toString(),
     });
 
-    const resultAchievement = {
+    return {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
@@ -249,7 +249,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
-    return resultAchievement;
 };
 
 export { getUserAchievements, getFurtherAchievements, getNextStepAchievements, getAchievementById };

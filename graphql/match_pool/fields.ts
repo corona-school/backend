@@ -14,6 +14,7 @@ import {
     getPupilsToContactNext,
     getInterestConfirmationRate,
     validatePoolToggles,
+    screeningInvitationsToSend,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -136,6 +137,16 @@ export class FieldsMatchPoolResolver {
         }
 
         return await confirmationRequestsToSend(matchPool);
+    }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN)
+    async screeningInvitationsToSend(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.toggles.includes('pupil-screening-pending')) {
+            return 0;
+        }
+
+        return await screeningInvitationsToSend(matchPool);
     }
 
     @FieldResolver((returns) => [Pupil])

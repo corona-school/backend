@@ -81,18 +81,6 @@ export async function allowCourse(course: Course, screeningComment: string | nul
             await publishSubcourse(subcourse);
         }
     }
-
-    await Promise.all(
-        subcourses
-            .map((subcourse) => subcourse.subcourse_instructors_student)
-            .flat()
-            .map(async (instructor) => {
-                await Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-                    courseName: course.name,
-                    relation: `subcourse/${instructor.subcourseId}`,
-                });
-            })
-    );
 }
 
 export async function denyCourse(course: Course, screeningComment: string | null) {
@@ -131,10 +119,8 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
     const course = await getCourse(subcourse.courseId);
-    if (course.category !== 'focus') {
-        await sendPupilCoursePromotion(subcourse);
-        logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
-    }
+    await sendPupilCoursePromotion(subcourse);
+    logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
 
     await Promise.all(
         subcourse.subcourse_instructors_student.map((instructor) =>
