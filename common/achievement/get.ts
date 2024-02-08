@@ -205,7 +205,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     );
     const leftProgress = maxValue - currentValue;
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
-        leftProgress: leftProgress.toString(),
+        remainingProgress: leftProgress.toString(),
         progress: currentValue.toString(),
         recordValue: maxValue.toString(),
     });
