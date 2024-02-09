@@ -60,7 +60,6 @@ function buildMetricCache(templates: achievement_template[]) {
 
 function buildRelationCache(templates: achievement_template[]) {
     achievementTemplates.set(TemplateSelectEnum.BY_RELATION, new Map());
-    achievementTemplates[TemplateSelectEnum.BY_RELATION] = new Map();
     for (const template of templates) {
         if (achievementTemplates.get(TemplateSelectEnum.BY_RELATION)?.has(template.templateFor)) {
             achievementTemplates.get(TemplateSelectEnum.BY_RELATION)?.set(template.templateFor, []);

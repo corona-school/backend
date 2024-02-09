@@ -773,7 +773,8 @@ void (async function setupDevDB() {
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_1.png',
             achievedImage: null,
             actionName: 'Termin vereinbaren',
@@ -795,7 +796,8 @@ void (async function setupDevDB() {
             stepName: 'Screening absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_2.png',
             achievedImage: null,
             actionName: 'Screening absolvieren',
@@ -815,7 +817,8 @@ void (async function setupDevDB() {
             stepName: 'Führungszeugnis einreichen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
+            description:
+                'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_3.png',
             achievedImage: null,
             actionName: 'Zeugnis einreichen',
@@ -835,7 +838,8 @@ void (async function setupDevDB() {
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/step_4.png',
             achievedImage: null,
             actionName: null,
@@ -856,7 +860,8 @@ void (async function setupDevDB() {
             stepName: 'Verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'gamification/achievements/tmp/finish_onboarding/four_pieces/empty_state.png',
             achievedImage: null,
             actionName: 'E-Mail erneut senden',
@@ -876,7 +881,8 @@ void (async function setupDevDB() {
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_1.png',
             achievedImage: null,
             actionName: 'Termin vereinbaren',
@@ -898,7 +904,8 @@ void (async function setupDevDB() {
             stepName: 'Screening absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_2.png',
             achievedImage: null,
             actionName: 'Screening absolvieren',
@@ -918,7 +925,8 @@ void (async function setupDevDB() {
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_3.png',
             achievedImage: null,
             actionName: null,
@@ -1300,7 +1308,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {
@@ -1333,7 +1341,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
@@ -1471,7 +1479,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
-            progressDescription: 'Noch {{leftProgress}} Termin(e) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{eventsToBeatStreak}} Termin(e) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Terminen in Folge anwesend!',
             condition: 'student_presence_events > recordValue',
             conditionDataAggregations: {
@@ -1504,7 +1512,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
-            progressDescription: 'Noch <strong>{{leftProgress}} Termin(e)</strong> bis zum neuen Rekord!',
+            progressDescription: 'Noch <strong>{{eventsToBeatStreak}} Termin(e)</strong> bis zum neuen Rekord!',
             streakProgress: 'Du warst bei <strong>{{progress}} Termin(en)</strong> in Folge anwesend!',
             condition: 'pupil_presence_events > recordValue',
             conditionDataAggregations: {

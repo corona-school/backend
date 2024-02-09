@@ -208,9 +208,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         userAchievements[currentAchievementIndex].relation,
         userAchievements[currentAchievementIndex].context as Prisma.JsonObject
     );
-    const leftProgress = maxValue - currentValue + 1;
+    const eventsToBeatStreak = maxValue - currentValue + 1;
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
-        remainingProgress: leftProgress.toString(),
+        remainingProgress: eventsToBeatStreak.toString(),
         progress: currentValue.toString(),
         maxValue: maxValue.toString(),
     });
