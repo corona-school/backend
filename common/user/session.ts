@@ -53,7 +53,7 @@ export async function updateSessionRolesOfUser(userID: string) {
     for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
         if (user.userID === userID) {
             user.roles = await evaluateUserRoles(user);
-            logger.info(`Invalidated Session(${sessionToken}) of User(${userID})`);
+            logger.info(`Updated Roles of Session(${sessionToken}) of User(${userID})`);
         }
     }
 }
