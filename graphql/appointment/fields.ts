@@ -11,7 +11,7 @@ import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
 import { getZoomUrl } from '../../common/zoom/user';
-import { getLogger } from 'log4js';
+import { getLogger } from '../../common/logger/logger';
 
 const logger = getLogger('Appointment Fields');
 

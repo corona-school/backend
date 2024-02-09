@@ -267,8 +267,7 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
 
 async function getZoomUrl(user: User, appointment: Appointment) {
     if (!appointment.zoomMeetingId) {
-        logger.error(`No zoom meeting ID found for appointment ID: ${appointment.id}`);
-        return null;
+        throw new Error(`No zoom meeting ID found for appointment ID: ${appointment.id}`);
     }
     const basicStartUrl = 'https://lern-fair.zoom.us/s';
     const basicJoinUrl = 'https://lern-fair.zoom.us/j';
