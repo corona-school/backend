@@ -3,7 +3,7 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-enum LectureBucketMessuringType {
+enum LectureBucketMeasuringType {
     start = 'start',
     participation = 'participation',
 }
