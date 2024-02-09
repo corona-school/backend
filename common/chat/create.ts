@@ -45,7 +45,6 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
 
         const convertedConversation = convertTJConversation(newConversation);
         logger.info(`One-on-one conversation was created with ID ${convertedConversation.id} `);
@@ -170,6 +169,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
         await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
+
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
@@ -195,7 +195,9 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
     }
 
     const conversationInfos: ConversationInfos = {
+        welcomeMessages: [systemMessages.de.oneOnOne],
         custom: {
+            createdBy: meUser.userID,
             ...(contact.match && { match: { matchId: contact.match.matchId } }),
             ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
         },
