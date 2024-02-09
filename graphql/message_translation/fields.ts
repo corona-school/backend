@@ -3,7 +3,7 @@ import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
 import { Message_translation as MessageTranslation } from '../generated';
 import { getNotification, getSampleContext } from '../../common/notification/notification';
 import { renderTemplate } from '../../utils/helpers';
-import { Role } from '../roles';
+import { Role } from '../../common/user/roles';
 
 @Resolver((of) => MessageTranslation)
 export class ExtendedFieldsMessageTranslationResolver {
