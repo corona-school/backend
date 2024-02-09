@@ -57,7 +57,8 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMessuringType.start))
                 .reduce((acc, val) => acc.concat(val), []);
-            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
+            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+            return { bucketKind: 'time', buckets: buckets };
         },
     },
     by_lecture_participation: {
@@ -67,9 +68,10 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
                 .map((match) => createLectureBuckets(match, LectureBucketMessuringType.participation))
                 .reduce((acc, val) => acc.concat(val), []);
             const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMessuringType.participation))
+                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMessuringType.start))
                 .reduce((acc, val) => acc.concat(val), []);
-            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
+            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+            return { bucketKind: 'time', buckets: buckets };
         },
     },
     by_weeks: {

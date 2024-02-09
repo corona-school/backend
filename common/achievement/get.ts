@@ -72,7 +72,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         const dataAggr = template.conditionDataAggregations as Prisma.JsonObject;
         const maxValue = Object.keys(dataAggr)
             .map((key) => {
-                const val = dataAggr[key] as number;
+                const val = dataAggr[key]['valueToAchieve'] as number;
                 return Number(val);
             })
             .reduce((a, b) => a + b, 0);
@@ -90,7 +90,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
             maxSteps: maxValue,
             currentStep: 0,
             isNewAchievement: null,
-            progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            progressDescription: template.progressDescription,
             actionName: template.actionName,
             actionRedirectLink: template.actionRedirectLink,
         };
@@ -152,10 +152,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
-
-    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
-
     const condition = userAchievements[currentAchievementIndex].recordValue
         ? userAchievements[currentAchievementIndex].template.condition.replace(
               'recordValue',
@@ -181,8 +177,8 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =
                 userAchievements[currentAchievementIndex].template.type === achievement_type_enum.STREAK
-                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue! > currentValue
-                        ? userAchievements[currentAchievementIndex].recordValue!
+                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue > currentValue
+                        ? userAchievements[currentAchievementIndex].recordValue
                         : currentValue
                     : dataAggregationKeys
                           .map((key) => {
@@ -192,22 +188,31 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                               );
                           })
                           .reduce((a, b) => a + b, 0);
+            if (currentValue < maxValue && userAchievements[currentAchievementIndex].achievedAt) {
+                await prisma.user_achievement.update({
+                    where: { id: userAchievements[currentAchievementIndex].id },
+                    data: { achievedAt: null, isSeen: false },
+                });
+            }
         }
     } else {
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }
 
+    const state: achievement_state = getAchievementState(userAchievements, currentAchievementIndex);
+    const isNewAchievement = state === achievement_state.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
+
     const achievementContext = transformPrismaJson(
         user,
         userAchievements[currentAchievementIndex].relation,
         userAchievements[currentAchievementIndex].context as Prisma.JsonObject
     );
-    const leftProgress = maxValue - currentValue;
+    const leftProgress = maxValue - currentValue + 1;
     const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
         remainingProgress: leftProgress.toString(),
         progress: currentValue.toString(),
-        recordValue: maxValue.toString(),
+        maxValue: maxValue.toString(),
     });
 
     return {
