@@ -1,4 +1,4 @@
-import { getUser, updateUser, User } from '../user';
+import { getUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
@@ -10,6 +10,7 @@ import { Email } from '../notification/types';
 import { isEmailAvailable } from '../user/email';
 import { secret_type_enum as SecretType } from '@prisma/client';
 import { createSecretEmailToken } from './emailToken';
+import { updateUser } from '../user/update';
 
 const logger = getLogger('Token');
 
