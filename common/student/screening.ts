@@ -7,7 +7,7 @@ import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { userForStudent } from '../user';
-import { invalidateSessionsOfUser } from '../user/session';
+import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
     success: boolean;
@@ -37,7 +37,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
 
         const asUser = userForStudent(student);
         await Notification.actionTaken(asUser, 'instructor_screening_success', {});
-        await invalidateSessionsOfUser(asUser.userID);
+        await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
     }

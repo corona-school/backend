@@ -6,6 +6,7 @@ import { User } from '.';
 import { v4 as uuid } from 'uuid';
 import { DEFAULT_PREFERENCES } from '../notification/defaultPreferences';
 import { getLogger } from '../logger/logger';
+import { evaluateUserRoles } from './evaluate_roles';
 
 const logger = getLogger('Session');
 
@@ -44,12 +45,14 @@ export async function getUserForSession(sessionToken: string) {
     return await userSessions.get(sessionToken);
 }
 
-// As roles are only evaluated once per session, sometimes it makes sense to flush sessions
-// so that clients reauthenticate and roles are reevaluated
-export async function invalidateSessionsOfUser(userID: string) {
+// As roles are only evaluated once per session, sometimes it makes sense to update sessions roles in-flight
+// so that clients directly see the new roles once the client updates (i.e. the user app caches it till a refresh happens)
+export async function updateSessionRolesOfUser(userID: string) {
+    // This for sure is O(n) with the number of authenticated users - but as this is rather rare,
+    // I guess there is no need yet to maintain a userID -> session bimap
     for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
         if (user.userID === userID) {
-            userSessions.delete(sessionToken);
+            user.roles = await evaluateUserRoles(user);
             logger.info(`Invalidated Session(${sessionToken}) of User(${userID})`);
         }
     }
