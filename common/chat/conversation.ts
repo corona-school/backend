@@ -95,7 +95,7 @@ async function* getAllConversations(onlyActive?: boolean): AsyncIterable<TJConve
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get all conversations.`);
     assureChatFeatureActive();
 
-    const filter = { custom: { finished: '!exists' } };
+    const filter = { custom: { finished: ['!oneOf', ['course_over', 'match_dissolved']] } };
 
     const encodedFilter = encodeURIComponent(JSON.stringify(filter));
 
