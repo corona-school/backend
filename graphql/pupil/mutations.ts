@@ -312,9 +312,9 @@ export class MutatePupilResolver {
 
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
+    async pupilCreateScreening(@Arg('pupilId') pupilId: number, @Arg('silent', { nullable: true }) silent?: boolean): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await addPupilScreening(pupil);
+        await addPupilScreening(pupil, undefined, silent ?? false);
 
         return true;
     }
