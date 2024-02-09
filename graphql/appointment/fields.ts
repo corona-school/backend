@@ -10,6 +10,10 @@ import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user'
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
+import { getZoomUrl } from '../../common/zoom/user';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger('Appointment Fields');
 
 @ObjectType()
 class AppointmentParticipant {
@@ -167,6 +171,24 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getZoomMeeting(appointment);
+    }
+    @FieldResolver((returns) => String, { nullable: true })
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.INSTRUCTOR)
+    async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+
+        if (!appointment.zoomMeetingId) {
+            logger.error(`No zoom meeting id exist for appointment id ${appointment.id}`);
+            return null;
+        }
+
+        if (isAdmin) {
+            const zoomMeeting = await getZoomMeeting(appointment);
+            logger.info(`Admin requested zoom meeting url`);
+            return zoomMeeting.join_url;
+        }
+        return await getZoomUrl(user, appointment);
     }
 
     @FieldResolver((returns) => Match, { nullable: true })
