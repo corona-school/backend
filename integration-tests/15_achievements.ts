@@ -72,12 +72,12 @@ void test('Reward student onboarding achievement sequence', async () => {
     assert.ok(studentOnboarding2);
 
     // Create Certificate of Conduct
-    const newDate = JSON.stringify(new Date());
+    const newDate = new Date().toISOString();
     await adminClient.request(`
         mutation CreateCertificateOfConduct {
             certificateOfConductCreate(
-                dateOfInspection: ${newDate},
-                dateOfIssue: ${newDate},
+                dateOfInspection: "${newDate}",
+                dateOfIssue: "${newDate}",
                 criminalRecords: false,
                 studentId: ${student.student.id},
             )
@@ -585,7 +585,7 @@ const createStudentOnboardingTemplates = async () => {
             stepName: 'Verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description: '',
             image: 'Puzzle_00',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
@@ -605,7 +605,8 @@ const createStudentOnboardingTemplates = async () => {
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'Puzzle_01',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
@@ -627,7 +628,8 @@ const createStudentOnboardingTemplates = async () => {
             stepName: 'Screening absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'Puzzle_02',
             achievedImage: '',
             actionName: 'Screening absolvieren',
@@ -647,7 +649,8 @@ const createStudentOnboardingTemplates = async () => {
             stepName: 'Führungszeugnis einreichen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
             image: 'Puzzle_02',
             achievedImage: '',
             actionName: 'Zeugnis einreichen',
@@ -667,7 +670,8 @@ const createStudentOnboardingTemplates = async () => {
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
             image: 'Flugticket',
             achievedImage: '',
             actionName: null,
@@ -689,7 +693,8 @@ const createPupilOnboardingTemplates = async () => {
             stepName: 'Verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'Puzzle_00',
             achievedImage: '',
             actionName: 'E-Mail erneut senden',
@@ -709,7 +714,8 @@ const createPupilOnboardingTemplates = async () => {
             stepName: 'Kennenlerngespräch buchen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             image: 'Puzzle_01',
             achievedImage: '',
             actionName: 'Termin vereinbaren',
@@ -731,7 +737,8 @@ const createPupilOnboardingTemplates = async () => {
             stepName: 'Screening absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             image: 'Puzzle_02',
             achievedImage: '',
             actionName: 'Screening absolvieren',
@@ -752,7 +759,8 @@ const createPupilOnboardingTemplates = async () => {
             stepName: 'Onboarding abgeschlossen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Jetzt durchstarten',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
             image: 'Flugticket',
             achievedImage: '',
             condition: 'pupil_screened_events > 0',
@@ -1051,13 +1059,16 @@ const createStudentRegularLearningTemplate = async () => {
             stepName: '',
             type: achievement_type_enum.STREAK,
             subtitle: 'Nachhilfe mit {{matchpartner}}',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Hat_grey',
-            achievedImage: 'Hat_gold',
-            actionName: null,
+            description:
+                'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
+            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            actionName: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
+            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
                 student_match_learning_events: {
@@ -1081,13 +1092,16 @@ const createPupilRegularLearningTemplate = async () => {
             stepName: '',
             type: achievement_type_enum.STREAK,
             subtitle: 'Nachhilfe mit {{matchpartner}}',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Hat_grey',
-            achievedImage: 'Hat_gold',
-            actionName: null,
+            description:
+                'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
+            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            actionName: 'Noch {{progress}} Woche(n) bis zum neuen Rekord!',
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
+            progressDescription: 'Noch {{leftProgress}} Woche(n) bis zum neuen Rekord!',
+            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {
                 pupil_match_learning_events: {
