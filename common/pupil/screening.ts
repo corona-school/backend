@@ -13,7 +13,7 @@ interface PupilScreeningInput {
     invalidated?: boolean;
 }
 
-export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}) {
+export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}, silent = false) {
     if (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, invalidated: false } })) {
         throw new RedundantError(`There already is a valid pupil screening for pupil ${pupil.id}`);
     }
@@ -25,7 +25,10 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     }
 
     await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
-    await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+
+    if (!silent) {
+        await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+    }
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }
