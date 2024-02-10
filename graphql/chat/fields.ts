@@ -1,9 +1,9 @@
 import { Authorized, Field, FieldResolver, ObjectType, Resolver, Root } from 'type-graphql';
 import { isConversationReadOnly, shouldMarkChatAsReadonly } from '../../common/chat/deactivation';
 import { TJConversation } from '../../common/chat/types';
-import { Role } from '../roles';
 import { getConversation } from '../../common/chat';
 import { GraphQLJSON } from 'graphql-scalars';
+import { Role } from '../../common/user/roles';
 
 @ObjectType()
 export class Chat {

@@ -5,10 +5,10 @@ import basicAuth from 'basic-auth';
 import * as crypto from 'crypto';
 import { getUserForSession, GraphQLUser, loginAsUser, toPublicToken, UNAUTHENTICATED_USER } from './authentication';
 import { AuthenticationError } from 'apollo-server-errors';
-import { Role } from './roles';
 import { loginPassword } from '../common/secret';
 import { Request, Response } from 'express';
 import { attachSession, Session, startTransaction, Transaction } from '../common/session';
+import { Role } from '../common/user/roles';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
