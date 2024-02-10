@@ -8,6 +8,7 @@ import {
     StudentWhereInput,
     PupilWhereInput,
     Log,
+    Important_information,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
@@ -30,6 +31,7 @@ import { getAchievementById, getFurtherAchievements, getNextStepAchievements, ge
 import { Achievement } from '../types/achievement';
 import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
+import { deriveAchievements } from '../../common/achievement/derive';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -250,6 +252,12 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => [Important_information])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async importantInformations(@Ctx() context: GraphQLContext) {
+        return (await deriveAchievements(context.user)).importantInformations;
     }
 
     @FieldResolver((returns) => Boolean)
