@@ -169,7 +169,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
     async appointmentTrackJoin(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
