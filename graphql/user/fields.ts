@@ -10,6 +10,7 @@ import {
     Log,
     Push_subscription as PushSubscription,
     notification_channel_enum as NotificationChannelEnum,
+    Important_information,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { GraphQLContext } from '../context';
@@ -34,6 +35,7 @@ import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
+import { deriveAchievements } from '../../common/achievement/derive';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -290,6 +292,12 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => [Important_information])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async importantInformations(@Ctx() context: GraphQLContext) {
+        return (await deriveAchievements(context.user)).importantInformations;
     }
 
     @FieldResolver((returns) => Boolean)
