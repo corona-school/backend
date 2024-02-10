@@ -88,6 +88,7 @@ async function _evaluateAchievement(
     const evaluate = swan.parse(condition);
     const value = await evaluate(resultObject);
     if (typeof value !== 'boolean') {
+        logger.error(`Failed to evaluate achievement condition`, undefined, { condition, resultObject, value });
         throw new Error(`Achievement Condition did not evaluate to a boolean but ${value}`);
     }
 
