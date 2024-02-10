@@ -26,8 +26,8 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     description: string;
     @Field()
     subtitle: string;
-    @Field()
-    stepName: string;
+    @Field({ nullable: true })
+    stepName?: string;
     @Field()
     image: string;
 

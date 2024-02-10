@@ -268,7 +268,7 @@ export async function deactivateAchievementTemplate(id: number) {
 
     await prisma.achievement_template.update({
         where: { id },
-        data: { isActive: true },
+        data: { isActive: false },
     });
 
     purgeAchievementTemplateCache();

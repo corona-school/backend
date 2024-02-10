@@ -608,25 +608,28 @@ const createStudentOnboardingTemplates = async () => {
         condition: 'student_verified_events > 0',
         conditionDataAggregations: { student_verified_events: { metric: 'student_onboarding_verified', aggregator: 'count' } },
     });
-    await createTemplate({
-        name: 'Onboarding abschließen',
-        templateFor: 'Global',
-        group: 'student_onboarding',
-        groupOrder: 2,
-        stepName: 'Kennenlerngespräch buchen',
-        type: 'SEQUENTIAL',
-        subtitle: 'Jetzt durchstarten',
-        description: 'Dieser Text muss noch geliefert werden.',
-        image: 'Puzzle_01',
-        achievedImage: '',
-        actionName: 'Termin vereinbaren',
-        actionRedirectLink: 'https://calendly.com',
-        actionType: 'Action',
-        condition: 'student_appointment_booked_events > 0',
-        conditionDataAggregations: {
-            student_appointment_booked_events: { metric: 'student_onboarding_appointment_booked', aggregator: 'count' },
+    await createTemplate(
+        {
+            name: 'Onboarding abschließen',
+            templateFor: 'Global',
+            group: 'student_onboarding',
+            groupOrder: 2,
+            stepName: 'Kennenlerngespräch buchen',
+            type: 'SEQUENTIAL',
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_01',
+            achievedImage: '',
+            actionName: 'Termin vereinbaren',
+            actionRedirectLink: 'https://calendly.com',
+            actionType: 'Action',
+            condition: 'student_appointment_booked_events > 0',
+            conditionDataAggregations: {
+                student_appointment_booked_events: { metric: 'student_onboarding_appointment_booked', aggregator: 'count' },
+            },
         },
-    });
+        /* skipActivation: */ true
+    );
     await createTemplate({
         name: 'Onboarding abschließen',
         templateFor: 'Global',
@@ -697,25 +700,28 @@ const createPupilOnboardingTemplates = async () => {
         condition: 'pupil_verified_events > 0',
         conditionDataAggregations: { pupil_verified_events: { metric: 'pupil_onboarding_verified', aggregator: 'count' } },
     });
-    await createTemplate({
-        name: 'Onboarding abschließen',
-        templateFor: 'Global',
-        group: 'pupil_onboarding',
-        groupOrder: 2,
-        stepName: 'Kennenlerngespräch buchen',
-        type: 'SEQUENTIAL',
-        subtitle: 'Jetzt durchstarten',
-        description: 'Dieser Text muss noch geliefert werden.',
-        image: 'Puzzle_01',
-        achievedImage: '',
-        actionName: 'Termin vereinbaren',
-        actionRedirectLink: 'https://calendly.com',
-        actionType: 'Action',
-        condition: 'pupil_appointment_booked_events > 0',
-        conditionDataAggregations: {
-            pupil_appointment_booked_events: { metric: 'pupil_onboarding_appointment_booked', aggregator: 'count' },
+    await createTemplate(
+        {
+            name: 'Onboarding abschließen',
+            templateFor: 'Global',
+            group: 'pupil_onboarding',
+            groupOrder: 2,
+            stepName: 'Kennenlerngespräch buchen',
+            type: 'SEQUENTIAL',
+            subtitle: 'Jetzt durchstarten',
+            description: 'Dieser Text muss noch geliefert werden.',
+            image: 'Puzzle_01',
+            achievedImage: '',
+            actionName: 'Termin vereinbaren',
+            actionRedirectLink: 'https://calendly.com',
+            actionType: 'Action',
+            condition: 'pupil_appointment_booked_events > 0',
+            conditionDataAggregations: {
+                pupil_appointment_booked_events: { metric: 'pupil_onboarding_appointment_booked', aggregator: 'count' },
+            },
         },
-    });
+        /* skipActivation: */ true
+    );
     await createTemplate({
         name: 'Onboarding abschließen',
         templateFor: 'Global',
