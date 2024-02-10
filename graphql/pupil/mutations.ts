@@ -6,7 +6,7 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -158,7 +158,7 @@ export async function updatePupil(
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
-    if (email != undefined && !isElevated(context)) {
+    if (email != undefined && !isAdmin(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
@@ -242,7 +242,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
+    @Authorized(Role.PUPIL, Role.ADMIN, Role.SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);
@@ -274,7 +274,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTEE)
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.SCREENER)
     async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
 
