@@ -3,10 +3,12 @@ import 'reflect-metadata';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { ConditionDataAggregations, Metric } from './types';
-import { achievement_template as AchievementTemplate } from '@prisma/client';
+import { achievement_template as AchievementTemplate, achievement_type_enum } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import swan from '@onlabsorg/swan-js';
 import { isMetric } from './metrics';
+import { isAggregator } from './aggregator';
+import { isBucketCreator } from './bucket';
 
 const logger = getLogger('Achievement Template');
 
@@ -95,7 +97,8 @@ export async function getTemplatesByMetrics(metricsForAction: Metric[]) {
 
 export const getTemplate = (id: number) => prisma.achievement_template.findUniqueOrThrow({ where: { id } });
 export const getAllTemplates = () => prisma.achievement_template.findMany();
-export const getTemplateGroup = (group: string) => prisma.achievement_template.findMany({ where: { group }, orderBy: { groupOrder: 'asc' } });
+export const getActiveTemplateGroup = (group: string) =>
+    prisma.achievement_template.findMany({ where: { group, isActive: true }, orderBy: { groupOrder: 'asc' } });
 
 // ------------------- Achievement Template Create & Update -------------------
 
@@ -145,7 +148,7 @@ export async function updateAchievementTemplate(id: number, update: AchievementT
 // ------------------- Achievement Template Activation & Consistency -------------------
 
 export async function checkTemplateConsistencyBeforeActivating(template: AchievementTemplate): Promise<void | never> {
-    const group = await getTemplateGroup(template.group);
+    const group = await getActiveTemplateGroup(template.group);
     logger.info(`Checking AchievementTemplate(${template.id}) for consistency`, { template, group });
 
     // ---- Template Metadata -----
@@ -156,6 +159,10 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     const actionFields = [!!template.actionName, !!template.actionRedirectLink, !!template.actionType];
     if (actionFields.some((it) => it) && !actionFields.every((it) => it)) {
         throw new PrerequisiteError(`actionName, actionRedirectLink and actionType must either all be set or all empty`);
+    }
+
+    if ((template.type === achievement_type_enum.SEQUENTIAL) !== !!template.stepName) {
+        throw new PrerequisiteError(`stepName must be set for sequential achievements, and only for those`);
     }
 
     // ---- Template Logic --------
@@ -169,12 +176,37 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
             throw new PrerequisiteError(`Aggregation ${name} uses unknown metric ${aggregation.metric}`);
         }
 
-        // TODO: How to evaluate the aggregators?
+        if ((template.type === achievement_type_enum.TIERED) !== !!aggregation.valueToAchieve) {
+            throw new PrerequisiteError(`valueToAchieve must be set for aggregations of tiered achievements, and only for them`);
+        }
+
+        if (!isAggregator(aggregation.aggregator)) {
+            throw new PrerequisiteError(`Unknown aggregator ${aggregation.aggregator}`);
+        }
+
+        // Bucket Aggregation
+        if (aggregation.bucketAggregator && aggregation.createBuckets) {
+            if (!isAggregator(aggregation.bucketAggregator)) {
+                throw new PrerequisiteError(`Unknown bucket aggregator ${aggregation.aggregator}`);
+            }
+
+            if (!isBucketCreator(aggregation.createBuckets)) {
+                throw new PrerequisiteError(`Unknown bucket creator ${aggregation.createBuckets}`);
+            }
+        } else if (aggregation.bucketAggregator || aggregation.createBuckets) {
+            throw new PrerequisiteError(`Bucket Aggregator and Bucket Creator must either both be set or not`);
+        }
     }
 
-    // TODO: Does the template.type imply any prerequisities?
+    const availableContext = Object.fromEntries(aggregations.map((it) => [it, 0]));
+    if (template.type === achievement_type_enum.STREAK) {
+        // Streaks can additionally have a condition based on the current recordValue
+        availableContext.recordValue = 0;
+    }
 
-    const sampleResult = await swan.parse(template.condition)(Object.fromEntries(aggregations.map((it) => [it, 0])));
+    // Unfortunately Swan does not offer a way to find undefined variables.
+    // The following is a best effort try to detect wrong conditions:
+    const sampleResult = await swan.parse(template.condition)(availableContext);
     if (typeof sampleResult !== 'boolean') {
         throw new PrerequisiteError(
             `AchievementTemplate condition does not evaluate to a boolean - This could be as it references to non existent aggregations`
@@ -182,29 +214,21 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     }
 
     // ---- Template Group --------
-    // We generally assume that if one template is activated that the whole group is supposed to be activated
-    // Thus also inconsistencies of not yet enabled achievement templates might show up here (this is easier to check)
-
-    // Check that groupOrders are sequential without gaps and that they are activated in sequence
-    let currentOrder = 1;
-    for (const groupTemplate of group) {
-        if (groupTemplate.groupOrder !== currentOrder) {
-            throw new PrerequisiteError(`Inconsistency in groupOrder, must be sequential`);
+    for (const other of group) {
+        // Only contains already activated templates, so also not self
+        // Check that groupOrders define a total order (does not have to be sequential)
+        if (other.groupOrder === template.groupOrder) {
+            throw new PrerequisiteError(`Inconsistency in groupOrder, must define a total order`);
         }
 
-        if (currentOrder < template.groupOrder && !groupTemplate.isActive) {
-            throw new PrerequisiteError(`Templates of a sequence must be activated in order`);
+        // Check that type is set consistently for the whole group
+        if (other.type !== template.type) {
+            throw new PrerequisiteError(`Inconsistent type in achievement template group`);
         }
 
-        currentOrder += 1;
-    }
-
-    // Check that stepNames are set for a group with multiple steps
-    if (group.length > 1) {
-        for (const groupTemplate of group) {
-            if (!groupTemplate.stepName) {
-                throw new PrerequisiteError(`For templates of a sequence, every group template must have a stepName`);
-            }
+        // Check that template type is set consistently for the whole group
+        if (other.templateFor !== template.templateFor) {
+            throw new PrerequisiteError(`Inconsistent templateFor in achievement template group`);
         }
     }
 
@@ -231,7 +255,7 @@ export async function activateAchievementTemplate(id: number) {
 
 export async function deactivateAchievementTemplate(id: number) {
     const template = await getTemplate(id);
-    const group = await getTemplateGroup(template.group);
+    const group = await getActiveTemplateGroup(template.group);
 
     if (!template.isActive) {
         throw new RedundantError('Template is already inactive');
@@ -240,10 +264,6 @@ export async function deactivateAchievementTemplate(id: number) {
     const hasAchivements = (await prisma.user_achievement.count({ where: { templateId: id } })) > 0;
     if (hasAchivements) {
         throw new PrerequisiteError(`Cannot deactivate AchievementTemplate as it is already in use`);
-    }
-
-    if (group.length > 1 && group.some((other) => other.groupOrder > template.groupOrder && template.isActive)) {
-        throw new PrerequisiteError(`Cannot deactivate AchievementTemplate with groupOrder ${template.groupOrder} as a following template is still active`);
     }
 
     await prisma.achievement_template.update({
