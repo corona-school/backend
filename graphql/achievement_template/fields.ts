@@ -1,7 +1,7 @@
 import { Authorized, Query, Resolver } from 'type-graphql';
 import { Achievement_template as AchievementTemplate } from '../generated';
 import { getAllTemplates } from '../../common/achievement/template';
-import { Role } from '../roles';
+import { Role } from '../authorizations';
 
 @Resolver((of) => AchievementTemplate)
 export class AchievementTemplateFieldResolver {

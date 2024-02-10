@@ -1,6 +1,5 @@
 import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
 import { Achievement_template as AchievementTemplate, achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '../generated';
-import { Role } from '../roles';
 import { GraphQLInt } from 'graphql';
 import {
     AchievementTemplateCreate,
@@ -13,6 +12,7 @@ import {
 import { ensureNoNullObject } from '../util';
 import { ConditionDataAggregations } from '../../common/achievement/types';
 import { JSONResolver } from 'graphql-scalars';
+import { Role } from '../authorizations';
 
 @InputType()
 class AchievementTemplateCreateInput implements AchievementTemplateCreate {
