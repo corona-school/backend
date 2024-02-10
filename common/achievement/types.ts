@@ -3,6 +3,13 @@ import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 import { prisma } from '../prisma';
 
+// Reexport from Prisma with camelcase
+export {
+    achievement_type_enum as AchievementType,
+    achievement_action_type_enum as AchievementActionType,
+    achievement_template_for_enum as AchievementTemplateFor,
+} from '@prisma/client';
+
 // type ActionIDUnion<A extends ActionID[]> = A[number];
 // formula: FormulaFunction<ActionIDUnion<Metric['onActions']>>;
 

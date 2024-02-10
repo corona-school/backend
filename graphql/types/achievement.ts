@@ -1,7 +1,6 @@
 import { ObjectType, Field, Int, registerEnumType } from 'type-graphql';
 import { achievement_action_type_enum as GraphQLAchievementActionTypeEnum, achievement_type_enum as GraphQLAchievementTypeEnum } from '../generated';
-import { PublicAchievement, PublicStep, AchievementState } from '../../common/achievement/types';
-import { achievement_action_type_enum, achievement_type_enum } from '@prisma/client';
+import { PublicAchievement, PublicStep, AchievementState, AchievementType, AchievementActionType } from '../../common/achievement/types';
 
 registerEnumType(AchievementState, {
     name: 'achievement_state',
@@ -28,10 +27,10 @@ export class Achievement implements PublicAchievement {
     alternativeText: string;
 
     @Field(() => GraphQLAchievementActionTypeEnum, { nullable: true })
-    actionType?: achievement_action_type_enum | null;
+    actionType?: AchievementActionType | null;
 
     @Field(() => GraphQLAchievementTypeEnum)
-    achievementType: achievement_type_enum;
+    achievementType: AchievementType;
 
     @Field(() => AchievementState)
     achievementState: AchievementState;

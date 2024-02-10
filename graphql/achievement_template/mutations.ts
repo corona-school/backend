@@ -1,5 +1,5 @@
 import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
-import { Achievement_template as AchievementTemplate, achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '../generated';
+import { Achievement_template as AchievementTemplate } from '../generated';
 import { GraphQLInt } from 'graphql';
 import {
     AchievementTemplateCreate,
@@ -10,7 +10,7 @@ import {
     updateAchievementTemplate,
 } from '../../common/achievement/template';
 import { ensureNoNullObject } from '../util';
-import { ConditionDataAggregations } from '../../common/achievement/types';
+import { AchievementActionType, AchievementTemplateFor, AchievementType, ConditionDataAggregations } from '../../common/achievement/types';
 import { JSONResolver } from 'graphql-scalars';
 import { Role } from '../authorizations';
 
@@ -36,9 +36,9 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     @Field((type) => JSONResolver)
     conditionDataAggregations: ConditionDataAggregations;
     @Field()
-    type: achievement_type_enum;
+    type: AchievementType;
     @Field()
-    templateFor: achievement_template_for_enum;
+    templateFor: AchievementTemplateFor;
     @Field()
     group: string;
     @Field()
@@ -49,7 +49,7 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     @Field({ nullable: true })
     actionRedirectLink: string | null;
     @Field({ nullable: true })
-    actionType: achievement_action_type_enum | null;
+    actionType: AchievementActionType | null;
 }
 
 @InputType()
@@ -72,9 +72,9 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
     @Field((type) => JSONResolver, { nullable: true })
     conditionDataAggregations: ConditionDataAggregations | null;
     @Field({ nullable: true })
-    type: achievement_type_enum | null;
+    type: AchievementType | null;
     @Field({ nullable: true })
-    templateFor: achievement_template_for_enum | null;
+    templateFor: AchievementTemplateFor | null;
     @Field({ nullable: true })
     group: string | null;
     @Field({ nullable: true })
@@ -85,7 +85,7 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
     @Field({ nullable: true })
     actionRedirectLink: string | null;
     @Field({ nullable: true })
-    actionType: achievement_action_type_enum | null;
+    actionType: AchievementActionType | null;
 }
 
 @Resolver((of) => AchievementTemplate)

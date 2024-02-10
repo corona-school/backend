@@ -2,8 +2,8 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { ConditionDataAggregations, Metric } from './types';
-import { achievement_template as AchievementTemplate, achievement_type_enum } from '@prisma/client';
+import { AchievementType, ConditionDataAggregations, Metric } from './types';
+import { achievement_template as AchievementTemplate } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import swan from '@onlabsorg/swan-js';
 import { isMetric } from './metrics';
@@ -161,7 +161,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
         throw new PrerequisiteError(`actionName, actionRedirectLink and actionType must either all be set or all empty`);
     }
 
-    if ((template.type === achievement_type_enum.SEQUENTIAL) !== !!template.stepName) {
+    if ((template.type === AchievementType.SEQUENTIAL) !== !!template.stepName) {
         throw new PrerequisiteError(`stepName must be set for sequential achievements, and only for those`);
     }
 
@@ -176,7 +176,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
             throw new PrerequisiteError(`Aggregation ${name} uses unknown metric ${aggregation.metric}`);
         }
 
-        if ((template.type === achievement_type_enum.TIERED) !== !!aggregation.valueToAchieve) {
+        if ((template.type === AchievementType.TIERED) !== !!aggregation.valueToAchieve) {
             throw new PrerequisiteError(`valueToAchieve must be set for aggregations of tiered achievements, and only for them`);
         }
 
@@ -199,7 +199,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     }
 
     const availableContext = Object.fromEntries(aggregations.map((it) => [it, 0]));
-    if (template.type === achievement_type_enum.STREAK) {
+    if (template.type === AchievementType.STREAK) {
         // Streaks can additionally have a condition based on the current recordValue
         availableContext.recordValue = 0;
     }
