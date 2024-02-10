@@ -136,6 +136,14 @@ export async function getPupil(user: User): Promise<Pupil | never> {
     return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
 }
 
+export async function getScreener(user: User): Promise<Screener | never> {
+    if (!user.screenerId) {
+        throw new Error(`Expected User(${user.userID}) to be screener`);
+    }
+
+    return await prisma.screener.findUnique({ where: { id: user.screenerId } });
+}
+
 type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
 
 export async function queryUser<Select extends UserSelect>(user: User, select: Select) {

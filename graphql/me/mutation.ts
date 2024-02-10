@@ -11,7 +11,6 @@ import { becomeStatePupil, BecomeStatePupilData, becomeTutee, becomeParticipant,
 import '../types/enums';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
-import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
@@ -23,6 +22,7 @@ import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
 import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
+import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
 
 @InputType()
 class MeUpdateInput {
