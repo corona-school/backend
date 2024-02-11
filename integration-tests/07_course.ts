@@ -120,16 +120,17 @@ export const subcourseOne = test('Create Subcourse', async () => {
         subcourseCreate: { id: subcourseId },
     } = await client.request(`
         mutation CreateSubcourse {
-            subcourseCreate(courseId: ${courseId}, studentId: ${student.userID}, subcourse: {
+            subcourseCreate(courseId: ${courseId}, subcourse: {
                 minGrade: 5
                 maxGrade: 10
-                maxParticipants: 1
+                maxParticipants: 1 
                 joinAfterStart: true
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
                 groupChatType: ${ChatType.NORMAL}
-            }) { id }
-        }
+            })
+  		{id}
+  }
     `);
 
     const { subcoursesPublic } = await client.request(`
@@ -394,25 +395,23 @@ void test('Add / Remove another instructor', async () => {
 });
 
 void test('Find shared course', async () => {
-    const { client, instructor: instructor1 } = await screenedInstructorTwo;
-    const { instructor, courseId } = await subcourseOne;
+    const { courseId, client } = await subcourseOne;
 
     await client.request(`
         mutation MarkCourseShared {
-            courseMarkShared(
-                courseId: ${courseId},
-                shared: true
-        ) 
+            courseMarkShared(courseId: ${courseId}, shared: true){id}
         }
     `);
 
-    const { courseSearch: courseSearch } = await adminClient.request(`
-    query FindSharedCourses {
-        templateCourses(studentId: ${instructor1.student.id}) { id }
-    }
-`);
+    const { templateCourses } = await adminClient.request(`
+        query FindSharedCourses {
+            templateCourses(search: "", take: 1) {
+              id
+            }
+        }
+    `);
 
-    assert.ok(courseSearch.some((it) => it.id === courseId));
+    assert.ok(templateCourses.some((it) => it.id === courseId));
 });
 
 void test('Test template course search', async () => {
@@ -420,19 +419,18 @@ void test('Test template course search', async () => {
     const { instructor, courseId } = await subcourseOne;
 
     await prisma.course.update({ where: { id: courseId }, data: { shared: false } });
-
-    const { courseSearch: courseSearch } = await adminClient.request(`
+    const { templateCourses: courseSearch } = await adminClient.request(`
     query FindSharedCourses {
-        templateCourses(studentId: ${instructor1.student.id}) { id }
+        templateCourses(studentId: ${instructor1.student.id}, search: "", take: 10) { id }
     }
 `);
-
     assert.ok(courseSearch.every((it) => it.id != courseId));
 
-    const { courseSearch: courseSearch2 } = await adminClient.request(`
+    const { templateCourses: courseSearch2 } = await adminClient.request(`
     query FindSharedCourses {
-        templateCourses(studentId: ${instructor.student.id}) { id }
+        templateCourses(studentId: ${instructor.student.id}, search: "", take: 10) { id }
     }
 `);
+
     assert.ok(courseSearch2.some((it) => it.id === courseId));
 });

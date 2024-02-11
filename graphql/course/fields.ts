@@ -72,7 +72,7 @@ export class ExtendedFieldsCourseResolver {
         return (await prisma.course_instructors_student.count({ where: { courseId: course.id, studentId: student.id } })) > 0;
     }
 
-    @FieldResolver((returns) => [Course])
+    @Query((returns) => [Course])
     @Authorized(Role.ADMIN, Role.OWNER, Role.INSTRUCTOR)
     async templateCourses(
         @Arg('studentId', { nullable: true }) studentId: number,
@@ -104,7 +104,6 @@ export class ExtendedFieldsCourseResolver {
             take,
             skip,
         });
-
         return courses;
     }
 }
