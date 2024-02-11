@@ -48,12 +48,20 @@ export async function getUserForSession(sessionToken: string) {
 // As roles are only evaluated once per session, sometimes it makes sense to update sessions roles in-flight
 // so that clients directly see the new roles once the client updates (i.e. the user app caches it till a refresh happens)
 export async function updateSessionRolesOfUser(userID: string) {
+    const sessionsToUpdate: string[] = [];
     // This for sure is O(n) with the number of authenticated users - but as this is rather rare,
     // I guess there is no need yet to maintain a userID -> session bimap
     for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
         if (user.userID === userID) {
-            user.roles = await evaluateUserRoles(user);
+            sessionsToUpdate.push(sessionToken);
+        }
+    }
 
+    for (const sessionToken of sessionsToUpdate) {
+        const user = await userSessions.get(sessionToken);
+        if (user) {
+            // session might have been deleted in the meantime
+            user.roles = await evaluateUserRoles(user);
             // as keyv serializes entries, we need to explicitly set(...) to reflect the update:
             userSessions.set(sessionToken, user);
 
