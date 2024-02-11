@@ -32,9 +32,6 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         return !!instructor;
     },
     Lecture: async (user, lecture) => {
-        if (!user.studentId) {
-            return false;
-        }
         const isOrganizer = (await prisma.lecture.count({ where: { id: lecture.id, organizerIds: { has: user.userID } } })) > 0;
         return isOrganizer;
     },

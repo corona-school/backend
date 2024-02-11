@@ -22,6 +22,7 @@ import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { GraphQLInt } from 'graphql';
+import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracking';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -164,6 +165,17 @@ export class MutateAppointmentResolver {
     )
     async appointmentOverrideMeetingLink(@Arg('lectureWhere') lectureWhere: LectureWhereInput, @Arg('overrideLink') overrideLink: string) {
         await prisma.lecture.updateMany({ where: lectureWhere, data: { override_meeting_link: overrideLink.length === 0 ? null : overrideLink } });
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT)
+    async appointmentTrackJoin(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+
+        await trackUserJoinAppointmentMeeting(context.user, appointment);
+
         return true;
     }
 }
