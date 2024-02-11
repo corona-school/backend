@@ -53,6 +53,10 @@ export async function updateSessionRolesOfUser(userID: string) {
     for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
         if (user.userID === userID) {
             user.roles = await evaluateUserRoles(user);
+
+            // as keyv serializes entries, we need to explicitly set(...) to reflect the update:
+            userSessions.set(sessionToken, user);
+
             logger.info(`Updated Roles of Session(${sessionToken}) of User(${userID})`);
         }
     }
