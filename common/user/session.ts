@@ -63,7 +63,7 @@ export async function updateSessionRolesOfUser(userID: string) {
             // session might have been deleted in the meantime
             user.roles = await evaluateUserRoles(user);
             // as keyv serializes entries, we need to explicitly set(...) to reflect the update:
-            userSessions.set(sessionToken, user);
+            await userSessions.set(sessionToken, user);
 
             logger.info(`Updated Roles of Session(${sessionToken}) of User(${userID})`);
         }
