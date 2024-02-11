@@ -29,7 +29,7 @@ import { subcourse } from '@prisma/client';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
-export { Role } from './roles';
+export { Role } from './../common/user/roles';
 
 const authLogger = getLogger('GraphQL Authentication');
 

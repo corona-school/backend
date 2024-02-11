@@ -12,6 +12,7 @@ import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneCon
 import { getCourseImageURL } from '../../common/courses/util';
 import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
 import { PrerequisiteError } from '../../common/util/error';
+import systemMessages from '../../common/chat/localization';
 
 const logger = getLogger('MutateChatResolver');
 @Resolver()
@@ -27,7 +28,9 @@ export class MutateChatResolver {
         await hasAccess(context, 'Match', match);
 
         const conversationInfos: ConversationInfos = {
+            welcomeMessages: [systemMessages.de.oneOnOne],
             custom: {
+                createdBy: user.userID,
                 match: { matchId: match.id },
             },
         };
@@ -44,7 +47,10 @@ export class MutateChatResolver {
 
         const allowed = await isSubcourseParticipant([user.userID, memberUserId]);
         const conversationInfos: ConversationInfos = {
-            custom: {},
+            welcomeMessages: [systemMessages.de.oneOnOne],
+            custom: {
+                createdBy: user.userID,
+            },
         };
 
         if (subcourseId) {
@@ -61,6 +67,7 @@ export class MutateChatResolver {
     @Mutation(() => String)
     @AuthorizedDeferred(Role.OWNER)
     async subcourseGroupChatCreate(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('groupChatType') groupChatType: ChatType) {
+        const { user } = context;
         const subcourse = await prisma.subcourse.findUnique({
             where: { id: subcourseId },
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
@@ -75,6 +82,7 @@ export class MutateChatResolver {
                 start: subcourse.lecture[0].start.toISOString(),
                 groupType: groupChatType,
                 subcourse: [subcourseId],
+                createdBy: user.userID,
             },
         };
         const subcourseMembers = await getMembersForSubcourseGroupChat(subcourse);
@@ -92,7 +100,10 @@ export class MutateChatResolver {
         const instructorUser = await getUser(instructorUserId);
 
         const conversationInfos: ConversationInfos = {
-            custom: {},
+            welcomeMessages: [systemMessages.de.oneOnOne],
+            custom: {
+                createdBy: prospectUser.userID,
+            },
         };
 
         if (subcourseId) {
