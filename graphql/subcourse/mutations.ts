@@ -73,7 +73,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.INSTRUCTOR, Role.OWNER)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
