@@ -415,13 +415,13 @@ void test('Find shared course', async () => {
 });
 
 void test('Test template course search', async () => {
-    const { instructor: instructor1 } = await screenedInstructorTwo;
+    const { instructor: instructor2 } = await screenedInstructorTwo;
     const { instructor, courseId } = await subcourseOne;
 
     await prisma.course.update({ where: { id: courseId }, data: { shared: false } });
     const { templateCourses: courseSearch } = await adminClient.request(`
     query FindSharedCourses {
-        templateCourses(studentId: ${instructor1.student.id}, search: "", take: 10) { id }
+        templateCourses(studentId: ${instructor2.student.id}, search: "", take: 10) { id }
     }
 `);
     assert.ok(courseSearch.every((it) => it.id != courseId));
