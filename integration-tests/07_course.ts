@@ -403,7 +403,7 @@ void test('Find shared course', async () => {
         }
     `);
 
-    const { templateCourses } = await adminClient.request(`
+    const { templateCourses: templateCoursesEmptySearch } = await adminClient.request(`
         query FindSharedCourses {
             templateCourses(search: "", take: 1) {
               id
@@ -411,7 +411,20 @@ void test('Find shared course', async () => {
         }
     `);
 
-    assert.ok(templateCourses.some((it) => it.id === courseId));
+    assert.ok(templateCoursesEmptySearch.some((it) => it.id === courseId));
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId },
+    });
+
+    const { templateCourses: templateCoursesNonEmptySearch } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(search: "${course.name}", take: 1) {
+          id
+        }
+    }
+`);
+    assert.ok(templateCoursesNonEmptySearch.some((it) => it.id === courseId));
 });
 
 void test('Test template course search', async () => {
