@@ -73,7 +73,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.INSTRUCTOR, Role.OWNER)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -83,7 +83,6 @@ export class MutateSubcourseResolver {
         const course = await getCourse(courseId);
         const student = await getSessionStudent(context, studentId);
 
-        await hasAccess(context, 'Course', course);
         const courseInstructorAssociation = await prisma.course_instructors_student.findFirst({
             where: {
                 courseId: courseId,
