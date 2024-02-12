@@ -3,39 +3,19 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-enum LectureBucketMeasuringType {
-    start = 'start',
-    participation = 'participation',
-}
-
-function filterLectureData<T extends ContextMatch | ContextSubcourse>(data: T) {
-    data.lecture.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const filteredLectures: ContextLecture[] = data.lecture.filter((lecture, index, array) => {
-        if (index === 0) {
-            return true;
-        }
-        const previousEndTime = new Date(array[index - 1].start.getTime() + array[index - 1].duration * 60000);
-        return lecture.start >= previousEndTime;
-    });
-    return filteredLectures;
-}
-
-function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T, measuringType: LectureBucketMeasuringType): TimeBucket[] {
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }
-    const filteredLectures = filterLectureData(data);
 
-    const buckets: TimeBucket[] = filteredLectures.map((lecture) => ({
-        kind: 'time',
-        relation: data.relation,
-        // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
-        startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
-        endTime:
-            measuringType === LectureBucketMeasuringType.start
-                ? moment(lecture.start).add(5, 'minutes').toDate()
-                : moment(lecture.start).add(lecture.duration, 'minutes').add(5, 'minutes').toDate(),
-    }));
+    const buckets: TimeBucket[] = data.lecture
+        .sort((a, b) => a.start.getTime() - b.start.getTime())
+        .map((lecture) => ({
+            kind: 'time',
+            relation: data.relation,
+            startTime: lecture.start,
+            endTime: moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
+        }));
     return buckets;
 }
 
@@ -51,12 +31,8 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const { context } = bucketContext;
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            const matchBuckets = context.match
-                .map((match) => createLectureBuckets(match, LectureBucketMeasuringType.start))
-                .reduce((acc, val) => acc.concat(val), []);
-            const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.start))
-                .reduce((acc, val) => acc.concat(val), []);
+            const matchBuckets = context.match.map((match) => createLectureBuckets(match)).reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse.map((subcourse) => createLectureBuckets(subcourse)).reduce((acc, val) => acc.concat(val), []);
             const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
@@ -64,12 +40,8 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
     by_lecture_participation: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-            const matchBuckets = context.match
-                .map((match) => createLectureBuckets(match, LectureBucketMeasuringType.participation))
-                .reduce((acc, val) => acc.concat(val), []);
-            const subcourseBuckets = context.subcourse
-                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.participation))
-                .reduce((acc, val) => acc.concat(val), []);
+            const matchBuckets = context.match.map((match) => createLectureBuckets(match)).reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse.map((subcourse) => createLectureBuckets(subcourse)).reduce((acc, val) => acc.concat(val), []);
             const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
