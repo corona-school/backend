@@ -123,7 +123,7 @@ export const subcourseOne = test('Create Subcourse', async () => {
             subcourseCreate(courseId: ${courseId}, subcourse: {
                 minGrade: 5
                 maxGrade: 10
-                maxParticipants: 1 
+                maxParticipants: 1
                 joinAfterStart: true
                 allowChatContactProspects: true
                 allowChatContactParticipants: true
