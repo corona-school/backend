@@ -104,10 +104,10 @@ const getUserAchievements = async (user: User): Promise<Achievement[]> => {
     const userAchievements = await getUserAchievementsWithTemplates(user);
     const userAchievementGroups: { [group: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
-        if (!userAchievementGroups[ua.template.group]) {
-            userAchievementGroups[ua.template.group] = [];
+        if (!userAchievementGroups[`${ua.template.group}/${ua.relation}`]) {
+            userAchievementGroups[`${ua.template.group}/${ua.relation}`] = [];
         }
-        userAchievementGroups[ua.template.group].push(ua);
+        userAchievementGroups[`${ua.template.group}/${ua.relation}`].push(ua);
     });
     const achievements: Achievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
