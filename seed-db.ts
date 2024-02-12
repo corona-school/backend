@@ -1294,7 +1294,7 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            templateFor: achievement_template_for_enum.Global,
+            templateFor: achievement_template_for_enum.Match,
             group: 'pupil_match_regular_learning',
             groupOrder: 1,
             stepName: '',
@@ -1327,7 +1327,7 @@ void (async function setupDevDB() {
     await prisma.achievement_template.create({
         data: {
             name: 'Regelmäßiges Lernen',
-            templateFor: achievement_template_for_enum.Global,
+            templateFor: achievement_template_for_enum.Match,
             group: 'student_match_regular_learning',
             groupOrder: 1,
             stepName: '',
