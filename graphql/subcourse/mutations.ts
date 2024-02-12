@@ -385,30 +385,4 @@ export class MutateSubcourseResolver {
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
         return true;
     }
-
-    @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseMeetingJoin(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number) {
-        const { user } = context;
-        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true, lecture: true } });
-        await hasAccess(context, 'Subcourse', subcourse);
-
-        if (user.studentId) {
-            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
-            await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
-                relation: `subcourse/${subcourseId}`,
-                subcourseLecturesCount: lecturesCount.toString(),
-            });
-            await Notification.actionTaken(user, 'student_presence_in_meeting', {});
-        } else if (user.pupilId) {
-            const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
-            await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
-                relation: `subcourse/${subcourseId}`,
-                subcourseLecturesCount: lecturesCount.toString(),
-            });
-            await Notification.actionTaken(user, 'pupil_presence_in_meeting', {});
-        }
-
-        return true;
-    }
 }

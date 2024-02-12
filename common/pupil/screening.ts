@@ -5,6 +5,7 @@ import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { NotFoundError } from '@prisma/client/runtime';
 import { userForPupil } from '../user';
+import { updateSessionRolesOfUser } from '../user/session';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
@@ -13,7 +14,7 @@ interface PupilScreeningInput {
     invalidated?: boolean;
 }
 
-export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}) {
+export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}, silent = false) {
     if (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, invalidated: false } })) {
         throw new RedundantError(`There already is a valid pupil screening for pupil ${pupil.id}`);
     }
@@ -25,7 +26,10 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     }
 
     await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
-    await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+
+    if (!silent) {
+        await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+    }
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }
@@ -55,16 +59,18 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
         return;
     }
 
+    const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_rejected', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
             break;
         case PupilScreeningStatus.success:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_succeeded', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+            await updateSessionRolesOfUser(asUser.userID);
             break;
 
         case PupilScreeningStatus.dispute:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_dispute', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_dispute', {});
             break;
 
         case PupilScreeningStatus.pending:

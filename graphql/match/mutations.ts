@@ -92,26 +92,4 @@ export class MutateMatchResolver {
         }
         throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
     }
-
-    @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async matchMeetingJoin(@Ctx() context: GraphQLContext, @Arg('matchId') matchId: number) {
-        const { user } = context;
-        const match = await prisma.match.findUnique({ where: { id: matchId }, include: { pupil: true, student: true } });
-        await hasAccess(context, 'Match', match);
-
-        if (user.studentId) {
-            await Notification.actionTaken(user, 'student_joined_match_meeting', {
-                relation: `match/${matchId}`,
-            });
-            await Notification.actionTaken(user, 'student_presence_in_meeting', {});
-        } else if (user.pupilId) {
-            await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
-                relation: `match/${matchId}`,
-            });
-            await Notification.actionTaken(user, 'pupil_presence_in_meeting', {});
-        }
-
-        return true;
-    }
 }
