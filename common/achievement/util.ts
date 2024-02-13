@@ -121,6 +121,9 @@ export function transformPrismaJson(user: User, relation: string | null, json: P
         transformedJson[`${relationType}Id`] = relationId;
         transformedJson['relation'] = relation;
     }
+    if (!json) {
+        return transformedJson;
+    }
     const keys = Object.keys(json) || [];
     keys.forEach((key) => {
         transformedJson[key] = json[key];

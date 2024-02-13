@@ -33,7 +33,7 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
         template.templateFor === achievement_template_for_enum.Global_Matches;
     const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : undefined);
     if (!existingUserAchievement) {
-        return await createAchievement(template, userId, !isGlobal ? context : Prisma.JsonNull);
+        return await createAchievement(template, userId, !isGlobal ? context : undefined);
     }
     return existingUserAchievement;
 }
@@ -53,7 +53,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
                 group: currentTemplate.group,
             },
             userId,
-            relation: context.relation || null,
+            relation: context?.relation || null,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
@@ -88,7 +88,7 @@ async function createNextUserAchievement<ID extends ActionID>(
             data: {
                 userId: userId,
                 // This ensures that the relation will set to null even if context.relation is an empty string
-                relation: context.relation || null,
+                relation: context?.relation || null,
                 context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
