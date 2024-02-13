@@ -3,7 +3,12 @@ import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextM
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
-function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T): TimeBucket[] {
+enum LectureBucketMeasuringType {
+    start = 'start',
+    participation = 'participation',
+}
+
+function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T, measuringType: LectureBucketMeasuringType): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }
@@ -13,8 +18,12 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
         .map((lecture) => ({
             kind: 'time',
             relation: data.relation,
-            startTime: lecture.start,
-            endTime: moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
+            startTime:
+                measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
+            endTime:
+                measuringType === LectureBucketMeasuringType.start
+                    ? moment(lecture.start).add(5, 'minutes').toDate()
+                    : moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
         }));
     return buckets;
 }
@@ -31,18 +40,26 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const { context } = bucketContext;
             // the context.type is a discriminator to define what relationType is used for the bucket (match, subcourse, global_match, global_subcourse)
             // using the context key context[context.type] is equivalent for using a variable key like context.match etc..., meaining that this forEach is iterating over an array of matches/subcourses
-            const matchBuckets = context.match.map((match) => createLectureBuckets(match)).reduce((acc, val) => acc.concat(val), []);
-            const subcourseBuckets = context.subcourse.map((subcourse) => createLectureBuckets(subcourse)).reduce((acc, val) => acc.concat(val), []);
-            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+            const matchBuckets = context.match
+                .map((match) => createLectureBuckets(match, LectureBucketMeasuringType.start))
+                .reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse
+                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.start))
+                .reduce((acc, val) => acc.concat(val), []);
+            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
     },
     by_lecture_participation: {
         function: (bucketContext): GenericBucketConfig<TimeBucket> => {
             const { context } = bucketContext;
-            const matchBuckets = context.match.map((match) => createLectureBuckets(match)).reduce((acc, val) => acc.concat(val), []);
-            const subcourseBuckets = context.subcourse.map((subcourse) => createLectureBuckets(subcourse)).reduce((acc, val) => acc.concat(val), []);
-            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+            const matchBuckets = context.match
+                .map((match) => createLectureBuckets(match, LectureBucketMeasuringType.participation))
+                .reduce((acc, val) => acc.concat(val), []);
+            const subcourseBuckets = context.subcourse
+                .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.participation))
+                .reduce((acc, val) => acc.concat(val), []);
+            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
     },
