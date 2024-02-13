@@ -33,7 +33,7 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
         template.templateFor === achievement_template_for_enum.Global_Matches;
     const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : undefined);
     if (!existingUserAchievement) {
-        return await createAchievement(template, userId, !isGlobal ? context : undefined);
+        return await createAchievement(template, userId, !isGlobal ? context : Prisma.JsonNull);
     }
     return existingUserAchievement;
 }
