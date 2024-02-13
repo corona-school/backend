@@ -15,6 +15,7 @@ import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { deleteAchievementsForParticipants } from '../achievement/delete';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -279,6 +280,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
 
     const pupilUser = userForPupil(pupil);
     await removeGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
+    await deleteAchievementsForParticipants(subcourse.id, [pupilUser.userID]);
 
     if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Pupil is not a participant`);

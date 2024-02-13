@@ -10,7 +10,10 @@ const logger = getLogger('Appointment Tracking');
 // joins an appointment meeting
 export async function trackUserJoinAppointmentMeeting(user: User, appointment: Appointment) {
     if (appointment.subcourseId) {
-        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { lecture: true } });
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({
+            where: { id: appointment.subcourseId },
+            include: { lecture: { where: { start: { gte: new Date('Tue Feb 13 2024 13:36:52 GMT+0100') } } } },
+        });
         if (user.studentId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
             await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {

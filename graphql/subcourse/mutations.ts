@@ -208,7 +208,6 @@ export class MutateSubcourseResolver {
         @Arg('pupilId', { nullable: true }) pupilId?: number
     ): Promise<boolean> {
         const pupil = await getSessionPupil(context, pupilId);
-        const user = userForPupil(pupil);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId})`);
