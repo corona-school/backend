@@ -29,12 +29,11 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
     const buckets: TimeBucket[] = filteredLectures.map((lecture) => ({
         kind: 'time',
         relation: data.relation,
-        // TODO: maybe it's possible to pass the 10 minutes as a parameter to the bucketCreatorDefs
-        startTime: moment(lecture.start).subtract(10, 'minutes').toDate(),
+        startTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
         endTime:
             measuringType === LectureBucketMeasuringType.start
                 ? moment(lecture.start).add(5, 'minutes').toDate()
-                : moment(lecture.start).add(lecture.duration, 'minutes').add(5, 'minutes').toDate(),
+                : moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
     }));
     return buckets;
 }
