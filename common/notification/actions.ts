@@ -676,6 +676,7 @@ const _notificationActions = {
         description: 'Student joined a match meeting',
         sampleContext: {
             relation: 'match/1',
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
         },
     },
     student_joined_subcourse_meeting: {
@@ -683,6 +684,7 @@ const _notificationActions = {
         sampleContext: {
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
         },
     },
     student_presence_in_meeting: {
@@ -693,6 +695,7 @@ const _notificationActions = {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             relation: 'match/1',
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
         },
     },
     pupil_joined_subcourse_meeting: {
@@ -700,6 +703,7 @@ const _notificationActions = {
         sampleContext: {
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
         },
     },
     pupil_presence_in_meeting: {
