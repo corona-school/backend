@@ -93,11 +93,19 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
         return false;
     }
 
+    const lectureStart = event.context['lectureStart'] ? new Date(event.context['lectureStart']) : undefined;
+
     for (const metric of metricsForEvent) {
         const formula = metric.formula;
         const value = formula(event.context);
 
-        logger.info('track event', { metric: metric.metricName, action: event.actionId, value, relation: event.context.relation ?? '', createdAt: event.at });
+        logger.info('track event', {
+            metric: metric.metricName,
+            action: event.actionId,
+            value,
+            relation: event.context.relation ?? '',
+            createdAt: lectureStart || event.at,
+        });
         await prisma.achievement_event.create({
             data: {
                 metric: metric.metricName,

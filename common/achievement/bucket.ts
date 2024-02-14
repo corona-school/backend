@@ -8,33 +8,23 @@ enum LectureBucketMeasuringType {
     participation = 'participation',
 }
 
-function filterLectureData<T extends ContextMatch | ContextSubcourse>(data: T) {
-    data.lecture.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const filteredLectures: ContextLecture[] = data.lecture.filter((lecture, index, array) => {
-        if (index === 0) {
-            return true;
-        }
-        const previousEndTime = new Date(array[index - 1].start.getTime() + array[index - 1].duration * 60000);
-        return lecture.start >= previousEndTime;
-    });
-    return filteredLectures;
-}
-
 function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T, measuringType: LectureBucketMeasuringType): TimeBucket[] {
     if (!data.lecture || data.lecture.length === 0) {
         return [];
     }
-    const filteredLectures = filterLectureData(data);
 
-    const buckets: TimeBucket[] = filteredLectures.map((lecture) => ({
-        kind: 'time',
-        relation: data.relation,
-        startTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
-        endTime:
-            measuringType === LectureBucketMeasuringType.start
-                ? moment(lecture.start).add(5, 'minutes').toDate()
-                : moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
-    }));
+    const buckets: TimeBucket[] = data.lecture
+        .sort((a, b) => a.start.getTime() - b.start.getTime())
+        .map((lecture) => ({
+            kind: 'time',
+            relation: data.relation,
+            startTime:
+                measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
+            endTime:
+                measuringType === LectureBucketMeasuringType.start
+                    ? moment(lecture.start).add(5, 'minutes').toDate()
+                    : moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
+        }));
     return buckets;
 }
 
@@ -56,7 +46,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.start))
                 .reduce((acc, val) => acc.concat(val), []);
-            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
     },
@@ -69,7 +59,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.participation))
                 .reduce((acc, val) => acc.concat(val), []);
-            const buckets = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
+            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
             return { bucketKind: 'time', buckets: buckets };
         },
     },

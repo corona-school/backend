@@ -16,12 +16,14 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
             await Notification.actionTaken(user, 'student_joined_subcourse_meeting', {
                 relation: `subcourse/${subcourse.id}`,
                 subcourseLecturesCount: lecturesCount.toString(),
+                lectureStart: appointment.start.toISOString(),
             });
         } else if (user.pupilId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
             await Notification.actionTaken(user, 'pupil_joined_subcourse_meeting', {
                 relation: `subcourse/${subcourse.id}`,
                 subcourseLecturesCount: lecturesCount.toString(),
+                lectureStart: appointment.start.toISOString(),
             });
         }
 
@@ -30,10 +32,12 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
         if (user.studentId) {
             await Notification.actionTaken(user, 'student_joined_match_meeting', {
                 relation: `match/${appointment.matchId}`,
+                lectureStart: appointment.start.toISOString(),
             });
         } else if (user.pupilId) {
             await Notification.actionTaken(user, 'pupil_joined_match_meeting', {
                 relation: `match/${appointment.matchId}`,
+                lectureStart: appointment.start.toISOString(),
             });
         }
 
