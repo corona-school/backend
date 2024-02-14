@@ -33,13 +33,13 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
         template.templateFor === achievement_template_for_enum.Global_Matches;
     const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : undefined);
     if (!existingUserAchievement) {
-        return await createAchievement(template, userId, context);
+        return await createAchievement(template, userId, !isGlobal ? context : undefined);
     }
     return existingUserAchievement;
 }
 
 const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
-async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
+async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     if (!templatesByGroup.has(currentTemplate.group)) {
         return null;
@@ -53,7 +53,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
                 group: currentTemplate.group,
             },
             userId,
-            relation: context.relation,
+            relation: context?.relation || null,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
@@ -72,7 +72,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     templatesForGroup: achievement_template[],
     nextStepIndex: number,
     userId: string,
-    context: SpecificNotificationContext<ID>
+    context?: SpecificNotificationContext<ID>
 ) {
     if (templatesForGroup.length <= nextStepIndex) {
         return null;
@@ -88,7 +88,7 @@ async function createNextUserAchievement<ID extends ActionID>(
             data: {
                 userId: userId,
                 // This ensures that the relation will set to null even if context.relation is an empty string
-                relation: context.relation || null,
+                relation: context?.relation || null,
                 context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
