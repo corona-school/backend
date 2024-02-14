@@ -15,7 +15,7 @@ export async function updateAppointment(
     appointment: Appointment,
     appointmentUpdate: Partial<Pick<Appointment, 'description' | 'duration' | 'start' | 'title'>>
 ) {
-    const { id, start, duration, appointmentType } = appointment;
+    const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link } = appointment;
     const { duration: newDuration, start: newStart } = appointmentUpdate;
 
     const currentDate = moment();
@@ -104,7 +104,9 @@ export async function updateAppointment(
         endDate: lastDate,
     };
 
-    await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
+    if (!override_meeting_link && zoomMeetingId) {
+        await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
+    }
 
     logger.info(`Participants of Appointment(${id}) were notified of the appointment change`);
 }
