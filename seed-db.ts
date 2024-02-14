@@ -951,7 +951,7 @@ void (async function setupDevDB() {
             description: 'Dieser Text muss noch geliefert werden.',
             image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
             achievedImage: null,
-            actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
+            actionName: 'Ersten Termin Absolvieren',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Action,
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
@@ -1127,7 +1127,7 @@ void (async function setupDevDB() {
             description: 'Dieser Text muss noch geliefert werden.',
             image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
             achievedImage: null,
-            actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
+            actionName: 'Ersten Termin Absolvieren',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Action,
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
@@ -1220,7 +1220,7 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
             condition: 'pupil_match_appointments_count > 9',
             conditionDataAggregations: {
-                student_conducted_match_appointments: {
+                pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
                     createBuckets: 'by_lecture_start',
@@ -1310,7 +1310,7 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Rekord gebrochen.',
             progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
-            condition: 'pupil_match_learning_events > recordValue',
+            condition: 'pupil_match_learning_events >= recordValue',
             conditionDataAggregations: {
                 pupil_match_learning_events: {
                     metric: 'pupil_match_learned_regular',
@@ -1343,7 +1343,7 @@ void (async function setupDevDB() {
             achievedText: 'Juhu! Rekord gebrochen.',
             progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
-            condition: 'student_match_learning_events > recordValue',
+            condition: 'student_match_learning_events >= recordValue',
             conditionDataAggregations: {
                 student_match_learning_events: {
                     metric: 'student_match_learned_regular',
@@ -1481,7 +1481,7 @@ void (async function setupDevDB() {
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
             progressDescription: 'Noch {{eventsToBeatStreak}} Termin(e) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Terminen in Folge anwesend!',
-            condition: 'student_presence_events > recordValue',
+            condition: 'student_presence_events >= recordValue',
             conditionDataAggregations: {
                 student_presence_events: {
                     metric: 'student_participation_streak',
@@ -1514,7 +1514,7 @@ void (async function setupDevDB() {
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
             progressDescription: 'Noch <strong>{{eventsToBeatStreak}} Termin(e)</strong> bis zum neuen Rekord!',
             streakProgress: 'Du warst bei <strong>{{progress}} Termin(en)</strong> in Folge anwesend!',
-            condition: 'pupil_presence_events > recordValue',
+            condition: 'pupil_presence_events >= recordValue',
             conditionDataAggregations: {
                 pupil_presence_events: {
                     metric: 'pupil_participation_streak',

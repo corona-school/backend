@@ -9,7 +9,7 @@ import { transformEventContextToUserAchievementContext } from './util';
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
@@ -31,15 +31,15 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
         template.templateFor === achievement_template_for_enum.Global ||
         template.templateFor === achievement_template_for_enum.Global_Courses ||
         template.templateFor === achievement_template_for_enum.Global_Matches;
-    const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : undefined);
+    const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : Prisma.JsonNull);
     if (!existingUserAchievement) {
-        return await createAchievement(template, userId, !isGlobal ? context : undefined);
+        return await createAchievement(template, userId, !isGlobal ? context : Prisma.JsonNull);
     }
     return existingUserAchievement;
 }
 
 const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
-async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
+async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     if (!templatesByGroup.has(currentTemplate.group)) {
         return null;
@@ -53,7 +53,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
                 group: currentTemplate.group,
             },
             userId,
-            relation: context?.relation || null,
+            relation: context?.relation,
         },
         orderBy: { template: { groupOrder: 'asc' } },
     });
@@ -72,7 +72,7 @@ async function createNextUserAchievement<ID extends ActionID>(
     templatesForGroup: achievement_template[],
     nextStepIndex: number,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ) {
     if (templatesForGroup.length <= nextStepIndex) {
         return null;

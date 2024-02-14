@@ -183,3 +183,11 @@ export function transformEventContextToUserAchievementContext<T extends ActionID
     delete uaCtx.relation;
     return uaCtx;
 }
+
+export function checkIfAchievementIsGlobal(template: achievement_template) {
+    return (
+        template.templateFor === achievement_template_for_enum.Global ||
+        template.templateFor === achievement_template_for_enum.Global_Courses ||
+        template.templateFor === achievement_template_for_enum.Global_Matches
+    );
+}
