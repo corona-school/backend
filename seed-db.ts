@@ -1299,7 +1299,7 @@ void (async function setupDevDB() {
             groupOrder: 1,
             stepName: '',
             type: achievement_type_enum.STREAK,
-            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            subtitle: 'Nachhilfe mit {{name}}',
             description:
                 'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
@@ -1332,7 +1332,7 @@ void (async function setupDevDB() {
             groupOrder: 1,
             stepName: '',
             type: achievement_type_enum.STREAK,
-            subtitle: 'Nachhilfe mit {{matchpartner}}',
+            subtitle: 'Nachhilfe mit {{name}}',
             description:
                 'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
@@ -1366,7 +1366,8 @@ void (async function setupDevDB() {
             stepName: 'Kurs entwerfen',
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: 'Vermittle Wissen',
-            description: 'Dieser Text muss noch geliefert werden.',
+            description:
+                'Wir freuen uns, wenn du einen Kurs auf unserer Plattform anbieten möchtest! Im Hilfestellungsbereich findest du unsere informativen Schulungs- und Erklärvideos, die dir den Einstieg erleichtern. Falls du Unterstützung benötigst, kannst du dort gerne einen Beratungstermin mit unserem pädagogischen Team buchen. Wir stehen bereit, um dich bei der Konzeption deines Kurses zu unterstützen und dir wertvolle Tipps zu geben. Dein Engagement bedeutet uns viel – wir können es kaum erwarten, gemeinsam mit dir neue Kurse zu entwefen und die Plattform zu bereichern!',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: null,
             actionName: 'Kurs anlegen',
@@ -1392,7 +1393,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: '{{courseName}}',
             description:
-                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+                'Hurra, du hast den Kurs {{course.name}} erfolgreich erstellt. Damit er auf unserer Plattform veröffentlicht werden kann, musst du den Kurs zunächst zur Prüfung freigeben. Wir prüfen deinen Kurs dann innerhalb weniger Tage und veröffentlichen ihn dann automatisch für alle Schüler:innen.',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: null,
             actionName: 'Kurs freigeben',
@@ -1418,7 +1419,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: '{{courseName}}',
             description:
-                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+                'Dein Kurs {{course.name}} wird derzeit von unserem Team überprüft. Wir können es kaum erwarten, ihn für alle Schüler:innen zur Anmeldung freizuschalten und damit das Wissensangebot für unsere Lerncommunity zu erweitern. Wir melden uns umgehend bei dir sobald dein Kurs online ist! ',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: null,
             actionName: 'Kurs in Prüfung',
@@ -1444,7 +1445,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.SEQUENTIAL,
             subtitle: '{{courseName}}',
             description:
-                'Dieser Text muss noch geliefert werden! Wie cool, dass du dich ehrenamtlich engagieren möchtest, indem du Schüler:innen durch Nachhilfeunterricht unterstützt. Um mit der Lernunterstützung zu starten sind mehrere Aktionen nötig. Schließe jetzt den nächsten Schritt ab und komme dem Ziel einer neuen Lernunterstüzung ein Stück näher.',
+                'Juhu! Dein Kurs {{course.name}} ist veröffentlicht! Wir haben direkt nach der Freischaltung passende Schüler:innen auf deinen Kurs aufmerksam gemacht und rühren nun die Werbetrommel in unserer Community. Du kannst die Anmeldungen zu deinem Kurs jederzeit einsehen und live verfolgen, wie sich die Lernbegeisterten einschreiben. Vielen Dank für deinen wertvollen Beitrag zu unserer Lernplattform!',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: null,
             actionName: null,
@@ -1472,7 +1473,7 @@ void (async function setupDevDB() {
             type: achievement_type_enum.STREAK,
             subtitle: null,
             description:
-                'Du warst bei {{progress}} Termin(en) in Folge dabei!<br><br>Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
+                'Du warst bei {{num}} Termine(n) in Folge dabei!<br><br>Behalte diesen großartigen Trend bei und steigere ihn noch weiter. Jedes Mal, wenn du zu einem Termin erscheinst, steigt deine Teilnahme-Serie. Deine konstante Ausdauer könnte dich bis zum Teilnahme-Marathon führen. Mach weiter so, du bist auf dem besten Weg zum Erfolg!',
             image: 'gamification/achievements/tmp/streaks/presence_set.png',
             achievedImage: 'gamification/achievements/tmp/streaks/presence_achieved.png',
             actionName: null,
