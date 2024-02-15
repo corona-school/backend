@@ -1068,7 +1068,7 @@ const createStudentRegularLearningTemplate = async () => {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
@@ -1101,7 +1101,7 @@ const createPupilRegularLearningTemplate = async () => {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {

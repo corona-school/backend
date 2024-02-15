@@ -1308,7 +1308,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events >= recordValue',
             conditionDataAggregations: {
@@ -1337,11 +1337,11 @@ void (async function setupDevDB() {
                 'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
             achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
-            actionName: 'Noch {{progress}} Woche(n) bis zum neuen Rekord!',
+            actionName: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events >= recordValue',
             conditionDataAggregations: {
@@ -1480,7 +1480,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Termin(e) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Termin(e) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Terminen in Folge anwesend!',
             condition: 'student_presence_events >= recordValue',
             conditionDataAggregations: {
@@ -1513,7 +1513,7 @@ void (async function setupDevDB() {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Hurra, du erhöhst deinen Rekord weiter!',
-            progressDescription: 'Noch <strong>{{eventsToBeatStreak}} Termin(e)</strong> bis zum neuen Rekord!',
+            progressDescription: 'Noch <strong>{{remainingProgress}} Termin(e)</strong> bis zum neuen Rekord!',
             streakProgress: 'Du warst bei <strong>{{progress}} Termin(en)</strong> in Folge anwesend!',
             condition: 'pupil_presence_events >= recordValue',
             conditionDataAggregations: {
