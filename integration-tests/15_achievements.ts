@@ -278,7 +278,7 @@ void test('Reward student regular learning', async () => {
             value: 1,
             createdAt: date,
             action: 'student_joined_match_meeting',
-            relation: '',
+            relation: 'match/' + match.id,
         },
     });
     // request to set the achievements record value to 2 due to the past event generated
@@ -369,7 +369,7 @@ void test('Reward pupil regular learning', async () => {
             value: 1,
             createdAt: date,
             action: 'pupil_joined_match_meeting',
-            relation: '',
+            relation: 'match/' + match.id,
         },
     });
     // request to set the achievements record value to 2 due to the past event generated
@@ -569,6 +569,7 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
                 },
                 select: {
                     id: true,
+                    start: true,
                 },
             });
         })
