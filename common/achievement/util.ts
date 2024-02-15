@@ -8,9 +8,8 @@ import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType, ExtendedAchievementContextType } from './types';
+import { RelationTypes, AchievementContextType, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
-import { getTemplatesWithRelation } from './template';
 import { getCourseImageURL } from '../courses/util';
 
 const logger = getLogger('Achievement');
@@ -22,9 +21,8 @@ export function getAchievementImageKey(imageKey: string) {
 }
 
 export async function getAchievementImageURL(template: achievement_template, state?: achievement_state, relation?: string) {
-    const templatesWithCourseRelation = await getTemplatesWithRelation(achievement_template_for_enum.Course);
     const { image, achievedImage } = template;
-    if (templatesWithCourseRelation && relation) {
+    if (relation) {
         const subcourseId = relation.split('/')[1];
         if (subcourseId && template.templateFor === achievement_template_for_enum.Course && template.type === achievement_type_enum.TIERED) {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
@@ -118,8 +116,8 @@ export async function getBucketContext(userID: string, templateFor: achievement_
     return achievementContext;
 }
 
-export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): ExtendedAchievementContextType {
-    const transformedJson: ExtendedAchievementContextType = {
+export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {
+    const transformedJson: TemplateContextType = {
         user: user,
         match: [],
         subcourse: [],

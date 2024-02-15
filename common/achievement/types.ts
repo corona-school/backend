@@ -128,6 +128,6 @@ export type AchievementContextType = {
     subcourse: ContextSubcourse[];
 };
 
-export type ExtendedAchievementContextType = AchievementContextType & {
+export type TemplateContextType = AchievementContextType & {
     [key: string]: any;
 };

@@ -4,7 +4,7 @@ import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
 import { AchievementToCheck } from './types';
-import { transformEventContextToUserAchievementContext } from './util';
+import { checkIfAchievementIsGlobal, transformEventContextToUserAchievementContext } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
@@ -27,10 +27,7 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
-    const isGlobal =
-        template.templateFor === achievement_template_for_enum.Global ||
-        template.templateFor === achievement_template_for_enum.Global_Courses ||
-        template.templateFor === achievement_template_for_enum.Global_Matches;
+    const isGlobal = checkIfAchievementIsGlobal(template);
     const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : {});
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, !isGlobal ? context : {});
