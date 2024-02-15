@@ -170,6 +170,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
             user.userID,
             condition,
             userAchievements[currentAchievementIndex].template.conditionDataAggregations as ConditionDataAggregations,
+            userAchievements[currentAchievementIndex].template.templateFor,
             userAchievements[currentAchievementIndex].recordValue || undefined,
             userAchievements[currentAchievementIndex].relation || undefined
         );

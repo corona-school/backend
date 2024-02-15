@@ -50,7 +50,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 
 type WhereInput = Prisma.matchWhereInput | Prisma.subcourseWhereInput;
 
-export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
+export async function getBucketContext(userID: string, templateFor: achievement_template_for_enum, relation?: string): Promise<AchievementContextType> {
     const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause: WhereInput = {};
@@ -68,7 +68,11 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
 
     let matches: any[] = [];
-    if (!relationType || relationType === 'match') {
+    if (
+        templateFor === achievement_template_for_enum.Global_Matches ||
+        templateFor === achievement_template_for_enum.Match ||
+        templateFor === achievement_template_for_enum.Global
+    ) {
         matches = await prisma.match.findMany({
             where: { ...whereClause, [`${userType}Id`]: id },
             select: {
@@ -79,7 +83,11 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     }
 
     let subcourses: any[] = [];
-    if (!relationType || relationType === 'subcourse') {
+    if (
+        templateFor === achievement_template_for_enum.Global_Courses ||
+        templateFor === achievement_template_for_enum.Course ||
+        templateFor === achievement_template_for_enum.Global
+    ) {
         const userClause =
             userType === 'student'
                 ? { subcourse_instructors_student: { some: { studentId: id } } }

@@ -56,15 +56,15 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 span?.setTag('achievement.group', groupName);
                 logger.info('evaluate achievement group', { groupName });
 
-                const updatedContext = actionEvent.context;
-                if (checkIfAchievementIsGlobal(group[0])) {
-                    updatedContext.relation = null;
-                }
+                const { relation, ...contextWithoutRelation } = actionEvent.context;
 
                 let achievementToCheck: AchievementToCheck | undefined = undefined;
                 for (const template of group) {
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
-                        getOrCreateUserAchievement(template, user.userID, updatedContext)
+                        getOrCreateUserAchievement(template, user.userID, {
+                            ...contextWithoutRelation,
+                            relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation,
+                        })
                     );
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === achievement_type_enum.STREAK)) {
                         logger.info('found achievement to check', {
@@ -80,7 +80,10 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 if (achievementToCheck) {
                     span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
-                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, { ...actionEvent, context: updatedContext })
+                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, {
+                            ...actionEvent,
+                            context: { ...contextWithoutRelation, relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation },
+                        })
                     );
                 }
                 logger.info('group evaluation done', { groupName });
@@ -174,13 +177,20 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
     const {
         userId,
         recordValue,
-        template: { condition, conditionDataAggregations },
+        template: { condition, conditionDataAggregations, templateFor },
     } = achievement;
     if (!condition) {
         logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-    const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
+    const result = await evaluateAchievement(
+        userId,
+        condition,
+        conditionDataAggregations as ConditionDataAggregations,
+        templateFor,
+        recordValue,
+        event.context.relation
+    );
     if (result === undefined) {
         return null;
     }
