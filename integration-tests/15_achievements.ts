@@ -262,7 +262,6 @@ void test('Reward student regular learning', async () => {
     const allAchievements = await prisma.user_achievement.findMany({
         where: {
             userId: student.userID,
-            relation: `match/${match.id}`,
         },
         include: { template: true },
     });
@@ -279,7 +278,7 @@ void test('Reward student regular learning', async () => {
             value: 1,
             createdAt: date,
             action: 'student_joined_match_meeting',
-            relation: `match/${match.id}`,
+            relation: 'match/' + match.id,
         },
     });
     // request to set the achievements record value to 2 due to the past event generated
@@ -354,7 +353,6 @@ void test('Reward pupil regular learning', async () => {
     const achievements = await prisma.user_achievement.findMany({
         where: {
             userId: pupil.userID,
-            relation: `match/${match.id}`,
         },
         include: { template: true },
     });
@@ -371,7 +369,7 @@ void test('Reward pupil regular learning', async () => {
             value: 1,
             createdAt: date,
             action: 'pupil_joined_match_meeting',
-            relation: `match/${match.id}`,
+            relation: 'match/' + match.id,
         },
     });
     // request to set the achievements record value to 2 due to the past event generated
@@ -383,7 +381,6 @@ void test('Reward pupil regular learning', async () => {
         where: {
             userId: pupil.userID,
             metric: 'pupil_match_regular_learning',
-            relation: `match/${match.id}`,
         },
     });
     await client.request(`
@@ -558,7 +555,6 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
                     duration: 60,
                     subcourseId: null,
                     matchId: match.id,
-
                     appointmentType: lecture_appointmenttype_enum.match,
                     title: null,
                     description: null,
@@ -573,6 +569,7 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
                 },
                 select: {
                     id: true,
+                    start: true,
                 },
             });
         })
@@ -1071,7 +1068,7 @@ const createStudentRegularLearningTemplate = async () => {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: {
@@ -1104,7 +1101,7 @@ const createPupilRegularLearningTemplate = async () => {
             actionRedirectLink: null,
             actionType: null,
             achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{eventsToBeatStreak}} Woche(n) bis zum neuen Rekord!',
+            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: {

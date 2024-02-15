@@ -4,13 +4,13 @@ import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
 import { AchievementToCheck } from './types';
-import { transformEventContextToUserAchievementContext } from './util';
+import { checkIfAchievementIsGlobal, transformEventContextToUserAchievementContext } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
     templateFor: achievement_template_for_enum,
     userId: string,
-    context?: SpecificNotificationContext<ID>
+    context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
     let relation = context?.relation || null;
     switch (templateFor) {
@@ -46,16 +46,13 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
 }
 
 const createAchievement = tracer.wrap('achievement.createAchievement', _createAchievement);
-async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context?: SpecificNotificationContext<ID>) {
+async function _createAchievement<ID extends ActionID>(currentTemplate: achievement_template, userId: string, context: SpecificNotificationContext<ID>) {
     const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
     if (!templatesByGroup.has(currentTemplate.group)) {
         return null;
     }
 
-    const isGlobal =
-        currentTemplate.templateFor === achievement_template_for_enum.Global ||
-        currentTemplate.templateFor === achievement_template_for_enum.Global_Courses ||
-        currentTemplate.templateFor === achievement_template_for_enum.Global_Matches;
+    const isGlobal = checkIfAchievementIsGlobal(currentTemplate);
     const achievementContext = isGlobal ? undefined : context;
 
     const templatesForGroup = templatesByGroup.get(currentTemplate.group)!.sort((a, b) => a.groupOrder - b.groupOrder);
@@ -113,7 +110,7 @@ async function createNextUserAchievement<ID extends ActionID>(
                 userId: userId,
                 // This ensures that the relation will set to null even if context.relation is an empty string
                 relation: relation,
-                context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
+                context: context ? transformEventContextToUserAchievementContext(context) : {},
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
                 achievedAt: achievedAt,

@@ -677,6 +677,7 @@ const _notificationActions = {
         sampleContext: {
             relation: 'match/1',
             lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            name: 'Max Muster',
         },
     },
     student_joined_subcourse_meeting: {
@@ -689,13 +690,16 @@ const _notificationActions = {
     },
     student_presence_in_meeting: {
         description: 'Student joined a meeting',
-        sampleContext: {},
+        sampleContext: {
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+        },
     },
     pupil_joined_match_meeting: {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             relation: 'match/1',
             lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            name: 'Max Muster',
         },
     },
     pupil_joined_subcourse_meeting: {
@@ -708,7 +712,9 @@ const _notificationActions = {
     },
     pupil_presence_in_meeting: {
         description: 'Pupil joined a meeting',
-        sampleContext: {},
+        sampleContext: {
+            lectureStart: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+        },
     },
     TEST: {
         description: 'For Tests',

@@ -73,7 +73,7 @@ const getFurtherAchievements = async (user: User): Promise<Achievement[]> => {
         const maxValue = Object.keys(dataAggr)
             .map((key) => {
                 const val = dataAggr[key]['valueToAchieve'] as number;
-                return Number(val);
+                return Number(val || 0);
             })
             .reduce((a, b) => a + b, 0);
         const achievement: Achievement = {
@@ -152,12 +152,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const condition = userAchievements[currentAchievementIndex].recordValue
-        ? userAchievements[currentAchievementIndex].template.condition.replace(
-              'recordValue',
-              (userAchievements[currentAchievementIndex].recordValue + 1).toString()
-          )
-        : userAchievements[currentAchievementIndex].template.condition;
+    const condition = userAchievements[currentAchievementIndex].template.condition;
 
     let maxValue: number = 0;
     let currentValue: number = 0;
@@ -183,9 +178,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                     : dataAggregationKeys
                           .map((key) => {
                               // TODO: check if we can remove valueToAchieve
-                              return Number(
-                                  (userAchievements[currentAchievementIndex].template.conditionDataAggregations as any)[key].valueToAchieve as string
-                              );
+                              return Number((userAchievements[currentAchievementIndex].template.conditionDataAggregations as any)[key].valueToAchieve || 0);
                           })
                           .reduce((a, b) => a + b, 0);
             if (currentValue < maxValue && userAchievements[currentAchievementIndex].achievedAt) {

@@ -7,6 +7,7 @@ import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { getBucketContext } from './util';
 import tracer from '../logger/tracing';
+import { achievement_template_for_enum } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -25,7 +26,7 @@ async function _evaluateAchievement(
         where: {
             userId,
             metric: { in: metrics },
-            relation: relation ? { startsWith: relation } : null,
+            relation: relation ? { startsWith: relation } : '',
         },
         orderBy: { createdAt: 'desc' },
     });

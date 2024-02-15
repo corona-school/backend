@@ -1,6 +1,6 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { sortActionTemplatesToGroups } from './util';
+import { checkIfAchievementIsGlobal, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
@@ -11,8 +11,9 @@ import { createAchievement, getOrCreateUserAchievement } from './create';
 import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
-import { achievement_type_enum } from '../../graphql/generated';
+import { achievement_type_enum, achievement_template_for_enum } from '../../graphql/generated';
 import { isGamificationFeatureActive } from '../../utils/environment';
+import { achievement_template } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -43,7 +44,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
         user: user,
         context,
     };
-    const isEventTracked = await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent));
+    const isEventTracked = await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent, templatesByGroups));
     if (!isEventTracked) {
         logger.warn(`Can't track action for user`, { actionId, userId: user.userID });
         return;
@@ -74,7 +75,10 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 if (achievementToCheck) {
                     span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
-                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent)
+                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, {
+                            ...actionEvent,
+                            context,
+                        })
                     );
                 }
                 logger.info('group evaluation done', { groupName });
@@ -85,7 +89,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
     }
 }
 
-async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
+async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateGroups: Map<string, achievement_template[]>) {
     const metricsForEvent = getMetricsByAction(event.actionId);
 
     if (metricsForEvent.length === 0) {
@@ -96,6 +100,13 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
     const lectureStart = event.context['lectureStart'] ? new Date(event.context['lectureStart']) : undefined;
 
     for (const metric of metricsForEvent) {
+        let templateForMetric: achievement_template | undefined = undefined;
+        templateGroups.forEach((temp) => {
+            const key = Object.keys(temp[0].conditionDataAggregations)[0];
+            if (temp[0].conditionDataAggregations[key].metric === metric.metricName) {
+                templateForMetric = temp[0];
+            }
+        });
         const formula = metric.formula;
         const value = formula(event.context);
 
@@ -113,7 +124,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 action: event.actionId,
                 userId: event.user.userID,
                 relation: event.context.relation ?? '',
-                createdAt: event.at,
+                createdAt: lectureStart || event.at,
             },
         });
     }
@@ -161,7 +172,6 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-
     const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
     if (result === undefined) {
         return null;
