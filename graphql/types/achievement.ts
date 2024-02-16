@@ -14,8 +14,8 @@ export class Achievement implements PublicAchievement {
     @Field()
     name: string;
 
-    @Field()
-    subtitle: string;
+    @Field({ nullable: true })
+    subtitle?: string | null;
 
     @Field()
     description: string;
@@ -48,7 +48,13 @@ export class Achievement implements PublicAchievement {
     isNewAchievement?: boolean | null;
 
     @Field({ nullable: true })
+    achievedText?: string | null;
+
+    @Field({ nullable: true })
     progressDescription?: string | null;
+
+    @Field({ nullable: true })
+    streakProgress?: string | null;
 
     @Field({ nullable: true })
     actionName?: string | null;
