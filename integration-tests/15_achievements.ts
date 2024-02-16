@@ -257,7 +257,7 @@ void test('Reward student regular learning', async () => {
     const dates = createDates();
     const appointments = await generateLectures(dates, match, student.userID);
     await client.request(`
-        mutation StudentJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
+        mutation StudentJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[1].id}) }
     `);
     const allAchievements = await prisma.user_achievement.findMany({
         where: {
@@ -283,7 +283,7 @@ void test('Reward student regular learning', async () => {
     });
     // request to set the achievements record value to 2 due to the past event generated
     await client.request(`
-        mutation StudentJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[1].id}) }
+        mutation StudentJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
     `);
 
     const studentMatchRegularLearningRecord = await prisma.user_achievement.findFirst({
@@ -348,7 +348,7 @@ void test('Reward pupil regular learning', async () => {
 
     // request to generate the achievement with initial record value 1
     await client.request(`
-        mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
+        mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[1].id}) }
     `);
     const achievements = await prisma.user_achievement.findMany({
         where: {
@@ -374,7 +374,7 @@ void test('Reward pupil regular learning', async () => {
     });
     // request to set the achievements record value to 2 due to the past event generated
     await client.request(`
-        mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[1].id}) }
+        mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
     `);
 
     await prisma.achievement_event.deleteMany({

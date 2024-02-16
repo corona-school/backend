@@ -20,10 +20,7 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
             relation: data.relation,
             startTime:
                 measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
-            endTime:
-                measuringType === LectureBucketMeasuringType.start
-                    ? moment(lecture.start).add(5, 'minutes').toDate()
-                    : moment(lecture.start).add(lecture.duration, 'minutes').toDate(),
+            endTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).add(5, 'minutes').toDate() : moment(lecture.start).toDate(),
         }));
     return buckets;
 }

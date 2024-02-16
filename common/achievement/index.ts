@@ -11,7 +11,7 @@ import { createAchievement, getOrCreateUserAchievement } from './create';
 import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
-import { achievement_type_enum, achievement_template_for_enum } from '../../graphql/generated';
+import { achievement_type_enum } from '../../graphql/generated';
 import { isGamificationFeatureActive } from '../../utils/environment';
 import { achievement_template } from '@prisma/client';
 
@@ -135,7 +135,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateG
                 action: event.actionId,
                 userId: event.user.userID,
                 relation: event.context.relation ?? '',
-                createdAt: event.at,
+                createdAt: lectureStart || event.at,
             },
         });
     }
