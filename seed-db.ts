@@ -746,7 +746,7 @@ void (async function setupDevDB() {
 
     /* Achievements */
     // STUDENT ONBOARDING
-    await prisma.achievement_template.create({
+    /* await prisma.achievement_template.create({
         data: {
             name: 'Onboarding abschließen',
             templateFor: achievement_template_for_enum.Global,
@@ -1448,7 +1448,7 @@ void (async function setupDevDB() {
             },
             isActive: true,
         },
-    });
+    }); */
 
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
