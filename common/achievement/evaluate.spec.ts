@@ -39,7 +39,7 @@ describe('evaluate should throw errors for misconfiguration', () => {
         prismaMock.match.findMany.mockResolvedValue([]);
         prismaMock.subcourse.findMany.mockResolvedValue([]);
 
-        await expect(evaluateAchievement('student/1', 'x > 0', dataAggr, achievement_template_for_enum.Global, 0, undefined)).resolves.toBeUndefined();
+        await expect(evaluateAchievement('student/1', 'x > 0', dataAggr, 0, undefined)).resolves.toBeUndefined();
     });
 });
 
@@ -86,7 +86,7 @@ describe('evaluate condition without default bucket aggregator', () => {
         prismaMock.match.findMany.mockResolvedValue([]);
         prismaMock.subcourse.findMany.mockResolvedValue([]);
 
-        const res = await evaluateAchievement(userId, condition, dataAggr, achievement_template_for_enum.Global, 0, undefined);
+        const res = await evaluateAchievement(userId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectedResult);
@@ -210,7 +210,7 @@ describe('evaluate record value condition with time buckets', () => {
         prismaMock.match.findMany.mockResolvedValue(matches || []);
         prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
 
-        const res = await evaluateAchievement(testUserId, condition, dataAggr, achievement_template_for_enum.Global, recordValue, undefined);
+        const res = await evaluateAchievement(testUserId, condition, dataAggr, recordValue, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectNewRecord);
@@ -397,7 +397,7 @@ describe('evaluate bucket with match / subcourse context', () => {
         prismaMock.match.findMany.mockResolvedValue(matches || []);
         prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
 
-        const res = await evaluateAchievement(testUserId, condition, dataAggr, achievement_template_for_enum.Global, 0, undefined);
+        const res = await evaluateAchievement(testUserId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectNewRecord);

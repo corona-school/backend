@@ -165,7 +165,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
             user.userID,
             condition,
             userAchievements[currentAchievementIndex].template.conditionDataAggregations as ConditionDataAggregations,
-            userAchievements[currentAchievementIndex].template.templateFor,
             userAchievements[currentAchievementIndex].recordValue || undefined,
             userAchievements[currentAchievementIndex].relation || undefined
         );
@@ -182,7 +181,11 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                               return Number((userAchievements[currentAchievementIndex].template.conditionDataAggregations as any)[key].valueToAchieve || 0);
                           })
                           .reduce((a, b) => a + b, 0);
-            if (currentValue < maxValue && userAchievements[currentAchievementIndex].achievedAt) {
+            if (
+                userAchievements[currentAchievementIndex].template.type === achievement_type_enum.STREAK &&
+                currentValue < maxValue &&
+                userAchievements[currentAchievementIndex].achievedAt
+            ) {
                 await prisma.user_achievement.update({
                     where: { id: userAchievements[currentAchievementIndex].id },
                     data: { achievedAt: null, isSeen: false },

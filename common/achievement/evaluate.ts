@@ -7,7 +7,6 @@ import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { getBucketContext } from './util';
 import tracer from '../logger/tracing';
-import { achievement_template_for_enum } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -17,7 +16,6 @@ async function _evaluateAchievement(
     userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
-    templateFor: achievement_template_for_enum,
     recordValue?: number,
     relation?: string
 ): Promise<EvaluationResult | undefined> {
