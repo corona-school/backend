@@ -5,7 +5,7 @@ import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
-import { getBucketContext } from './util';
+import { filterBucketEvents, getBucketContext } from './util';
 import tracer from '../logger/tracing';
 
 const logger = getLogger('Achievement');
@@ -79,7 +79,8 @@ async function _evaluateAchievement(
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
-        const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
+        const filteredBucketEvents = filterBucketEvents(bucketEvents);
+        const bucketAggr = filteredBucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
         const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;

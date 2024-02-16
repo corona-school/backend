@@ -8,7 +8,7 @@ import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType, TemplateContextType } from './types';
+import { RelationTypes, AchievementContextType, TemplateContextType, BucketEvents } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
 import moment from 'moment';
@@ -66,7 +66,6 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
 
-    const nowPlusFiveMinutes = moment().add(5, 'minutes').toDate();
     let matches: any[] = [];
     if (relation?.includes('match') || !relation) {
         matches = await prisma.match.findMany({
@@ -74,7 +73,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
             select: {
                 id: true,
                 lecture: {
-                    where: { start: { lte: nowPlusFiveMinutes }, NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
                     select: { start: true, duration: true },
                 },
             },
@@ -93,7 +92,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
             select: {
                 id: true,
                 lecture: {
-                    where: { start: { lte: nowPlusFiveMinutes }, NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
                     select: { start: true, duration: true },
                 },
             },
@@ -114,6 +113,21 @@ export async function getBucketContext(userID: string, relation?: string): Promi
         })),
     };
     return achievementContext;
+}
+
+export function filterBucketEvents(bucketEvents: BucketEvents[]) {
+    // Filter out time bucketEvents that are in the future and dont contain events.
+    // This is done to avoid taking future lectures into account during the evaluation of achievements.
+    // If a lecture was joined early, it will be added to the filteredBuckets array by this function for containing events.
+    const filteredBuckets: BucketEvents[] = bucketEvents.filter((bucketEvent) => {
+        if (bucketEvent.kind !== 'time') {
+            return true;
+        } else if (bucketEvent.startTime > moment().toDate()) {
+            return bucketEvent.events.length > 0;
+        }
+        return true;
+    });
+    return filteredBuckets;
 }
 
 export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {
