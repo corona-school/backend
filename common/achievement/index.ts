@@ -183,14 +183,7 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-    const result = await evaluateAchievement(
-        userId,
-        condition,
-        conditionDataAggregations as ConditionDataAggregations,
-        templateFor,
-        recordValue,
-        event.context.relation
-    );
+    const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
     if (result === undefined) {
         return null;
     }
