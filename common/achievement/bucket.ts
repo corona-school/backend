@@ -108,3 +108,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
         },
     },
 };
+
+export function isBucketCreator(name: string) {
+    return name in bucketCreatorDefs;
+}

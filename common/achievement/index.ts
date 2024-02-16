@@ -5,13 +5,12 @@ import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
+import { AchievementToCheck, AchievementType, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 // eslint-disable-next-line import/no-cycle
 import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
-import { achievement_type_enum } from '../../graphql/generated';
 import { isGamificationFeatureActive } from '../../utils/environment';
 
 const logger = getLogger('Achievement');
@@ -60,7 +59,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
                         getOrCreateUserAchievement(template, user.userID, context)
                     );
-                    if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === achievement_type_enum.STREAK)) {
+                    if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === AchievementType.STREAK)) {
                         logger.info('found achievement to check', {
                             achievementId: userAchievement.id,
                             achievementName: userAchievement.template?.name,
@@ -175,7 +174,7 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
 
     const { type, group, groupOrder } = updatedAchievement.template;
 
-    if (type === achievement_type_enum.SEQUENTIAL) {
+    if (type === AchievementType.SEQUENTIAL) {
         const templatesByGroup = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
         const groupTemplates = templatesByGroup.get(group);
         /**

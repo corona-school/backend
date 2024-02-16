@@ -1,9 +1,9 @@
-import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
+import { Prisma, achievement_template } from '@prisma/client';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
-import { AchievementToCheck } from './types';
+import { AchievementTemplateFor, AchievementToCheck, AchievementType } from './types';
 import { transformEventContextToUserAchievementContext } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
@@ -28,9 +28,9 @@ async function getOrCreateUserAchievement<ID extends ActionID>(
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
     const isGlobal =
-        template.templateFor === achievement_template_for_enum.Global ||
-        template.templateFor === achievement_template_for_enum.Global_Courses ||
-        template.templateFor === achievement_template_for_enum.Global_Matches;
+        template.templateFor === AchievementTemplateFor.Global ||
+        template.templateFor === AchievementTemplateFor.Global_Courses ||
+        template.templateFor === AchievementTemplateFor.Global_Matches;
     const existingUserAchievement = await findUserAchievement(template.id, userId, !isGlobal ? context : undefined);
     if (!existingUserAchievement) {
         return await createAchievement(template, userId, context);
@@ -80,7 +80,7 @@ async function createNextUserAchievement<ID extends ActionID>(
 
     const nextStepTemplate = templatesForGroup[nextStepIndex];
     const achievedAt =
-        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL ? new Date() : null;
+        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === AchievementType.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
