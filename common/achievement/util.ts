@@ -116,6 +116,9 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 }
 
 export function filterBucketEvents(bucketEvents: BucketEvents[]) {
+    // Filter out time bucketEvents that are in the future and dont contain events.
+    // This is done to avoid taking future lectures into account during the evaluation of achievements.
+    // If a lecture was joined early, it will be added to the filteredBuckets array by this function for containing events.
     const filteredBuckets: BucketEvents[] = bucketEvents.filter((bucketEvent) => {
         if (bucketEvent.kind !== 'time') {
             return true;
