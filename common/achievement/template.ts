@@ -152,8 +152,8 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     logger.info(`Checking AchievementTemplate(${template.id}) for consistency`, { template, group });
 
     // ---- Template Metadata -----
-    if (!template.name || !template.description || !template.subtitle || !template.image) {
-        throw new PrerequisiteError(`AchievementTemplates need a name, description, subtitle and image`);
+    if (!template.name || !template.description || !template.subtitle) {
+        throw new PrerequisiteError(`AchievementTemplates need a name, description and subtitle`);
     }
 
     const actionFields = [!!template.actionName, !!template.actionRedirectLink, !!template.actionType];
