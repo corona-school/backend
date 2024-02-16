@@ -255,7 +255,6 @@ export async function activateAchievementTemplate(id: number) {
 
 export async function deactivateAchievementTemplate(id: number) {
     const template = await getTemplate(id);
-    const group = await getActiveTemplateGroup(template.group);
 
     if (!template.isActive) {
         throw new RedundantError('Template is already inactive');
