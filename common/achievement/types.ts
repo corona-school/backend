@@ -146,7 +146,7 @@ export enum AchievementState {
 export interface PublicAchievement {
     id: number;
     name: string;
-    subtitle: string;
+    subtitle?: string;
     description: string;
     image: string;
     alternativeText: string;
