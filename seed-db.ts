@@ -960,7 +960,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 1,
                 },
@@ -989,7 +989,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 3,
                 },
@@ -1018,7 +1018,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 5,
                 },
@@ -1047,7 +1047,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 10,
                 },
@@ -1076,7 +1076,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 15,
                 },
@@ -1105,7 +1105,7 @@ void (async function setupDevDB() {
                 student_match_appointments_count: {
                     metric: 'student_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 25,
                 },
@@ -1136,7 +1136,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 1,
                 },
@@ -1165,7 +1165,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 3,
                 },
@@ -1194,7 +1194,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 5,
                 },
@@ -1223,7 +1223,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 10,
                 },
@@ -1252,7 +1252,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 15,
                 },
@@ -1281,7 +1281,7 @@ void (async function setupDevDB() {
                 pupil_match_appointments_count: {
                     metric: 'pupil_conducted_match_appointment',
                     aggregator: 'count',
-                    createBuckets: 'by_lecture_start',
+                    createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
                     valueToAchieve: 25,
                 },
@@ -1485,7 +1485,7 @@ void (async function setupDevDB() {
             condition: 'student_presence_events >= recordValue',
             conditionDataAggregations: {
                 student_presence_events: {
-                    metric: 'student_participation_streak',
+                    metric: 'student_participated_in_meeting',
                     aggregator: 'lastStreakLength',
                     createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',
@@ -1518,7 +1518,7 @@ void (async function setupDevDB() {
             condition: 'pupil_presence_events >= recordValue',
             conditionDataAggregations: {
                 pupil_presence_events: {
-                    metric: 'pupil_participation_streak',
+                    metric: 'pupil_participated_in_meeting',
                     aggregator: 'lastStreakLength',
                     createBuckets: 'by_lecture_participation',
                     bucketAggregator: 'presenceOfEvents',

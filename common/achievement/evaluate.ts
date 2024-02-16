@@ -27,7 +27,7 @@ async function _evaluateAchievement(
         where: {
             userId,
             metric: { in: metrics },
-            relation: relation ? { startsWith: relation } : null,
+            relation: relation ? { startsWith: relation } : '',
         },
         orderBy: { createdAt: 'desc' },
     });
@@ -77,7 +77,7 @@ async function _evaluateAchievement(
 
         const aggregatorFunction = aggregators[aggregator].function;
 
-        const bucketContext = await getBucketContext(userId, templateFor, relation);
+        const bucketContext = await getBucketContext(userId, relation);
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);

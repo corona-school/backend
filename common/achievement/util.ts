@@ -11,6 +11,7 @@ import { getLogger } from '../logger/logger';
 import { RelationTypes, AchievementContextType, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
+import moment from 'moment';
 
 const logger = getLogger('Achievement');
 
@@ -48,7 +49,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 
 type WhereInput = Prisma.matchWhereInput | Prisma.subcourseWhereInput;
 
-export async function getBucketContext(userID: string, templateFor: achievement_template_for_enum, relation?: string): Promise<AchievementContextType> {
+export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
     const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause: WhereInput = {};
@@ -65,27 +66,23 @@ export async function getBucketContext(userID: string, templateFor: achievement_
 
     logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
 
+    const nowPlusFiveMinutes = moment().add(5, 'minutes').toDate();
     let matches: any[] = [];
-    if (
-        templateFor === achievement_template_for_enum.Global_Matches ||
-        templateFor === achievement_template_for_enum.Match ||
-        templateFor === achievement_template_for_enum.Global
-    ) {
+    if (relation?.includes('match') || !relation) {
         matches = await prisma.match.findMany({
             where: { ...whereClause, [`${userType}Id`]: id },
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
+                lecture: {
+                    where: { start: { lte: nowPlusFiveMinutes }, NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    select: { start: true, duration: true },
+                },
             },
         });
     }
 
     let subcourses: any[] = [];
-    if (
-        templateFor === achievement_template_for_enum.Global_Courses ||
-        templateFor === achievement_template_for_enum.Course ||
-        templateFor === achievement_template_for_enum.Global
-    ) {
+    if (relation?.includes('subcourse') || !relation) {
         const userClause =
             userType === 'student'
                 ? { subcourse_instructors_student: { some: { studentId: id } } }
@@ -95,7 +92,10 @@ export async function getBucketContext(userID: string, templateFor: achievement_
             where: subcourseWhere,
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
+                lecture: {
+                    where: { start: { lte: nowPlusFiveMinutes }, NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    select: { start: true, duration: true },
+                },
             },
         });
     }

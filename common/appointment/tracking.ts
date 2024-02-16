@@ -52,4 +52,13 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
     } else {
         logger.info(`Did not track User(${user.userID}) joining Appointment(${appointment.id}) as it is neither associated to a subcourse or match`);
     }
+    if (user.studentId) {
+        await Notification.actionTaken(user, 'student_presence_in_meeting', {
+            lectureStart: appointment.start.toISOString(),
+        });
+    } else if (user.pupilId) {
+        await Notification.actionTaken(user, 'pupil_presence_in_meeting', {
+            lectureStart: appointment.start.toISOString(),
+        });
+    }
 }
