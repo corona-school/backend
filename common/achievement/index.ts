@@ -103,7 +103,6 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateG
     }
 
     const lectureStart = event.context['lectureStart'] ? new Date(event.context['lectureStart']) : undefined;
-    const { relation, ...contextWithoutRelation } = event.context;
 
     for (const metric of metricsForEvent) {
         let templateForMetric: achievement_template | undefined = undefined;
@@ -113,11 +112,6 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateG
                 templateForMetric = temp[0];
             }
         });
-        if (templateForMetric && checkIfAchievementIsGlobal(templateForMetric)) {
-            event.context = contextWithoutRelation as SpecificNotificationContext<ID>;
-        } else {
-            event.context = { ...event.context, relation };
-        }
         const formula = metric.formula;
         const value = formula(event.context);
 
