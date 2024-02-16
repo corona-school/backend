@@ -25,6 +25,8 @@ import {
     lecture_appointmenttype_enum as AppointmentType,
 } from '@prisma/client';
 import { achievement_action_type_enum, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
+import { activateAchievementTemplate, createTemplate } from './common/achievement/template';
+import { AchievementTemplate, UserAchievementTemplate } from './common/achievement/types';
 
 const logger = getLogger('DevSetup');
 
@@ -1487,6 +1489,8 @@ void (async function setupDevDB() {
         await importMessagesTranslationsFromProd();
     }
 
+    await importAchievementTemplatesFromProd();
+
     _setSilenceNotificationSystem(false);
 
     logger.info(`Successfully seeded the DB`);
@@ -1567,4 +1571,57 @@ async function importMessagesTranslationsFromProd() {
     const messageTranslations = prodMessageTranslations.data.notifications.reduce((acc: any[], cur: any) => [...acc, ...cur.messageTranslations], []);
 
     await importMessageTranslations(messageTranslations);
+}
+
+async function importAchievementTemplatesFromProd() {
+    if (process.env.ENV !== 'dev') {
+        throw new Error(`Can only seed achievements on DEV environments`);
+    }
+
+    const prodAchievementTemplates = await (
+        await fetch(PROD_URL, {
+            body: JSON.stringify({
+                query: `
+                query { 
+                    achievementTemplates { 
+                        id
+                        name
+                        templateFor
+                        group
+                        groupOrder
+                        stepName
+                        type
+                        subtitle
+                        description
+                        image
+                        achievedImage
+                        actionName
+                        actionRedirectLink
+                        actionType
+                        achievedText
+                        condition
+                        conditionDataAggregations
+                        isActive
+                    }
+                }
+            }
+        `,
+                variables: {},
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+    ).json();
+
+    for (const template of prodAchievementTemplates.data.achievementTemplates) {
+        const { isActive, ...data } = template as AchievementTemplate;
+        const id = await createTemplate(data);
+        if (isActive) {
+            await activateAchievementTemplate(id);
+        }
+    }
+
+    logger.info(`Seeded Achievement Templates`, prodAchievementTemplates.data.achievementTemplates);
 }
