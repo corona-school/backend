@@ -110,7 +110,7 @@ async function createNextUserAchievement<ID extends ActionID>(
                 userId: userId,
                 // This ensures that the relation will set to null even if context.relation is an empty string
                 relation: relation,
-                context: context ? transformEventContextToUserAchievementContext(context) : {},
+                context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
                 achievedAt: achievedAt,

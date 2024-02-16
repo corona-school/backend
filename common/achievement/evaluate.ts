@@ -17,6 +17,7 @@ async function _evaluateAchievement(
     userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
+    templateFor: achievement_template_for_enum,
     recordValue?: number,
     relation?: string
 ): Promise<EvaluationResult | undefined> {

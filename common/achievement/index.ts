@@ -11,7 +11,7 @@ import { createAchievement, getOrCreateUserAchievement } from './create';
 import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
-import { achievement_type_enum, achievement_template_for_enum } from '../../graphql/generated';
+import { achievement_type_enum } from '../../graphql/generated';
 import { isGamificationFeatureActive } from '../../utils/environment';
 import { achievement_template } from '@prisma/client';
 
@@ -56,10 +56,15 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 span?.setTag('achievement.group', groupName);
                 logger.info('evaluate achievement group', { groupName });
 
+                const { relation, ...contextWithoutRelation } = actionEvent.context;
+
                 let achievementToCheck: AchievementToCheck | undefined = undefined;
                 for (const template of group) {
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
-                        getOrCreateUserAchievement(template, user.userID, context)
+                        getOrCreateUserAchievement(template, user.userID, {
+                            ...contextWithoutRelation,
+                            relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation,
+                        })
                     );
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === achievement_type_enum.STREAK)) {
                         logger.info('found achievement to check', {
@@ -77,7 +82,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                     await tracer.trace('achievement.checkUserAchievement', () =>
                         checkUserAchievement(achievementToCheck as UserAchievementTemplate, {
                             ...actionEvent,
-                            context,
+                            context: { ...contextWithoutRelation, relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation },
                         })
                     );
                 }
@@ -98,6 +103,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateG
     }
 
     const lectureStart = event.context['lectureStart'] ? new Date(event.context['lectureStart']) : undefined;
+    const { relation, ...contextWithoutRelation } = event.context;
 
     for (const metric of metricsForEvent) {
         let templateForMetric: achievement_template | undefined = undefined;
@@ -107,6 +113,11 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>, templateG
                 templateForMetric = temp[0];
             }
         });
+        if (templateForMetric && checkIfAchievementIsGlobal(templateForMetric)) {
+            event.context = contextWithoutRelation as SpecificNotificationContext<ID>;
+        } else {
+            event.context = { ...event.context, relation };
+        }
         const formula = metric.formula;
         const value = formula(event.context);
 
@@ -166,13 +177,20 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
     const {
         userId,
         recordValue,
-        template: { condition, conditionDataAggregations },
+        template: { condition, conditionDataAggregations, templateFor },
     } = achievement;
     if (!condition) {
         logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-    const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
+    const result = await evaluateAchievement(
+        userId,
+        condition,
+        conditionDataAggregations as ConditionDataAggregations,
+        templateFor,
+        recordValue,
+        event.context.relation
+    );
     if (result === undefined) {
         return null;
     }
