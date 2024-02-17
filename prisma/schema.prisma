@@ -95,7 +95,7 @@ model achievement_event {
   // what action triggered the event
   action    String   @db.VarChar
   // the relation is like a unique id so that we can later assign the event uniquely, e.g. "course/10", "match/12", "user/10"
-  relation  String   @db.VarChar
+  relation  String?  @db.VarChar
 }
 
 // An attachment is a file uploaded to an object storage and attached to a notification

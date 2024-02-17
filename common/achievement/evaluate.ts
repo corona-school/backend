@@ -1,4 +1,3 @@
-import { Achievement_event } from '../../graphql/generated';
 import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
@@ -7,6 +6,7 @@ import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
 import { filterBucketEvents, getBucketContext } from './util';
 import tracer from '../logger/tracing';
+import { achievement_event } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -30,7 +30,7 @@ async function _evaluateAchievement(
         orderBy: { createdAt: 'desc' },
     });
 
-    const eventsByMetric: Record<string, Achievement_event[]> = {};
+    const eventsByMetric: Record<string, achievement_event[]> = {};
     for (const event of achievementEvents) {
         if (!eventsByMetric[event.metric]) {
             eventsByMetric[event.metric] = [];
@@ -99,7 +99,7 @@ async function _evaluateAchievement(
     };
 }
 
-export function createBucketEvents(events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
+export function createBucketEvents(events: achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
     switch (bucketConfig.bucketKind) {
         case 'default':
             return createDefaultBuckets(events);
@@ -110,14 +110,14 @@ export function createBucketEvents(events: Achievement_event[], bucketConfig: Bu
     }
 }
 
-const createDefaultBuckets = (events: Achievement_event[]): BucketEvents[] => {
+const createDefaultBuckets = (events: achievement_event[]): BucketEvents[] => {
     return events.map((event) => ({
         kind: 'default',
         events: [event],
     }));
 };
 
-const createTimeBuckets = (events: Achievement_event[], bucketConfig: GenericBucketConfig<TimeBucket>): BucketEvents[] => {
+const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBucketConfig<TimeBucket>): BucketEvents[] => {
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order
