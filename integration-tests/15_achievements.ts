@@ -7,7 +7,7 @@ import { achievement_template_for_enum, achievement_type_enum, achievement_actio
 import { Match } from '../graphql/generated';
 import { _createFixedToken } from '../common/secret/token';
 import assert from 'assert';
-import { purgeAchievementTemplateCache } from '../common/achievement/template';
+import { AchievementTemplateCreate, purgeAchievementTemplateCache } from '../common/achievement/template';
 import { achievement_with_template, ConditionDataAggregations } from '../common/achievement/types';
 
 function findTemplateByMetric(achievements: achievement_with_template[], metric: string) {
@@ -576,35 +576,47 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
     );
 }
 
+async function createTemplate(template: Partial<AchievementTemplateCreate>, skipActivation = false) {
+    const result = await adminClient.request(
+        `mutation CreateTemplate($template: AchievementTemplateCreateInput!) {
+        achievementTemplateCreate(data: $template)
+    }`,
+        { template }
+    );
+
+    if (!skipActivation) {
+        await adminClient.request(`mutation ActivateTemplate {
+            achievementTemplateActivate(achievementTemplateId: ${result.achievementTemplateCreate})
+        }`);
+    }
+}
+
 const createStudentOnboardingTemplates = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'student_onboarding',
-            groupOrder: 1,
-            stepName: 'Verifizieren',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description: '',
-            image: 'Puzzle_00',
-            achievedImage: '',
-            actionName: 'E-Mail erneut senden',
-            actionRedirectLink: '',
-            actionType: achievement_action_type_enum.Action,
-            condition: 'student_verified_events > 0',
-            conditionDataAggregations: { student_verified_events: { metric: 'student_onboarding_verified', aggregator: 'count' } },
-            isActive: true,
-        },
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'student_onboarding',
+        groupOrder: 1,
+        stepName: 'Verifizieren',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Puzzle_00',
+        achievedImage: '',
+        actionName: 'E-Mail erneut senden',
+        actionRedirectLink: '/somewhere',
+        actionType: achievement_action_type_enum.Action,
+        condition: 'student_verified_events > 0',
+        conditionDataAggregations: { student_verified_events: { metric: 'student_onboarding_verified', aggregator: 'count' } },
     });
-    await prisma.achievement_template.create({
-        data: {
+    await createTemplate(
+        {
             name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
+            templateFor: 'Global',
             group: 'student_onboarding',
             groupOrder: 2,
             stepName: 'Kennenlerngespräch buchen',
-            type: achievement_type_enum.SEQUENTIAL,
+            type: 'SEQUENTIAL',
             subtitle: 'Jetzt durchstarten',
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
@@ -612,108 +624,96 @@ const createStudentOnboardingTemplates = async () => {
             achievedImage: '',
             actionName: 'Termin vereinbaren',
             actionRedirectLink: 'https://calendly.com',
-            actionType: achievement_action_type_enum.Action,
+            actionType: 'Action',
             condition: 'student_appointment_booked_events > 0',
             conditionDataAggregations: {
                 student_appointment_booked_events: { metric: 'student_onboarding_appointment_booked', aggregator: 'count' },
             },
-            isActive: false,
         },
+        /* skipActivation: */ true
+    );
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'student_onboarding',
+        groupOrder: 3,
+        stepName: 'Screening absolvieren',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
+        image: 'Puzzle_02',
+        achievedImage: '',
+        actionName: 'Screening absolvieren',
+        actionRedirectLink: '/somewhere',
+        actionType: achievement_action_type_enum.Appointment,
+        condition: 'student_screened_events > 0',
+        conditionDataAggregations: { student_screened_events: { metric: 'student_onboarding_screened', aggregator: 'count' } },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'student_onboarding',
-            groupOrder: 3,
-            stepName: 'Screening absolvieren',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
-            image: 'Puzzle_02',
-            achievedImage: '',
-            actionName: 'Screening absolvieren',
-            actionRedirectLink: '',
-            actionType: achievement_action_type_enum.Appointment,
-            condition: 'student_screened_events > 0',
-            conditionDataAggregations: { student_screened_events: { metric: 'student_onboarding_screened', aggregator: 'count' } },
-            isActive: true,
-        },
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'student_onboarding',
+        groupOrder: 4,
+        stepName: 'Führungszeugnis einreichen',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
+        image: 'Puzzle_02',
+        achievedImage: '',
+        actionName: 'Zeugnis einreichen',
+        actionRedirectLink: 'mailto:fz@lern-fair.de',
+        actionType: achievement_action_type_enum.Action,
+        condition: 'student_coc_success_events > 0',
+        conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'student_onboarding',
-            groupOrder: 4,
-            stepName: 'Führungszeugnis einreichen',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
-            image: 'Puzzle_02',
-            achievedImage: '',
-            actionName: 'Zeugnis einreichen',
-            actionRedirectLink: 'mailto:fz@lern-fair.de',
-            actionType: achievement_action_type_enum.Action,
-            condition: 'student_coc_success_events > 0',
-            conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
-            isActive: true,
-        },
-    });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'student_onboarding',
-            groupOrder: 5,
-            stepName: 'Onboarding abgeschlossen',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
-            image: 'Flugticket',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            condition: 'student_coc_success_events > 0',
-            conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
-            isActive: true,
-        },
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'student_onboarding',
+        groupOrder: 5,
+        stepName: 'Onboarding abgeschlossen',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
+        image: 'Flugticket',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        condition: 'student_coc_success_events > 0',
+        conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
     });
 };
 const createPupilOnboardingTemplates = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'pupil_onboarding',
-            groupOrder: 1,
-            stepName: 'Verifizieren',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
-            image: 'Puzzle_00',
-            achievedImage: '',
-            actionName: 'E-Mail erneut senden',
-            actionRedirectLink: '',
-            actionType: achievement_action_type_enum.Action,
-            condition: 'pupil_verified_events > 0',
-            conditionDataAggregations: { pupil_verified_events: { metric: 'pupil_onboarding_verified', aggregator: 'count' } },
-            isActive: true,
-        },
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'pupil_onboarding',
+        groupOrder: 1,
+        stepName: 'Verifizieren',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
+        image: 'Puzzle_00',
+        achievedImage: '',
+        actionName: 'E-Mail erneut senden',
+        actionRedirectLink: '/somewhere',
+        actionType: achievement_action_type_enum.Action,
+        condition: 'pupil_verified_events > 0',
+        conditionDataAggregations: { pupil_verified_events: { metric: 'pupil_onboarding_verified', aggregator: 'count' } },
     });
-    await prisma.achievement_template.create({
-        data: {
+    await createTemplate(
+        {
             name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
+            templateFor: 'Global',
             group: 'pupil_onboarding',
             groupOrder: 2,
             stepName: 'Kennenlerngespräch buchen',
-            type: achievement_type_enum.SEQUENTIAL,
+            type: 'SEQUENTIAL',
             subtitle: 'Jetzt durchstarten',
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
@@ -721,398 +721,350 @@ const createPupilOnboardingTemplates = async () => {
             achievedImage: '',
             actionName: 'Termin vereinbaren',
             actionRedirectLink: 'https://calendly.com',
-            actionType: achievement_action_type_enum.Action,
+            actionType: 'Action',
             condition: 'pupil_appointment_booked_events > 0',
             conditionDataAggregations: {
                 pupil_appointment_booked_events: { metric: 'pupil_onboarding_appointment_booked', aggregator: 'count' },
             },
-            isActive: false,
         },
-    });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'pupil_onboarding',
-            groupOrder: 3,
-            stepName: 'Screening absolvieren',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
-            image: 'Puzzle_02',
-            achievedImage: '',
-            actionName: 'Screening absolvieren',
-            actionRedirectLink: '',
-            actionType: achievement_action_type_enum.Appointment,
-            condition: 'pupil_screened_events > 0',
-            conditionDataAggregations: { pupil_screened_events: { metric: 'pupil_onboarding_screened', aggregator: 'count' } },
-            isActive: true,
-        },
+        /* skipActivation: */ true
+    );
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'pupil_onboarding',
+        groupOrder: 3,
+        stepName: 'Screening absolvieren',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
+        image: 'Puzzle_02',
+        achievedImage: '',
+        actionName: 'Screening absolvieren',
+        actionRedirectLink: '/somewhere',
+        actionType: achievement_action_type_enum.Appointment,
+        condition: 'pupil_screened_events > 0',
+        conditionDataAggregations: { pupil_screened_events: { metric: 'pupil_onboarding_screened', aggregator: 'count' } },
     });
 
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Onboarding abschließen',
-            templateFor: achievement_template_for_enum.Global,
-            group: 'pupil_onboarding',
-            groupOrder: 4,
-            stepName: 'Onboarding abgeschlossen',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: 'Jetzt durchstarten',
-            description:
-                'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
-            image: 'Flugticket',
-            achievedImage: '',
-            condition: 'pupil_screened_events > 0',
-            conditionDataAggregations: { pupil_screened_events: { metric: 'pupil_onboarding_screened', aggregator: 'count' } },
-            isActive: true,
-        },
+    await createTemplate({
+        name: 'Onboarding abschließen',
+        templateFor: achievement_template_for_enum.Global,
+        group: 'pupil_onboarding',
+        groupOrder: 4,
+        stepName: 'Onboarding abgeschlossen',
+        type: achievement_type_enum.SEQUENTIAL,
+        subtitle: 'Jetzt durchstarten',
+        description:
+            'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
+        image: 'Flugticket',
+        achievedImage: '',
+        condition: 'pupil_screened_events > 0',
+        conditionDataAggregations: { pupil_screened_events: { metric: 'pupil_onboarding_screened', aggregator: 'count' } },
     });
 };
 const createStudentConductedMatchAppointmentTemplates = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: '1. durchgeführter Termin',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 1,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_01',
-            achievedImage: '',
-            actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
-            actionRedirectLink: null,
-            actionType: achievement_action_type_enum.Action,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 0',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '1. durchgeführter Termin',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 1,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_01',
+        achievedImage: '',
+        actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
+        actionRedirectLink: '/somewhere',
+        actionType: 'Action',
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 0',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '3 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 2,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_02',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 2',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '3 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 2,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_02',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 2',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '5 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 3,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_03',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 4',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '5 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 3,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_03',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 4',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '10 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 4,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_04',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 9',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '10 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 4,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_04',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 9',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '15 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 5,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_05',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 14',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '15 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 5,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_05',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 14',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '25 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'student_conduct_match_appointment',
-            groupOrder: 6,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_06',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'student_match_appointments_count > 24',
-            conditionDataAggregations: {
-                student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '25 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'student_conduct_match_appointment',
+        groupOrder: 6,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_06',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'student_match_appointments_count > 24',
+        conditionDataAggregations: {
+            student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
         },
     });
 };
 const createPupilConductedMatchMeetingTemplates = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: '1. durchgeführter Termin',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 1,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_01',
-            achievedImage: '',
-            actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
-            actionRedirectLink: null,
-            actionType: achievement_action_type_enum.Action,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 0',
-            conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '1. durchgeführter Termin',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 1,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_01',
+        achievedImage: '',
+        actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
+        actionRedirectLink: '/somewhere',
+        actionType: 'Action',
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 0',
+        conditionDataAggregations: {
+            pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '3 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 2,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_02',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 2',
-            conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '3 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 2,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_02',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 2',
+        conditionDataAggregations: {
+            pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '5 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 3,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_03',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 4',
-            conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '5 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 3,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_03',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 4',
+        conditionDataAggregations: {
+            pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '10 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 4,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_04',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 9',
-            conditionDataAggregations: {
-                student_conducted_match_appointments: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '10 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 4,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_04',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 9',
+        conditionDataAggregations: {
+            student_conducted_match_appointments: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '15 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 5,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_05',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 14',
-            conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '15 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 5,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_05',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 14',
+        conditionDataAggregations: {
+            pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
         },
     });
-    await prisma.achievement_template.create({
-        data: {
-            name: '25 durchgeführte Termine',
-            templateFor: achievement_template_for_enum.Global_Matches,
-            group: 'pupil_conduct_match_appointment',
-            groupOrder: 6,
-            stepName: '',
-            type: achievement_type_enum.TIERED,
-            subtitle: '1:1 Lernunterstützungen',
-            description: 'Dieser Text muss noch geliefert werden.',
-            image: 'Polaroid_06',
-            achievedImage: '',
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
-            condition: 'pupil_match_appointments_count > 24',
-            conditionDataAggregations: {
-                pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
-            },
-            isActive: true,
+    await createTemplate({
+        name: '25 durchgeführte Termine',
+        templateFor: 'Global_Matches',
+        group: 'pupil_conduct_match_appointment',
+        groupOrder: 6,
+        stepName: '',
+        type: 'TIERED',
+        subtitle: '1:1 Lernunterstützungen',
+        description: 'Dieser Text muss noch geliefert werden.',
+        image: 'Polaroid_06',
+        achievedImage: '',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        condition: 'pupil_match_appointments_count > 24',
+        conditionDataAggregations: {
+            pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
         },
     });
 };
 const createStudentRegularLearningTemplate = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Regelmäßiges Lernen',
-            templateFor: achievement_template_for_enum.Match,
-            group: 'student_match_regular_learning',
-            groupOrder: 1,
-            stepName: '',
-            type: achievement_type_enum.STREAK,
-            subtitle: 'Nachhilfe mit {{matchpartner}}',
-            description:
-                'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
-            actionName: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
-            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
-            condition: 'student_match_learning_events > recordValue',
-            conditionDataAggregations: {
-                student_match_learning_events: {
-                    metric: 'student_match_learned_regular',
-                    aggregator: 'lastStreakLength',
-                    createBuckets: 'by_weeks',
-                    bucketAggregator: 'presenceOfEvents',
-                },
+    await createTemplate({
+        name: 'Regelmäßiges Lernen',
+        templateFor: achievement_template_for_enum.Match,
+        group: 'student_match_regular_learning',
+        groupOrder: 1,
+        stepName: '',
+        type: achievement_type_enum.STREAK,
+        subtitle: 'Nachhilfe mit {{matchpartner}}',
+        description:
+            'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
+        image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+        achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Rekord gebrochen.',
+        progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
+        streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
+        condition: 'student_match_learning_events > recordValue',
+        conditionDataAggregations: {
+            student_match_learning_events: {
+                metric: 'student_match_learned_regular',
+                aggregator: 'lastStreakLength',
+                createBuckets: 'by_weeks',
+                bucketAggregator: 'presenceOfEvents',
             },
-            isActive: true,
         },
     });
 };
 const createPupilRegularLearningTemplate = async () => {
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Regelmäßiges Lernen',
-            templateFor: achievement_template_for_enum.Match,
-            group: 'pupil_match_regular_learning',
-            groupOrder: 1,
-            stepName: '',
-            type: achievement_type_enum.STREAK,
-            subtitle: 'Nachhilfe mit {{matchpartner}}',
-            description:
-                'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
-            actionName: 'Noch {{progress}} Woche(n) bis zum neuen Rekord!',
-            actionRedirectLink: null,
-            actionType: null,
-            achievedText: 'Juhu! Rekord gebrochen.',
-            progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
-            streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
-            condition: 'pupil_match_learning_events > recordValue',
-            conditionDataAggregations: {
-                pupil_match_learning_events: {
-                    metric: 'pupil_match_learned_regular',
-                    aggregator: 'lastStreakLength',
-                    createBuckets: 'by_weeks',
-                    bucketAggregator: 'presenceOfEvents',
-                },
+    await createTemplate({
+        name: 'Regelmäßiges Lernen',
+        templateFor: achievement_template_for_enum.Match,
+        group: 'pupil_match_regular_learning',
+        groupOrder: 1,
+        stepName: '',
+        type: achievement_type_enum.STREAK,
+        subtitle: 'Nachhilfe mit {{matchpartner}}',
+        description:
+            'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
+        image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+        achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        achievedText: 'Juhu! Rekord gebrochen.',
+        progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
+        streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
+        condition: 'pupil_match_learning_events > recordValue',
+        conditionDataAggregations: {
+            pupil_match_learning_events: {
+                metric: 'pupil_match_learned_regular',
+                aggregator: 'lastStreakLength',
+                createBuckets: 'by_weeks',
+                bucketAggregator: 'presenceOfEvents',
             },
-            isActive: true,
         },
     });
 };

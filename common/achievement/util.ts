@@ -4,11 +4,10 @@ import { join } from 'path';
 import { prisma } from '../prisma';
 import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
-import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType, TemplateContextType, BucketEvents } from './types';
+import { RelationTypes, AchievementContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
 import moment from 'moment';
@@ -21,7 +20,7 @@ export function getAchievementImageKey(imageKey: string) {
     return join(ACHIEVEMENT_IMAGE_DEFAULT_PATH, `${imageKey}`);
 }
 
-export async function getAchievementImageURL(template: achievement_template, state?: achievement_state, relation?: string) {
+export async function getAchievementImageURL(template: achievement_template, state?: AchievementState, relation?: string) {
     const { image, achievedImage } = template;
     if (relation) {
         const subcourseId = relation.split('/')[1];
@@ -32,7 +31,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
             }
         }
     }
-    if (state === achievement_state.COMPLETED && achievedImage) {
+    if (state === AchievementState.COMPLETED && achievedImage) {
         return accessURLForKey(achievedImage);
     }
     return accessURLForKey(image);
@@ -170,10 +169,10 @@ export function renderAchievementWithContext(
 
 export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number) {
     return userAchievements.length === 0
-        ? achievement_state.INACTIVE
+        ? AchievementState.INACTIVE
         : userAchievements[currentAchievementIndex].achievedAt
-        ? achievement_state.COMPLETED
-        : achievement_state.ACTIVE;
+        ? AchievementState.COMPLETED
+        : AchievementState.ACTIVE;
 }
 
 export function sortActionTemplatesToGroups(templatesForAction: achievement_template[]) {

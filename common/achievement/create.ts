@@ -1,23 +1,23 @@
-import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
+import { Prisma, achievement_template } from '@prisma/client';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
-import { AchievementToCheck } from './types';
-import { checkIfAchievementIsGlobal, transformEventContextToUserAchievementContext } from './util';
+import { AchievementTemplateFor, AchievementToCheck, AchievementType } from './types';
+import { transformEventContextToUserAchievementContext, checkIfAchievementIsGlobal } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
     templateId: number,
-    templateFor: achievement_template_for_enum,
+    templateFor: AchievementTemplateFor,
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
     let relation = context?.relation || null;
     switch (templateFor) {
-        case achievement_template_for_enum.Global_Courses:
+        case AchievementTemplateFor.Global_Courses:
             relation = 'course';
             break;
-        case achievement_template_for_enum.Global_Matches:
+        case AchievementTemplateFor.Global_Matches:
             relation = 'match';
             break;
         default:
@@ -58,10 +58,10 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     const templatesForGroup = templatesByGroup.get(currentTemplate.group)!.sort((a, b) => a.groupOrder - b.groupOrder);
     let relation = context?.relation || null;
     switch (currentTemplate.templateFor) {
-        case achievement_template_for_enum.Global_Courses:
+        case AchievementTemplateFor.Global_Courses:
             relation = 'course';
             break;
-        case achievement_template_for_enum.Global_Matches:
+        case AchievementTemplateFor.Global_Matches:
             relation = 'match';
             break;
         default:
@@ -101,7 +101,7 @@ async function createNextUserAchievement<ID extends ActionID>(
 
     const nextStepTemplate = templatesForGroup[nextStepIndex];
     const achievedAt =
-        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === achievement_type_enum.SEQUENTIAL ? new Date() : null;
+        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === AchievementType.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {

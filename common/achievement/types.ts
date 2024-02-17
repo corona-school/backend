@@ -1,7 +1,14 @@
-import { achievement_event, achievement_template, lecture } from '@prisma/client';
+import { achievement_action_type_enum, achievement_event, achievement_template, achievement_type_enum, lecture } from '@prisma/client';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 import { prisma } from '../prisma';
+
+// Reexport from Prisma with camelcase
+export {
+    achievement_type_enum as AchievementType,
+    achievement_action_type_enum as AchievementActionType,
+    achievement_template_for_enum as AchievementTemplateFor,
+} from '@prisma/client';
 
 // type ActionIDUnion<A extends ActionID[]> = A[number];
 // formula: FormulaFunction<ActionIDUnion<Metric['onActions']>>;
@@ -131,3 +138,37 @@ export type AchievementContextType = {
 export type TemplateContextType = AchievementContextType & {
     [key: string]: any;
 };
+
+export enum AchievementState {
+    INACTIVE = 'INACTIVE',
+    ACTIVE = 'ACTIVE',
+    COMPLETED = 'COMPLETED',
+}
+
+// The achievement exposed to users via the API,
+// hiding internals of the achievement system
+export interface PublicAchievement {
+    id: number;
+    name: string;
+    subtitle?: string;
+    description: string;
+    image: string;
+    alternativeText: string;
+    actionType?: achievement_action_type_enum | null;
+    achievementType: achievement_type_enum;
+    achievementState: AchievementState;
+    achievedText?: string;
+    streakProgress?: string;
+    steps?: PublicStep[] | null;
+    maxSteps: number;
+    currentStep?: number;
+    isNewAchievement?: boolean | null;
+    progressDescription?: string | null;
+    actionName?: string | null;
+    actionRedirectLink?: string | null;
+}
+
+export interface PublicStep {
+    name: string;
+    isActive?: boolean | null;
+}

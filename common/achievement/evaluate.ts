@@ -87,7 +87,11 @@ async function _evaluateAchievement(
     }
     // TODO: return true if the condition is empty (eg. a student finishes a course and automatically receives an achievement)
     const evaluate = swan.parse(condition);
-    const value: boolean = await evaluate(resultObject);
+    const value = await evaluate(resultObject);
+    if (typeof value !== 'boolean') {
+        logger.error(`Failed to evaluate achievement condition`, undefined, { condition, resultObject, value });
+        throw new Error(`Achievement Condition did not evaluate to a boolean but ${value}`);
+    }
 
     return {
         conditionIsMet: value,

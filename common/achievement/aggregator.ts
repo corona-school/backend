@@ -35,3 +35,7 @@ export const aggregators: Aggregator = {
         },
     },
 };
+
+export function isAggregator(name: string) {
+    return name in aggregators;
+}

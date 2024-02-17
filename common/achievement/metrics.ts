@@ -27,6 +27,10 @@ function registerMetric(metric: Metric) {
     metricByName.set(metricName, metric);
 }
 
+export function isMetric(name: string) {
+    return metricByName.has(name);
+}
+
 export function registerAllMetrics(metrics: Metric[]) {
     metrics.forEach((metric) => {
         registerMetric(metric);
