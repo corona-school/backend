@@ -53,7 +53,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     }
 
     const isGlobal = checkIfAchievementIsGlobal(currentTemplate);
-    const achievementContext = isGlobal ? {} : context;
+    const achievementContext = isGlobal ? undefined : context;
 
     const templatesForGroup = templatesByGroup.get(currentTemplate.group)!.sort((a, b) => a.groupOrder - b.groupOrder);
     let relation = context?.relation || null;
