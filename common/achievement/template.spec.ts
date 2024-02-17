@@ -31,6 +31,8 @@ function createTestTemplate(group: string, metrics: string[]): achievement_templ
         actionRedirectLink: null,
         actionType: null,
         achievedText: null,
+        progressDescription: null,
+        streakProgress: null,
         condition: '',
         conditionDataAggregations: dataAggr,
         isActive: true,

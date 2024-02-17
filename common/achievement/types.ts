@@ -58,7 +58,7 @@ export type BucketEventsWithAggr = BucketEvents & {
 };
 
 // The recordValue is used as a reference for the time bucket creator on how many buckets to create. if the recordValue is 5, then 6 buckets will be created to check the last 6 weeks / months
-export type BucketCreatorContext = { recordValue?: number; context: AchievementContextType };
+export type BucketCreatorContext = { recordValue?: number; context: BucketContextType };
 type BucketFormulaFunction = (bucketContext: BucketCreatorContext) => BucketConfig;
 
 export type BucketFormula = {
@@ -129,10 +129,14 @@ export type ContextSubcourse = {
     lecture: ContextLecture[];
 };
 
-export type AchievementContextType = {
+export type BucketContextType = {
     user?: User;
     match: ContextMatch[];
     subcourse: ContextSubcourse[];
+};
+
+export type TemplateContextType = {
+    [key: string]: any;
 };
 
 export enum AchievementState {
@@ -153,6 +157,8 @@ export interface PublicAchievement {
     actionType?: achievement_action_type_enum | null;
     achievementType: achievement_type_enum;
     achievementState: AchievementState;
+    achievedText?: string;
+    streakProgress?: string;
     steps?: PublicStep[] | null;
     maxSteps: number;
     currentStep?: number;

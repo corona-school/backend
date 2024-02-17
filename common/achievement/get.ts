@@ -67,12 +67,12 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
         },
     });
 
-    const tieredAchievements = tieredTemplates.map((template) => {
+    const tieredAchievements = tieredTemplates.map(async (template) => {
         const dataAggr = template.conditionDataAggregations as Prisma.JsonObject;
         const maxValue = Object.keys(dataAggr)
             .map((key) => {
-                const val = dataAggr[key] as number;
-                return Number(val);
+                const val = dataAggr[key]['valueToAchieve'] as number;
+                return Number(val || 0);
             })
             .reduce((a, b) => a + b, 0);
         const achievement: PublicAchievement = {
@@ -80,7 +80,7 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             name: template.name,
             subtitle: template.subtitle,
             description: template.description,
-            image: getAchievementImageURL(template.image),
+            image: await getAchievementImageURL(template),
             alternativeText: 'alternativeText',
             actionType: template.actionType ?? undefined,
             achievementType: template.type,
@@ -89,13 +89,13 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             maxSteps: maxValue,
             currentStep: 0,
             isNewAchievement: null,
-            progressDescription: `Noch ${userAchievements.length - userAchievements.length} Schritte bis zum Abschluss`,
+            progressDescription: template.progressDescription,
             actionName: template.actionName,
             actionRedirectLink: template.actionRedirectLink,
         };
         return achievement;
     });
-    return tieredAchievements;
+    return Promise.all(tieredAchievements);
 };
 
 // User achievements are already started by the user and are either active or completed.
@@ -103,10 +103,10 @@ const getUserAchievements = async (user: User): Promise<PublicAchievement[]> => 
     const userAchievements = await getUserAchievementsWithTemplates(user);
     const userAchievementGroups: { [group: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
-        if (!userAchievementGroups[ua.template.group]) {
-            userAchievementGroups[ua.template.group] = [];
+        if (!userAchievementGroups[`${ua.template.group}/${ua.relation}`]) {
+            userAchievementGroups[`${ua.template.group}/${ua.relation}`] = [];
         }
-        userAchievementGroups[ua.template.group].push(ua);
+        userAchievementGroups[`${ua.template.group}/${ua.relation}`].push(ua);
     });
     const achievements: PublicAchievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
     return achievements;
@@ -146,60 +146,77 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    const achievementContext = transformPrismaJson(
-        user,
-        userAchievements[currentAchievementIndex].relation,
-        userAchievements[currentAchievementIndex].context as Prisma.JsonObject
-    );
-    const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext);
-
     const achievementTemplates = await prisma.achievement_template.findMany({
-        where: { group: currentAchievementTemplate.group, isActive: true },
+        where: { group: userAchievements[currentAchievementIndex].template.group, isActive: true },
         orderBy: { groupOrder: 'asc' },
     });
 
-    const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);
-
-    const isNewAchievement = state === AchievementState.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
+    const condition = userAchievements[currentAchievementIndex].template.condition;
 
     let maxValue: number = 0;
     let currentValue: number = 0;
-    if (currentAchievementTemplate.type === AchievementType.STREAK || currentAchievementTemplate.type === AchievementType.TIERED) {
-        const dataAggregationKeys = Object.keys(currentAchievementTemplate.conditionDataAggregations as Prisma.JsonObject);
+    if (
+        userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK ||
+        userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED
+    ) {
+        const dataAggregationKeys = Object.keys(userAchievements[currentAchievementIndex].template.conditionDataAggregations as Prisma.JsonObject);
         const evaluationResult = await evaluateAchievement(
             user.userID,
-            currentAchievementTemplate.condition,
-            currentAchievementTemplate.conditionDataAggregations as ConditionDataAggregations,
+            condition,
+            userAchievements[currentAchievementIndex].template.conditionDataAggregations as ConditionDataAggregations,
             userAchievements[currentAchievementIndex].recordValue || undefined,
             userAchievements[currentAchievementIndex].relation || undefined
         );
         if (evaluationResult) {
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =
-                currentAchievementTemplate.type === AchievementType.STREAK
-                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue! > currentValue
-                        ? userAchievements[currentAchievementIndex].recordValue!
+                userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK
+                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue > currentValue
+                        ? userAchievements[currentAchievementIndex].recordValue
                         : currentValue
                     : dataAggregationKeys
                           .map((key) => {
                               // TODO: check if we can remove valueToAchieve
-                              return Number((currentAchievementTemplate.conditionDataAggregations as any)[key].valueToAchieve as string);
+                              return Number((userAchievements[currentAchievementIndex].template.conditionDataAggregations as any)[key].valueToAchieve || 0);
                           })
                           .reduce((a, b) => a + b, 0);
+            if (
+                userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK &&
+                currentValue < maxValue &&
+                userAchievements[currentAchievementIndex].achievedAt
+            ) {
+                await prisma.user_achievement.update({
+                    where: { id: userAchievements[currentAchievementIndex].id },
+                    data: { achievedAt: null, isSeen: false },
+                });
+            }
         }
     } else {
         currentValue = currentAchievementIndex;
         maxValue = achievementTemplates.length - 1;
     }
 
-    // TODO: create a function to get the course image path for an array given templateIds. If the result of this function is undefined, use the template image.
+    const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);
+    const isNewAchievement = state === AchievementState.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
+
+    const achievementContext = transformPrismaJson(
+        user,
+        userAchievements[currentAchievementIndex].relation,
+        userAchievements[currentAchievementIndex].context as Prisma.JsonObject
+    );
+    const eventsToBeatStreak = maxValue - currentValue + 1;
+    const currentAchievementTemplate = renderAchievementWithContext(userAchievements[currentAchievementIndex], achievementContext, {
+        remainingProgress: eventsToBeatStreak.toString(),
+        progress: currentValue.toString(),
+        maxValue: maxValue.toString(),
+    });
 
     return {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
         description: currentAchievementTemplate.description,
-        image: getAchievementImageURL(currentAchievementTemplate.image),
+        image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].relation),
         alternativeText: 'alternativeText',
         actionType: currentAchievementTemplate.actionType,
         achievementType: currentAchievementTemplate.type,
@@ -222,10 +239,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
-        // TODO: take progressDescription from achievement template and when COMPLETED, take the achievedText from achievement template
-        progressDescription: userAchievements[currentAchievementIndex].achievedAt
-            ? 'Hurra! alle Termin(e) wurden abgeschlossen'
-            : `Noch ${maxValue - currentValue} Termin(e) bis zum Abschluss`,
+        progressDescription: currentAchievementTemplate.progressDescription,
+        achievedText: currentAchievementTemplate.achievedText,
+        streakProgress: currentAchievementTemplate.streakProgress,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };

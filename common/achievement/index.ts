@@ -1,6 +1,6 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { sortActionTemplatesToGroups } from './util';
+import { checkIfAchievementIsGlobal, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
@@ -15,8 +15,8 @@ import { isGamificationFeatureActive } from '../../utils/environment';
 
 const logger = getLogger('Achievement');
 
-export const rewardActionTaken = tracer.wrap('achievement.rewardActionTaken', _rewardActionTaken);
-async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+export const rewardActionTakenAt = tracer.wrap('achievement.rewardActionTaken', _rewardActionTakenAt);
+async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
     if (!isGamificationFeatureActive()) {
         logger.warn(`Gamification feature is not active`);
         return;
@@ -38,7 +38,7 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
 
     const actionEvent: ActionEvent<ID> = {
         actionId,
-        at: new Date(),
+        at,
         user: user,
         context,
     };
@@ -54,10 +54,15 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 span?.setTag('achievement.group', groupName);
                 logger.info('evaluate achievement group', { groupName });
 
+                const { relation, ...contextWithoutRelation } = actionEvent.context;
+
                 let achievementToCheck: AchievementToCheck | undefined = undefined;
                 for (const template of group) {
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
-                        getOrCreateUserAchievement(template, user.userID, context)
+                        getOrCreateUserAchievement(template, user.userID, {
+                            ...contextWithoutRelation,
+                            relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation,
+                        })
                     );
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === AchievementType.STREAK)) {
                         logger.info('found achievement to check', {
@@ -73,7 +78,10 @@ async function _rewardActionTaken<ID extends ActionID>(user: User, actionId: ID,
                 if (achievementToCheck) {
                     span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
-                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, actionEvent)
+                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, {
+                            ...actionEvent,
+                            context: { ...contextWithoutRelation, relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation },
+                        })
                     );
                 }
                 logger.info('group evaluation done', { groupName });
@@ -96,14 +104,20 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
         const formula = metric.formula;
         const value = formula(event.context);
 
-        logger.info('track event', { metric: metric.metricName, action: event.actionId, value, relation: event.context.relation ?? '', createdAt: event.at });
+        logger.info('track event', {
+            metric: metric.metricName,
+            action: event.actionId,
+            value,
+            relation: event.context.relation ?? '',
+            createdAt: event.at,
+        });
         await prisma.achievement_event.create({
             data: {
                 metric: metric.metricName,
                 value: value,
                 action: event.actionId,
                 userId: event.user.userID,
-                relation: event.context.relation ?? '',
+                relation: event.context.relation ?? null,
                 createdAt: event.at,
             },
         });
@@ -152,7 +166,6 @@ async function isAchievementConditionMet<ID extends ActionID>(achievement: UserA
         logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-
     const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
     if (result === undefined) {
         return null;
@@ -188,12 +201,12 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         }
         const lastTemplate = groupTemplates[groupTemplates.length - 2];
         if (groupOrder === lastTemplate.groupOrder) {
-            await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+            await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
                 achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
             });
         }
     } else {
-        await actionTakenAt(new Date(event.at), event.user, 'user_achievement_reward_issued', {
+        await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
             achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
         });
     }

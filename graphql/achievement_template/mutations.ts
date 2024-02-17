@@ -30,6 +30,10 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     stepName: string;
     @Field()
     image: string;
+    @Field({ nullable: true })
+    progressDescription: string | null;
+    @Field({ nullable: true })
+    streakProgress: string | null;
 
     @Field()
     condition: string;

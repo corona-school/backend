@@ -50,7 +50,6 @@ function buildGroupCache(templates: AchievementTemplate[]) {
 
 function buildMetricCache(templates: AchievementTemplate[]) {
     achievementTemplates.set(TemplateSelectEnum.BY_METRIC, new Map());
-
     for (const template of templates) {
         const dataAggr = template.conditionDataAggregations as ConditionDataAggregations;
 
@@ -105,7 +104,18 @@ export const getActiveTemplateGroup = (group: string) =>
 // The metadata consists of values that are safe to update at runtime
 export type AchievementTemplateMetadata = Pick<
     AchievementTemplate,
-    'name' | 'achievedText' | 'actionName' | 'actionRedirectLink' | 'actionType' | 'description' | 'subtitle' | 'stepName' | 'image' | 'achievedImage'
+    | 'name'
+    | 'achievedText'
+    | 'actionName'
+    | 'actionRedirectLink'
+    | 'actionType'
+    | 'description'
+    | 'subtitle'
+    | 'stepName'
+    | 'image'
+    | 'achievedImage'
+    | 'progressDescription'
+    | 'streakProgress'
 >;
 // The logic fields are unsafe to update while a template is active
 export type AchievementTemplateLogicFields = Pick<
