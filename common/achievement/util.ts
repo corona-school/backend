@@ -7,7 +7,7 @@ import { accessURLForKey } from '../file-bucket';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
+import { RelationTypes, BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
 import moment from 'moment';
@@ -48,7 +48,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 
 type WhereInput = Prisma.matchWhereInput | Prisma.subcourseWhereInput;
 
-export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
+export async function getBucketContext(userID: string, relation?: string): Promise<BucketContextType> {
     const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause: WhereInput = {};
@@ -99,7 +99,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     }
 
     // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
-    const achievementContext: AchievementContextType = {
+    const bucketContext: BucketContextType = {
         match: matches.map((match) => ({
             id: match.id,
             relation: relationType ? `${relationType}/${match.id}` : undefined,
@@ -111,7 +111,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
             lecture: subcourse.lecture,
         })),
     };
-    return achievementContext;
+    return bucketContext;
 }
 
 export function filterBucketEvents(bucketEvents: BucketEvents[]) {
@@ -130,11 +130,7 @@ export function filterBucketEvents(bucketEvents: BucketEvents[]) {
 }
 
 export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {
-    const transformedJson: TemplateContextType = {
-        user: user,
-        match: [],
-        subcourse: [],
-    };
+    const transformedJson: TemplateContextType = { user: user };
     if (relation) {
         const [relationType, relationId] = getRelationTypeAndId(relation);
         transformedJson[`${relationType}Id`] = relationId;
@@ -152,7 +148,7 @@ export function transformPrismaJson(user: User, relation: string | null, json: P
 
 export function renderAchievementWithContext(
     userAchievement: user_achievement & { template: achievement_template },
-    achievementContext: AchievementContextType,
+    achievementContext: TemplateContextType,
     additionalContext?: { [key: string]: string }
 ): achievement_template {
     const currentAchievementContext = userAchievement.template as any;
