@@ -8,6 +8,7 @@ export {
     achievement_type_enum as AchievementType,
     achievement_action_type_enum as AchievementActionType,
     achievement_template_for_enum as AchievementTemplateFor,
+    achievement_template as AchievementTemplate,
 } from '@prisma/client';
 
 // type ActionIDUnion<A extends ActionID[]> = A[number];
