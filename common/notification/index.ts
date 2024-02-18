@@ -401,17 +401,12 @@ export async function actionTaken<ID extends ActionID>(
     attachments?: AttachmentGroup,
     noDuplicates = false
 ) {
-    return await tracer.trace('notification.actionTaken', async (span) => {
-        span.setTag('actionId', actionId);
+    if (!user.active) {
+        logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
+        return;
+    }
 
-        if (!user.active) {
-            logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
-            return;
-        }
-
-        await Achievement.rewardActionTaken(user, actionId, notificationContext);
-        return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
-    });
+    return await actionTakenAt(new Date(), user, actionId, notificationContext, false, noDuplicates, attachments);
 }
 
 /* actionTakenAt is the mighty variant of actionTaken:
@@ -460,6 +455,13 @@ export async function _actionTakenAt<ID extends ActionID>(
     noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
+    try {
+        // To be able to reuse all existing action taken events, we had to move the achievement reward here
+        await Achievement.rewardActionTakenAt(at, user, actionId, notificationContext);
+    } catch (e) {
+        logger.error('Failed to reward achievement', e, { at, user, actionId, notificationContext });
+    }
+
     if (SILENCE_NOTIFICATION_SYTEM && isDev) {
         logger.debug(`No Action taken as Notification System is silenced`);
         return;

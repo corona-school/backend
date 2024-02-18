@@ -1,12 +1,12 @@
-import { Achievement_event } from '../../graphql/generated';
 import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
-import { getBucketContext } from './util';
+import { filterBucketEvents, getBucketContext } from './util';
 import tracer from '../logger/tracing';
+import { achievement_event } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
@@ -25,12 +25,12 @@ async function _evaluateAchievement(
         where: {
             userId,
             metric: { in: metrics },
-            AND: relation ? { relation: { equals: relation } } : {},
+            AND: relation ? { relation: { startsWith: relation } } : {},
         },
         orderBy: { createdAt: 'desc' },
     });
 
-    const eventsByMetric: Record<string, Achievement_event[]> = {};
+    const eventsByMetric: Record<string, achievement_event[]> = {};
     for (const event of achievementEvents) {
         if (!eventsByMetric[event.metric]) {
             eventsByMetric[event.metric] = [];
@@ -79,14 +79,19 @@ async function _evaluateAchievement(
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
 
         const bucketEvents = createBucketEvents(eventsForMetric, buckets);
-        const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
+        const filteredBucketEvents = filterBucketEvents(bucketEvents);
+        const bucketAggr = filteredBucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
         const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;
     }
     // TODO: return true if the condition is empty (eg. a student finishes a course and automatically receives an achievement)
     const evaluate = swan.parse(condition);
-    const value: boolean = await evaluate(resultObject);
+    const value = await evaluate(resultObject);
+    if (typeof value !== 'boolean') {
+        logger.error(`Failed to evaluate achievement condition`, undefined, { condition, resultObject, value });
+        throw new Error(`Achievement Condition did not evaluate to a boolean but ${value}`);
+    }
 
     return {
         conditionIsMet: value,
@@ -94,7 +99,7 @@ async function _evaluateAchievement(
     };
 }
 
-export function createBucketEvents(events: Achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
+export function createBucketEvents(events: achievement_event[], bucketConfig: BucketConfig): BucketEvents[] {
     switch (bucketConfig.bucketKind) {
         case 'default':
             return createDefaultBuckets(events);
@@ -105,14 +110,14 @@ export function createBucketEvents(events: Achievement_event[], bucketConfig: Bu
     }
 }
 
-const createDefaultBuckets = (events: Achievement_event[]): BucketEvents[] => {
+const createDefaultBuckets = (events: achievement_event[]): BucketEvents[] => {
     return events.map((event) => ({
         kind: 'default',
         events: [event],
     }));
 };
 
-const createTimeBuckets = (events: Achievement_event[], bucketConfig: GenericBucketConfig<TimeBucket>): BucketEvents[] => {
+const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBucketConfig<TimeBucket>): BucketEvents[] => {
     const { buckets } = bucketConfig;
     const bucketsWithEvents: BucketEvents[] = buckets.map((bucket) => {
         // values will be sorted in a desc order

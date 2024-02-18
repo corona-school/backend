@@ -19,20 +19,20 @@ logger.mark(`Backend Integration Tests\n` + ` testing ${URL}\n\n`);
 
 // This wrapper provides assertions and logging around a GraphQLClient of the graphql-request package
 function wrapClient(client: GraphQLClient) {
-    async function request(query: string) {
+    async function request(query: string, variables: object = {}) {
         const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
         logger.mark(`+ ${name}`);
         if (!silent) {
             logger.info(`request: ` + query.trim());
         }
-        const response = await client.request(query);
+        const response = await client.request(query, variables);
         if (!silent) {
             logger.info(`response: ` + JSON.stringify(response, null, 2));
         }
         return response;
     }
 
-    async function requestShallFail(query: string): Promise<never> {
+    async function requestShallFail(query: string, variables: object = {}): Promise<never> {
         const name = query.match(/(mutation|query) [A-Za-z]+/)?.[0] ?? '(unnamed)';
         logger.mark(`+ ${name}`);
 
@@ -41,7 +41,7 @@ function wrapClient(client: GraphQLClient) {
         }
 
         try {
-            await client.request(query);
+            await client.request(query, variables);
         } catch (error) {
             if (!silent) {
                 logger.info(`  successfully failed with ${error.message.split(':')[0]}`);

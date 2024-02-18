@@ -72,6 +72,8 @@ import { ExtendedFieldsScreenerResolver } from './screener/fields';
 import { ExtendedFieldsCooperationResolver } from './cooperation/fields';
 import { MutateCooperationResolver } from './cooperation/mutation';
 import { FieldsChatResolver } from './chat/fields';
+import { AchievementTemplateFieldResolver } from './achievement_template/fields';
+import { MutateAchievementTemplateResolver } from './achievement_template/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -185,6 +187,10 @@ const schema = buildSchemaSync({
         /* Cooperation */
         ExtendedFieldsCooperationResolver,
         MutateCooperationResolver,
+
+        /* Achievement Templates */
+        AchievementTemplateFieldResolver,
+        MutateAchievementTemplateResolver,
 
         /* Admin */
         AdminMutationsResolver,

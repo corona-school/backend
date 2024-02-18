@@ -35,3 +35,7 @@ export function ensureNoNull<T>(value: T | null | undefined): T | undefined {
     }
     return value;
 }
+
+export function ensureNoNullObject<T>(value: T): { [K in keyof T]?: Exclude<T[K], null> } {
+    return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== null)) as any;
+}

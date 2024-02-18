@@ -45,10 +45,10 @@ model achievement_template {
   stepName                  String                        @db.VarChar
   // what type of achievement is it
   type                      achievement_type_enum
-  subtitle                  String                        @db.VarChar
+  subtitle                  String?                       @db.VarChar
   description               String                        @db.VarChar
   image                     String                        @db.VarChar
-  achievedImage             String                        @db.VarChar
+  achievedImage             String?                       @db.VarChar
   // some achievements show actions that a user can/must perform next.
   // therefore we need the action name, type (for the icon) and a redirect link
   actionName                String?                       @db.VarChar
@@ -56,6 +56,8 @@ model achievement_template {
   actionType                achievement_action_type_enum?
   // Tiered: If a tiered achievement has been achieved, the text changes
   achievedText              String?                       @db.VarChar
+  progressDescription       String?                       @db.VarChar
+  streakProgress            String?                       @db.VarChar
   // defines what value must be reached to receive the achievement, 
   // e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
   condition                 String                        @db.VarChar
@@ -93,7 +95,7 @@ model achievement_event {
   // what action triggered the event
   action    String   @db.VarChar
   // the relation is like a unique id so that we can later assign the event uniquely, e.g. "course/10", "match/12", "user/10"
-  relation  String   @db.VarChar
+  relation  String?  @db.VarChar
 }
 
 // An attachment is a file uploaded to an object storage and attached to a notification
