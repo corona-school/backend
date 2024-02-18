@@ -86,6 +86,21 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Course)
+    @AuthorizedDeferred(Role.OWNER)
+    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<GraphQLModel.Course> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+        if (course) {
+            const result = await prisma.course.delete({ where: { id: courseId } });
+            logger.info(`Course (${courseId}) deleted successfully`);
+            return result;
+        } else {
+            logger.error(`Course (${courseId}) not found`);
+            return null;
+        }
+    }
+
+    @Mutation((returns) => GraphQLModel.Course)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async courseEdit(
         @Ctx() context: GraphQLContext,

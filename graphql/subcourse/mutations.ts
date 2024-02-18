@@ -14,7 +14,7 @@ import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
-import { chat_type } from '../generated';
+import { chat_type, Subcourse } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
@@ -198,6 +198,23 @@ export class MutateSubcourseResolver {
         }
         logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user.userID})`);
         return true;
+    }
+
+    @Mutation((returns) => GraphQLModel.Subcourse)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<GraphQLModel.Subcourse> {
+        const { user } = context;
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        if (subcourse) {
+            const result = await prisma.subcourse.delete({ where: { id: subcourseId } });
+
+            logger.info(`Subcourse(${subcourseId}) was deleted by User(${context.user.userID})`);
+            return result;
+        } else {
+            logger.error(`Course (${subcourseId}) not found`);
+            return null;
+        }
     }
 
     @Mutation((returns) => Boolean)

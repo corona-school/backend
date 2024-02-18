@@ -6,6 +6,7 @@ import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
+import { prisma } from '../common/prisma';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -389,4 +390,33 @@ void test('Add / Remove another instructor', async () => {
     await client.request(`mutation RemoveInstructorFromSubcourse {
         subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
     }`);
+});
+
+void test('Delete course', async () => {
+    const { courseId, client: courseClient, subcourseId } = await subcourseOne;
+    await courseClient.request(`
+    mutation DeleteSubCourse {
+        subcourseDelete(
+        subcourseId: ${subcourseId}
+    ) {id}}      
+`);
+
+    const subcourse = await prisma.subcourse.findUnique({
+        where: { id: subcourseId },
+    });
+
+    assert.ok(subcourse == null);
+
+    await courseClient.request(`
+        mutation DeleteCourse {
+            courseDelete(
+            courseId: ${courseId}
+        ) {id}}      
+    `);
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId },
+    });
+
+    assert.ok(course == null);
 });
