@@ -395,7 +395,8 @@ void test('Add / Remove another instructor', async () => {
 });
 
 void test('Find shared course', async () => {
-    const { courseId, client } = await subcourseOne;
+    const { instructor: instructor2, client: instructor2client } = await screenedInstructorTwo;
+    const { courseId, client, instructor: subcourseInstructor } = await subcourseOne;
 
     await client.request(`
         mutation MarkCourseShared {
@@ -403,47 +404,52 @@ void test('Find shared course', async () => {
         }
     `);
 
-    const { templateCourses: templateCoursesEmptySearch } = await adminClient.request(`
+    const { templateCourses: templateCoursesEmptySearch } = await instructor2client.request(`
         query FindSharedCourses {
             templateCourses(search: "", take: 1) {
               id
             }
         }
     `);
-
+    // Instructor from subcourseOne creates subcourse, Different instructor (instructor2) must find it.
     assert.ok(templateCoursesEmptySearch.some((it) => it.id === courseId));
 
     const course = await prisma.course.findUnique({
         where: { id: courseId },
     });
 
-    const { templateCourses: templateCoursesNonEmptySearch } = await adminClient.request(`
+    const { templateCourses: templateCoursesNonEmptySearch } = await instructor2client.request(`
     query FindSharedCourses {
         templateCourses(search: "${course.name}", take: 1) {
           id
         }
     }
 `);
+    // Instructor 2 must be able to find shared course by name
     assert.ok(templateCoursesNonEmptySearch.some((it) => it.id === courseId));
-});
 
-void test('Test template course search', async () => {
-    const { instructor: instructor2 } = await screenedInstructorTwo;
-    const { instructor, courseId } = await subcourseOne;
+    await client.request(`
+    mutation MarkCourseShared {
+        courseMarkShared(courseId: ${courseId}, shared: false){id}
+    }
+`);
 
-    await prisma.course.update({ where: { id: courseId }, data: { shared: false } });
     const { templateCourses: courseSearch } = await adminClient.request(`
     query FindSharedCourses {
         templateCourses(studentId: ${instructor2.student.id}, search: "", take: 10) { id }
     }
-`);
+    `);
+
+    //Subcourse is not shared anymore. Instructor 2 must not find the course since it was created
+    //by the subcourseInstructor
     assert.ok(courseSearch.every((it) => it.id != courseId));
 
     const { templateCourses: courseSearch2 } = await adminClient.request(`
     query FindSharedCourses {
-        templateCourses(studentId: ${instructor.student.id}, search: "", take: 10) { id }
+        templateCourses(studentId: ${subcourseInstructor.student.id}, search: "", take: 10) { id }
     }
 `);
 
+    //SubcourseOneInstructor must be able to find his own subcourse, even if it is not shared
     assert.ok(courseSearch2.some((it) => it.id === courseId));
 });
