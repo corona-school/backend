@@ -19,3 +19,14 @@ export async function deleteCourseAchievementsForStudents(subcourseId: number, s
         },
     });
 }
+
+export async function deleteCourseRelatedAchievementsForPupils(subcourseId: number, pupilIds) {
+    await prisma.user_achievement.deleteMany({
+        where: {
+            userId: {
+                in: pupilIds,
+            },
+            relation: `subcourse/${subcourseId}`,
+        },
+    });
+}

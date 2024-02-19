@@ -15,6 +15,7 @@ import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { deleteCourseRelatedAchievementsForPupils } from '../achievement/delete';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -288,7 +289,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     await logTransaction('participantLeftCourse', pupil, { subcourseID: subcourse.id });
 
     const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
-
+    await deleteCourseRelatedAchievementsForPupils(subcourse.id, [pupil.id]);
     await Notification.actionTaken(userForPupil(pupil), 'participant_course_leave', {
         course,
     });
