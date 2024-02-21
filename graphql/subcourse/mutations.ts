@@ -381,7 +381,6 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await sendPupilCoursePromotion(subcourse);
-        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
         logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
         return true;
     }
