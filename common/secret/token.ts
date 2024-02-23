@@ -1,4 +1,4 @@
-import { getUser, updateUser, User } from '../user';
+import { getUser, User } from '../user';
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
 import { hashToken } from '../util/hashing';
@@ -10,6 +10,8 @@ import { Email } from '../notification/types';
 import { isEmailAvailable } from '../user/email';
 import { secret_type_enum as SecretType } from '@prisma/client';
 import { createSecretEmailToken } from './emailToken';
+import moment from 'moment';
+import { updateUser } from '../user/update';
 
 const logger = getLogger('Token');
 
@@ -168,7 +170,10 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.studentId },
             });
-            await Notification.actionTaken(user, 'student_registration_verified_email', {});
+            await Notification.actionTaken(user, 'student_registration_verified_email', {
+                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                email: user.email,
+            });
 
             logger.info(`Student(${user.studentId}) verified their e-mail by logging in with an e-mail token`);
         }
@@ -184,8 +189,10 @@ export async function verifyEmail(user: User) {
                 data: { verifiedAt: new Date(), verification: null },
                 where: { id: user.pupilId },
             });
-            await Notification.actionTaken(user, 'pupil_registration_verified_email', {});
-
+            await Notification.actionTaken(user, 'pupil_registration_verified_email', {
+                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                email: user.email,
+            });
             logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);
         }
     }

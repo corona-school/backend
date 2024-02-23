@@ -23,7 +23,7 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -35,13 +35,13 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
             ],
@@ -62,7 +62,7 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -74,13 +74,13 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T01:05:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -101,25 +101,25 @@ describe('test create buckets by_lecture_start', () => {
                 {
                     kind: 'time',
                     startTime: moment('2023-07-31T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-01T00:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-01T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T00:35:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-07T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-08T04:55:00.000Z').toDate(),
+                    endTime: moment('2023-08-08T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
                     startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-14T01:50:00.000Z').toDate(),
+                    endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
             ],
@@ -160,7 +160,7 @@ describe('test create buckets by_lecture_start', () => {
             },
         });
 
-        expect(res.buckets).toEqual(expectedBuckets);
+        expect(res.buckets).toEqual(expectedBuckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()));
     });
 });
 

@@ -1,5 +1,5 @@
 import moment from 'moment-timezone';
-import { achievement_event, lecture, match, subcourse } from '@prisma/client';
+import { achievement_event, achievement_template_for_enum, lecture, match, subcourse } from '@prisma/client';
 import { prismaMock } from '../../jest/singletons';
 import { evaluateAchievement } from './evaluate';
 import { ConditionDataAggregations } from './types';

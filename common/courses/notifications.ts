@@ -86,13 +86,21 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-const PREDICTED_PUPIL_RESPONSE_RATE = 1; /* % */
+const PREDICTED_PUPIL_RESPONSE_RATE = 5; /* % */
+// The maximum amount of notifications to send for a course:
+const MAX_PROMOTIONS = 500;
 
-export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, countAsPromotion: boolean = true) {
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
     if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
         throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
+    }
+
+    if (countAsPromotion) {
+        // Store this before sending out the notifications (which may take a while), to prevent this from accidentally being
+        // triggered twice
+        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
     }
 
     const course = await getCourse(subcourse.courseId);
@@ -118,7 +126,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse) {
 
     // get random subset of filtered pupils
     const seatsLeft = await getCourseFreePlaces(subcourse);
-    const randomPupilSampleSize = (seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100;
+    const randomPupilSampleSize = Math.min((seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100, MAX_PROMOTIONS);
     const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
 
     logger.info(

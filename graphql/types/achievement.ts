@@ -1,34 +1,21 @@
 import { ObjectType, Field, Int, registerEnumType } from 'type-graphql';
-import { achievement_type_enum, achievement_action_type_enum } from '@prisma/client';
+import { achievement_action_type_enum as GraphQLAchievementActionTypeEnum, achievement_type_enum as GraphQLAchievementTypeEnum } from '../generated';
+import { PublicAchievement, PublicStep, AchievementState, AchievementType, AchievementActionType } from '../../common/achievement/types';
 
-enum achievement_state {
-    INACTIVE = 'INACTIVE',
-    ACTIVE = 'ACTIVE',
-    COMPLETED = 'COMPLETED',
-}
-
-registerEnumType(achievement_state, {
+registerEnumType(AchievementState, {
     name: 'achievement_state',
 });
 
-registerEnumType(achievement_action_type_enum, {
-    name: 'achievement_action_type_enum',
-});
-
-registerEnumType(achievement_type_enum, {
-    name: 'achievement_type_enum',
-});
-
 @ObjectType()
-class Achievement {
+export class Achievement implements PublicAchievement {
     @Field()
     id: number;
 
     @Field()
     name: string;
 
-    @Field()
-    subtitle: string;
+    @Field({ nullable: true })
+    subtitle?: string | null;
 
     @Field()
     description: string;
@@ -39,14 +26,14 @@ class Achievement {
     @Field()
     alternativeText: string;
 
-    @Field(() => achievement_action_type_enum, { nullable: true })
-    actionType?: achievement_action_type_enum | null;
+    @Field(() => GraphQLAchievementActionTypeEnum, { nullable: true })
+    actionType?: AchievementActionType | null;
 
-    @Field(() => achievement_type_enum)
-    achievementType: achievement_type_enum;
+    @Field(() => GraphQLAchievementTypeEnum)
+    achievementType: AchievementType;
 
-    @Field(() => achievement_state)
-    achievementState: achievement_state;
+    @Field(() => AchievementState)
+    achievementState: AchievementState;
 
     @Field(() => [Step], { nullable: true })
     steps?: Step[] | null;
@@ -61,7 +48,13 @@ class Achievement {
     isNewAchievement?: boolean | null;
 
     @Field({ nullable: true })
+    achievedText?: string | null;
+
+    @Field({ nullable: true })
     progressDescription?: string | null;
+
+    @Field({ nullable: true })
+    streakProgress?: string | null;
 
     @Field({ nullable: true })
     actionName?: string | null;
@@ -71,12 +64,10 @@ class Achievement {
 }
 
 @ObjectType()
-class Step {
+export class Step implements PublicStep {
     @Field()
     name: string;
 
     @Field({ nullable: true })
     isActive?: boolean | null;
 }
-
-export { Achievement, Step, achievement_state };

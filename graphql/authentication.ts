@@ -1,5 +1,4 @@
 import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
-import { Role } from './roles';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
 import type { GraphQLContext, GraphQLContextPupil, GraphQLContextScreener, GraphQLContextStudent } from './context';
 import { assert } from 'console';
@@ -10,11 +9,12 @@ import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
 import { getUser, updateLastLogin, User, userForScreener } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
-import { evaluatePupilRoles, evaluateScreenerRoles, evaluateStudentRoles } from './roles';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
 import { defaultScreener } from '../common/util/screening';
+import { evaluateUserRoles } from '../common/user/evaluate_roles';
+import { Role } from '../common/user/roles';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -117,21 +117,7 @@ export async function loginAsUser(user: User, context: GraphQLContext, noSession
         ensureSession(context);
     }
 
-    const roles: Role[] = [];
-    if (user.studentId) {
-        const student = await getStudent(user.studentId);
-        await evaluateStudentRoles(student, roles);
-    }
-
-    if (user.pupilId) {
-        const pupil = await getPupil(user.pupilId);
-        await evaluatePupilRoles(pupil, roles);
-    }
-
-    if (user.screenerId) {
-        const screener = await getScreener(user.screenerId);
-        evaluateScreenerRoles(screener, roles);
-    }
+    const roles = await evaluateUserRoles(user);
 
     context.user = { ...user, roles };
 

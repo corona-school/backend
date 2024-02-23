@@ -25,6 +25,7 @@ export type ChatMetaData = {
     subcourse?: number[];
     prospectSubcourse?: number[];
     finished?: FinishedReason;
+    createdBy?: string;
 };
 
 export type TJConversation = Conversation & {

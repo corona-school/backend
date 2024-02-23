@@ -2,14 +2,15 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma, achievement_template, user_achievement } from '@prisma/client';
+import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
-import { achievement_state } from '../../graphql/types/achievement';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, AchievementContextType } from './types';
+import { RelationTypes, BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
+import { getCourseImageURL } from '../courses/util';
+import moment from 'moment';
 
 const logger = getLogger('Achievement');
 
@@ -19,8 +20,21 @@ export function getAchievementImageKey(imageKey: string) {
     return join(ACHIEVEMENT_IMAGE_DEFAULT_PATH, `${imageKey}`);
 }
 
-export function getAchievementImageURL(imageKey: string) {
-    return accessURLForKey(imageKey);
+export async function getAchievementImageURL(template: achievement_template, state?: AchievementState, relation?: string) {
+    const { image, achievedImage } = template;
+    if (relation) {
+        const subcourseId = relation.split('/')[1];
+        if (subcourseId && template.templateFor === achievement_template_for_enum.Course && template.type === achievement_type_enum.TIERED) {
+            const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
+            if (subcourse) {
+                return getCourseImageURL(subcourse.course);
+            }
+        }
+    }
+    if (state === AchievementState.COMPLETED && achievedImage) {
+        return accessURLForKey(achievedImage);
+    }
+    return accessURLForKey(image);
 }
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
@@ -34,7 +48,7 @@ function getRelationTypeAndId(relation: string): [type: RelationTypes, id: strin
 
 type WhereInput = Prisma.matchWhereInput | Prisma.subcourseWhereInput;
 
-export async function getBucketContext(userID: string, relation?: string): Promise<AchievementContextType> {
+export async function getBucketContext(userID: string, relation?: string): Promise<BucketContextType> {
     const [userType, id] = getUserTypeAndIdForUserId(userID);
 
     const whereClause: WhereInput = {};
@@ -52,18 +66,21 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     logger.info('evaluate bucket configuration', { userType, relation, relationType, whereClause });
 
     let matches: any[] = [];
-    if (!relationType || relationType === 'match') {
+    if (relation?.includes('match') || !relation) {
         matches = await prisma.match.findMany({
             where: { ...whereClause, [`${userType}Id`]: id },
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
+                lecture: {
+                    where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    select: { start: true, duration: true },
+                },
             },
         });
     }
 
     let subcourses: any[] = [];
-    if (!relationType || relationType === 'subcourse') {
+    if (relation?.includes('subcourse') || !relation) {
         const userClause =
             userType === 'student'
                 ? { subcourse_instructors_student: { some: { studentId: id } } }
@@ -73,13 +90,16 @@ export async function getBucketContext(userID: string, relation?: string): Promi
             where: subcourseWhere,
             select: {
                 id: true,
-                lecture: { where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } }, select: { start: true, duration: true } },
+                lecture: {
+                    where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
+                    select: { start: true, duration: true },
+                },
             },
         });
     }
 
     // for global relations we get all matches/subcourses of a user by his own id, whereas for specific relations we get the match/subcourse by its relationId
-    const achievementContext: AchievementContextType = {
+    const bucketContext: BucketContextType = {
         match: matches.map((match) => ({
             id: match.id,
             relation: relationType ? `${relationType}/${match.id}` : undefined,
@@ -91,16 +111,33 @@ export async function getBucketContext(userID: string, relation?: string): Promi
             lecture: subcourse.lecture,
         })),
     };
-    return achievementContext;
+    return bucketContext;
 }
 
-export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): AchievementContextType {
-    // TODO: find proper type?
-    const transformedJson: any = { user: user };
+export function filterBucketEvents(bucketEvents: BucketEvents[]) {
+    // Filter out time bucketEvents that are in the future and dont contain events.
+    // This is done to avoid taking future lectures into account during the evaluation of achievements.
+    // If a lecture was joined early, it will be added to the filteredBuckets array by this function for containing events.
+    const filteredBuckets: BucketEvents[] = bucketEvents.filter((bucketEvent) => {
+        if (bucketEvent.kind !== 'time') {
+            return true;
+        } else if (bucketEvent.startTime > moment().toDate()) {
+            return bucketEvent.events.length > 0;
+        }
+        return true;
+    });
+    return filteredBuckets;
+}
+
+export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {
+    const transformedJson: TemplateContextType = { user: user };
     if (relation) {
         const [relationType, relationId] = getRelationTypeAndId(relation);
         transformedJson[`${relationType}Id`] = relationId;
         transformedJson['relation'] = relation;
+    }
+    if (!json) {
+        return transformedJson;
     }
     const keys = Object.keys(json) || [];
     keys.forEach((key) => {
@@ -111,14 +148,15 @@ export function transformPrismaJson(user: User, relation: string | null, json: P
 
 export function renderAchievementWithContext(
     userAchievement: user_achievement & { template: achievement_template },
-    achievementContext: AchievementContextType
+    achievementContext: TemplateContextType,
+    additionalContext?: { [key: string]: string }
 ): achievement_template {
     const currentAchievementContext = userAchievement.template as any;
     const templateKeys = Object.keys(userAchievement.template);
     templateKeys.forEach((key) => {
         const updatedElement =
             currentAchievementContext[key] && typeof currentAchievementContext[key] === 'string'
-                ? renderTemplate(currentAchievementContext[key], achievementContext)
+                ? renderTemplate(currentAchievementContext[key], { ...achievementContext, ...additionalContext })
                 : currentAchievementContext[key];
         currentAchievementContext[key] = updatedElement;
     });
@@ -127,10 +165,10 @@ export function renderAchievementWithContext(
 
 export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number) {
     return userAchievements.length === 0
-        ? achievement_state.INACTIVE
+        ? AchievementState.INACTIVE
         : userAchievements[currentAchievementIndex].achievedAt
-        ? achievement_state.COMPLETED
-        : achievement_state.ACTIVE;
+        ? AchievementState.COMPLETED
+        : AchievementState.ACTIVE;
 }
 
 export function sortActionTemplatesToGroups(templatesForAction: achievement_template[]) {
@@ -159,4 +197,12 @@ export function transformEventContextToUserAchievementContext<T extends ActionID
     // To make sure we are not misusing the one in the context, we delete it here.
     delete uaCtx.relation;
     return uaCtx;
+}
+
+export function checkIfAchievementIsGlobal(template: achievement_template) {
+    return (
+        template.templateFor === achievement_template_for_enum.Global ||
+        template.templateFor === achievement_template_for_enum.Global_Courses ||
+        template.templateFor === achievement_template_for_enum.Global_Matches
+    );
 }
