@@ -101,6 +101,32 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
+    async helperRegistrationsByJob(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                   date_part('year', "createdAt"::date)  AS year,
+                   date_part('month', "createdAt"::date) AS month,
+                   "jobStatus" AS group
+            FROM (
+                SELECT student."createdAt", screening."jobStatus" as "jobStatus" FROM student
+                LEFT JOIN screening on screening."studentId" = student.id
+                WHERE verification is NULL
+                  AND student."createdAt" > ${statistics.from}::timestamp
+                  AND student."createdAt" < ${statistics.to}::timestamp
+                  AND screening."jobStatus" IS NOT NULL
+                UNION
+                SELECT student."createdAt", instructor_screening."jobStatus" as "jobStatus" FROM student
+                LEFT JOIN instructor_screening on instructor_screening."studentId" = student.id
+                WHERE verification is NULL
+                  AND student."createdAt" > ${statistics.from}::timestamp
+                  AND student."createdAt" < ${statistics.to}::timestamp
+                  AND instructor_screening."jobStatus" IS NOT NULL
+            ) as "student"
+            GROUP BY "year", "month", "jobStatus"
+            ORDER BY "year" ASC, "month" ASC;`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async helperRegistrationsByUniversity(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
