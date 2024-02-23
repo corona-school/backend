@@ -114,6 +114,7 @@ export type AchievementTemplateMetadata = Pick<
     | 'stepName'
     | 'image'
     | 'achievedImage'
+    | 'achievedDescription'
     | 'progressDescription'
     | 'streakProgress'
 >;

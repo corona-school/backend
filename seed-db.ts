@@ -1420,37 +1420,13 @@ void (async function setupDevDB() {
             subtitle: '{{courseName}}',
             description:
                 'Dein Kurs {{course.name}} wird derzeit von unserem Team überprüft. Wir können es kaum erwarten, ihn für alle Schüler:innen zur Anmeldung freizuschalten und damit das Wissensangebot für unsere Lerncommunity zu erweitern. Wir melden uns umgehend bei dir sobald dein Kurs online ist! ',
+            achievedDescription:
+                'Juhu! Dein Kurs {{course.name}} ist veröffentlicht! Wir haben direkt nach der Freischaltung passende Schüler:innen auf deinen Kurs aufmerksam gemacht und rühren nun die Werbetrommel in unserer Community. Du kannst die Anmeldungen zu deinem Kurs jederzeit einsehen und live verfolgen, wie sich die Lernbegeisterten einschreiben. Vielen Dank für deinen wertvollen Beitrag zu unserer Lernplattform!',
             image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
             achievedImage: null,
             actionName: 'Kurs in Prüfung',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Wait,
-            condition: 'student_approve_course_events > 0',
-            conditionDataAggregations: {
-                student_approve_course_events: {
-                    metric: 'student_approve_course',
-                    aggregator: 'count',
-                },
-            },
-            isActive: true,
-        },
-    });
-    await prisma.achievement_template.create({
-        data: {
-            name: 'Kurs anbieten',
-            templateFor: achievement_template_for_enum.Course,
-            group: 'student_offer_course',
-            groupOrder: 4,
-            stepName: 'Kurs erstellt!',
-            type: achievement_type_enum.SEQUENTIAL,
-            subtitle: '{{courseName}}',
-            description:
-                'Juhu! Dein Kurs {{course.name}} ist veröffentlicht! Wir haben direkt nach der Freischaltung passende Schüler:innen auf deinen Kurs aufmerksam gemacht und rühren nun die Werbetrommel in unserer Community. Du kannst die Anmeldungen zu deinem Kurs jederzeit einsehen und live verfolgen, wie sich die Lernbegeisterten einschreiben. Vielen Dank für deinen wertvollen Beitrag zu unserer Lernplattform!',
-            image: 'gamification/achievements/tmp/offer_course/offer_course.jpg',
-            achievedImage: null,
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
             condition: 'student_approve_course_events > 0',
             conditionDataAggregations: {
                 student_approve_course_events: {

@@ -100,8 +100,6 @@ async function createNextUserAchievement<ID extends ActionID>(
     }
 
     const nextStepTemplate = templatesForGroup[nextStepIndex];
-    const achievedAt =
-        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === AchievementType.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
@@ -113,7 +111,7 @@ async function createNextUserAchievement<ID extends ActionID>(
                 context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
-                achievedAt: achievedAt,
+                achievedAt: null,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
         });

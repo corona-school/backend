@@ -199,7 +199,7 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         if (!groupTemplates) {
             return updatedAchievement;
         }
-        const lastTemplate = groupTemplates[groupTemplates.length - 2];
+        const lastTemplate = groupTemplates[groupTemplates.length - 1];
         if (groupOrder === lastTemplate.groupOrder) {
             await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
                 achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
