@@ -438,7 +438,12 @@ export interface MatchPoolStatistics {
     }[];
     averageMatchesPerMonth: number;
     predictedPupilMatchTime: number /* in days */;
-    subjectDemand: { subject: string; demand: number /* >1 -> too many offers, <1 -> to few offers */ }[];
+    subjectDemand: {
+        subject: string;
+        demand: number; // >1 -> too many offers, <1 -> to few offers
+        offered: number;
+        requested: number;
+    }[];
 }
 
 const statisticsCache: { [pool: string]: { at: number; result: Promise<MatchPoolStatistics> } } = {};
@@ -497,6 +502,8 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
         const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({
             subject,
             demand: requested / offered,
+            offered: offered,
+            requested: requested,
         }));
 
         const result: MatchPoolStatistics = {
