@@ -21,6 +21,8 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
     @Field({ nullable: true })
     achievedText: string | null;
     @Field({ nullable: true })
+    achievedDescription: string | null;
+    @Field({ nullable: true })
     achievedImage: string | null;
     @Field()
     description: string;
@@ -62,6 +64,8 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
     name: string;
     @Field({ nullable: true })
     achievedText: string | null;
+    @Field({ nullable: true })
+    achievedDescription: string | null;
     @Field({ nullable: true })
     description: string | null;
     @Field({ nullable: true })

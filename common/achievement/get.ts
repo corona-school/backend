@@ -40,12 +40,7 @@ const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]>
         }
         userAchievementGroups[key].push(ua);
     });
-    Object.keys(userAchievementGroups).forEach((groupName) => {
-        const group = userAchievementGroups[groupName].sort((a, b) => a.template.groupOrder - b.template.groupOrder);
-        group[group.length - 1].achievedAt && delete userAchievementGroups[groupName];
-    });
-    const achievements: PublicAchievement[] = await generateReorderedAchievementData(userAchievementGroups, user);
-    return achievements;
+    return generateReorderedAchievementData(userAchievementGroups, user);
 };
 
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
@@ -153,8 +148,8 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     const condition = userAchievements[currentAchievementIndex].template.condition;
 
-    let maxValue: number = 0;
-    let currentValue: number = 0;
+    let maxValue: number = achievementTemplates.length;
+    let currentValue: number = currentAchievementIndex;
     if (
         userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK ||
         userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED
@@ -191,9 +186,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                 });
             }
         }
-    } else {
-        currentValue = currentAchievementIndex;
-        maxValue = achievementTemplates.length - 1;
     }
 
     const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);
@@ -211,11 +203,16 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxValue: maxValue.toString(),
     });
 
+    let desciption = currentAchievementTemplate.description;
+    if (state === AchievementState.COMPLETED && currentAchievementTemplate.achievedDescription) {
+        desciption = currentAchievementTemplate.achievedDescription;
+    }
+
     return {
         id: userAchievements[currentAchievementIndex].id,
         name: currentAchievementTemplate.name,
         subtitle: currentAchievementTemplate.subtitle,
-        description: currentAchievementTemplate.description,
+        description: desciption,
         image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].relation),
         alternativeText: 'alternativeText',
         actionType: currentAchievementTemplate.actionType,
@@ -226,7 +223,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                 ? achievementTemplates
                       .map((achievement, index): PublicStep | null => {
                           // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (description) and isActive property for the achievement step currently active but unachieved
-                          if (index < achievementTemplates.length - 1 && achievement.isActive) {
+                          if (index < achievementTemplates.length && achievement.isActive) {
                               return {
                                   name: achievement.stepName,
                                   isActive: index === currentAchievementIndex,

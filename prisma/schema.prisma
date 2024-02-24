@@ -47,6 +47,7 @@ model achievement_template {
   type                      achievement_type_enum
   subtitle                  String?                       @db.VarChar
   description               String                        @db.VarChar
+  achievedDescription       String?                       @db.VarChar
   image                     String                        @db.VarChar
   achievedImage             String?                       @db.VarChar
   // some achievements show actions that a user can/must perform next.

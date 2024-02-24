@@ -27,6 +27,7 @@ function createTestTemplate(group: string, metrics: string[]): achievement_templ
         description: 'test',
         image: 'test',
         achievedImage: 'test',
+        achievedDescription: null,
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
