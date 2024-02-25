@@ -597,18 +597,24 @@ export async function screeningInvitationsToSend(pool: MatchPool) {
     const requests = await getPupilDemandCount(pool, []);
     const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
 
-    const screeningsNeeded = Math.floor(openOffers / ((await getScreeningSuccessRate()) || 1));
+    const successRate = (await getScreeningSuccessRate()) || 1;
+    const screeningsNeeded = Math.floor(openOffers / successRate);
 
     const screeningPending = await getPupilDemandCount(pool, ['pupil-screening-pending']);
     const requestsToSend = Math.max(0, screeningsNeeded - screeningPending);
 
-    // The screening invitation job currently runs every three days
-    const requestsToSendLimited = Math.min(requestsToSend, MAX_SCREENINGS_PER_DAY * 3);
+    const requestsToSendLimited = Math.min(requestsToSend, MAX_SCREENINGS_PER_DAY);
 
-    // TODO: We could differentiate the screening success rate into the "no-show rate", and
-    // add the now show rate here
-
-    return requestsToSend;
+    logger.info(`Calculated screening invitations to send`, {
+        offers,
+        requests,
+        openOffers,
+        screeningsNeeded,
+        screeningPending,
+        requestsToSend,
+        requestsToSendLimited,
+    });
+    return requestsToSendLimited;
 }
 
 async function offeredSubjects(pool: MatchPool): Promise<string[]> {
@@ -654,7 +660,10 @@ export async function sendConfirmationRequests(pool: MatchPool) {
 export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
     if (toSendCount === undefined) {
         toSendCount = await screeningInvitationsToSend(pool);
+        logger.info(`Calculated ${toSendCount} pupil screening invitations to send`);
     }
+
+    logger.info(`Inviting ${toSendCount} to the pupil screening`);
 
     const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSendCount);
     for (const pupil of pupils) {
