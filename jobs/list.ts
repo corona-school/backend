@@ -38,8 +38,8 @@ export const jobExists = (name: string): name is JobName => name in allJobs;
 // A list of all jobs that should be scheduled at the moment
 export type ScheduledJob = { cronTime: string; name: JobName };
 export const regularJobs: ScheduledJob[] = [
-    // every morning, quite early (but only on Monday and Thursday)
-    { cronTime: '00 55 07 * * 1,4', name: 'runInterestConfirmations' },
+    // every morning, quite early
+    { cronTime: '00 55 07 * * *', name: 'runInterestConfirmations' },
     // every morning, but a little bit later
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', name: 'checkReminders' },
