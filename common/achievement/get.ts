@@ -1,11 +1,11 @@
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
 import { User } from '../user';
-import { AchievementState, AchievementType, ConditionDataAggregations, PublicAchievement, PublicStep } from './types';
+import { AchievementState, AchievementType, PublicAchievement, PublicStep } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
-import { evaluateAchievement } from './evaluate';
 import { getAchievementImageURL } from './util';
 import { isDefined } from './util';
+import { isAchievementConditionMet } from '.';
 
 export async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
@@ -146,8 +146,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const condition = userAchievements[currentAchievementIndex].template.condition;
-
     let maxValue: number = achievementTemplates.length;
     let currentValue: number = currentAchievementIndex;
     if (
@@ -155,13 +153,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED
     ) {
         const dataAggregationKeys = Object.keys(userAchievements[currentAchievementIndex].template.conditionDataAggregations as Prisma.JsonObject);
-        const evaluationResult = await evaluateAchievement(
-            user.userID,
-            condition,
-            userAchievements[currentAchievementIndex].template.conditionDataAggregations as ConditionDataAggregations,
-            userAchievements[currentAchievementIndex].recordValue || undefined,
-            userAchievements[currentAchievementIndex].relation || undefined
-        );
+        const evaluationResult = await isAchievementConditionMet(userAchievements[currentAchievementIndex]);
         if (evaluationResult) {
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =

@@ -1504,6 +1504,57 @@ void (async function setupDevDB() {
         },
     });
 
+    // PUPIL COURSE PARTICIPATION
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs Teilnahme',
+            templateFor: achievement_template_for_enum.Course,
+            group: 'course_participation',
+            groupOrder: 1,
+            stepName: 'An Kurs Teilnehmen',
+            type: achievement_type_enum.SEQUENTIAL,
+            description: 'Will never be shown',
+            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
+            condition: 'pupil_course_joined > 0',
+            conditionDataAggregations: {
+                pupil_course_joined: {
+                    metric: 'pupil_course_joined',
+                    aggregator: 'count',
+                },
+            },
+            isActive: true,
+        },
+    });
+    await prisma.achievement_template.create({
+        data: {
+            name: 'Kurs Teilnahme',
+            templateFor: achievement_template_for_enum.Course,
+            group: 'course_participation',
+            groupOrder: 2,
+            stepName: 'Kurs Beenden',
+            type: achievement_type_enum.SEQUENTIAL,
+            subtitle: '{{course.name}}',
+            description: 'Diese wird hier angezeigt',
+            achievedDescription: 'Achieved test 2',
+            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedText: '{{course.name}}',
+            condition: 'pupil_conducted_subcourse_appointment > 0',
+            conditionDataAggregations: {
+                pupil_conducted_subcourse_appointment: {
+                    metric: 'pupil_conducted_subcourse_appointment',
+                    aggregator: 'atLeastOneEventPerBucket',
+                    createBuckets: 'by_lecture_participation',
+                    bucketAggregator: 'presenceOfEvents',
+                },
+            },
+            isActive: true,
+        },
+    });
+
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addSubcourseInstructor(null, subcourse1, student1);
     await addSubcourseInstructor(null, subcourse1, student2);
