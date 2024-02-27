@@ -151,7 +151,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
                     participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                     zoomMeetingId,
-                    override_meeting_link: appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link,
+                    override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
                 },
             });
         })

@@ -1,9 +1,8 @@
 import { compile } from 'handlebars';
-import { Context } from '../common/notification/types';
 import { getLogger } from '../common/logger/logger';
-import { AchievementContextType } from '../common/achievement/types';
+import { TemplateContextType } from '../common/achievement/types';
 
-export const renderTemplate = (template: string, context: Partial<Context> | AchievementContextType, strict = false) => {
+export const renderTemplate = (template: string, context: TemplateContextType, strict = false) => {
     const log = getLogger('Template Rendering');
     if (!template) {
         log.error('Template string undefined', new Error('Template string undefined'));

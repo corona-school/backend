@@ -179,7 +179,7 @@ export class ExtendedFieldsLectureResolver {
         const isAdmin = user.roles.includes(Role.ADMIN);
 
         if (!appointment.zoomMeetingId) {
-            logger.error(`No zoom meeting id exist for appointment id ${appointment.id}`);
+            logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
             return null;
         }
 

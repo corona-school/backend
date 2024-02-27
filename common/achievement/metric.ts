@@ -73,9 +73,13 @@ const batchOfMetrics = [
         return 1;
     }),
 
-    // TODO: new match metric listening to 2 actions - screening_success and match_requested
-
-    // TODO: attendance and punctuality records only for pupils - actions: pupil_joined_match_meeting, pupil_joined_subcourse_meeting
+    /* PARTICIPATION STREAK */
+    createMetric('student_participated_in_meeting', ['student_presence_in_meeting'], () => {
+        return 1;
+    }),
+    createMetric('pupil_participated_in_meeting', ['pupil_presence_in_meeting'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {
