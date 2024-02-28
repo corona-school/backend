@@ -46,6 +46,7 @@ export async function getNotificationContextForSubcourse(course: { name: string;
     const time = start.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: 'numeric', minute: 'numeric' });
 
     return {
+        relation: `subcourse/${subcourse.id}`,
         course: {
             name: course.name,
             description: course.description,

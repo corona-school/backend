@@ -83,21 +83,6 @@ export type ConditionDataAggregations = {
     };
 };
 
-export type UserAchievementContext = {
-    matchId?: number;
-    subcourseId?: number;
-    match_partner?: string;
-};
-
-export type UserAchievementTemplate = {
-    id: number;
-    userId: string;
-    achievedAt: Date;
-    context: UserAchievementContext;
-    template: achievement_template;
-    recordValue?: number;
-};
-
 export type ActionEvent<ID extends ActionID> = {
     actionId: ActionID;
     at: Date;

@@ -21,6 +21,11 @@ export const aggregators: Aggregator = {
             return elements.filter((num) => num != 0).length > 0 ? 1 : 0;
         },
     },
+    atLeastOneEventPerBucket: {
+        function: (elements): number => {
+            return elements.every((num) => num != 0) ? 1 : 0;
+        },
+    },
     lastStreakLength: {
         function: (elements): number => {
             // elements are sorted desc, i.e. [KW 52, KW 51, KW 50]
