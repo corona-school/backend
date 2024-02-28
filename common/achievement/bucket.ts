@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse, ContextLecture } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
