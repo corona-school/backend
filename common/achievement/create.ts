@@ -1,9 +1,10 @@
 import { Prisma, achievement_template } from '@prisma/client';
+import { metrics } from '../logger/metrics';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
 import { TemplateSelectEnum, getAchievementTemplates } from './template';
 import tracer from '../logger/tracing';
-import { AchievementTemplateFor, AchievementToCheck, AchievementType } from './types';
+import { AchievementTemplateFor, AchievementToCheck } from './types';
 import { transformEventContextToUserAchievementContext, checkIfAchievementIsGlobal } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
@@ -115,6 +116,11 @@ async function createNextUserAchievement<ID extends ActionID>(
                 achievedAt: null,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
+        });
+        metrics.AchievementsCreated.inc({
+            id: createdUserAchievement.template.id.toString(),
+            name: createdUserAchievement.template.name,
+            type: createdUserAchievement.template.type,
         });
         return createdUserAchievement;
     }
