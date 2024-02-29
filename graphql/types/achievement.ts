@@ -11,6 +11,12 @@ export class Achievement implements PublicAchievement {
     @Field()
     id: number;
 
+    @Field({ nullable: true })
+    tagline?: string | null;
+
+    @Field({ nullable: true })
+    title?: string;
+
     @Field()
     name: string;
 

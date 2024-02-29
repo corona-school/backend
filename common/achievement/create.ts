@@ -119,7 +119,7 @@ async function createNextUserAchievement<ID extends ActionID>(
         });
         metrics.AchievementsCreated.inc({
             id: createdUserAchievement.template.id.toString(),
-            name: createdUserAchievement.template.name,
+            title: createdUserAchievement.template.title,
             type: createdUserAchievement.template.type,
         });
         return createdUserAchievement;

@@ -32,7 +32,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
     logger.info('found achievement templates for action', {
         actionId,
         metrics: metricsForAction.map((metric) => metric.metricName),
-        templates: templatesForAction.map((temp) => temp.name),
+        templates: templatesForAction.map((temp) => temp.title),
     });
 
     const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
@@ -68,7 +68,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === AchievementType.STREAK)) {
                         logger.info('found achievement to check', {
                             achievementId: userAchievement.id,
-                            achievementName: userAchievement.template?.name,
+                            achievementName: userAchievement.template?.title,
                             type: userAchievement.template?.type,
                         });
                         achievementToCheck = userAchievement;
@@ -167,7 +167,7 @@ export async function isAchievementConditionMet(achievement: AchievementToCheck)
         template: { condition, conditionDataAggregations, type },
     } = achievement;
     if (!condition) {
-        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
+        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.title, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
     // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
@@ -204,7 +204,7 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
     });
     metrics.AchievementsAchieved.inc({
         id: updatedAchievement.template.id.toString(),
-        name: updatedAchievement.template.name,
+        title: updatedAchievement.template.title,
         type: updatedAchievement.template.type,
     });
 
@@ -225,12 +225,12 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         const lastTemplate = groupTemplates[groupTemplates.length - 1];
         if (groupOrder === lastTemplate.groupOrder) {
             await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
-                achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+                achievement: { name: updatedAchievement.template.title, id: updatedAchievement.id.toString() },
             });
         }
     } else {
         await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
-            achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+            achievement: { name: updatedAchievement.template.title, id: updatedAchievement.id.toString() },
         });
     }
     return updatedAchievement;
