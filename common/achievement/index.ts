@@ -12,6 +12,7 @@ import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
 import { isGamificationFeatureActive } from '../../utils/environment';
+import { metrics } from '../logger/metrics';
 
 const logger = getLogger('Achievement');
 
@@ -121,6 +122,7 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 createdAt: event.at,
             },
         });
+        metrics.AchievementsTrackedEvents.inc({ metric: metric.metricName, action: event.actionId });
     }
 
     return true;
@@ -199,6 +201,11 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
         select: { id: true, userId: true, achievedAt: true, template: true },
+    });
+    metrics.AchievementsAchieved.inc({
+        id: updatedAchievement.template.id.toString(),
+        name: updatedAchievement.template.name,
+        type: updatedAchievement.template.type,
     });
 
     const { type, group, groupOrder } = updatedAchievement.template;
