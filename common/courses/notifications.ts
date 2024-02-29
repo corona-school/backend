@@ -112,7 +112,13 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
     }
 
     const pupils = await prisma.pupil.findMany({
-        where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
+        where: {
+            active: true,
+            verification: null,
+            isParticipant: true,
+            grade: { in: grades },
+            subcourse_participants_pupil: { none: { subcourseId: subcourse.id } },
+        },
     });
 
     const courseSubject = course.subject;
