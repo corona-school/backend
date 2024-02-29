@@ -7,6 +7,8 @@ import { DEACTIVATE_ACCOUNTS_INACTIVITY_DAYS, deactivateInactiveAccounts } from 
 import { sendInactivityNotification, NOTIFY_AFTER_DAYS } from '../jobs/periodic/redact-inactive-accounts/send-inactivity-notification';
 import moment from 'moment';
 import assert from 'assert';
+import { cleanupMockedNotifications, createMockNotification } from './base/notifications';
+import { expectFetch } from './base/mock';
 
 void test('Pupil Account Deactivation', async () => {
     const { client, pupil, password } = await pupilOneWithPassword;
@@ -225,4 +227,36 @@ void test('Student not should be deactivated as it is not inactive for long enou
     const dbStudentNew = await prisma.student.findUnique({ where: { id: student.student.student.id } });
 
     assert.strictEqual(dbStudentNew?.active, true);
+});
+
+void test('User should not receive notifications after deactivation', async () => {
+    const { student, client } = await createNewStudent();
+
+    const mockNotification = await createMockNotification('TEST2', 'Instant');
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${student.userID}")
+    }`);
+
+    const sentNotificationsBefore = await prisma.concrete_notification.count({
+        where: {
+            notificationID: mockNotification.id,
+            userId: student.userID,
+        },
+    });
+    assert.strictEqual(sentNotificationsBefore, 1);
+
+    await client.request(`mutation { meDeactivate(reason: "Keine Lust mehr auf nervige Nachrichten von Lern-Fair")}`);
+
+    await adminClient.request(`mutation TriggerAction {
+        _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${student.userID}")
+    }`);
+
+    const sentNotificationsAfter = await prisma.concrete_notification.count({
+        where: {
+            notificationID: mockNotification.id,
+            userId: student.userID,
+        },
+    });
+    assert.strictEqual(sentNotificationsAfter, 1);
 });
