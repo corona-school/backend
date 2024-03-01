@@ -427,6 +427,84 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [Bucket])
     @Authorized(Role.ADMIN)
+    async tutorLifetime(@Root() statistics: Statistics) {
+        const lifetimes: { student_id: number; lifetime: number }[] = await prisma.$queryRaw`
+            WITH first_action AS (
+                SELECT
+                    student.id as student_id,
+                    MIN(screening."createdAt") as first_screening
+                FROM
+                    student
+                LEFT JOIN screening on screening."studentId" = student.id
+                WHERE screening.success = TRUE AND student.active = TRUE AND student."isStudent" = TRUE
+                GROUP BY student.id
+            ),
+            last_action AS (
+                SELECT
+                    student.id as student_id,
+                    GREATEST(
+                        student."firstMatchRequest",
+                        MAX(match."createdAt"),
+                        MAX(lecture.start)
+                    ) as last_action
+                FROM student
+                LEFT JOIN match on match."studentId" = student.id
+                LEFT JOIN lecture on lecture."matchId" = match.id
+                WHERE student.active = TRUE AND student."isStudent" = TRUE
+                GROUP BY
+                    student.id
+            )
+            SELECT
+                last_action.student_id,
+                EXTRACT(EPOCH FROM (last_action.last_action - first_action.first_screening)) as lifetime
+            FROM first_action
+            JOIN last_action ON first_action.student_id = last_action.student_id`;
+
+        const buckets: Bucket[] = [
+            {
+                from: 0,
+                to: 14 * 24 * 3600 * 1000,
+                value: 0,
+                label: '0-14 Tage',
+            },
+            {
+                from: 14 * 24 * 3600 * 1000,
+                to: 28 * 24 * 3600 * 1000,
+                value: 0,
+                label: '14-28 Tage',
+            },
+            {
+                from: 28 * 24 * 3600 * 1000,
+                to: 60 * 24 * 3600 * 1000,
+                value: 0,
+                label: '28-60 Tage',
+            },
+            {
+                from: 60 * 24 * 3600 * 1000,
+                to: 120 * 24 * 3600 * 1000,
+                value: 0,
+                label: '60-120 Tage',
+            },
+            {
+                from: 120 * 24 * 3600 * 1000,
+                to: 300 * 24 * 3600 * 1000,
+                value: 0,
+                label: '120-300 Tage',
+            },
+            {
+                from: 300 * 24 * 3600 * 1000,
+                to: -1,
+                value: 0,
+                label: '300+ Tage',
+            },
+        ];
+        lifetimes.forEach(({ student_id, lifetime }) => {
+            buckets.find((b) => b.from <= lifetime && (b.to > lifetime || b.to === -1)).value += 1;
+        });
+    }
+
+    @FieldResolver(() => [Bucket])
+    @Authorized(Role.ADMIN)
     async timeCommitment(@Root() statistics: Statistics) {
         const matches = await prisma.match.findMany({
             where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },

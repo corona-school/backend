@@ -349,7 +349,12 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
 
     const helpers: Helper[] = await Promise.all(students.map(studentToHelper));
     const helpees: Helpee[] = await Promise.all(pupils.map(pupilToHelpee));
-
+    const requestsWithPriority: Map<string, number> = helpees.reduce((acc, helpee) => {
+        if (helpee.subject.mandatory) {
+            acc.set(helpee.subject.name, (acc.get(helpee.subject.name) ?? 0) + 1);
+        }
+        return acc;
+    }, new Map());
     timing.preparation = Date.now() - startPreparation;
     logger.info(`MatchingPool(${pool.name}) found ${pupils.length} pupils and ${students.length} students for matching in ${timing.preparation}ms`);
 
@@ -371,6 +376,9 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
     const stats = { ...result.stats, toggles };
+    stats.subjectStats.forEach((subject) => {
+        subject.stats.requestedPriority = requestsWithPriority.get(subject.name) || 0;
+    });
 
     if (apply) {
         const startCommit = Date.now();
@@ -433,7 +441,7 @@ export interface MatchPoolStatistics {
         year: number;
         matches: number;
         subjects: {
-            [subject: string]: { offered: number; requested: number; fulfilled: number };
+            [subject: string]: { offered: number; requested: number; requestedPriority: number; fulfilled: number };
         };
     }[];
     averageMatchesPerMonth: number;
@@ -443,6 +451,7 @@ export interface MatchPoolStatistics {
         demand: number; // >1 -> too many offers, <1 -> to few offers
         offered: number;
         requested: number;
+        requestedPriority: number;
     }[];
 }
 
@@ -479,10 +488,11 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             entry.matches += matchesCreated;
             for (const {
                 name,
-                stats: { offered, requested, fulfilledRequests },
+                stats: { offered, requested, fulfilledRequests, requestedPriority },
             } of subjectStats) {
-                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
+                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, requestedPriority: 0, fulfilled: 0, offered: 0 });
                 subjectStats.fulfilled += fulfilledRequests;
+                subjectStats.requestedPriority += requestedPriority;
                 subjectStats.offered += offered;
                 subjectStats.requested += requested;
             }
@@ -499,11 +509,12 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
 
         // Current Subject Demand in the last finished month
         const lastMonth = matchesByMonth.slice(-2)[0];
-        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({
+        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested, requestedPriority }]) => ({
             subject,
             demand: requested / offered,
             offered: offered,
             requested: requested,
+            requestedPriority,
         }));
 
         const result: MatchPoolStatistics = {
