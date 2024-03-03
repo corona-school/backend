@@ -134,20 +134,28 @@ export enum AchievementState {
 // hiding internals of the achievement system
 export interface PublicAchievement {
     id: number;
+    tagline?: string;
+    // TODO: remove optional
+    title?: string;
+    // TODO: delete after frontend is updated
     name: string;
     subtitle?: string;
     description: string;
+    footer?: string;
+    sequentialStepName?: string;
     image: string;
     alternativeText: string;
     actionType?: achievement_action_type_enum | null;
     achievementType: achievement_type_enum;
     achievementState: AchievementState;
     achievedText?: string;
+    // TODO: delete after frontend is updated
     streakProgress?: string;
     steps?: PublicStep[] | null;
     maxSteps: number;
     currentStep?: number;
     isNewAchievement?: boolean | null;
+    // TODO: delete after frontend is updated
     progressDescription?: string | null;
     actionName?: string | null;
     actionRedirectLink?: string | null;

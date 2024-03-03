@@ -593,11 +593,11 @@ async function createTemplate(template: Partial<AchievementTemplateCreate>, skip
 
 const createStudentOnboardingTemplates = async () => {
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'student_onboarding',
         groupOrder: 1,
-        stepName: 'Verifizieren',
+        sequentialStepName: 'Verifizieren',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -611,11 +611,11 @@ const createStudentOnboardingTemplates = async () => {
     });
     await createTemplate(
         {
-            name: 'Onboarding abschließen',
+            title: 'Onboarding abschließen',
             templateFor: 'Global',
             group: 'student_onboarding',
             groupOrder: 2,
-            stepName: 'Kennenlerngespräch buchen',
+            sequentialStepName: 'Kennenlerngespräch buchen',
             type: 'SEQUENTIAL',
             subtitle: 'Jetzt durchstarten',
             description:
@@ -633,11 +633,11 @@ const createStudentOnboardingTemplates = async () => {
         /* skipActivation: */ true
     );
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'student_onboarding',
         groupOrder: 3,
-        stepName: 'Screening absolvieren',
+        sequentialStepName: 'Screening absolvieren',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -651,11 +651,11 @@ const createStudentOnboardingTemplates = async () => {
         conditionDataAggregations: { student_screened_events: { metric: 'student_onboarding_screened', aggregator: 'count' } },
     });
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'student_onboarding',
         groupOrder: 4,
-        stepName: 'Führungszeugnis einreichen',
+        sequentialStepName: 'Führungszeugnis einreichen',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -669,11 +669,11 @@ const createStudentOnboardingTemplates = async () => {
         conditionDataAggregations: { student_coc_success_events: { metric: 'student_onboarding_coc_success', aggregator: 'count' } },
     });
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'student_onboarding',
         groupOrder: 5,
-        stepName: 'Onboarding abgeschlossen',
+        sequentialStepName: 'Onboarding abgeschlossen',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -689,11 +689,11 @@ const createStudentOnboardingTemplates = async () => {
 };
 const createPupilOnboardingTemplates = async () => {
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'pupil_onboarding',
         groupOrder: 1,
-        stepName: 'Verifizieren',
+        sequentialStepName: 'Verifizieren',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -708,11 +708,11 @@ const createPupilOnboardingTemplates = async () => {
     });
     await createTemplate(
         {
-            name: 'Onboarding abschließen',
+            title: 'Onboarding abschließen',
             templateFor: 'Global',
             group: 'pupil_onboarding',
             groupOrder: 2,
-            stepName: 'Kennenlerngespräch buchen',
+            sequentialStepName: 'Kennenlerngespräch buchen',
             type: 'SEQUENTIAL',
             subtitle: 'Jetzt durchstarten',
             description:
@@ -730,11 +730,11 @@ const createPupilOnboardingTemplates = async () => {
         /* skipActivation: */ true
     );
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'pupil_onboarding',
         groupOrder: 3,
-        stepName: 'Screening absolvieren',
+        sequentialStepName: 'Screening absolvieren',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -749,11 +749,11 @@ const createPupilOnboardingTemplates = async () => {
     });
 
     await createTemplate({
-        name: 'Onboarding abschließen',
+        title: 'Onboarding abschließen',
         templateFor: achievement_template_for_enum.Global,
         group: 'pupil_onboarding',
         groupOrder: 4,
-        stepName: 'Onboarding abgeschlossen',
+        sequentialStepName: 'Onboarding abgeschlossen',
         type: achievement_type_enum.SEQUENTIAL,
         subtitle: 'Jetzt durchstarten',
         description:
@@ -766,11 +766,10 @@ const createPupilOnboardingTemplates = async () => {
 };
 const createStudentConductedMatchAppointmentTemplates = async () => {
     await createTemplate({
-        name: '1. durchgeführter Termin',
+        title: '1. durchgeführter Termin',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 1,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -779,18 +778,17 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
         actionRedirectLink: '/somewhere',
         actionType: 'Action',
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 0',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
         },
     });
     await createTemplate({
-        name: '3 durchgeführte Termine',
+        title: '3 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 2,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -799,18 +797,17 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 2',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
         },
     });
     await createTemplate({
-        name: '5 durchgeführte Termine',
+        title: '5 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 3,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -819,18 +816,17 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 4',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
         },
     });
     await createTemplate({
-        name: '10 durchgeführte Termine',
+        title: '10 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 4,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -839,18 +835,17 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 9',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
         },
     });
     await createTemplate({
-        name: '15 durchgeführte Termine',
+        title: '15 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 5,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -859,18 +854,17 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 14',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
         },
     });
     await createTemplate({
-        name: '25 durchgeführte Termine',
+        title: '25 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'student_conduct_match_appointment',
         groupOrder: 6,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -879,7 +873,7 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'student_match_appointments_count > 24',
         conditionDataAggregations: {
             student_match_appointments_count: { metric: 'student_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
@@ -888,11 +882,10 @@ const createStudentConductedMatchAppointmentTemplates = async () => {
 };
 const createPupilConductedMatchMeetingTemplates = async () => {
     await createTemplate({
-        name: '1. durchgeführter Termin',
+        title: '1. durchgeführter Termin',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 1,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -901,18 +894,17 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: 'Absolviere deinen ersten Termin, um diesen Erfolg zu erhalten',
         actionRedirectLink: '/somewhere',
         actionType: 'Action',
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 0',
         conditionDataAggregations: {
             pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 1 },
         },
     });
     await createTemplate({
-        name: '3 durchgeführte Termine',
+        title: '3 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 2,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -921,18 +913,17 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 2',
         conditionDataAggregations: {
             pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 3 },
         },
     });
     await createTemplate({
-        name: '5 durchgeführte Termine',
+        title: '5 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 3,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -941,18 +932,17 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 4',
         conditionDataAggregations: {
             pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 5 },
         },
     });
     await createTemplate({
-        name: '10 durchgeführte Termine',
+        title: '10 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 4,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -961,18 +951,17 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 9',
         conditionDataAggregations: {
             student_conducted_match_appointments: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 10 },
         },
     });
     await createTemplate({
-        name: '15 durchgeführte Termine',
+        title: '15 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 5,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -981,18 +970,17 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 14',
         conditionDataAggregations: {
             pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 15 },
         },
     });
     await createTemplate({
-        name: '25 durchgeführte Termine',
+        title: '25 durchgeführte Termine',
         templateFor: 'Global_Matches',
         group: 'pupil_conduct_match_appointment',
         groupOrder: 6,
-        stepName: '',
         type: 'TIERED',
         subtitle: '1:1 Lernunterstützungen',
         description: 'Dieser Text muss noch geliefert werden.',
@@ -1001,7 +989,7 @@ const createPupilConductedMatchMeetingTemplates = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Dieser Text muss noch geliefert werden',
+        achievedFooter: 'Juhu! Dieser Text muss noch geliefert werden',
         condition: 'pupil_match_appointments_count > 24',
         conditionDataAggregations: {
             pupil_match_appointments_count: { metric: 'pupil_conducted_match_appointment', aggregator: 'count', valueToAchieve: 25 },
@@ -1010,13 +998,12 @@ const createPupilConductedMatchMeetingTemplates = async () => {
 };
 const createStudentRegularLearningTemplate = async () => {
     await createTemplate({
-        name: 'Regelmäßiges Lernen',
+        title: 'Regelmäßiges Lernen',
         templateFor: achievement_template_for_enum.Match,
         group: 'student_match_regular_learning',
         groupOrder: 1,
-        stepName: '',
         type: achievement_type_enum.STREAK,
-        subtitle: 'Nachhilfe mit {{matchpartner}}',
+        // subtitle: 'Nachhilfe mit {{matchpartner}}',
         description:
             'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
         image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
@@ -1024,9 +1011,9 @@ const createStudentRegularLearningTemplate = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Rekord gebrochen.',
-        progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
-        streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
+        achievedFooter: 'Juhu! Rekord gebrochen.',
+        footer: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
+        subtitle: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
         condition: 'student_match_learning_events > recordValue',
         conditionDataAggregations: {
             student_match_learning_events: {
@@ -1040,13 +1027,12 @@ const createStudentRegularLearningTemplate = async () => {
 };
 const createPupilRegularLearningTemplate = async () => {
     await createTemplate({
-        name: 'Regelmäßiges Lernen',
+        title: 'Regelmäßiges Lernen',
         templateFor: achievement_template_for_enum.Match,
         group: 'pupil_match_regular_learning',
         groupOrder: 1,
-        stepName: '',
         type: achievement_type_enum.STREAK,
-        subtitle: 'Nachhilfe mit {{matchpartner}}',
+        // subtitle: 'Nachhilfe mit {{matchpartner}}',
         description:
             'Du hast {{progress}} Woche(n) in Folge mit {{name}} gelernt! Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{name}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
         image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
@@ -1054,9 +1040,9 @@ const createPupilRegularLearningTemplate = async () => {
         actionName: null,
         actionRedirectLink: null,
         actionType: null,
-        achievedText: 'Juhu! Rekord gebrochen.',
-        progressDescription: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
-        streakProgress: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
+        achievedFooter: 'Juhu! Rekord gebrochen.',
+        footer: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
+        subtitle: 'Du warst bei {{progress}} Termin(en) in Folge anwesend!',
         condition: 'pupil_match_learning_events > recordValue',
         conditionDataAggregations: {
             pupil_match_learning_events: {

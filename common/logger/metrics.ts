@@ -49,12 +49,12 @@ export const metrics = {
         name: 'achievements_created',
         help: 'Amount of created achievements',
         registers: [registry],
-        labelNames: ['id', 'name', 'type'],
+        labelNames: ['id', 'title', 'type'],
     }),
     AchievementsAchieved: new promClient.Counter({
         name: 'achievements_achieved',
         help: 'Amount of achieved achievements',
         registers: [registry],
-        labelNames: ['id', 'name', 'type'],
+        labelNames: ['id', 'title', 'type'],
     }),
 };

@@ -72,8 +72,11 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             .reduce((a, b) => a + b, 0);
         const achievement: PublicAchievement = {
             id: template.id,
-            name: template.name,
-            subtitle: template.subtitle,
+            name: template.title,
+            tagline: template.tagline,
+            title: template.title,
+            footer: template.footer,
+            subtitle: template.tagline,
             description: template.description,
             image: await getAchievementImageURL(template),
             alternativeText: 'alternativeText',
@@ -84,7 +87,7 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             maxSteps: maxValue,
             currentStep: 0,
             isNewAchievement: null,
-            progressDescription: template.progressDescription,
+            progressDescription: template.footer,
             actionName: template.actionName,
             actionRedirectLink: template.actionRedirectLink,
         };
@@ -199,11 +202,18 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     if (state === AchievementState.COMPLETED && currentAchievementTemplate.achievedDescription) {
         desciption = currentAchievementTemplate.achievedDescription;
     }
+    let footer = currentAchievementTemplate.footer;
+    if (state === AchievementState.COMPLETED && currentAchievementTemplate.achievedFooter) {
+        footer = currentAchievementTemplate.achievedFooter;
+    }
 
     return {
         id: userAchievements[currentAchievementIndex].id,
-        name: currentAchievementTemplate.name,
+        title: currentAchievementTemplate.title,
+        name: currentAchievementTemplate.title,
+        tagline: currentAchievementTemplate.tagline,
         subtitle: currentAchievementTemplate.subtitle,
+        footer: footer,
         description: desciption,
         image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].relation),
         alternativeText: 'alternativeText',
@@ -217,7 +227,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                           // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (description) and isActive property for the achievement step currently active but unachieved
                           if (index < achievementTemplates.length && achievement.isActive) {
                               return {
-                                  name: achievement.stepName,
+                                  name: achievement.sequentialStepName,
                                   isActive: index === currentAchievementIndex,
                               };
                           }
@@ -228,9 +238,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
-        progressDescription: currentAchievementTemplate.progressDescription,
-        achievedText: currentAchievementTemplate.achievedText,
-        streakProgress: currentAchievementTemplate.streakProgress,
+        progressDescription: currentAchievementTemplate.footer,
+        achievedText: currentAchievementTemplate.achievedFooter,
+        streakProgress: currentAchievementTemplate.subtitle,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };
