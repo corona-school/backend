@@ -408,10 +408,10 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
         stats.subjectStats.map((subject) => ({
             name: subject.name,
             stats: {
-                offered: subject.offered,
-                requested: subject.requested,
+                offered: subject.stats.offered,
+                requested: subject.stats.requested,
                 requestedPriority: requestsWithPriority.get(subject.name) ?? 0,
-                fulfilledRequests: subject.fulfilledRequests,
+                fulfilledRequests: subject.stats.fulfilledRequests,
             },
         }))
     );
