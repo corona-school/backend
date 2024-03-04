@@ -403,18 +403,20 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
     const stats = { ...result.stats, toggles };
-    stats.subjectStats = Object.assign(
-        {},
-        stats.subjectStats.map((subject) => ({
-            name: subject.name,
-            stats: {
-                offered: subject.stats.offered,
-                requested: subject.stats.requested,
-                requestedPriority: requestsWithPriority.get(subject.name) ?? 0,
-                fulfilledRequests: subject.stats.fulfilledRequests,
-            },
-        }))
-    );
+    if (stats.subjectStats) {
+        stats.subjectStats = Object.assign(
+            {},
+            stats.subjectStats.map((subject) => ({
+                name: subject.name,
+                stats: {
+                    offered: subject.stats.offered,
+                    requested: subject.stats.requested,
+                    requestedPriority: requestsWithPriority.get(subject.name) ?? 0,
+                    fulfilledRequests: subject.stats.fulfilledRequests,
+                },
+            }))
+        );
+    }
 
     if (apply) {
         const startCommit = Date.now();
