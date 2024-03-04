@@ -52,6 +52,8 @@ class SubjectDemand {
     offered: number;
     @Field()
     requested: number;
+    @Field()
+    requestedPriority: number;
 }
 
 @ObjectType()

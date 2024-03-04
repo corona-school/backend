@@ -1,4 +1,4 @@
-# LernFair Backend
+# Lern-Fair Backend
 
 Basics:
 
@@ -16,15 +16,20 @@ The backend exposes various APIs to other services and runs various background j
 It is deployed in two Heroku Dynos, one answering API requests and one running jobs.
 
 ```
-                                       +-[ Backend Web Dyno ]-----------------------------------------------------------+
-web-user-app      ----[ REST    ]----> | (Express) /web/controllers                                                     |
-backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningController   (Prisma)  /prisma/*           | ----- SQL ----> PostgreSQL
-                                       |                                                                                |
-   ReTool         ----[ GraphQL ]----> | (Apollo)  /graphql                             (Mailjet) /common/mails/*       | ----- REST ----> Mailjet
-                                       |                                                (Mailjet) /common/notification/*|
-                                       +-[ Backend Job Dyno ]--------------------                                       +
-                                       |  /jobs                                                                         |
-                                       +--------------------------------------------------------------------------------+
+                                  +-[ Backend Web Dyno ]--------------------------------------------------------+
+web-user-app ----[ GraphQL ]----> | (Express) /web/controllers                                                  |
+                                  |                             (Prisma)  /prisma/*                             | ----- SQL ----> PostgreSQL
+                                  |                                                                             |
+   ReTool    ----[ GraphQL ]----> | (Apollo)  /graphql          (Mailjet) /common/notification/channels/mailjet | ----- REST ----> Mailjet
+                                  |                             (WebSocket) /common/notification/channels/inapp | ----- WebSocket ----> User App
+                                  |                                                                             |
+                                  |                             (TalkJS) /common/chat/*                         | ----- REST ----> TalkJS
+                                  |                             (Zoom) /common/zoom/*                           | ----- REST ----> Zoom
+                                  |                             (S3) /common/file-bucket/*                      | ----- REST ----> S3 Provider
+                                  |                             (Datadog) /common/logger/*                      | ----- REST ----> Datadog
+                                  +-[ Backend Job Dyno ]--------------------------------------------------------+
+                                  |  /jobs                                                                      |
+                                  +-----------------------------------------------------------------------------+
 ```
 
 ### Build & Run
@@ -119,7 +124,7 @@ When changing the data model, we have potentially differing states:
 To start changing the data model, ensure that they all are in sync:
 
 1. Check out a recent state of the master branch to fetch the latest schema and migrations
-2. Run `npm run db:reset-for-migration` to ensure the local database and typescript is in the state described by the migrations
+2. Run `npm run db:reset` to ensure the local database and typescript is in the state described by the migrations
 
 Then modify `prisma.schema` to your needs. Afterwards run `npm run db:create-migration`, which shows the difference between the schema and the migrations, creates a new migration and rebuilds the local database and typescript based on that. Make sure to commit both the schema change and the migration in the same commit to simplify a potential revert. You probably also need to adapt `graphql/authorizations.ts` for the build to work again, as we enforce that all GraphQL entities have proper permissions assigned. Now you can make further changes to the code till the feature is ready. When opening a pull request, a Github Action ensures that the migrations are in sync with the schema. When we merge the pull request to master and trigger a productive deployment, the migration will be run on the productive database, bringing all states back into sync.
 
