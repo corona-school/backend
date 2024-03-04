@@ -413,9 +413,6 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
                 fulfilledRequests: subject.stats.fulfilledRequests,
             },
         }));
-        for (const x of stats.subjectStats) {
-            console.log(`subject ${x.name}: ${x.stats}`);
-        }
     }
 
     if (apply) {
@@ -524,6 +521,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             }
 
             entry.matches += matchesCreated;
+            console.log('SUBJECT STATS: ' + JSON.stringify(subjectStats));
             for (const {
                 name,
                 stats: { offered, requested, fulfilledRequests, requestedPriority },
