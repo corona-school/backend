@@ -436,7 +436,7 @@ export class StatisticsResolver {
                 FROM
                     student
                 LEFT JOIN screening on screening."studentId" = student.id
-                WHERE screening.success = TRUE AND student.active = TRUE AND student."isStudent" = TRUE
+                WHERE screening.success = TRUE
                 GROUP BY student.id
             ),
             last_action AS (
@@ -451,6 +451,17 @@ export class StatisticsResolver {
                 LEFT JOIN match on match."studentId" = student.id
                 LEFT JOIN lecture on lecture."matchId" = match.id
                 WHERE student.active = TRUE AND student."isStudent" = TRUE
+                AND (${onlyInactive} = false OR (
+                    NOT EXISTS (
+                        SELECT 1 FROM match WHERE match."studentId" = student.id AND match.dissolved = FALSE
+                    ) AND
+                    NOT EXISTS (
+                        SELECT 1 FROM subcourse
+                        LEFT JOIN subcourse_instructors_student instructor ON instructor."subcourseId" = subcourse.id
+                        LEFT JOIN lecture ON lecture."subcourseId" = subcourse.id
+                        WHERE instructor."studentId" = student.id AND lecture.start > ${statistics.to}::timestamp
+                    )
+                ))
                 GROUP BY
                     student.id
             )
@@ -458,7 +469,10 @@ export class StatisticsResolver {
                 last_action.student_id,
                 EXTRACT(EPOCH FROM (last_action.last_action - first_action.first_screening)) as lifetime
             FROM first_action
-            JOIN last_action ON first_action.student_id = last_action.student_id`;
+            JOIN last_action ON first_action.student_id = last_action.student_id
+            WHERE first_action >= ${statistics.from}::timestamp
+            AND last_action < ${statistics.to}::timestamp
+            `;
 
         const buckets: Bucket[] = [
             {
