@@ -80,6 +80,14 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     });
 
     const nextStepIndex = userAchievementsByGroup.length > 0 ? templatesForGroup.findIndex((e) => e.groupOrder === currentTemplate.groupOrder) + 1 : 0;
+    // We should avoid creating a new achievement if the next step precedes the current step.
+    // This scenario could occur, for instance, if an old student account, created before the implementation of the achievement system, applies to become an instructor.
+    // Consequently, the screening process would trigger the creation of the Onboarding achievement, implying several steps that are inappropriate for the student.
+    // Thus, the line below ensures that only the current or subsequent achievement steps are created, while others are automatically bypassed.
+    // Note: +1 is added because the index is 0-based, while the groupOrder is 1-based.
+    if (nextStepIndex + 1 < currentTemplate.groupOrder) {
+        return null;
+    }
 
     if (templatesForGroup && templatesForGroup.length > nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, relation, achievementContext);
