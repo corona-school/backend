@@ -427,7 +427,7 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [Bucket])
     @Authorized(Role.ADMIN)
-    async tutorLifetime(@Root() statistics: Statistics) {
+    async tutorLifetime(@Root() statistics: Statistics, @Arg('onlyInactive') onlyInactive: boolean) {
         const lifetimes: { student_id: number; lifetime: number }[] = await prisma.$queryRaw`
             WITH first_action AS (
                 SELECT

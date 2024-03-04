@@ -350,9 +350,7 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const helpers: Helper[] = await Promise.all(students.map(studentToHelper));
     const helpees: Helpee[] = await Promise.all(pupils.map(pupilToHelpee));
     const requestsWithPriority: Map<string, number> = helpees.reduce((acc, helpee) => {
-        if (helpee.subject.mandatory) {
-            acc.set(helpee.subject.name, (acc.get(helpee.subject.name) ?? 0) + 1);
-        }
+        helpee.subjects.filter((x) => x.mandatory).forEach((x) => acc.set(x.name, (acc.get(x.name) ?? 0) + 1));
         return acc;
     }, new Map());
     timing.preparation = Date.now() - startPreparation;
