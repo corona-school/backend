@@ -404,18 +404,18 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
 
     const stats = { ...result.stats, toggles };
     if (stats.subjectStats) {
-        stats.subjectStats = Object.assign(
-            {},
-            stats.subjectStats.map((subject) => ({
-                name: subject.name,
-                stats: {
-                    offered: subject.stats.offered,
-                    requested: subject.stats.requested,
-                    requestedPriority: requestsWithPriority.get(subject.name) ?? 0,
-                    fulfilledRequests: subject.stats.fulfilledRequests,
-                },
-            }))
-        );
+        stats.subjectStats = stats.subjectStats.map((subject) => ({
+            name: subject.name,
+            stats: {
+                offered: subject.stats.offered,
+                requested: subject.stats.requested,
+                requestedPriority: requestsWithPriority.get(subject.name) ?? 0,
+                fulfilledRequests: subject.stats.fulfilledRequests,
+            },
+        }));
+        for (const x of stats.subjectStats) {
+            console.log(`subject ${x.name}: ${x.stats}`);
+        }
     }
 
     if (apply) {
