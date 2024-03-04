@@ -521,7 +521,6 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             }
 
             entry.matches += matchesCreated;
-            console.log('SUBJECT STATS: ' + JSON.stringify(subjectStats));
             for (const {
                 name,
                 stats: { offered, requested, fulfilledRequests, requestedPriority },
