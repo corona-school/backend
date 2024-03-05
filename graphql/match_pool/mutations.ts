@@ -18,7 +18,7 @@ class MatchingSubjectStats {
     @Field()
     requested: number;
     @Field()
-    requestedPriority: number;
+    requestedMandatory: number;
     @Field()
     fulfilledRequests: number;
 }

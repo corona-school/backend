@@ -53,7 +53,7 @@ class SubjectDemand {
     @Field()
     requested: number;
     @Field()
-    requestedPriority: number;
+    requestedMandatory: number;
 }
 
 @ObjectType()

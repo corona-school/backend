@@ -57,6 +57,8 @@ class MedianTimeToMatch {
     median_days_student: number;
 }
 
+const ONE_DAY_MILLIS = 24 * 3600 * 1000;
+
 @Resolver((of) => Statistics)
 export class StatisticsResolver {
     @Query((returns) => Statistics)
@@ -470,43 +472,43 @@ export class StatisticsResolver {
                 EXTRACT(EPOCH FROM (last_action.last_action - first_action.first_screening)) as lifetime
             FROM first_action
             JOIN last_action ON first_action.student_id = last_action.student_id
-            WHERE first_action >= ${statistics.from}::timestamp
-            AND last_action < ${statistics.to}::timestamp
+            WHERE first_action.first_screening >= ${statistics.from}::timestamp
+            AND last_action.last_action < ${statistics.to}::timestamp
             `;
 
         const buckets: Bucket[] = [
             {
                 from: 0,
-                to: 14 * 24 * 3600 * 1000,
+                to: 14 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '0-14 Tage',
             },
             {
-                from: 14 * 24 * 3600 * 1000,
-                to: 28 * 24 * 3600 * 1000,
+                from: 14 * ONE_DAY_MILLIS,
+                to: 28 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '14-28 Tage',
             },
             {
-                from: 28 * 24 * 3600 * 1000,
-                to: 60 * 24 * 3600 * 1000,
+                from: 28 * ONE_DAY_MILLIS,
+                to: 60 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '28-60 Tage',
             },
             {
-                from: 60 * 24 * 3600 * 1000,
-                to: 120 * 24 * 3600 * 1000,
+                from: 60 * ONE_DAY_MILLIS,
+                to: 120 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '60-120 Tage',
             },
             {
-                from: 120 * 24 * 3600 * 1000,
-                to: 300 * 24 * 3600 * 1000,
+                from: 120 * ONE_DAY_MILLIS,
+                to: 300 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '120-300 Tage',
             },
             {
-                from: 300 * 24 * 3600 * 1000,
+                from: 300 * ONE_DAY_MILLIS,
                 to: -1,
                 value: 0,
                 label: '300+ Tage',
@@ -515,6 +517,7 @@ export class StatisticsResolver {
         lifetimes.forEach(({ student_id, lifetime }) => {
             buckets.find((b) => b.from <= lifetime && (b.to > lifetime || b.to === -1)).value += 1;
         });
+        return buckets;
     }
 
     @FieldResolver(() => [Bucket])
@@ -542,36 +545,36 @@ export class StatisticsResolver {
         const buckets: Bucket[] = [
             {
                 from: 0,
-                to: 14 * 24 * 3600 * 1000,
+                to: 14 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '0-14 Tage',
             },
             {
-                from: 14 * 24 * 3600 * 1000,
-                to: 28 * 24 * 3600 * 1000,
+                from: 14 * ONE_DAY_MILLIS,
+                to: 28 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '14-28 Tage',
             },
             {
-                from: 28 * 24 * 3600 * 1000,
-                to: 60 * 24 * 3600 * 1000,
+                from: 28 * ONE_DAY_MILLIS,
+                to: 60 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '28-60 Tage',
             },
             {
-                from: 60 * 24 * 3600 * 1000,
-                to: 120 * 24 * 3600 * 1000,
+                from: 60 * ONE_DAY_MILLIS,
+                to: 120 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '60-120 Tage',
             },
             {
-                from: 120 * 24 * 3600 * 1000,
-                to: 300 * 24 * 3600 * 1000,
+                from: 120 * ONE_DAY_MILLIS,
+                to: 300 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '120-300 Tage',
             },
             {
-                from: 300 * 24 * 3600 * 1000,
+                from: 300 * ONE_DAY_MILLIS,
                 to: -1,
                 value: 0,
                 label: '300+ Tage',
@@ -903,36 +906,36 @@ export class StatisticsResolver {
         const buckets: Bucket[] = [
             {
                 from: 0,
-                to: 14 * 24 * 3600 * 1000,
+                to: 14 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '0-14 Tage',
             },
             {
-                from: 14 * 24 * 3600 * 1000,
-                to: 28 * 24 * 3600 * 1000,
+                from: 14 * ONE_DAY_MILLIS,
+                to: 28 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '14-28 Tage',
             },
             {
-                from: 28 * 24 * 3600 * 1000,
-                to: 60 * 24 * 3600 * 1000,
+                from: 28 * ONE_DAY_MILLIS,
+                to: 60 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '28-60 Tage',
             },
             {
-                from: 60 * 24 * 3600 * 1000,
-                to: 120 * 24 * 3600 * 1000,
+                from: 60 * ONE_DAY_MILLIS,
+                to: 120 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '60-120 Tage',
             },
             {
-                from: 120 * 24 * 3600 * 1000,
-                to: 300 * 24 * 3600 * 1000,
+                from: 120 * ONE_DAY_MILLIS,
+                to: 300 * ONE_DAY_MILLIS,
                 value: 0,
                 label: '120-300 Tage',
             },
             {
-                from: 300 * 24 * 3600 * 1000,
+                from: 300 * ONE_DAY_MILLIS,
                 to: -1,
                 value: 0,
                 label: '300+ Tage',
