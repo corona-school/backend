@@ -2,7 +2,7 @@ import { Prisma, achievement_template } from '@prisma/client';
 import { metrics } from '../logger/metrics';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
-import { TemplateSelectEnum, getAchievementTemplates } from './template';
+import { TemplateSelectEnum, getAchievementTemplates, getAchievementTamplateUID as getAchievementTemplateUID } from './template';
 import tracer from '../logger/tracing';
 import { AchievementTemplateFor, AchievementToCheck } from './types';
 import { transformEventContextToUserAchievementContext, checkIfAchievementIsGlobal } from './util';
@@ -127,7 +127,7 @@ async function createNextUserAchievement<ID extends ActionID>(
         });
         metrics.AchievementsCreated.inc({
             id: createdUserAchievement.template.id.toString(),
-            title: createdUserAchievement.template.title,
+            uid: getAchievementTemplateUID(createdUserAchievement.template),
             type: createdUserAchievement.template.type,
         });
         return createdUserAchievement;

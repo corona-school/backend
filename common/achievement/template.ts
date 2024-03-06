@@ -17,6 +17,11 @@ export enum TemplateSelectEnum {
     BY_METRIC = 'metrics',
 }
 
+// The uid is a human readable identifier for the template
+export function getAchievementTamplateUID(template: Pick<AchievementTemplate, 'group' | 'groupOrder'>): string {
+    return `${template.group}_${template.groupOrder}`;
+}
+
 // ------------------- Achievement Template Cache & Getters -------------------
 
 // string == metricId, group

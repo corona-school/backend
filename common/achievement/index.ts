@@ -3,7 +3,7 @@ import { User } from '../user';
 import { checkIfAchievementIsGlobal, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
+import { getAchievementTamplateUID, getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
 import { evaluateAchievement } from './evaluate';
 import { AchievementToCheck, AchievementType, ActionEvent, ConditionDataAggregations } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
@@ -204,7 +204,7 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
     });
     metrics.AchievementsAchieved.inc({
         id: updatedAchievement.template.id.toString(),
-        title: updatedAchievement.template.title,
+        uid: getAchievementTamplateUID(updatedAchievement.template),
         type: updatedAchievement.template.type,
     });
 
