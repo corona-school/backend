@@ -40,7 +40,8 @@ const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]>
         }
         userAchievementGroups[key].push(ua);
     });
-    return generateReorderedAchievementData(userAchievementGroups, user);
+    const achievements = await generateReorderedAchievementData(userAchievementGroups, user);
+    return achievements.filter((a) => a.achievementState === AchievementState.ACTIVE);
 };
 
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
