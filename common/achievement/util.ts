@@ -37,7 +37,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
 }
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
+    const validRelationTypes = ['match', 'subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
