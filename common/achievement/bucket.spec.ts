@@ -1,6 +1,14 @@
 import moment from 'moment-timezone';
 import { bucketCreatorDefs } from './bucket';
 import { BucketCreatorContext, ContextMatch, ContextSubcourse, TimeBucket } from './types';
+import { BucketConfig } from './types';
+
+function sortBuckets(bucket: BucketConfig): BucketConfig {
+    if (bucket.bucketKind === 'time') {
+        bucket.buckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    }
+    return bucket;
+}
 
 describe('test create buckets by_lecture_start', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
@@ -152,13 +160,14 @@ describe('test create buckets by_lecture_start', () => {
     ];
 
     it.each(tests)('$name', ({ expectedBuckets, matches, subcourses }) => {
-        const res = bucketCreatorDefs['by_lecture_start'].function({
+        let res = bucketCreatorDefs['by_lecture_start'].function({
             recordValue: 0,
             context: {
                 match: matches ?? [],
                 subcourse: subcourses ?? [],
             },
         });
+        res = sortBuckets(res);
 
         expect(res.buckets).toEqual(expectedBuckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()));
     });

@@ -28,10 +28,10 @@ export const aggregators: Aggregator = {
     },
     last_streak_length: {
         function: (elements): number => {
-            // elements are sorted desc, i.e. [KW 52, KW 51, KW 50]
+            // elements are sorted asc, i.e. [KW 50, KW 51, KW 52]
             let value = 0;
-            for (const element of elements) {
-                if (element === 0) {
+            for (let i = elements.length - 1; i >= 0; i--) {
+                if (elements[i] === 0) {
                     break;
                 }
                 value += 1;
