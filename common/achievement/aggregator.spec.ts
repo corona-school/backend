@@ -51,7 +51,7 @@ describe('test count aggregator', () => {
     });
 });
 
-describe('test presenceOfEvents aggregator', () => {
+describe('test presence_of_events aggregator', () => {
     const tests: {
         name: string;
         elements: number[];
@@ -75,11 +75,11 @@ describe('test presenceOfEvents aggregator', () => {
     ];
 
     it.each(tests)('$name', ({ elements, expected }) => {
-        expect(aggregators['presenceOfEvents'].function(elements)).toEqual(expected);
+        expect(aggregators['presence_of_events'].function(elements)).toEqual(expected);
     });
 });
 
-describe('test lastStreakLength aggregator', () => {
+describe('test last_streak_length aggregator', () => {
     const tests: {
         name: string;
         elements: number[];
@@ -108,6 +108,6 @@ describe('test lastStreakLength aggregator', () => {
     ];
 
     it.each(tests)('$name', ({ elements, expected }) => {
-        expect(aggregators['lastStreakLength'].function(elements)).toEqual(expected);
+        expect(aggregators['last_streak_length'].function(elements)).toEqual(expected);
     });
 });

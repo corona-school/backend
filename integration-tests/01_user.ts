@@ -9,7 +9,7 @@ const setup = test('Setup Configuration', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
 });
 
-const createMockVerification = test('Create Mock Email Verify Notification', async () => {
+export const createMockVerification = test('Create Mock Email Verify Notification', async () => {
     await setup;
     return await createMockNotification('user-verify-email', 'UserVerifyEmailNotification');
 });

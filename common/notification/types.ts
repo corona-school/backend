@@ -46,8 +46,12 @@ export interface NotificationContextExtensions {
     // (i.e. when verifying an email change, or when testing mails)
     // BE CAREFUL: This might otherwise send an email with an auth token to someone else!
     overrideReceiverEmail?: Email;
+    // ------ Achievements ------
     // For Achievements, the match or subcourse is needed as a relation to allocate events to a specific user achievement
     relation?: string;
+    // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
+    // Therefore, we should skip the achievement buckets before the user's join, so that he still has the possibility to achieve the achievements.
+    skipAchievementBucketsBefore?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {

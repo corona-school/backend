@@ -18,8 +18,8 @@ export async function postStatisticsToSlack() {
     lastMonthEnd.setUTCSeconds(0);
     const end = lastMonthEnd.toISOString();
 
-    const pupilRegisteredCount = await prisma.pupil.count({ where: { createdAt: { gte: begin, lte: end } } });
-    const studentsRegisteredCount = await prisma.student.count({ where: { createdAt: { gte: begin, lte: end } } });
+    const pupilRegisteredCount = await prisma.pupil.count({ where: { verification: null, createdAt: { gte: begin, lte: end } } });
+    const studentsRegisteredCount = await prisma.student.count({ where: { verification: null, createdAt: { gte: begin, lte: end } } });
 
     // Screenings
     // Pupil screening - total
