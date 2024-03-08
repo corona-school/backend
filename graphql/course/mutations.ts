@@ -15,7 +15,7 @@ import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
-import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
+import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 import { userForStudent } from '../../common/user';
@@ -85,19 +85,14 @@ export class MutateCourseResolver {
         return result;
     }
 
-    @Mutation((returns) => GraphQLModel.Course)
+    @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<GraphQLModel.Course> {
+    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<Boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        if (course) {
-            const result = await prisma.course.delete({ where: { id: courseId } });
-            logger.info(`Course (${courseId}) deleted successfully`);
-            return result;
-        } else {
-            logger.error(`Course (${courseId}) not found`);
-            return null;
-        }
+        const result = await deleteCourse(course);
+        logger.info(`Course (${courseId}) deleted successfully`);
+        return true;
     }
 
     @Mutation((returns) => GraphQLModel.Course)

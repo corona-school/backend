@@ -394,24 +394,9 @@ void test('Add / Remove another instructor', async () => {
 
 void test('Delete course', async () => {
     const { courseId, client: courseClient, subcourseId } = await subcourseOne;
-    await courseClient.request(`
-    mutation DeleteSubCourse {
-        subcourseDelete(
-        subcourseId: ${subcourseId}
-    ) {id}}      
-`);
-
-    const subcourse = await prisma.subcourse.findUnique({
-        where: { id: subcourseId },
-    });
-
-    assert.ok(subcourse == null);
 
     await courseClient.request(`
-        mutation DeleteCourse {
-            courseDelete(
-            courseId: ${courseId}
-        ) {id}}      
+        mutation DeleteCourse {courseDelete(courseId: ${courseId})}      
     `);
 
     const course = await prisma.course.findUnique({

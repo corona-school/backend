@@ -2,7 +2,7 @@ import { subcourse as Subcourse, course as Course, student as Student, course_co
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
-import { getCourse } from '../../graphql/util';
+import { getCourse, getSubcoursesForCourse } from '../../graphql/util';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
@@ -86,6 +86,20 @@ export async function allowCourse(course: Course, screeningComment: string | nul
 export async function denyCourse(course: Course, screeningComment: string | null) {
     await prisma.course.update({ data: { screeningComment, courseState: CourseState.denied }, where: { id: course.id } });
     logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
+}
+
+export async function canDeleteCourse(course: Course): Promise<Decision> {
+    const subcoursesForCourse = await getSubcoursesForCourse(course.id, false);
+    if (subcoursesForCourse.length == 0) {
+        return { allowed: true, reason: `Course ${course.id} has subcourses` };
+    }
+}
+
+export async function deleteCourse(course: Course) {
+    const can = await canDeleteCourse(course);
+    if (!can.allowed) {
+        throw new Error(`Cannot delete Course ${course.id}, reason: ${can.reason}`);
+    }
 }
 
 /* ------------------ Subcourse Publish ------------- */
