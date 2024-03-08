@@ -2,7 +2,7 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum, user_achievement } from '@prisma/client';
+import { Prisma, achievement_template, achievement_template_for_enum, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
@@ -10,7 +10,6 @@ import { getLogger } from '../logger/logger';
 import { RelationTypes, BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
-import moment from 'moment';
 
 const logger = getLogger('Achievement');
 
@@ -24,7 +23,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
     const { image, achievedImage } = template;
     if (relation) {
         const subcourseId = relation.split('/')[1];
-        if (subcourseId && template.templateFor === achievement_template_for_enum.Course && template.type === achievement_type_enum.TIERED) {
+        if (subcourseId && template.templateFor === achievement_template_for_enum.Course) {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
             if (subcourse) {
                 return getCourseImageURL(subcourse.course);
