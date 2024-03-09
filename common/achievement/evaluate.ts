@@ -79,6 +79,10 @@ async function _evaluateAchievement(
 
         const bucketContext = await getBucketContext(userId, relation);
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
+        // We have to ensure that time buckets are always sorted in the same way (start time ascending)
+        if (buckets.bucketKind === 'time') {
+            buckets.buckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+        }
 
         let bucketEvents = createBucketEvents(eventsForMetric, buckets);
         // This will remove all buckets that are before the given date
@@ -134,7 +138,9 @@ const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBuc
         // values will be sorted in a desc order
         let filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
         if (bucket.relation) {
-            filteredEvents = filteredEvents.filter((event) => event.relation === bucket.relation);
+            // Events that don't have a relation should count for all buckets it falls in.
+            // Events with relation on the other side, should only count for the bucket with the same relation.
+            filteredEvents = filteredEvents.filter((event) => !event.relation || event.relation === bucket.relation);
         }
 
         return {

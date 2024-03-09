@@ -19,8 +19,10 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
     // To prevent this, we've implemented a workaround by setting the "join time" equal to the appointment's start time, ensuring that actions are accurately assigned to the appropriate bucket.
     // Moreover, the time window for lecture buckets has been narrowed to minimize the chance of overlaps.
 
+    let relation: string | undefined = undefined;
     if (appointment.subcourseId) {
         const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { lecture: true } });
+        relation = `subcourse/${subcourse.id}`;
         if (user.studentId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_subcourse_meeting', {
@@ -40,6 +42,7 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
         const match = await getMatch(appointment.matchId);
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
+        relation = `match/${match.id}`;
 
         if (user.studentId) {
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_match_meeting', {
@@ -57,9 +60,10 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
     } else {
         logger.info(`Did not track User(${user.userID}) joining Appointment(${appointment.id}) as it is neither associated to a subcourse or match`);
     }
+
     if (user.studentId) {
-        await Notification.actionTakenAt(appointment.start, user, 'student_presence_in_meeting', {});
+        await Notification.actionTaken(user, 'student_presence_in_meeting', { relation });
     } else if (user.pupilId) {
-        await Notification.actionTakenAt(appointment.start, user, 'pupil_presence_in_meeting', {});
+        await Notification.actionTaken(user, 'pupil_presence_in_meeting', { relation });
     }
 }

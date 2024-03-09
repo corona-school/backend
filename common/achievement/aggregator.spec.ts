@@ -87,7 +87,7 @@ describe('test last_streak_length aggregator', () => {
     }[] = [
         {
             name: 'should get a streak of five',
-            elements: [1, 2, 3, 4, 5],
+            elements: [5, 4, 3, 2, 1],
             expected: 5,
         },
         {
@@ -97,12 +97,12 @@ describe('test last_streak_length aggregator', () => {
         },
         {
             name: 'should reset streak if zero in chain',
-            elements: [1, 1, 1, 0, 1],
+            elements: [1, 0, 1, 1, 1],
             expected: 3,
         },
         {
             name: 'should have a streak of 0 if first element is zero',
-            elements: [0, 1, 1, 1, 1],
+            elements: [1, 1, 1, 1, 0],
             expected: 0,
         },
     ];

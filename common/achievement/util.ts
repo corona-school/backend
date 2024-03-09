@@ -101,12 +101,12 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     const bucketContext: BucketContextType = {
         match: matches.map((match) => ({
             id: match.id,
-            relation: relationType ? `${relationType}/${match.id}` : undefined,
+            relation: `match/${match.id}`,
             lecture: match.lecture,
         })),
         subcourse: subcourses.map((subcourse) => ({
             id: subcourse.id,
-            relation: relationType ? `${relationType}/${subcourse.id}` : undefined,
+            relation: `subcourse/${subcourse.id}`,
             lecture: subcourse.lecture,
         })),
     };

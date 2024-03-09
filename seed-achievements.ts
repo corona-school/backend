@@ -501,6 +501,32 @@ export async function importAchievements() {
     await prisma.achievement_template.create({
         data: {
             templateFor: achievement_template_for_enum.Global,
+            group: 'student_appointment_reliability',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.STREAK,
+            title: 'Pünktlichkeits-Power',
+            tagline: 'Zur richtigen Uhrzeit',
+            description:
+                'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal; wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst; steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so; du bist auf dem richtigen Kurs!',
+            achievedDescription: null,
+            image: 'gamification/achievements/tmp/streaks/punctuality_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/punctuality_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'Hurra; du erhöhst deinen Rekord weiter!',
+            condition: 'student_participated_in_meeting > recordValue',
+            conditionDataAggregations: JSON.parse(
+                '{"student_participated_in_meeting":{"metric":"student_participated_in_meeting","aggregator":"last_streak_length","createBuckets":"by_lecture_start","bucketAggregator":"presence_of_events"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 1,
             sequentialStepName: 'Verifizieren',
@@ -879,15 +905,15 @@ export async function importAchievements() {
             sequentialStepName: 'An Kurs Teilnehmen',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs beigetreten',
-            tagline: null,
-            description: 'TBD',
+            tagline: '{{course.Name}}',
+            description: 'This is not in use',
             achievedDescription: null,
             image: 'course-image',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: null,
+            achievedFooter: 'This is not in use',
             condition: 'pupil_course_joined > 0',
             conditionDataAggregations: JSON.parse('{"pupil_course_joined":{"metric":"pupil_course_joined","aggregator":"count"}}'),
             isActive: true,
@@ -942,6 +968,32 @@ export async function importAchievements() {
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_learning_events":{"metric":"pupil_match_learned_regular","aggregator":"last_streak_length","createBuckets":"by_weeks","bucketAggregator":"presence_of_events"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
+            group: 'pupil_appointment_reliability',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.STREAK,
+            title: 'Pünktlichkeits-Power',
+            tagline: 'Zur richtigen Uhrzeit',
+            description:
+                'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal; wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst; steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so; du bist auf dem richtigen Kurs!',
+            achievedDescription: null,
+            image: 'gamification/achievements/tmp/streaks/punctuality_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/punctuality_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'Hurra; du erhöhst deinen Rekord weiter!',
+            condition: 'pupil_participated_in_meeting > recordValue',
+            conditionDataAggregations: JSON.parse(
+                '{"pupil_participated_in_meeting":{"metric":"pupil_participated_in_meeting","aggregator":"last_streak_length","createBuckets":"by_lecture_start","bucketAggregator":"presence_of_events"}}'
             ),
             isActive: true,
         },
