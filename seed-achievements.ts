@@ -577,6 +577,32 @@ export async function importAchievements() {
     await prisma.achievement_template.create({
         data: {
             templateFor: achievement_template_for_enum.Global,
+            group: 'student_regular_learning',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.STREAK,
+            title: 'Login-Legende',
+            tagline: 'User-Bereich',
+            description:
+                'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an; um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so; du Anmelde-Champion!',
+            achievedDescription: null,
+            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'Hurra; du erhöhst deinen Rekord weiter!',
+            condition: 'student_regular_learning > recordValue',
+            conditionDataAggregations: JSON.parse(
+                '{"student_regular_learning":{"metric":"student_regular_learning","aggregator":"last_streak_length","createBuckets":"by_months","bucketAggregator":"presence_of_events"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 1,
             sequentialStepName: 'Verifizieren',
@@ -1044,6 +1070,32 @@ export async function importAchievements() {
             condition: 'pupil_participated_in_meeting > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_participated_in_meeting":{"metric":"pupil_participated_in_meeting","aggregator":"last_streak_length","createBuckets":"by_lecture_start","bucketAggregator":"presence_of_events"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
+            group: 'pupil_regular_learning',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.STREAK,
+            title: 'Login-Legende',
+            tagline: 'User-Bereich',
+            description:
+                'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an; um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so; du Anmelde-Champion!',
+            achievedDescription: null,
+            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'Hurra; du erhöhst deinen Rekord weiter!',
+            condition: 'pupil_regular_learning > recordValue',
+            conditionDataAggregations: JSON.parse(
+                '{"pupil_regular_learning":{"metric":"pupil_regular_learning","aggregator":"last_streak_length","createBuckets":"by_months","bucketAggregator":"presence_of_events"}}'
             ),
             isActive: true,
         },
