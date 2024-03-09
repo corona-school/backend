@@ -16,7 +16,7 @@ export async function findUserAchievement<ID extends ActionID>(
     let relation = context?.relation || null;
     switch (templateFor) {
         case AchievementTemplateFor.Global_Courses:
-            relation = 'course';
+            relation = 'subcourse';
             break;
         case AchievementTemplateFor.Global_Matches:
             relation = 'match';
@@ -60,7 +60,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     let relation = context?.relation || null;
     switch (currentTemplate.templateFor) {
         case AchievementTemplateFor.Global_Courses:
-            relation = 'course';
+            relation = 'subcourse';
             break;
         case AchievementTemplateFor.Global_Matches:
             relation = 'match';
