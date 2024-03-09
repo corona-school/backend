@@ -65,10 +65,18 @@ export async function updateAppointment(
             }
 
             for (const instructor of instructors) {
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                if (subcourse.published) {
+                    // For unpublished courses, this is deferred to a later point
+                    await Notification.actionTakenAt(
+                        new Date(updatedAppointment.start),
+                        userForStudent(instructor.student),
+                        'student_group_appointment_starts',
+                        {
+                            ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
+                            student,
+                        }
+                    );
+                }
             }
             break;
         }
