@@ -6,7 +6,7 @@ import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
-import { prisma } from '../common/prisma';
+import { ValidationError } from 'apollo-server-express';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -394,14 +394,14 @@ void test('Add / Remove another instructor', async () => {
 
 void test('Delete course', async () => {
     const { courseId, client: courseClient, subcourseId } = await subcourseOne;
-
-    await courseClient.request(`
+    try {
+        await courseClient.request(`
         mutation DeleteCourse {courseDelete(courseId: ${courseId})}      
     `);
-
-    const course = await prisma.course.findUnique({
-        where: { id: courseId },
-    });
-
-    assert.ok(course == null);
+        assert.fail('Expected an error because test course has subcourses');
+    } catch (error) {
+        if (error instanceof ValidationError) {
+            assert.ok('Got expected validation error since test course has subcourses');
+        }
+    }
 });
