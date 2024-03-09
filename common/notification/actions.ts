@@ -504,21 +504,14 @@ const _notificationActions = {
         },
     },
     student_add_appointment_group: {
-        description: 'Student / Group Appointment Added',
-        sampleContext: {
-            student: sampleUser,
-            ...sampleCourse,
-        },
-    },
-    student_add_appointments_group: {
-        description: 'Student / Group Appointments Added',
+        description: 'Participant / Instructor added Group Appointment',
         sampleContext: {
             student: sampleUser,
             ...sampleCourse,
         },
     },
     student_add_appointment_match: {
-        description: 'Student / Match Appointment Added',
+        description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
             student: sampleUser,
             matchId: '1',
@@ -540,7 +533,7 @@ const _notificationActions = {
         },
     },
     student_cancel_appointment_group: {
-        description: 'Student / Group Appointment Cancelled',
+        description: 'Participant / Group Appointment Cancelled by Instructor',
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
