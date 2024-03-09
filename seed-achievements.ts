@@ -474,6 +474,56 @@ export async function importAchievements() {
 
     await prisma.achievement_template.create({
         data: {
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_course_participation',
+            groupOrder: 1,
+            sequentialStepName: 'Kurs anbieten',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Kurs erstellt',
+            tagline: '{{course.Name}}',
+            description: 'This is not in use',
+            achievedDescription: null,
+            image: 'course-image',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'This is not in use',
+            condition: 'student_offer_course > 0',
+            conditionDataAggregations: JSON.parse('{"student_offer_course":{"metric":"student_offer_course","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Course,
+            group: 'student_course_participation',
+            groupOrder: 2,
+            sequentialStepName: 'Kurs Beenden',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Kurs erfolgreich beendet',
+            tagline: '{{course.Name}}',
+            description:
+                'Du erhältst diesen Erfolg sobald alle Termine deines Kurses "{{course.Name}}" beendet wurden. Kontinuierliche Termine ermöglichen den Schüler:innen nicht nur; das Beste aus dem Kurs herauszuholen; sondern stärken auch ihre Lernfortschritte und das Verständnis der Kursinhalte.',
+            achievedDescription:
+                'Herzlichen Glückwunsch zum erfolgreichen Abschluss des letzten Termins deines Kurses {{course.name}}! Wir hoffen; die Kursleitung hat dir viel Freude bereitet und dass die Schüler:innen viel mitnehmen konnten. Dein Feedback ist uns sehr wichtig – wir freuen uns darauf; von deinen Erfahrungen zu hören! ',
+            image: 'course-image',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
+            condition: 'student_conducted_subcourse_appointment > 0',
+            conditionDataAggregations: JSON.parse(
+                '{"student_conducted_subcourse_appointment":{"metric":"student_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
             templateFor: achievement_template_for_enum.Match,
             group: 'student_match_regular_learning',
             groupOrder: 1,

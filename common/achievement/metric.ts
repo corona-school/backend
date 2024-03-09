@@ -56,6 +56,9 @@ const batchOfMetrics = [
     createMetric('pupil_course_joined', ['participant_course_joined'], () => {
         return 1;
     }),
+    createMetric('student_offer_course', ['instructor_course_approved'], () => {
+        return 1;
+    }),
 
     /* REGULAR MATCH LEARNING */
     createMetric('pupil_match_learned_regular', ['pupil_joined_match_meeting'], () => {
