@@ -163,10 +163,12 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
         // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                student: organizer,
-            });
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForPupil(participant.pupil),
+                'pupil_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+            );
         }
     }
 
@@ -174,10 +176,12 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         for (const appointment of createdGroupAppointments) {
             if (subcourse.published) {
                 // For unpublished courses, this is deferred to a later point
-                await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                    student: organizer,
-                });
+                await Notification.actionTakenAt(
+                    new Date(appointment.start),
+                    userForStudent(instructor.student),
+                    'student_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+                );
             }
         }
     }

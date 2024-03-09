@@ -58,10 +58,12 @@ export async function updateAppointment(
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                await Notification.actionTakenAt(
+                    new Date(updatedAppointment.start),
+                    userForPupil(participant.pupil),
+                    'pupil_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                );
             }
 
             for (const instructor of instructors) {
@@ -71,10 +73,7 @@ export async function updateAppointment(
                         new Date(updatedAppointment.start),
                         userForStudent(instructor.student),
                         'student_group_appointment_starts',
-                        {
-                            ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                            student,
-                        }
+                        await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
                     );
                 }
             }

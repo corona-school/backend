@@ -136,10 +136,12 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
 
     for (const { student: instructor } of subcourse.subcourse_instructors_student) {
         for (const appointment of subcourseAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor), 'student_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, course)),
-                student: instructor,
-            });
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForStudent(instructor),
+                'student_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, course)
+            );
         }
     }
 }

@@ -228,12 +228,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
         await logTransaction('participantJoinedCourse', pupil, { subcourseID: subcourse.id });
 
-        const firstLecture = await prisma.lecture.findMany({
-            where: { subcourseId: subcourse.id },
-            orderBy: { start: 'asc' },
-            take: 1,
-        });
-
         await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
         if (isChatFeatureActive() && subcourse.conversationId) {
             await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
@@ -241,8 +235,6 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         try {
             const course = await getCourseOfSubcourse(subcourse);
-            const courseStart = moment(firstLecture[0].start);
-            const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
 
             const context = await getNotificationContextForSubcourse(course, subcourse);
             if (leftWaitingList) {
