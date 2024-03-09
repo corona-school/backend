@@ -12,6 +12,12 @@ function createMetric<T extends ActionID>(metricName: string, onActions: T[], fo
 }
 
 const batchOfMetrics = [
+    createMetric('student_regular_learning', ['student_login'], () => {
+        return 1;
+    }),
+    createMetric('pupil_regular_learning', ['pupil_login'], () => {
+        return 1;
+    }),
     /* STUDENT ONBOARDING */
     createMetric('student_onboarding_verified', ['student_registration_verified_email'], () => {
         return 1;
