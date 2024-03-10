@@ -3,15 +3,16 @@ import { User } from '../user';
 import { checkIfAchievementIsGlobal, sortActionTemplatesToGroups } from './util';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
-import { getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
+import { getAchievementTamplateUID, getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
 import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, AchievementType, ActionEvent, ConditionDataAggregations, UserAchievementTemplate } from './types';
+import { AchievementToCheck, AchievementType, ActionEvent, ConditionDataAggregations } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 // eslint-disable-next-line import/no-cycle
 import { actionTakenAt } from '../notification';
 import tracer from '../logger/tracing';
 import { getMetricsByAction } from './metrics';
 import { isGamificationFeatureActive } from '../../utils/environment';
+import { metrics } from '../logger/metrics';
 
 const logger = getLogger('Achievement');
 
@@ -31,7 +32,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
     logger.info('found achievement templates for action', {
         actionId,
         metrics: metricsForAction.map((metric) => metric.metricName),
-        templates: templatesForAction.map((temp) => temp.name),
+        templates: templatesForAction.map((temp) => temp.title),
     });
 
     const templatesByGroups = sortActionTemplatesToGroups(templatesForAction);
@@ -67,7 +68,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === AchievementType.STREAK)) {
                         logger.info('found achievement to check', {
                             achievementId: userAchievement.id,
-                            achievementName: userAchievement.template?.name,
+                            achievementName: userAchievement.template?.title,
                             type: userAchievement.template?.type,
                         });
                         achievementToCheck = userAchievement;
@@ -78,7 +79,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
                 if (achievementToCheck) {
                     span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
-                        checkUserAchievement(achievementToCheck as UserAchievementTemplate, {
+                        checkUserAchievement(achievementToCheck, {
                             ...actionEvent,
                             context: { ...contextWithoutRelation, relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation },
                         })
@@ -121,13 +122,14 @@ async function trackEvent<ID extends ActionID>(event: ActionEvent<ID>) {
                 createdAt: event.at,
             },
         });
+        metrics.AchievementsTrackedEvents.inc({ metric: metric.metricName, action: event.actionId });
     }
 
     return true;
 }
 
-async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
-    const evaluationResult = await isAchievementConditionMet(userAchievement, event);
+async function checkUserAchievement<ID extends ActionID>(userAchievement: AchievementToCheck, event: ActionEvent<ID>) {
+    const evaluationResult = await isAchievementConditionMet(userAchievement);
     logger.info('sucessfully evaluated achievement condition', {
         actionId: event.actionId,
         achievementId: userAchievement.id,
@@ -156,24 +158,40 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: UserAc
     }
 }
 
-async function isAchievementConditionMet<ID extends ActionID>(achievement: UserAchievementTemplate, event: ActionEvent<ID>) {
+export async function isAchievementConditionMet(achievement: AchievementToCheck) {
     const {
         userId,
         recordValue,
-        template: { condition, conditionDataAggregations },
+        context,
+        relation,
+        template: { condition, conditionDataAggregations, type },
     } = achievement;
     if (!condition) {
-        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.name, achievementId: achievement.id });
+        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.title, achievementId: achievement.id });
         return { conditionIsMet: false, resultObject: {} };
     }
-    const result = await evaluateAchievement(userId, condition, conditionDataAggregations as ConditionDataAggregations, recordValue, event.context.relation);
+    // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
+    // Therefore, we should skip the achievement buckets before the user's join, so that he still has the possibility to achieve the achievements.
+    const skipAchievementBucketsBefore = context && context['skipAchievementBucketsBefore'] ? new Date(context['skipAchievementBucketsBefore']) : undefined;
+    // For streaks, we need to ignore future buckets, as they will interrupt the streak even though the user had no opportunity to complete them.
+    // Nevertheless, we still want to include future buckets if they are associated with an event. This occurs if you join a meeting before its official start time.
+    const skipAchievementBucketsAfter = type === AchievementType.STREAK ? new Date() : undefined;
+    const result = await evaluateAchievement(
+        userId,
+        condition,
+        conditionDataAggregations as ConditionDataAggregations,
+        recordValue,
+        relation,
+        skipAchievementBucketsBefore,
+        skipAchievementBucketsAfter
+    );
     if (result === undefined) {
         return null;
     }
     return result;
 }
 
-async function rewardUser<ID extends ActionID>(evaluationResult: number | null, userAchievement: UserAchievementTemplate, event: ActionEvent<ID>) {
+async function rewardUser<ID extends ActionID>(evaluationResult: number | null, userAchievement: AchievementToCheck, event: ActionEvent<ID>) {
     let newRecordValue = null;
     if (typeof userAchievement.recordValue === 'number' && evaluationResult) {
         newRecordValue = evaluationResult;
@@ -183,6 +201,11 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         where: { id: userAchievement.id },
         data: { achievedAt: new Date(), recordValue: newRecordValue, isSeen: false },
         select: { id: true, userId: true, achievedAt: true, template: true },
+    });
+    metrics.AchievementsAchieved.inc({
+        id: updatedAchievement.template.id.toString(),
+        uid: getAchievementTamplateUID(updatedAchievement.template),
+        type: updatedAchievement.template.type,
     });
 
     const { type, group, groupOrder } = updatedAchievement.template;
@@ -199,15 +222,15 @@ async function rewardUser<ID extends ActionID>(evaluationResult: number | null, 
         if (!groupTemplates) {
             return updatedAchievement;
         }
-        const lastTemplate = groupTemplates[groupTemplates.length - 2];
+        const lastTemplate = groupTemplates[groupTemplates.length - 1];
         if (groupOrder === lastTemplate.groupOrder) {
             await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
-                achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+                achievement: { name: updatedAchievement.template.title, id: updatedAchievement.id.toString() },
             });
         }
     } else {
         await actionTakenAt(new Date(), event.user, 'user_achievement_reward_issued', {
-            achievement: { name: updatedAchievement.template.name, id: updatedAchievement.id.toString() },
+            achievement: { name: updatedAchievement.template.title, id: updatedAchievement.id.toString() },
         });
     }
     return updatedAchievement;

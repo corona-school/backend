@@ -27,7 +27,6 @@ datasource db {
 // A final achievement can consist of several sub-achievements
 model achievement_template {
   id                        Int                           @id @default(autoincrement())
-  name                      String                        @db.VarChar
   templateFor               achievement_template_for_enum
   // Achievements can
   // - cross-platform (i.e. for one user) 
@@ -41,12 +40,8 @@ model achievement_template {
   // In the case of tiered achievements, for example, each tier is a separate achievement but belongs to a group. 
   // The groupOrder therefore determines the order of the sub-achievements.
   groupOrder                Int
-  // Sequential: each step is seen as a separate achievement and each step has its own name                   
-  stepName                  String                        @db.VarChar
   // what type of achievement is it
   type                      achievement_type_enum
-  subtitle                  String?                       @db.VarChar
-  description               String                        @db.VarChar
   image                     String                        @db.VarChar
   achievedImage             String?                       @db.VarChar
   // some achievements show actions that a user can/must perform next.
@@ -54,10 +49,6 @@ model achievement_template {
   actionName                String?                       @db.VarChar
   actionRedirectLink        String?                       @db.VarChar
   actionType                achievement_action_type_enum?
-  // Tiered: If a tiered achievement has been achieved, the text changes
-  achievedText              String?                       @db.VarChar
-  progressDescription       String?                       @db.VarChar
-  streakProgress            String?                       @db.VarChar
   // defines what value must be reached to receive the achievement, 
   // e.g. "duration == 60", "count == 5", "count == 3 & duration == 60", "series >= 5" (https://github.com/onlabsorg/swan-js)
   condition                 String                        @db.VarChar
@@ -66,6 +57,18 @@ model achievement_template {
   conditionDataAggregations Json                          @db.Json
   isActive                  Boolean
   user_achievement          user_achievement[]
+
+  // Text related fields
+  tagline                   String?                       @db.VarChar
+  title                     String                        @db.VarChar
+  subtitle                  String?                       @db.VarChar
+  description               String                        @db.VarChar
+  achievedDescription       String?                       @db.VarChar
+  footer                    String?                       @db.VarChar
+  achievedFooter            String?                       @db.VarChar
+
+  // Sequential: each step is seen as a separate achievement and each step has its own name                   
+  sequentialStepName        String?                       @db.VarChar
 }
 
 model user_achievement {

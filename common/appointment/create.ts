@@ -62,7 +62,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
 
     // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
     let hosts: ZoomUser[] | null = null;
-    if (isZoomFeatureActive() && lastAppointment?.override_meeting_link == null && !appointmentsToBeCreated[0].meetingLink) {
+    if (isZoomFeatureActive() && !lastAppointment?.override_meeting_link && !appointmentsToBeCreated[0].meetingLink) {
         hosts = await hostsForStudents([student]);
     }
 
@@ -148,7 +148,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
                     participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                     zoomMeetingId,
-                    override_meeting_link: appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link,
+                    override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
                 },
             });
         })

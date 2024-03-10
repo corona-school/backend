@@ -101,6 +101,32 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
+    async helperRegistrationsByJob(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                   date_part('year', "createdAt"::date)  AS year,
+                   date_part('month', "createdAt"::date) AS month,
+                   "jobStatus" AS group
+            FROM (
+                SELECT student."createdAt", screening."jobStatus" as "jobStatus" FROM student
+                LEFT JOIN screening on screening."studentId" = student.id
+                WHERE verification is NULL
+                  AND student."createdAt" > ${statistics.from}::timestamp
+                  AND student."createdAt" < ${statistics.to}::timestamp
+                  AND screening."jobStatus" IS NOT NULL
+                UNION
+                SELECT student."createdAt", instructor_screening."jobStatus" as "jobStatus" FROM student
+                LEFT JOIN instructor_screening on instructor_screening."studentId" = student.id
+                WHERE verification is NULL
+                  AND student."createdAt" > ${statistics.from}::timestamp
+                  AND student."createdAt" < ${statistics.to}::timestamp
+                  AND instructor_screening."jobStatus" IS NOT NULL
+            ) as "student"
+            GROUP BY "year", "month", "jobStatus"
+            ORDER BY "year" ASC, "month" ASC;`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async helperRegistrationsByUniversity(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
@@ -175,19 +201,42 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
-    async helperScreenings(@Root() statistics: Statistics) {
+    async registeredHelpersHavingScreening(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                                           date_part('year', student."createdAt"::date)  AS year,
+                                           date_part('month', student."createdAt"::date) AS month
+                                    FROM student
+                                             LEFT JOIN screening on screening."studentId" = student.id
+                                             LEFT JOIN instructor_screening on instructor_screening."studentId" = student.id
+                                    WHERE student."createdAt" > ${statistics.from}::timestamp
+                                      AND student."createdAt" < ${statistics.to}::timestamp
+                                      AND (screening."createdAt" IS NOT NULL OR instructor_screening."createdAt" IS NOT NULL)
+                                    GROUP BY "year", "month"
+                                    ORDER BY "year" ASC, "month" ASC`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async tutorScreenings(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                            date_part('year', "createdAt"::date)  AS year,
                                            date_part('month', "createdAt"::date) AS month
-                                    FROM (
-                                         SELECT "createdAt" FROM "screening"
-                                         WHERE "createdAt" > ${statistics.from}::timestamp
-                                           AND "createdAt" < ${statistics.to}::timestamp
-                                         UNION ALL
-                                         SELECT "createdAt" FROM "instructor_screening"
-                                         WHERE "createdAt" > ${statistics.from}::timestamp
-                                           AND "createdAt" < ${statistics.to}::timestamp
-                                    ) as "combinedResults"
+                                     FROM "screening"
+                                     WHERE "createdAt" > ${statistics.from}::timestamp
+                                       AND "createdAt" < ${statistics.to}::timestamp
+                                    GROUP BY "year", "month"
+                                    ORDER BY "year" ASC, "month" ASC`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async instructorScreenings(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                                           date_part('year', "createdAt"::date)  AS year,
+                                           date_part('month', "createdAt"::date) AS month
+                                     FROM "instructor_screening"
+                                     WHERE "createdAt" > ${statistics.from}::timestamp
+                                       AND "createdAt" < ${statistics.to}::timestamp
                                     GROUP BY "year", "month"
                                     ORDER BY "year" ASC, "month" ASC`;
     }
@@ -253,13 +302,13 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async nowDissolvedMatchesBeforeThreeMonths(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
-                                             date_part('year', "updatedAt"::date)  AS year,
-                                             date_part('month', "updatedAt"::date) AS month
+                                             date_part('year', coalesce("dissolvedAt", "updatedAt")::date)  AS year,
+                                             date_part('month', coalesce("dissolvedAt", "updatedAt")::date) AS month
                                       FROM "match"
                                       WHERE dissolved = TRUE
-                                        AND date_part('day', "updatedAt"::timestamp - "createdAt"::timestamp) <= 90
-                                        AND "dissolvedAt" > ${statistics.from}::timestamp
-                                        AND "dissolvedAt" < ${statistics.to}::timestamp
+                                        AND date_part('day', coalesce("dissolvedAt", "updatedAt")::timestamp - "createdAt"::timestamp) <= 90
+                                        AND coalesce("dissolvedAt", "updatedAt") > ${statistics.from}::timestamp
+                                        AND coalesce("dissolvedAt", "updatedAt") < ${statistics.to}::timestamp
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -268,13 +317,13 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async nowDissolvedMatchesAfterThreeMonths(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
-                                             date_part('year', "updatedAt"::date)  AS year,
-                                             date_part('month', "updatedAt"::date) AS month
+                                             date_part('year', coalesce("dissolvedAt", "updatedAt")::date)  AS year,
+                                             date_part('month', coalesce("dissolvedAt", "updatedAt")::date) AS month
                                       FROM "match"
                                       WHERE dissolved = TRUE
-                                        AND date_part('day', "updatedAt"::timestamp - "createdAt"::timestamp) > 90
-                                        AND "dissolvedAt" > ${statistics.from}::timestamp
-                                        AND "dissolvedAt" < ${statistics.to}::timestamp
+                                        AND date_part('day', coalesce("dissolvedAt", "updatedAt")::timestamp - "createdAt"::timestamp) > 90
+                                        AND coalesce("dissolvedAt", "updatedAt") > ${statistics.from}::timestamp
+                                        AND coalesce("dissolvedAt", "updatedAt") < ${statistics.to}::timestamp
                                       GROUP BY "year", "month"
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
@@ -299,7 +348,7 @@ export class StatisticsResolver {
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async offeredCoursePlaces(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw`SELECT "year", "month", SUM("subcourse"."maxParticipants")::INT
+        return await prisma.$queryRaw`SELECT "year", "month", SUM("subcourse"."maxParticipants")::INT AS value
                                       FROM (SELECT DISTINCT ON ("subcourseId") "subcourseId",
                                                                                "start",
                                                                                date_part('year', "start"::date)  AS "year",
@@ -491,8 +540,14 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async averageMatchesOfTutee(@Root() statistics: Statistics) {
         const tuteesWithMatch = await prisma.pupil.count({
-            where: { match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } } },
+            where: {
+                isPupil: true,
+                match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } },
+            },
         });
+        if (tuteesWithMatch === 0) {
+            return -1;
+        }
         const matchesTotal = await prisma.match.count({
             where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
         });
@@ -504,8 +559,14 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async averageMatchesOfTutors(@Root() statistics: Statistics) {
         const tutorsWithMatch = await prisma.student.count({
-            where: { match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } } },
+            where: {
+                isStudent: true,
+                match: { some: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] } },
+            },
         });
+        if (tutorsWithMatch === 0) {
+            return -1;
+        }
         const matchesTotal = await prisma.match.count({
             where: { AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }] },
         });
@@ -585,6 +646,9 @@ export class StatisticsResolver {
                                       ORDER BY "year" ASC, "month" ASC;`;
     }
 
+    /*
+    out of all tutors that should have turned in their CoC (max 8 weeks after screening) within the selected timeframe, how many actually did it?
+     */
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
     async rateSuccessfulCoCsTutors(@Root() statistics: Statistics) {
@@ -607,6 +671,9 @@ export class StatisticsResolver {
         return actuallyTurnedIn[0].count / mustHaveTurnedInCoC[0].count;
     }
 
+    /*
+    out of all instructors that should have turned in their CoC (max 8 weeks after screening) within the selected timeframe, how many actually did it?
+     */
     @FieldResolver((returns) => Float)
     @Authorized(Role.ADMIN)
     async rateSuccessfulCoCsInstructors(@Root() statistics: Statistics) {
@@ -661,6 +728,10 @@ export class StatisticsResolver {
                 AND: [{ createdAt: { gte: new Date(statistics.from) } }, { createdAt: { lt: new Date(statistics.to) } }],
             },
         });
+
+        if (numPupils === 0) {
+            return -1;
+        }
 
         const successfulScreeningsCount: { value: number }[] = await prisma.$queryRaw`SELECT COUNT(DISTINCT "pupilId")::int AS value
             FROM "pupil_screening"

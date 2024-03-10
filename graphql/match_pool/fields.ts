@@ -48,6 +48,10 @@ class SubjectDemand {
     subject: string;
     @Field()
     demand: number;
+    @Field()
+    offered: number;
+    @Field()
+    requested: number;
 }
 
 @ObjectType()

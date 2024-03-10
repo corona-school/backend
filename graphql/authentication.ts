@@ -15,6 +15,7 @@ import { validateEmail } from './validators';
 import { defaultScreener } from '../common/util/screening';
 import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
+import { actionTaken } from '../common/notification';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -182,6 +183,12 @@ export class AuthenticationResolver {
             const user = await loginPassword(email, password);
             await loginAsUser(user, context);
 
+            if (user.studentId) {
+                await actionTaken(user, 'student_login', {});
+            } else if (user.pupilId) {
+                await actionTaken(user, 'pupil_login', {});
+            }
+
             return true;
         } catch (error) {
             throw new AuthenticationError('Invalid E-Mail or Password');
@@ -194,6 +201,11 @@ export class AuthenticationResolver {
         try {
             const user = await loginToken(token);
             await loginAsUser(user, context);
+            if (user.studentId) {
+                await actionTaken(user, 'student_login', {});
+            } else if (user.pupilId) {
+                await actionTaken(user, 'pupil_login', {});
+            }
             return true;
         } catch (error) {
             logger.info(`Failed to log in with token: `, error);

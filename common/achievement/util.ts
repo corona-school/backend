@@ -2,7 +2,7 @@ import 'reflect-metadata';
 // ↑ Needed by typegraphql: https://typegraphql.com/docs/installation.html
 import { join } from 'path';
 import { prisma } from '../prisma';
-import { Prisma, achievement_template, achievement_template_for_enum, achievement_type_enum, user_achievement } from '@prisma/client';
+import { Prisma, achievement_template, achievement_template_for_enum, user_achievement } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
@@ -10,7 +10,6 @@ import { getLogger } from '../logger/logger';
 import { RelationTypes, BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
-import moment from 'moment';
 
 const logger = getLogger('Achievement');
 
@@ -24,7 +23,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
     const { image, achievedImage } = template;
     if (relation) {
         const subcourseId = relation.split('/')[1];
-        if (subcourseId && template.templateFor === achievement_template_for_enum.Course && template.type === achievement_type_enum.TIERED) {
+        if (subcourseId && template.templateFor === achievement_template_for_enum.Course) {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
             if (subcourse) {
                 return getCourseImageURL(subcourse.course);
@@ -38,7 +37,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
 }
 
 function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse', 'global_match', 'global_subcourse'];
+    const validRelationTypes = ['match', 'subcourse'];
     const [relationType, id] = relation.split('/');
     if (!validRelationTypes.includes(relationType)) {
         throw Error('No valid relation found in relation: ' + relationType);
@@ -102,31 +101,43 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     const bucketContext: BucketContextType = {
         match: matches.map((match) => ({
             id: match.id,
-            relation: relationType ? `${relationType}/${match.id}` : undefined,
+            relation: `match/${match.id}`,
             lecture: match.lecture,
         })),
         subcourse: subcourses.map((subcourse) => ({
             id: subcourse.id,
-            relation: relationType ? `${relationType}/${subcourse.id}` : undefined,
+            relation: `subcourse/${subcourse.id}`,
             lecture: subcourse.lecture,
         })),
     };
     return bucketContext;
 }
 
-export function filterBucketEvents(bucketEvents: BucketEvents[]) {
-    // Filter out time bucketEvents that are in the future and dont contain events.
-    // This is done to avoid taking future lectures into account during the evaluation of achievements.
-    // If a lecture was joined early, it will be added to the filteredBuckets array by this function for containing events.
-    const filteredBuckets: BucketEvents[] = bucketEvents.filter((bucketEvent) => {
-        if (bucketEvent.kind !== 'time') {
+export function removeBucketsBefore(ts: Date, bucketEvents: BucketEvents[], keepBucketsWithEvents: boolean): BucketEvents[] {
+    return bucketEvents.filter((bucket) => {
+        if (bucket.kind !== 'time') {
             return true;
-        } else if (bucketEvent.startTime > moment().toDate()) {
-            return bucketEvent.events.length > 0;
         }
-        return true;
+        if (keepBucketsWithEvents && bucket.events.length > 0) {
+            return true;
+        }
+        return bucket.startTime >= ts;
     });
-    return filteredBuckets;
+}
+
+// Filter out time bucketEvents that are in the future and dont contain events.
+// This is done to avoid taking future lectures into account during the evaluation of achievements.
+// If a lecture was joined early, it will be added to the filteredBuckets array by this function for containing events.
+export function removeBucketsAfter(ts: Date, bucketEvents: BucketEvents[], keepBucketsWithEvents: boolean): BucketEvents[] {
+    return bucketEvents.filter((bucket) => {
+        if (bucket.kind !== 'time') {
+            return true;
+        }
+        if (keepBucketsWithEvents && bucket.events.length > 0) {
+            return true;
+        }
+        return bucket.startTime <= ts;
+    });
 }
 
 export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {

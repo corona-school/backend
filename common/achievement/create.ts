@@ -1,9 +1,10 @@
 import { Prisma, achievement_template } from '@prisma/client';
+import { metrics } from '../logger/metrics';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { prisma } from '../prisma';
-import { TemplateSelectEnum, getAchievementTemplates } from './template';
+import { TemplateSelectEnum, getAchievementTemplates, getAchievementTamplateUID as getAchievementTemplateUID } from './template';
 import tracer from '../logger/tracing';
-import { AchievementTemplateFor, AchievementToCheck, AchievementType } from './types';
+import { AchievementTemplateFor, AchievementToCheck } from './types';
 import { transformEventContextToUserAchievementContext, checkIfAchievementIsGlobal } from './util';
 
 export async function findUserAchievement<ID extends ActionID>(
@@ -15,7 +16,7 @@ export async function findUserAchievement<ID extends ActionID>(
     let relation = context?.relation || null;
     switch (templateFor) {
         case AchievementTemplateFor.Global_Courses:
-            relation = 'course';
+            relation = 'subcourse';
             break;
         case AchievementTemplateFor.Global_Matches:
             relation = 'match';
@@ -59,7 +60,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     let relation = context?.relation || null;
     switch (currentTemplate.templateFor) {
         case AchievementTemplateFor.Global_Courses:
-            relation = 'course';
+            relation = 'subcourse';
             break;
         case AchievementTemplateFor.Global_Matches:
             relation = 'match';
@@ -79,6 +80,14 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     });
 
     const nextStepIndex = userAchievementsByGroup.length > 0 ? templatesForGroup.findIndex((e) => e.groupOrder === currentTemplate.groupOrder) + 1 : 0;
+    // We should avoid creating a new achievement if the next step precedes the current step.
+    // This scenario could occur, for instance, if an old student account, created before the implementation of the achievement system, applies to become an instructor.
+    // Consequently, the screening process would trigger the creation of the Onboarding achievement, implying several steps that are inappropriate for the student.
+    // Thus, the line below ensures that only the current or subsequent achievement steps are created, while others are automatically bypassed.
+    // Note: +1 is added because the index is 0-based, while the groupOrder is 1-based.
+    if (nextStepIndex + 1 < currentTemplate.groupOrder) {
+        return null;
+    }
 
     if (templatesForGroup && templatesForGroup.length > nextStepIndex) {
         const createdUserAchievement = await createNextUserAchievement(templatesForGroup, nextStepIndex, userId, relation, achievementContext);
@@ -100,8 +109,6 @@ async function createNextUserAchievement<ID extends ActionID>(
     }
 
     const nextStepTemplate = templatesForGroup[nextStepIndex];
-    const achievedAt =
-        templatesForGroup.length - 1 === nextStepIndex && templatesForGroup[nextStepIndex].type === AchievementType.SEQUENTIAL ? new Date() : null;
     // Here a user template is created for the next template in the group. This is done to always have the data availible for the next step.
     // This could mean to, for example, have the name of a match partner that is not yet availible due to a unfinished matching process.
     if (nextStepTemplate) {
@@ -110,12 +117,18 @@ async function createNextUserAchievement<ID extends ActionID>(
                 userId: userId,
                 // This ensures that the relation will set to null even if context.relation is an empty string
                 relation: relation,
+                // TODO: maybe merge with context of previous achievement in group
                 context: context ? transformEventContextToUserAchievementContext(context) : Prisma.JsonNull,
                 template: { connect: { id: nextStepTemplate.id } },
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
-                achievedAt: achievedAt,
+                achievedAt: null,
             },
             select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
+        });
+        metrics.AchievementsCreated.inc({
+            id: createdUserAchievement.template.id.toString(),
+            uid: getAchievementTemplateUID(createdUserAchievement.template),
+            type: createdUserAchievement.template.type,
         });
         return createdUserAchievement;
     }

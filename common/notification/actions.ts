@@ -503,6 +503,14 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
+    student_login: {
+        description: 'Student logged in',
+        sampleContext: {},
+    },
+    pupil_login: {
+        description: 'Pupil logged in',
+        sampleContext: {},
+    },
     student_add_appointment_group: {
         description: 'Student / Group Appointment Added',
         sampleContext: {

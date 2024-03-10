@@ -4,7 +4,7 @@ import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
 import { bucketCreatorDefs } from './bucket';
 import { getLogger } from '../logger/logger';
-import { filterBucketEvents, getBucketContext } from './util';
+import { getBucketContext, removeBucketsBefore, removeBucketsAfter } from './util';
 import tracer from '../logger/tracing';
 import { achievement_event } from '@prisma/client';
 
@@ -17,7 +17,9 @@ async function _evaluateAchievement(
     condition: string,
     dataAggregation: ConditionDataAggregations,
     recordValue?: number,
-    relation?: string
+    relation?: string,
+    skipAchievementBucketsBefore?: Date,
+    skipAchievementBucketsAfter?: Date
 ): Promise<EvaluationResult | undefined> {
     // We only care about metrics that are used for the data aggregation
     const metrics = Object.values(dataAggregation).map((entry) => entry.metric);
@@ -77,10 +79,23 @@ async function _evaluateAchievement(
 
         const bucketContext = await getBucketContext(userId, relation);
         const buckets = bucketCreatorFunction({ recordValue, context: bucketContext });
+        // We have to ensure that time buckets are always sorted in the same way (start time ascending)
+        if (buckets.bucketKind === 'time') {
+            buckets.buckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+        }
 
-        const bucketEvents = createBucketEvents(eventsForMetric, buckets);
-        const filteredBucketEvents = filterBucketEvents(bucketEvents);
-        const bucketAggr = filteredBucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
+        let bucketEvents = createBucketEvents(eventsForMetric, buckets);
+        // This will remove all buckets that are before the given date
+        // but only if they don't have any events associated with them.
+        if (skipAchievementBucketsBefore) {
+            bucketEvents = removeBucketsBefore(skipAchievementBucketsBefore, bucketEvents, true);
+        }
+        // This will remove all buckets that are after the current date
+        // but only if they don't have any events associated with them.
+        if (skipAchievementBucketsAfter) {
+            bucketEvents = removeBucketsAfter(skipAchievementBucketsAfter, bucketEvents, true);
+        }
+        const bucketAggr = bucketEvents.map((bucketEvent) => bucketAggregatorFunction(bucketEvent.events.map((event) => event.value)));
 
         const value = aggregatorFunction(bucketAggr);
         resultObject[key] = value;
@@ -123,7 +138,10 @@ const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBuc
         // values will be sorted in a desc order
         let filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
         if (bucket.relation) {
-            filteredEvents = filteredEvents.filter((event) => event.relation === bucket.relation);
+            // Events that don't have a relation should count for all buckets it falls in.
+            // Buckets without a relation, which can happen if we create buckets based on weeks or months, should keep all events as well.
+            // If both have a relation the other side, events should only count for the bucket with the same one.
+            filteredEvents = filteredEvents.filter((event) => !event.relation || !bucket.relation || event.relation === bucket.relation);
         }
 
         return {
