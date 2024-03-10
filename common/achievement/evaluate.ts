@@ -139,8 +139,9 @@ const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBuc
         let filteredEvents = events.filter((event) => event.createdAt >= bucket.startTime && event.createdAt <= bucket.endTime);
         if (bucket.relation) {
             // Events that don't have a relation should count for all buckets it falls in.
-            // Events with relation on the other side, should only count for the bucket with the same relation.
-            filteredEvents = filteredEvents.filter((event) => !event.relation || event.relation === bucket.relation);
+            // Buckets without a relation, which can happen if we create buckets based on weeks or months, should keep all events as well.
+            // If both have a relation the other side, events should only count for the bucket with the same one.
+            filteredEvents = filteredEvents.filter((event) => !event.relation || !bucket.relation || event.relation === bucket.relation);
         }
 
         return {
