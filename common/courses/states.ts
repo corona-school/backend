@@ -2,7 +2,7 @@ import { subcourse as Subcourse, course as Course, student as Student, course_co
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
-import { getCourse } from '../../graphql/util';
+import { getCourse, getSubcoursesForCourse } from '../../graphql/util';
 import { fillSubcourse } from './participants';
 import { PrerequisiteError } from '../util/error';
 import { getLastLecture } from './lectures';
@@ -23,6 +23,7 @@ import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
 import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
+import { ValidationError } from 'apollo-server-express';
 
 const logger = getLogger('Course States');
 
@@ -86,6 +87,54 @@ export async function allowCourse(course: Course, screeningComment: string | nul
 export async function denyCourse(course: Course, screeningComment: string | null) {
     await prisma.course.update({ data: { screeningComment, courseState: CourseState.denied }, where: { id: course.id } });
     logger.info(`Admin denied Course${course.id}) with screening comment: ${screeningComment}`, { courseId: course.id, screeningComment });
+}
+
+/* ------------------ Course Delete ------------- */
+
+export async function canDeleteCourse(course: Course): Promise<Decision> {
+    console.log('Inside candelete function before getsubcourses function');
+    const subcoursesForCourse = await getSubcoursesForCourse(course.id, false);
+    console.log('Inside candelete function after getsubcourses function');
+    if (subcoursesForCourse.length == 0) {
+        console.log('Check if subcourses exist if condition true');
+        return { allowed: true, reason: `Course ${course.id} has no subcourses` };
+    } else {
+        console.log('Check if subcourses exist if condition false');
+        return { allowed: false, reason: `Course ${course.id} has subcourses` };
+    }
+}
+
+export async function deleteCourse(course: Course) {
+    console.log('Before candelete check');
+    const can = await canDeleteCourse(course);
+    if (!can.allowed) {
+        console.log(`Cannot delete Course ${course.id}, reason: ${can.reason}`);
+        throw new ValidationError(`Cannot delete Course ${course.id}, reason: ${can.reason}`);
+    }
+
+    prisma.course.delete({ where: { id: course.id } });
+}
+
+/* ------------------ Subcourse Delete ------------- */
+
+export async function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
+    if (subcourse.published) {
+        return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
+    } else {
+        return { allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` };
+    }
+}
+
+export async function deleteSubcourse(subcourse: Subcourse) {
+    const can = await canDeleteSubcourse(subcourse);
+    if (!can.allowed) {
+        throw new ValidationError(`Cannot delete Subcourse ${subcourse.id}, reason: ${can.reason}`);
+    }
+    prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
+    prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
+    prisma.subcourse_instructors_student.deleteMany({ where: { subcourseId: subcourse.id } });
+    prisma.subcourse_participants_pupil.deleteMany({ where: { subcourseId: subcourse.id } });
+    prisma.waiting_list_enrollment.deleteMany({ where: { subcourseId: subcourse.id } });
 }
 
 /* ------------------ Subcourse Publish ------------- */

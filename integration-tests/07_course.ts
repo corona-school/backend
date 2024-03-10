@@ -6,6 +6,8 @@ import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
+import { ValidationError } from 'apollo-server-express';
+import { prisma } from '../common/prisma';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -389,4 +391,69 @@ void test('Add / Remove another instructor', async () => {
     await client.request(`mutation RemoveInstructorFromSubcourse {
         subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
     }`);
+});
+
+void test('Delete course', async () => {
+    const { courseId, client: courseClient, subcourseId } = await subcourseOne;
+    try {
+        await courseClient.request(`
+        mutation DeleteCourse {courseDelete(courseId: ${courseId})}      
+    `);
+        assert.fail('Expected an error because test course has subcourses');
+    } catch (error) {
+        if (error instanceof ValidationError) {
+            assert.ok('Got expected validation error since test course has subcourses');
+        }
+    }
+
+    //Unpublish Test Subcourse
+    await prisma.subcourse.update({
+        where: {
+            id: subcourseId,
+        },
+        data: {
+            published: true,
+        },
+    });
+
+    //Test deletion of unpublished subcourse => should fail
+    try {
+        await courseClient.request(`
+        mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}      
+    `);
+        assert.fail('Expected an error because test subcourse is published');
+    } catch (error) {
+        if (error instanceof ValidationError) {
+            assert.ok('Got expected validation error since test subcourse is published');
+        }
+    }
+    //Publish Subcourse
+    await prisma.subcourse.update({
+        where: {
+            id: subcourseId,
+        },
+        data: {
+            published: true, // Set published to the desired value
+        },
+    });
+    //Test deletion of published subcourse => should pass
+    try {
+        await courseClient.request(`
+        mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}      
+    `);
+        assert.ok('Deleted unpublished');
+    } catch (error) {
+        assert.ok('Got expected validation error since test subcourse is published');
+    }
+    //Test deletion of empty course => should work
+    try {
+        await courseClient.request(`
+        mutation DeleteCourse {courseDelete(courseId: ${courseId})}      
+    `);
+        assert.ok('Successfully deleted empty course');
+    } catch (error) {
+        if (error instanceof ValidationError) {
+            assert.ok('Got expected validation error since test course has subcourses');
+        }
+    }
 });

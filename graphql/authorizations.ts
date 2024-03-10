@@ -580,7 +580,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
-
+            shared: nobody,
             course_guest: nobody,
             course_instructors_student: nobody,
             course_tags_course_tag: nobody,

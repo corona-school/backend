@@ -1,5 +1,5 @@
 import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
-import { canCancel, canEditSubcourse, canPublish } from '../../common/courses/states';
+import { canCancel, canDeleteSubcourse, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { prisma } from '../../common/prisma';
@@ -467,6 +467,12 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER)
     async canEdit(@Root() subcourse: Required<Subcourse>) {
         return await canEditSubcourse(subcourse);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async canDelete(@Root() subcourse: Required<Subcourse>) {
+        return await canDeleteSubcourse(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
