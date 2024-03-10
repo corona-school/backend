@@ -73,6 +73,8 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
     @Field({ nullable: true })
     achievedDescription: string | null;
     @Field({ nullable: true })
+    achievedImage: string | null;
+    @Field({ nullable: true })
     subtitle: string | null;
     @Field({ nullable: true })
     sequentialStepName: string | null;
