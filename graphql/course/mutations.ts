@@ -15,7 +15,7 @@ import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
-import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse } from '../../common/courses/states';
+import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteSubcourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 import { userForStudent } from '../../common/user';

@@ -3,7 +3,7 @@ import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-g
 import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
@@ -202,19 +202,12 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => GraphQLModel.Subcourse)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<GraphQLModel.Subcourse> {
+    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
-        if (subcourse) {
-            const result = await prisma.subcourse.delete({ where: { id: subcourseId } });
-
-            logger.info(`Subcourse(${subcourseId}) was deleted by User(${context.user.userID})`);
-            return result;
-        } else {
-            logger.error(`Course (${subcourseId}) not found`);
-            return null;
-        }
+        deleteSubcourse(subcourse);
+        return true;
     }
 
     @Mutation((returns) => Boolean)
