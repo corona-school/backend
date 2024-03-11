@@ -136,7 +136,7 @@ export function removeBucketsAfter(ts: Date, bucketEvents: BucketEvents[], keepB
         if (keepBucketsWithEvents && bucket.events.length > 0) {
             return true;
         }
-        return bucket.startTime <= ts;
+        return bucket.endTime <= ts;
     });
 }
 
