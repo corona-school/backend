@@ -476,7 +476,7 @@ export interface MatchPoolStatistics {
         year: number;
         matches: number;
         subjects: {
-            [subject: string]: { offered: number; requested: number; requestedMandatory: number; fulfilled: number };
+            [subject: string]: { offered: number; requested: number; requestedMandatory?: number; fulfilled: number };
         };
     }[];
     averageMatchesPerMonth: number;
@@ -486,7 +486,7 @@ export interface MatchPoolStatistics {
         demand: number; // >1 -> too many offers, <1 -> to few offers
         offered: number;
         requested: number;
-        requestedMandatory: number;
+        requestedMandatory?: number;
     }[];
 }
 
@@ -556,7 +556,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             demand: requested / offered,
             offered: offered,
             requested: requested,
-            requestedMandatory,
+            requestedMandatory: isNaN(requestedMandatory) ? null : requestedMandatory,
         }));
 
         const result: MatchPoolStatistics = {

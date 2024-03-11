@@ -52,8 +52,8 @@ class SubjectDemand {
     offered: number;
     @Field()
     requested: number;
-    @Field()
-    requestedMandatory: number;
+    @Field({ nullable: true })
+    requestedMandatory?: number;
 }
 
 @ObjectType()
