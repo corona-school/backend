@@ -515,7 +515,7 @@ export class StatisticsResolver {
             },
         ];
         lifetimes.forEach(({ student_id, lifetime }) => {
-            buckets.find((b) => b.from <= lifetime && (b.to > lifetime || b.to === -1)).value += 1;
+            buckets.find((b) => b.from <= lifetime * 1000 && (b.to > lifetime * 1000 || b.to === -1)).value += 1;
         });
         return buckets;
     }
