@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse, ContextLecture } from './types';
+import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -13,19 +13,17 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
         return [];
     }
 
-    const buckets: TimeBucket[] = data.lecture
-        .sort((a, b) => a.start.getTime() - b.start.getTime())
-        .map((lecture) => ({
-            kind: 'time',
-            relation: data.relation,
-            startTime:
-                measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(10, 'minutes').toDate() : moment(lecture.start).toDate(),
-            endTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).add(5, 'minutes').toDate() : moment(lecture.start).toDate(),
-        }));
+    const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
+        kind: 'time',
+        relation: data.relation,
+        // TODO: think about a way to make the buffer time configurable
+        startTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(60, 'minutes').toDate() : moment(lecture.start).toDate(),
+        // TODO: think about a way to make the buffer time configurable
+        endTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).add(5, 'minutes').toDate() : moment(lecture.start).toDate(),
+    }));
     return buckets;
 }
 
-// Buckets are needed to pre-sort and aggregate certain events by types / a certain time window (e.g. weekly) etc.
 export const bucketCreatorDefs: BucketCreatorDefs = {
     default: {
         function: (): GenericBucketConfig<DefaultBucket> => {
@@ -43,8 +41,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.start))
                 .reduce((acc, val) => acc.concat(val), []);
-            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-            return { bucketKind: 'time', buckets: buckets };
+            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
     },
     by_lecture_participation: {
@@ -56,8 +53,7 @@ export const bucketCreatorDefs: BucketCreatorDefs = {
             const subcourseBuckets = context.subcourse
                 .map((subcourse) => createLectureBuckets(subcourse, LectureBucketMeasuringType.participation))
                 .reduce((acc, val) => acc.concat(val), []);
-            const buckets: TimeBucket[] = [...matchBuckets, ...subcourseBuckets].sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
-            return { bucketKind: 'time', buckets: buckets };
+            return { bucketKind: 'time', buckets: [...matchBuckets, ...subcourseBuckets] };
         },
     },
     by_weeks: {

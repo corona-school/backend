@@ -16,17 +16,22 @@ export const aggregators: Aggregator = {
         },
     },
     // this aggregator should be used to check if min one event exist in a bucket, i.e. if one event happend in one week / one month
-    presenceOfEvents: {
+    presence_of_events: {
         function: (elements): number => {
             return elements.filter((num) => num != 0).length > 0 ? 1 : 0;
         },
     },
-    lastStreakLength: {
+    at_least_one_event_per_bucket: {
         function: (elements): number => {
-            // elements are sorted desc, i.e. [KW 52, KW 51, KW 50]
+            return elements.every((num) => num != 0) ? 1 : 0;
+        },
+    },
+    last_streak_length: {
+        function: (elements): number => {
+            // elements are sorted asc, i.e. [KW 50, KW 51, KW 52]
             let value = 0;
-            for (const element of elements) {
-                if (element === 0) {
+            for (let i = elements.length - 1; i >= 0; i--) {
+                if (elements[i] === 0) {
                     break;
                 }
                 value += 1;

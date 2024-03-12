@@ -51,7 +51,7 @@ describe('test count aggregator', () => {
     });
 });
 
-describe('test presenceOfEvents aggregator', () => {
+describe('test presence_of_events aggregator', () => {
     const tests: {
         name: string;
         elements: number[];
@@ -75,11 +75,11 @@ describe('test presenceOfEvents aggregator', () => {
     ];
 
     it.each(tests)('$name', ({ elements, expected }) => {
-        expect(aggregators['presenceOfEvents'].function(elements)).toEqual(expected);
+        expect(aggregators['presence_of_events'].function(elements)).toEqual(expected);
     });
 });
 
-describe('test lastStreakLength aggregator', () => {
+describe('test last_streak_length aggregator', () => {
     const tests: {
         name: string;
         elements: number[];
@@ -87,7 +87,7 @@ describe('test lastStreakLength aggregator', () => {
     }[] = [
         {
             name: 'should get a streak of five',
-            elements: [1, 2, 3, 4, 5],
+            elements: [5, 4, 3, 2, 1],
             expected: 5,
         },
         {
@@ -97,17 +97,17 @@ describe('test lastStreakLength aggregator', () => {
         },
         {
             name: 'should reset streak if zero in chain',
-            elements: [1, 1, 1, 0, 1],
+            elements: [1, 0, 1, 1, 1],
             expected: 3,
         },
         {
             name: 'should have a streak of 0 if first element is zero',
-            elements: [0, 1, 1, 1, 1],
+            elements: [1, 1, 1, 1, 0],
             expected: 0,
         },
     ];
 
     it.each(tests)('$name', ({ elements, expected }) => {
-        expect(aggregators['lastStreakLength'].function(elements)).toEqual(expected);
+        expect(aggregators['last_streak_length'].function(elements)).toEqual(expected);
     });
 });

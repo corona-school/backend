@@ -46,6 +46,7 @@ export async function getNotificationContextForSubcourse(course: { name: string;
     const time = start.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: 'numeric', minute: 'numeric' });
 
     return {
+        relation: `subcourse/${subcourse.id}`,
         course: {
             name: course.name,
             description: course.description,
@@ -112,7 +113,13 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
     }
 
     const pupils = await prisma.pupil.findMany({
-        where: { active: true, isParticipant: true, grade: { in: grades }, subcourse_participants_pupil: { none: { subcourseId: subcourse.id } } },
+        where: {
+            active: true,
+            verification: null,
+            isParticipant: true,
+            grade: { in: grades },
+            subcourse_participants_pupil: { none: { subcourseId: subcourse.id } },
+        },
     });
 
     const courseSubject = course.subject;

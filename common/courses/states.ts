@@ -23,6 +23,7 @@ import { addGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
 import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
+import { getContextForGroupAppointmentReminder } from '../appointment/util';
 
 const logger = getLogger('Course States');
 
@@ -130,6 +131,19 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
             })
         )
     );
+
+    const subcourseAppointments = await prisma.lecture.findMany({ where: { isCanceled: false, subcourseId: subcourse.id } });
+
+    for (const { student: instructor } of subcourse.subcourse_instructors_student) {
+        for (const appointment of subcourseAppointments) {
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForStudent(instructor),
+                'student_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, course)
+            );
+        }
+    }
 }
 
 /* ---------------- Subcourse Cancel ------------ */

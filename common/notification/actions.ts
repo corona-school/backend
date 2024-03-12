@@ -503,22 +503,23 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    student_add_appointment_group: {
-        description: 'Student / Group Appointment Added',
-        sampleContext: {
-            student: sampleUser,
-            ...sampleCourse,
-        },
+    student_login: {
+        description: 'Student logged in',
+        sampleContext: {},
     },
-    student_add_appointments_group: {
-        description: 'Student / Group Appointments Added',
+    pupil_login: {
+        description: 'Pupil logged in',
+        sampleContext: {},
+    },
+    student_add_appointment_group: {
+        description: 'Participant / Instructor added Group Appointment',
         sampleContext: {
             student: sampleUser,
             ...sampleCourse,
         },
     },
     student_add_appointment_match: {
-        description: 'Student / Match Appointment Added',
+        description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
             student: sampleUser,
             matchId: '1',
@@ -540,7 +541,7 @@ const _notificationActions = {
         },
     },
     student_cancel_appointment_group: {
-        description: 'Student / Group Appointment Cancelled',
+        description: 'Participant / Group Appointment Cancelled by Instructor',
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
@@ -587,37 +588,49 @@ const _notificationActions = {
     },
     pupil_match_appointment_starts: {
         description: 'Remind pupil of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            student: { firstname: 'Student' },
+        },
     },
     student_match_appointment_starts: {
         description: 'Remind student of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            pupil: { firstname: 'Pupil' },
+        },
     },
     pupil_group_appointment_starts: {
         description: 'Remind pupil of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     student_group_appointment_starts: {
         description: 'Remind student of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     cancel_group_appointment_reminder: {
         description: 'Cancel / group appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },
     cancel_match_appointment_reminder: {
         description: 'Cancel / match appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },

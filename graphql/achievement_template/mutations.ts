@@ -16,26 +16,26 @@ import { Role } from '../authorizations';
 
 @InputType()
 class AchievementTemplateCreateInput implements AchievementTemplateCreate {
-    @Field()
-    name: string;
     @Field({ nullable: true })
-    achievedText: string | null;
+    tagline: string | null;
+    @Field()
+    title: string;
+    @Field({ nullable: true })
+    footer: string | null;
+    @Field({ nullable: true })
+    achievedFooter: string | null;
     @Field({ nullable: true })
     achievedDescription: string | null;
     @Field({ nullable: true })
     achievedImage: string | null;
     @Field()
     description: string;
-    @Field()
-    subtitle: string;
-    @Field()
-    stepName: string;
+    @Field({ nullable: true })
+    subtitle: string | null;
+    @Field({ nullable: true })
+    sequentialStepName: string | null;
     @Field()
     image: string;
-    @Field({ nullable: true })
-    progressDescription: string | null;
-    @Field({ nullable: true })
-    streakProgress: string | null;
 
     @Field()
     condition: string;
@@ -61,17 +61,23 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
 @InputType()
 class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
     @Field({ nullable: true })
-    name: string;
+    tagline: string | null;
     @Field({ nullable: true })
-    achievedText: string | null;
+    title: string | null;
     @Field({ nullable: true })
-    achievedDescription: string | null;
+    footer: string | null;
+    @Field({ nullable: true })
+    achievedFooter: string | null;
     @Field({ nullable: true })
     description: string | null;
     @Field({ nullable: true })
+    achievedDescription: string | null;
+    @Field({ nullable: true })
+    achievedImage: string | null;
+    @Field({ nullable: true })
     subtitle: string | null;
     @Field({ nullable: true })
-    stepName: string | null;
+    sequentialStepName: string | null;
     @Field({ nullable: true })
     image: string | null;
 

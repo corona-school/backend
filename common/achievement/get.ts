@@ -1,11 +1,11 @@
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
 import { User } from '../user';
-import { AchievementState, AchievementType, ConditionDataAggregations, PublicAchievement, PublicStep } from './types';
+import { AchievementState, AchievementType, PublicAchievement, PublicStep } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
-import { evaluateAchievement } from './evaluate';
 import { getAchievementImageURL } from './util';
 import { isDefined } from './util';
+import { isAchievementConditionMet } from '.';
 
 export async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
@@ -40,7 +40,8 @@ const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]>
         }
         userAchievementGroups[key].push(ua);
     });
-    return generateReorderedAchievementData(userAchievementGroups, user);
+    const achievements = await generateReorderedAchievementData(userAchievementGroups, user);
+    return achievements.filter((a) => a.achievementState === AchievementState.ACTIVE);
 };
 
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
@@ -72,8 +73,11 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             .reduce((a, b) => a + b, 0);
         const achievement: PublicAchievement = {
             id: template.id,
-            name: template.name,
-            subtitle: template.subtitle,
+            name: template.title,
+            tagline: template.tagline,
+            title: template.title,
+            footer: template.footer,
+            subtitle: template.tagline,
             description: template.description,
             image: await getAchievementImageURL(template),
             alternativeText: 'alternativeText',
@@ -84,7 +88,7 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
             maxSteps: maxValue,
             currentStep: 0,
             isNewAchievement: null,
-            progressDescription: template.progressDescription,
+            progressDescription: template.footer,
             actionName: template.actionName,
             actionRedirectLink: template.actionRedirectLink,
         };
@@ -146,8 +150,6 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         orderBy: { groupOrder: 'asc' },
     });
 
-    const condition = userAchievements[currentAchievementIndex].template.condition;
-
     let maxValue: number = achievementTemplates.length;
     let currentValue: number = currentAchievementIndex;
     if (
@@ -155,13 +157,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED
     ) {
         const dataAggregationKeys = Object.keys(userAchievements[currentAchievementIndex].template.conditionDataAggregations as Prisma.JsonObject);
-        const evaluationResult = await evaluateAchievement(
-            user.userID,
-            condition,
-            userAchievements[currentAchievementIndex].template.conditionDataAggregations as ConditionDataAggregations,
-            userAchievements[currentAchievementIndex].recordValue || undefined,
-            userAchievements[currentAchievementIndex].relation || undefined
-        );
+        const evaluationResult = await isAchievementConditionMet(userAchievements[currentAchievementIndex]);
         if (evaluationResult) {
             currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
             maxValue =
@@ -207,11 +203,18 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     if (state === AchievementState.COMPLETED && currentAchievementTemplate.achievedDescription) {
         desciption = currentAchievementTemplate.achievedDescription;
     }
+    let footer = currentAchievementTemplate.footer;
+    if (state === AchievementState.COMPLETED && currentAchievementTemplate.achievedFooter) {
+        footer = currentAchievementTemplate.achievedFooter;
+    }
 
     return {
         id: userAchievements[currentAchievementIndex].id,
-        name: currentAchievementTemplate.name,
+        title: currentAchievementTemplate.title,
+        name: currentAchievementTemplate.title,
+        tagline: currentAchievementTemplate.tagline,
         subtitle: currentAchievementTemplate.subtitle,
+        footer: footer,
         description: desciption,
         image: await getAchievementImageURL(currentAchievementTemplate, state, userAchievements[currentAchievementIndex].relation),
         alternativeText: 'alternativeText',
@@ -225,7 +228,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
                           // for every achievement in the sortedGroupAchievements, we create a step object with the stepName (description) and isActive property for the achievement step currently active but unachieved
                           if (index < achievementTemplates.length && achievement.isActive) {
                               return {
-                                  name: achievement.stepName,
+                                  name: achievement.sequentialStepName,
                                   isActive: index === currentAchievementIndex,
                               };
                           }
@@ -236,9 +239,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxSteps: maxValue,
         currentStep: currentValue,
         isNewAchievement: isNewAchievement,
-        progressDescription: currentAchievementTemplate.progressDescription,
-        achievedText: currentAchievementTemplate.achievedText,
-        streakProgress: currentAchievementTemplate.streakProgress,
+        progressDescription: currentAchievementTemplate.footer,
+        achievedText: currentAchievementTemplate.achievedFooter,
+        streakProgress: currentAchievementTemplate.subtitle,
         actionName: currentAchievementTemplate.actionName,
         actionRedirectLink: currentAchievementTemplate.actionRedirectLink,
     };

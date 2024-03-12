@@ -1,6 +1,14 @@
 import moment from 'moment-timezone';
 import { bucketCreatorDefs } from './bucket';
 import { BucketCreatorContext, ContextMatch, ContextSubcourse, TimeBucket } from './types';
+import { BucketConfig } from './types';
+
+function sortBuckets(bucket: BucketConfig): BucketConfig {
+    if (bucket.bucketKind === 'time') {
+        bucket.buckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    }
+    return bucket;
+}
 
 describe('test create buckets by_lecture_start', () => {
     moment.updateLocale('de', { week: { dow: 1 } });
@@ -22,7 +30,7 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
@@ -34,13 +42,13 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
@@ -61,7 +69,7 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
@@ -73,13 +81,13 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-14T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
@@ -100,27 +108,27 @@ describe('test create buckets by_lecture_start', () => {
             expectedBuckets: [
                 {
                     kind: 'time',
-                    startTime: moment('2023-07-31T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-07-31T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-01T00:05:00.000Z').toDate(),
                     relation: 'match',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-14T23:50:00.000Z').toDate(),
-                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
-                    relation: 'match',
-                },
-                {
-                    kind: 'time',
-                    startTime: moment('2023-08-07T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-07T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-08T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
                 },
                 {
                     kind: 'time',
-                    startTime: moment('2023-08-13T23:50:00.000Z').toDate(),
+                    startTime: moment('2023-08-13T23:00:00.000Z').toDate(),
                     endTime: moment('2023-08-14T00:05:00.000Z').toDate(),
                     relation: 'subcourse',
+                },
+                {
+                    kind: 'time',
+                    startTime: moment('2023-08-14T23:00:00.000Z').toDate(),
+                    endTime: moment('2023-08-15T00:05:00.000Z').toDate(),
+                    relation: 'match',
                 },
             ],
             subcourses: [
@@ -152,13 +160,14 @@ describe('test create buckets by_lecture_start', () => {
     ];
 
     it.each(tests)('$name', ({ expectedBuckets, matches, subcourses }) => {
-        const res = bucketCreatorDefs['by_lecture_start'].function({
+        let res = bucketCreatorDefs['by_lecture_start'].function({
             recordValue: 0,
             context: {
                 match: matches ?? [],
                 subcourse: subcourses ?? [],
             },
         });
+        res = sortBuckets(res);
 
         expect(res.buckets).toEqual(expectedBuckets.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()));
     });

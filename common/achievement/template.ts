@@ -17,6 +17,11 @@ export enum TemplateSelectEnum {
     BY_METRIC = 'metrics',
 }
 
+// The uid is a human readable identifier for the template
+export function getAchievementTamplateUID(template: Pick<AchievementTemplate, 'group' | 'groupOrder'>): string {
+    return `${template.group}_${template.groupOrder}`;
+}
+
 // ------------------- Achievement Template Cache & Getters -------------------
 
 // string == metricId, group
@@ -104,19 +109,19 @@ export const getActiveTemplateGroup = (group: string) =>
 // The metadata consists of values that are safe to update at runtime
 export type AchievementTemplateMetadata = Pick<
     AchievementTemplate,
-    | 'name'
-    | 'achievedText'
+    | 'tagline'
+    | 'title'
+    | 'subtitle'
+    | 'description'
+    | 'achievedDescription'
+    | 'footer'
+    | 'achievedFooter'
+    | 'sequentialStepName'
     | 'actionName'
     | 'actionRedirectLink'
     | 'actionType'
-    | 'description'
-    | 'subtitle'
-    | 'stepName'
     | 'image'
     | 'achievedImage'
-    | 'achievedDescription'
-    | 'progressDescription'
-    | 'streakProgress'
 >;
 // The logic fields are unsafe to update while a template is active
 export type AchievementTemplateLogicFields = Pick<
@@ -163,7 +168,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     logger.info(`Checking AchievementTemplate(${template.id}) for consistency`, { template, group });
 
     // ---- Template Metadata -----
-    if (!template.name || !template.description || !template.subtitle) {
+    if (!template.title || !template.description || !template.subtitle) {
         throw new PrerequisiteError(`AchievementTemplates need a name, description and subtitle`);
     }
 
@@ -172,7 +177,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
         throw new PrerequisiteError(`actionName, actionRedirectLink and actionType must either all be set or all empty`);
     }
 
-    if ((template.type === AchievementType.SEQUENTIAL) !== !!template.stepName) {
+    if ((template.type === AchievementType.SEQUENTIAL) !== !!template.sequentialStepName) {
         throw new PrerequisiteError(`stepName must be set for sequential achievements, and only for those`);
     }
 
