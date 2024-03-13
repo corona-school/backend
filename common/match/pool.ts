@@ -21,6 +21,7 @@ const logger = getLogger('MatchingPool');
     which can then be matched to a Set of matches */
 
 type Toggle = InterestConfirmationToggle | PupilScreeningToggle | 'allow-unverified';
+
 export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
@@ -82,7 +83,16 @@ export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: numbe
 
     return await prisma.pupil.findMany({
         where: { AND: [where, userSearch(search)] },
-        orderBy: [{ match: { _count: 'asc' } }, { firstMatchRequest: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
+        orderBy: [
+            { match: { _count: 'asc' } },
+            {
+                firstMatchRequest: {
+                    sort: 'asc',
+                    nulls: 'first',
+                },
+            },
+            { createdAt: 'asc' },
+        ],
         take,
         skip,
     });
@@ -119,7 +129,10 @@ export async function getPupilDemandCount(pool: MatchPool, toggles: Toggle[]) {
 }
 
 async function studentToHelper(student: Student): Promise<Helper> {
-    const existingMatches = await prisma.match.findMany({ select: { pupil: { select: { wix_id: true } } }, where: { studentId: student.id } });
+    const existingMatches = await prisma.match.findMany({
+        select: { pupil: { select: { wix_id: true } } },
+        where: { studentId: student.id },
+    });
 
     return {
         id: student.id,
@@ -134,7 +147,10 @@ async function studentToHelper(student: Student): Promise<Helper> {
 }
 
 async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
-    const existingMatches = await prisma.match.findMany({ select: { student: { select: { wix_id: true } } }, where: { pupilId: pupil.id } });
+    const existingMatches = await prisma.match.findMany({
+        select: { student: { select: { wix_id: true } } },
+        where: { pupilId: pupil.id },
+    });
 
     return {
         id: pupil.id,
@@ -167,7 +183,13 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
         // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-        query.pupil_tutoring_interest_confirmation_request = { some: { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false } };
+        query.pupil_tutoring_interest_confirmation_request = {
+            some: {
+                status: 'pending',
+                createdAt: { gt: twoWeeksAgo },
+                invalidated: false,
+            },
+        };
     }
 
     if (toggles.includes('confirmation-unknown')) {
@@ -260,7 +282,14 @@ const _pools = [
                 // As we slowly move from pupil screening to interest confirmations, by default take those pupils that have either the one or the other
                 query.OR = [
                     { pupil_screening: { some: { status: 'success', invalidated: false } } },
-                    { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
+                    {
+                        pupil_tutoring_interest_confirmation_request: {
+                            some: {
+                                status: 'confirmed',
+                                invalidated: false,
+                            },
+                        },
+                    },
                 ];
 
                 assert(!query.pupil_screening, 'expected no pupil_screening filter to be present');
@@ -349,7 +378,10 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
 
     const helpers: Helper[] = await Promise.all(students.map(studentToHelper));
     const helpees: Helpee[] = await Promise.all(pupils.map(pupilToHelpee));
-
+    const mandatoryRequests: Map<string, number> = helpees.reduce((acc, helpee) => {
+        helpee.subjects.filter((x) => x.mandatory).forEach((x) => acc.set(x.name, (acc.get(x.name) ?? 0) + 1));
+        return acc;
+    }, new Map());
     timing.preparation = Date.now() - startPreparation;
     logger.info(`MatchingPool(${pool.name}) found ${pupils.length} pupils and ${students.length} students for matching in ${timing.preparation}ms`);
 
@@ -371,6 +403,17 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
     const stats = { ...result.stats, toggles };
+    if (stats.subjectStats) {
+        stats.subjectStats = stats.subjectStats.map((subject) => ({
+            name: subject.name,
+            stats: {
+                offered: subject.stats.offered,
+                requested: subject.stats.requested,
+                requestedMandatory: mandatoryRequests.get(subject.name) ?? 0,
+                fulfilledRequests: subject.stats.fulfilledRequests,
+            },
+        }));
+    }
 
     if (apply) {
         const startCommit = Date.now();
@@ -433,7 +476,7 @@ export interface MatchPoolStatistics {
         year: number;
         matches: number;
         subjects: {
-            [subject: string]: { offered: number; requested: number; fulfilled: number };
+            [subject: string]: { offered: number; requested: number; requestedMandatory?: number; fulfilled: number };
         };
     }[];
     averageMatchesPerMonth: number;
@@ -443,6 +486,7 @@ export interface MatchPoolStatistics {
         demand: number; // >1 -> too many offers, <1 -> to few offers
         offered: number;
         requested: number;
+        requestedMandatory?: number;
     }[];
 }
 
@@ -479,10 +523,18 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             entry.matches += matchesCreated;
             for (const {
                 name,
-                stats: { offered, requested, fulfilledRequests },
+                stats: { offered, requested, fulfilledRequests, requestedMandatory },
             } of subjectStats) {
-                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
+                const subjectStats =
+                    entry.subjects[name] ??
+                    (entry.subjects[name] = {
+                        requested: 0,
+                        requestedMandatory: 0,
+                        fulfilled: 0,
+                        offered: 0,
+                    });
                 subjectStats.fulfilled += fulfilledRequests;
+                subjectStats.requestedMandatory += requestedMandatory;
                 subjectStats.offered += offered;
                 subjectStats.requested += requested;
             }
@@ -499,11 +551,12 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
 
         // Current Subject Demand in the last finished month
         const lastMonth = matchesByMonth.slice(-2)[0];
-        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({
+        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested, requestedMandatory }]) => ({
             subject,
             demand: requested / offered,
             offered: offered,
             requested: requested,
+            requestedMandatory: isNaN(requestedMandatory) ? null : requestedMandatory,
         }));
 
         const result: MatchPoolStatistics = {

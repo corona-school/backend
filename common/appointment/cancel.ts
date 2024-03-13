@@ -54,14 +54,18 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
                         ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                     });
                 }
-
+                
                 await Notification.actionTaken(userForPupil(participant.pupil), 'cancel_group_appointment_reminder', {
                     appointment: getAppointmentForNotification(appointment),
+                    uniqueId: appointment.id.toString(),
                 });
             }
+
+            
             for (const instructor of instructors) {
                 await Notification.actionTaken(userForStudent(instructor.student), 'cancel_group_appointment_reminder', {
                     appointment: getAppointmentForNotification(appointment),
+                    uniqueId: appointment.id.toString(),
                 });
             }
             break;
@@ -71,7 +75,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
             if (!silent) {
                 await Notification.actionTaken(userForPupil(match.pupil), 'student_cancel_appointment_match', {
                     appointment: getAppointmentForNotification(appointment),
-                    student,
+                    uniqueId: appointment.id.toString(),
                 });
             }
             await Notification.actionTaken(userForPupil(match.pupil), 'cancel_match_appointment_reminder', {

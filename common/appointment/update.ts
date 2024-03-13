@@ -58,17 +58,24 @@ export async function updateAppointment(
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                await Notification.actionTakenAt(
+                    new Date(updatedAppointment.start),
+                    userForPupil(participant.pupil),
+                    'pupil_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                );
             }
 
             for (const instructor of instructors) {
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                if (subcourse.published) {
+                    // For unpublished courses, this is deferred to a later point
+                    await Notification.actionTakenAt(
+                        new Date(updatedAppointment.start),
+                        userForStudent(instructor.student),
+                        'student_group_appointment_starts',
+                        await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                    );
+                }
             }
             break;
         }
