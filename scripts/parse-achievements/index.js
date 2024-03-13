@@ -57,6 +57,8 @@ function escapeString(str) {
     if (str === '' || str === undefined || str === null) {
         return 'null';
     }
+    // We had to replace all , with ; to support export to csv from google sheets
+    str = str.replaceAll(';', ',');
     return `'${str}'`;
 }
 
