@@ -99,10 +99,7 @@ export type EvaluationResult = {
     resultObject: Record<string, number>;
 };
 
-// match and subcourse are relation types to point to a specific match or subcourse, whereas global_match and global_subcourse are used to point to all matches/subcourses of a user
-export type RelationTypes = 'match' | 'subcourse' | 'global_match' | 'global_subcourse'; // match_all, subcourse_all, all
-
-export type ContextLecture = Pick<lecture, 'start' | 'duration'>;
+export type ContextLecture = Pick<lecture, 'id' | 'start' | 'duration'>;
 export type ContextMatch = {
     id: number;
     relation?: string; // will be null if searching for all matches

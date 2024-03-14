@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { BucketFormula, DefaultBucket, GenericBucketConfig, TimeBucket, ContextMatch, ContextSubcourse } from './types';
+import { createRelation, EventRelationType } from './relation';
 
 type BucketCreatorDefs = Record<string, BucketFormula>;
 
@@ -15,7 +16,7 @@ function createLectureBuckets<T extends ContextMatch | ContextSubcourse>(data: T
 
     const buckets: TimeBucket[] = data.lecture.map((lecture) => ({
         kind: 'time',
-        relation: data.relation,
+        relation: createRelation(EventRelationType.Appointment, lecture.id),
         // TODO: think about a way to make the buffer time configurable
         startTime: measuringType === LectureBucketMeasuringType.start ? moment(lecture.start).subtract(60, 'minutes').toDate() : moment(lecture.start).toDate(),
         // TODO: think about a way to make the buffer time configurable
