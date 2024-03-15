@@ -27,7 +27,6 @@ async function _evaluateAchievement(
         where: {
             userId,
             metric: { in: metrics },
-            AND: relation ? { relation: { startsWith: relation } } : {},
         },
         orderBy: { createdAt: 'desc' },
     });
