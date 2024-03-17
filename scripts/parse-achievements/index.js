@@ -95,7 +95,7 @@ await prisma.achievement_template.create({
 
     const file = `
 import { prisma } from './common/prisma';
-import { achievement_template_for_enum, achievement_type_enum } from '@prisma/client';
+import { achievement_template_for_enum, achievement_type_enum, achievement_action_type_enum } from '@prisma/client';
 
 export async function importAchievements() {
 ${data.join('')}

@@ -22,18 +22,22 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
 
     const relation = createRelation(EventRelationType.Appointment, appointment.id);
     if (appointment.subcourseId) {
-        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { lecture: true } });
+        const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { lecture: true, course: true } });
         if (user.studentId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_subcourse_meeting', {
                 relation,
                 subcourseLecturesCount: lecturesCount.toString(),
+                course: { name: subcourse.course.name },
+                subcourse: { id: subcourse.id.toString() },
             });
         } else if (user.pupilId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
             await Notification.actionTakenAt(appointment.start, user, 'pupil_joined_subcourse_meeting', {
                 relation,
                 subcourseLecturesCount: lecturesCount.toString(),
+                course: { name: subcourse.course.name },
+                subcourse: { id: subcourse.id.toString() },
             });
         }
 
@@ -46,12 +50,12 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
         if (user.studentId) {
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_match_meeting', {
                 relation,
-                name: pupil.firstname.toString(),
+                partner: { firstname: pupil.firstname.toString() },
             });
         } else if (user.pupilId) {
             await Notification.actionTakenAt(appointment.start, user, 'pupil_joined_match_meeting', {
                 relation,
-                name: student.firstname.toString(),
+                partner: { firstname: student.firstname.toString() },
             });
         }
 

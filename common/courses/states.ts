@@ -126,7 +126,8 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     await Promise.all(
         subcourse.subcourse_instructors_student.map((instructor) =>
             Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-                courseName: course.name,
+                course: { name: course.name },
+                subcourse: { id: subcourse.id.toString() },
                 relation: `subcourse/${subcourse.id}`,
             })
         )
@@ -261,7 +262,8 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
 
     const { name } = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { name: true } });
     await Notification.actionTaken(userForStudent(newInstructor), 'instructor_course_created', {
-        courseName: name,
+        course: { name },
+        subcourse: { id: subcourse.id.toString() },
         relation: `subcourse/${subcourse.id}`,
     });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
