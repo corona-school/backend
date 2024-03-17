@@ -9,7 +9,14 @@ import { isAchievementConditionMet } from '.';
 
 export async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, AND: { template: { isActive: true } } },
+        where: {
+            userId: user.userID,
+            template: { isActive: true },
+            // This will ensure that we only get achievements that are either not streaks or have a recordValue of at least 1
+            // Otherwise, we would get all streaks that have not been started yet.
+            // This can happen if an event related to a streak was emitted, but does not match any bucket, like "join on time".
+            OR: [{ recordValue: null }, { recordValue: { gt: 0 } }],
+        },
         include: { template: true },
     });
     return userAchievementsWithTemplates;
@@ -47,10 +54,7 @@ const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]>
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
 const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> => {
-    const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, template: { isActive: true } },
-        include: { template: true },
-    });
+    const userAchievements = await getUserAchievementsWithTemplates(user);
 
     const groups = Array.from(new Set(userAchievements.map((ua) => ua.template.group)));
     const templates = Array.from(new Set(userAchievements.map((ua) => ua.templateId)));
