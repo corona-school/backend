@@ -294,9 +294,8 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
-    async chatSignature(@Ctx() context: GraphQLContext): Promise<string> {
-        const { user } = context;
+    @Authorized(Role.USER, Role.ADMIN)
+    async chatSignature(@Root() user: User): Promise<string> {
         const signature = await createChatSignature(user);
         return signature;
     }
