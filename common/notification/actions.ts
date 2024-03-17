@@ -32,6 +32,11 @@ const sampleCourse = {
     },
 };
 
+const sampleAchievementCourse = {
+    course: { name: 'Apollo' },
+    subcourse: { id: '1' },
+};
+
 const sampleAppointment = {
     start_day: 'Sonntag',
     start_date: '20. Juli 1969',
@@ -210,21 +215,21 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
     instructor_course_submitted: {
         description: 'Instructor / Course submitted for review',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
     instructor_course_approved: {
         description: 'Instructor / Course approved',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
@@ -689,12 +694,13 @@ const _notificationActions = {
         description: 'Student joined a match meeting',
         sampleContext: {
             relation: 'match/1',
-            name: 'Max Muster',
+            partner: { firstname: 'Puipl' },
         },
     },
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
         },
@@ -707,12 +713,13 @@ const _notificationActions = {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             relation: 'match/1',
-            name: 'Max Muster',
+            partner: { firstname: 'Student' },
         },
     },
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
         },
