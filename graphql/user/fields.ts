@@ -18,7 +18,8 @@ import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
 import { getAchievementById, getFurtherAchievements, getNextStepAchievements, getUserAchievements } from '../../common/achievement/get';
 import { Achievement } from '../types/achievement';
-import { Doc } from '../util';
+import { Deprecated, Doc } from '../util';
+import { createChatSignature } from '../../common/chat/create';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -278,11 +279,26 @@ export class UserFieldsResolver {
 
     // ----------- Chat ----------------
 
+    @FieldResolver((returns) => [Contact])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async contactOptions(@Root() user: User) {
+        return await getMyContacts(user);
+    }
+
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
+    @Deprecated(`Use me { contactOptions } !`)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
         return await getMyContacts(user);
+    }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER)
+    async chatSignature(@Ctx() context: GraphQLContext): Promise<string> {
+        const { user } = context;
+        const signature = await createChatSignature(user);
+        return signature;
     }
 
     // ------------ Zoom ---------------
