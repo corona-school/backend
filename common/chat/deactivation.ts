@@ -12,8 +12,13 @@ const logger = getLogger('Chat Deactivation');
 // one to one chats (if match) whose match was dissolved 30 days ago should be "disabled" (readonly).
 // This will allow users to continue writing for another 30 days after match disolving.
 async function isActiveMatch(id: number): Promise<boolean> {
-    const today = moment().endOf('day');
     const match = await prisma.match.findUniqueOrThrow({ where: { id } });
+
+    if (!match.dissolved) {
+        return true;
+    }
+
+    const today = moment().endOf('day');
     const dissolvedAtPlus30Days = moment(match.dissolvedAt).add(30, 'days');
     return !dissolvedAtPlus30Days.isBefore(today);
 }
