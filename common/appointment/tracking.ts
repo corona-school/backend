@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getMatch, getStudent, getPupil } from '../../graphql/util';
+import { createRelation, EventRelationType } from '../achievement/relation';
 
 const logger = getLogger('Appointment Tracking');
 
@@ -19,20 +20,19 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
     // To prevent this, we've implemented a workaround by setting the "join time" equal to the appointment's start time, ensuring that actions are accurately assigned to the appropriate bucket.
     // Moreover, the time window for lecture buckets has been narrowed to minimize the chance of overlaps.
 
-    let relation: string | undefined = undefined;
+    const relation = createRelation(EventRelationType.Appointment, appointment.id);
     if (appointment.subcourseId) {
         const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: appointment.subcourseId }, include: { lecture: true } });
-        relation = `subcourse/${subcourse.id}`;
         if (user.studentId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.isCanceled ? 0 : 1), 0);
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_subcourse_meeting', {
-                relation: `subcourse/${subcourse.id}`,
+                relation,
                 subcourseLecturesCount: lecturesCount.toString(),
             });
         } else if (user.pupilId) {
             const lecturesCount = subcourse.lecture.reduce((acc, lecture) => acc + (lecture.declinedBy.includes(user.userID) ? 0 : 1), 0);
             await Notification.actionTakenAt(appointment.start, user, 'pupil_joined_subcourse_meeting', {
-                relation: `subcourse/${subcourse.id}`,
+                relation,
                 subcourseLecturesCount: lecturesCount.toString(),
             });
         }
@@ -42,16 +42,15 @@ export async function trackUserJoinAppointmentMeeting(user: User, appointment: A
         const match = await getMatch(appointment.matchId);
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
-        relation = `match/${match.id}`;
 
         if (user.studentId) {
             await Notification.actionTakenAt(appointment.start, user, 'student_joined_match_meeting', {
-                relation: `match/${appointment.matchId}`,
+                relation,
                 name: pupil.firstname.toString(),
             });
         } else if (user.pupilId) {
             await Notification.actionTakenAt(appointment.start, user, 'pupil_joined_match_meeting', {
-                relation: `match/${appointment.matchId}`,
+                relation,
                 name: student.firstname.toString(),
             });
         }
