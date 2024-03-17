@@ -1,6 +1,7 @@
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { checkIfAchievementIsGlobal, sortActionTemplatesToGroups } from './util';
+import { sortActionTemplatesToGroups } from './util';
+import { getAchievementRelationFromEvent } from './relation';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getAchievementTamplateUID, getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
@@ -17,7 +18,7 @@ import { metrics } from '../logger/metrics';
 const logger = getLogger('Achievement');
 
 export const rewardActionTakenAt = tracer.wrap('achievement.rewardActionTaken', _rewardActionTakenAt);
-async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, actionId: ID, context: SpecificNotificationContext<ID>) {
+async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, actionId: ID, eventContext: SpecificNotificationContext<ID>) {
     if (!isGamificationFeatureActive()) {
         logger.warn(`Gamification feature is not active`);
         return;
@@ -41,7 +42,7 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
         actionId,
         at,
         user: user,
-        context,
+        context: eventContext,
     };
     const isEventTracked = await tracer.trace('achievement.trackEvent', () => trackEvent(actionEvent));
     if (!isEventTracked) {
@@ -55,15 +56,12 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
                 span?.setTag('achievement.group', groupName);
                 logger.info('evaluate achievement group', { groupName });
 
-                const { relation, ...contextWithoutRelation } = actionEvent.context;
-
                 let achievementToCheck: AchievementToCheck | undefined = undefined;
+                let achievementContext: SpecificNotificationContext<ID> | undefined = undefined;
                 for (const template of group) {
+                    achievementContext = { ...eventContext, relation: await getAchievementRelationFromEvent(actionEvent, template.templateFor) };
                     const userAchievement = await tracer.trace('achievement.getOrCreateUserAchievement', () =>
-                        getOrCreateUserAchievement(template, user.userID, {
-                            ...contextWithoutRelation,
-                            relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation,
-                        })
+                        getOrCreateUserAchievement(template, user.userID, achievementContext)
                     );
                     if (userAchievement && (userAchievement.achievedAt === null || userAchievement.template?.type === AchievementType.STREAK)) {
                         logger.info('found achievement to check', {
@@ -76,12 +74,12 @@ async function _rewardActionTakenAt<ID extends ActionID>(at: Date, user: User, a
                     }
                 }
                 span?.setTag('achievement.foundToCheck', !!achievementToCheck);
-                if (achievementToCheck) {
+                if (achievementToCheck && achievementContext) {
                     span?.setTag('achievement.id', achievementToCheck.id);
                     await tracer.trace('achievement.checkUserAchievement', () =>
                         checkUserAchievement(achievementToCheck, {
                             ...actionEvent,
-                            context: { ...contextWithoutRelation, relation: checkIfAchievementIsGlobal(group[0]) ? undefined : relation },
+                            context: achievementContext,
                         })
                     );
                 }
