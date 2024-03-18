@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
-import { achievement_event, achievement_template_for_enum, lecture, match, subcourse } from '@prisma/client';
+import { achievement_event, lecture, match, subcourse } from '@prisma/client';
 import { prismaMock } from '../../jest/singletons';
-import { evaluateAchievement } from './evaluate';
+import { exportedForTesting } from './evaluate';
 import { ConditionDataAggregations } from './types';
 import { Prisma } from '@prisma/client';
 
@@ -39,7 +39,7 @@ describe('evaluate should throw errors for misconfiguration', () => {
         prismaMock.match.findMany.mockResolvedValue([]);
         prismaMock.subcourse.findMany.mockResolvedValue([]);
 
-        await expect(evaluateAchievement('student/1', 'x > 0', dataAggr, 0, undefined)).resolves.toBeUndefined();
+        await expect(exportedForTesting.evaluateAchievement('student/1', 'x > 0', dataAggr, 0, undefined)).rejects.toThrow();
     });
 });
 
@@ -86,7 +86,7 @@ describe('evaluate condition without default bucket aggregator', () => {
         prismaMock.match.findMany.mockResolvedValue([]);
         prismaMock.subcourse.findMany.mockResolvedValue([]);
 
-        const res = await evaluateAchievement(userId, condition, dataAggr, 0, undefined);
+        const res = await exportedForTesting.evaluateAchievement(userId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectedResult);
@@ -210,7 +210,7 @@ describe('evaluate record value condition with time buckets', () => {
         prismaMock.match.findMany.mockResolvedValue(matches || []);
         prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
 
-        const res = await evaluateAchievement(testUserId, condition, dataAggr, recordValue, undefined);
+        const res = await exportedForTesting.evaluateAchievement(testUserId, condition, dataAggr, recordValue, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectNewRecord);
@@ -397,7 +397,7 @@ describe('evaluate bucket with match / subcourse context', () => {
         prismaMock.match.findMany.mockResolvedValue(matches || []);
         prismaMock.subcourse.findMany.mockResolvedValue(subcourses || []);
 
-        const res = await evaluateAchievement(testUserId, condition, dataAggr, 0, undefined);
+        const res = await exportedForTesting.evaluateAchievement(testUserId, condition, dataAggr, 0, undefined);
 
         expect(res).toBeDefined();
         expect(res?.conditionIsMet).toBe(expectNewRecord);
