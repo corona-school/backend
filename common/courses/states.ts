@@ -118,23 +118,36 @@ export async function deleteCourse(course: Course) {
 /* ------------------ Subcourse Delete ------------- */
 
 export async function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
+    console.log('Inside candelete subcourse function');
     if (subcourse.published) {
+        console.log('Subcourse delete not allowed');
         return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
     } else {
+        console.log('Subcourse delete allowed');
         return { allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` };
     }
 }
 
 export async function deleteSubcourse(subcourse: Subcourse) {
+    console.log('Before candelete subcourse check');
     const can = await canDeleteSubcourse(subcourse);
     if (!can.allowed) {
         throw new ValidationError(`Cannot delete Subcourse ${subcourse.id}, reason: ${can.reason}`);
     }
-    prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
-    prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
-    prisma.subcourse_instructors_student.deleteMany({ where: { subcourseId: subcourse.id } });
-    prisma.subcourse_participants_pupil.deleteMany({ where: { subcourseId: subcourse.id } });
-    prisma.waiting_list_enrollment.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Before first delete');
+    await prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Deleted participation cert');
+    await prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Deleted lectures');
+    await prisma.subcourse_instructors_student.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Deleted subcourse instructord');
+    await prisma.subcourse_participants_pupil.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Deleted subcourse participants');
+    await prisma.waiting_list_enrollment.deleteMany({ where: { subcourseId: subcourse.id } });
+    console.log('Deleted waiting list enrollment');
+    const deleteResult = await prisma.subcourse.delete({ where: { id: subcourse.id } });
+    console.log(deleteResult);
+    console.log('deleteSubcourse function finished');
 }
 
 /* ------------------ Subcourse Publish ------------- */

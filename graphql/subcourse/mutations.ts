@@ -200,13 +200,16 @@ export class MutateSubcourseResolver {
         return true;
     }
 
-    @Mutation((returns) => GraphQLModel.Subcourse)
+    @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
+        console.log(`Got subcourse ${subcourseId}`);
         await hasAccess(context, 'Subcourse', subcourse);
+        console.log('We have access');
         deleteSubcourse(subcourse);
+        console.log('Deleted subcourse');
         return true;
     }
 
