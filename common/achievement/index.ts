@@ -5,8 +5,8 @@ import { getAchievementRelationFromEvent } from './relation';
 import { getLogger } from '../logger/logger';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { getAchievementTamplateUID, getAchievementTemplates, getTemplatesByMetrics, TemplateSelectEnum } from './template';
-import { evaluateAchievement } from './evaluate';
-import { AchievementToCheck, AchievementType, ActionEvent, ConditionDataAggregations } from './types';
+import { isAchievementConditionMet } from './evaluate';
+import { AchievementToCheck, AchievementType, ActionEvent } from './types';
 import { createAchievement, getOrCreateUserAchievement } from './create';
 // eslint-disable-next-line import/no-cycle
 import { actionTakenAt } from '../notification';
@@ -132,61 +132,21 @@ async function checkUserAchievement<ID extends ActionID>(userAchievement: Achiev
         actionId: event.actionId,
         achievementId: userAchievement.id,
         condition: userAchievement.template.condition,
-        conditionIsMet: evaluationResult?.conditionIsMet,
-        resultObject: JSON.stringify(evaluationResult?.resultObject, null, 4),
+        conditionIsMet: evaluationResult.isConditionMet,
+        aggrResult: evaluationResult.aggregationResult,
+        shouldInvalidateStreak: evaluationResult.shouldInvalidateStreak,
     });
 
-    if (evaluationResult === null) {
-        // TODO: handle this case
-        return;
-    }
-
-    if (evaluationResult.conditionIsMet) {
-        const conditionDataAggregations = userAchievement?.template.conditionDataAggregations as ConditionDataAggregations;
-        const dataAggregationKey = Object.keys(conditionDataAggregations)[0];
-        const evaluationResultValue =
-            typeof evaluationResult.resultObject[dataAggregationKey] === 'number' ? Number(evaluationResult.resultObject[dataAggregationKey]) : null;
+    if (evaluationResult.isConditionMet) {
+        const evaluationResultValue = evaluationResult.aggregationResult;
         const awardedAchievement = await rewardUser(evaluationResultValue, userAchievement, event);
         await createAchievement(awardedAchievement.template, userAchievement.userId, event.context);
-    } else {
+    } else if (evaluationResult.shouldInvalidateStreak) {
         await prisma.user_achievement.update({
             where: { id: userAchievement.id },
             data: { achievedAt: null, isSeen: false },
         });
     }
-}
-
-export async function isAchievementConditionMet(achievement: AchievementToCheck) {
-    const {
-        userId,
-        recordValue,
-        context,
-        relation,
-        template: { condition, conditionDataAggregations, type },
-    } = achievement;
-    if (!condition) {
-        logger.error(`No condition found for achievement`, undefined, { template: achievement.template.title, achievementId: achievement.id });
-        return { conditionIsMet: false, resultObject: {} };
-    }
-    // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
-    // Therefore, we should skip the achievement buckets before the user's join, so that he still has the possibility to achieve the achievements.
-    const skipAchievementBucketsBefore = context && context['skipAchievementBucketsBefore'] ? new Date(context['skipAchievementBucketsBefore']) : undefined;
-    // For streaks, we need to ignore future buckets, as they will interrupt the streak even though the user had no opportunity to complete them.
-    // Nevertheless, we still want to include future buckets if they are associated with an event. This occurs if you join a meeting before its official start time.
-    const skipAchievementBucketsAfter = type === AchievementType.STREAK ? new Date() : undefined;
-    const result = await evaluateAchievement(
-        userId,
-        condition,
-        conditionDataAggregations as ConditionDataAggregations,
-        recordValue,
-        relation,
-        skipAchievementBucketsBefore,
-        skipAchievementBucketsAfter
-    );
-    if (result === undefined) {
-        return null;
-    }
-    return result;
 }
 
 async function rewardUser<ID extends ActionID>(evaluationResult: number | null, userAchievement: AchievementToCheck, event: ActionEvent<ID>) {

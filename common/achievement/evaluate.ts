@@ -1,4 +1,13 @@
-import { BucketConfig, BucketEvents, ConditionDataAggregations, EvaluationResult, GenericBucketConfig, TimeBucket } from './types';
+import {
+    BucketConfig,
+    BucketEvents,
+    ConditionDataAggregations,
+    EvaluationResult,
+    GenericBucketConfig,
+    TimeBucket,
+    AchievementToCheck,
+    AchievementType,
+} from './types';
 import { prisma } from '../prisma';
 import { aggregators } from './aggregator';
 import swan from '@onlabsorg/swan-js';
@@ -10,9 +19,56 @@ import { achievement_event } from '@prisma/client';
 
 const logger = getLogger('Achievement');
 
-export const evaluateAchievement = tracer.wrap('achievement.evaluateAchievement', _evaluateAchievement);
+interface IsConditionMetResult {
+    isConditionMet: boolean;
+    // A sum of all data aggregation field values
+    // Usually used for streaks or tiered achievements to show the current progress
+    aggregationResult: number;
+    // Is only set for streak achievements
+    shouldInvalidateStreak: boolean | null;
+}
 
-async function _evaluateAchievement(
+export const isAchievementConditionMet = tracer.wrap('achievement.isAchievementConditionMet', _isAchievementConditionMet);
+async function _isAchievementConditionMet(achievement: AchievementToCheck): Promise<IsConditionMetResult> {
+    const {
+        userId,
+        recordValue,
+        context,
+        relation,
+        template: { condition, conditionDataAggregations, type },
+    } = achievement;
+    // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
+    // Therefore, we should skip the achievement buckets before the user's join, so that he still has the possibility to achieve the achievements.
+    const skipAchievementBucketsBefore = context && context['skipAchievementBucketsBefore'] ? new Date(context['skipAchievementBucketsBefore']) : undefined;
+    // For streaks, we need to ignore future buckets, as they will interrupt the streak even though the user had no opportunity to complete them.
+    // Nevertheless, we still want to include future buckets if they are associated with an event. This occurs if you join a meeting before its official start time.
+    const skipAchievementBucketsAfter = type === AchievementType.STREAK ? new Date() : undefined;
+    const result = await evaluateAchievement(
+        userId,
+        condition,
+        conditionDataAggregations as ConditionDataAggregations,
+        recordValue,
+        relation,
+        skipAchievementBucketsBefore,
+        skipAchievementBucketsAfter
+    );
+
+    const aggrResult = Object.keys(conditionDataAggregations)
+        .filter((key) => !isNaN(result.resultObject[key]))
+        .reduce((acc, key) => acc + result.resultObject[key], 0);
+    let shouldInvalidateStreak: boolean | null = null;
+    if (type == AchievementType.STREAK) {
+        shouldInvalidateStreak = aggrResult < recordValue;
+    }
+
+    return {
+        isConditionMet: result.conditionIsMet,
+        aggregationResult: aggrResult,
+        shouldInvalidateStreak,
+    };
+}
+
+async function evaluateAchievement(
     userId: string,
     condition: string,
     dataAggregation: ConditionDataAggregations,
@@ -20,7 +76,7 @@ async function _evaluateAchievement(
     relation?: string,
     skipAchievementBucketsBefore?: Date,
     skipAchievementBucketsAfter?: Date
-): Promise<EvaluationResult | undefined> {
+): Promise<EvaluationResult> {
     // We only care about metrics that are used for the data aggregation
     const metrics = Object.values(dataAggregation).map((entry) => entry.metric);
     const achievementEvents = await prisma.achievement_event.findMany({
@@ -67,7 +123,7 @@ async function _evaluateAchievement(
                 dataKey: key,
                 metric: metricName,
             });
-            return;
+            throw new Error('Invalid data aggregation configuration');
         }
         logger.info('Using aggregator functions', { bucketCreator, aggregator, bucketAggregator, dataKey: key, metric: metricName });
 
@@ -152,4 +208,8 @@ const createTimeBuckets = (events: achievement_event[], bucketConfig: GenericBuc
         };
     });
     return bucketsWithEvents;
+};
+
+export const exportedForTesting = {
+    evaluateAchievement,
 };
