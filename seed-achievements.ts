@@ -11,6 +11,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
@@ -19,7 +22,6 @@ export async function importAchievements() {
             actionName: 'E-Mail verifizieren',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Action,
-            achievedFooter: null,
             condition: 'student_verified_events > 0',
             conditionDataAggregations: JSON.parse('{"student_verified_events":{"metric":"student_onboarding_verified","aggregator":"count"}}'),
             isActive: true,
@@ -35,15 +37,17 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription: null,
             image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_1.png',
             achievedImage: null,
             actionName: 'Kennenlerngespräch absolvieren',
-            actionRedirectLink: null,
+            actionRedirectLink: 'Calendly HuH Erstgespräch',
             actionType: achievement_action_type_enum.Appointment,
-            achievedFooter: null,
             condition: 'student_screened_events > 0',
             conditionDataAggregations: JSON.parse('{"student_screened_events":{"metric":"student_onboarding_screened","aggregator":"count"}}'),
             isActive: true,
@@ -59,6 +63,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             description:
                 'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
             achievedDescription:
@@ -68,7 +75,6 @@ export async function importAchievements() {
             actionName: 'Führungszeugnis einreichen',
             actionRedirectLink: '/certificate-of-conduct',
             actionType: achievement_action_type_enum.Action,
-            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             condition: 'student_coc_success_events > 0',
             conditionDataAggregations: JSON.parse('{"student_coc_success_events":{"metric":"student_onboarding_coc_success","aggregator":"count"}}'),
             isActive: true,
@@ -84,6 +90,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -93,7 +102,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 0',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":1}}'
@@ -111,6 +119,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -120,7 +131,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 2',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":3}}'
@@ -138,6 +148,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -147,7 +160,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 4',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":5}}'
@@ -165,6 +177,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -174,7 +189,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 9',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":10}}'
@@ -192,6 +206,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -201,7 +218,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 14',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":15}}'
@@ -219,6 +235,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -228,7 +247,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_match_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
@@ -246,6 +264,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -255,7 +276,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 0',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":1}}'
@@ -273,6 +293,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -282,7 +305,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 2',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":3}}'
@@ -300,6 +322,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -309,7 +334,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 4',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":5}}'
@@ -327,6 +351,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -336,7 +363,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 9',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":10}}'
@@ -354,6 +380,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -363,7 +392,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 14',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":15}}'
@@ -381,6 +409,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -390,7 +421,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'student_course_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
@@ -408,6 +438,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
                 'Wir freuen uns, wenn du einen Kurs auf unserer Plattform anbieten möchtest! Im Hilfestellungsbereich findest du unsere informativen Schulungs- und Erklärvideos, die dir den Einstieg erleichtern. Falls du Unterstützung benötigst, kannst du dort gerne einen Beratungstermin mit unserem pädagogischen Team buchen. Wir stehen bereit, um dich bei der Konzeption deines Kurses zu unterstützen und dir wertvolle Tipps zu geben. Dein Engagement bedeutet uns viel – wir können es kaum erwarten, gemeinsam mit dir neue Kurse zu entwefen und die Plattform zu bereichern!',
             achievedDescription: null,
@@ -416,7 +449,6 @@ export async function importAchievements() {
             actionName: 'Kurs entwerfen',
             actionRedirectLink: '/create-course',
             actionType: achievement_action_type_enum.Action,
-            achievedFooter: null,
             condition: 'student_create_course_events > 0',
             conditionDataAggregations: JSON.parse('{"student_create_course_events":{"metric":"student_create_course","aggregator":"count"}}'),
             isActive: true,
@@ -432,15 +464,17 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
-                'Hurra, du hast den Kurs “{{course.name}}” erfolgreich erstellt. Damit er auf unserer Plattform veröffentlicht werden kann, musst du den Kurs zunächst zur Prüfung freigeben. Wir prüfen deinen Kurs dann innerhalb weniger Tage und veröffentlichen ihn dann automatisch für alle Schüler:innen.',
+                'Hurra, du hast den Kurs “{{course.name}}” erfolgreich erstellt. Damit er auf unserer Plattform veröffentlicht werden kann, musst du den Kurs zunächst zur Prüfung freigeben. Wir prüfen deinen Kurs innerhalb weniger Tage und veröffentlichen ihn dann automatisch für alle Schüler:innen.',
             achievedDescription: null,
             image: 'course-image',
             achievedImage: null,
             actionName: 'Kurs zur Prüfung freigeben',
             actionRedirectLink: '/single-course/{{subcourse.id}}',
             actionType: achievement_action_type_enum.Action,
-            achievedFooter: null,
             condition: 'student_submit_course_events > 0',
             conditionDataAggregations: JSON.parse('{"student_submit_course_events":{"metric":"student_submit_course","aggregator":"count"}}'),
             isActive: true,
@@ -456,6 +490,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             description:
                 'Dein Kurs “{{course.name}}” wird derzeit von unserem Team überprüft. Wir können es kaum erwarten, ihn für alle Schüler:innen zur Anmeldung freizuschalten und damit das Wissensangebot für unsere Lerncommunity zu erweitern. Wir melden uns umgehend bei dir sobald dein Kurs online ist!',
             achievedDescription:
@@ -465,7 +502,6 @@ export async function importAchievements() {
             actionName: 'Kurs veröffentlichen',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Wait,
-            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             condition: 'student_approve_course_events > 0',
             conditionDataAggregations: JSON.parse('{"student_approve_course_events":{"metric":"student_approve_course","aggregator":"count"}}'),
             isActive: true,
@@ -481,6 +517,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs erstellt',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'This is not in use',
             description: 'This is not in use',
             achievedDescription: null,
             image: 'course-image',
@@ -488,7 +527,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'This is not in use',
             condition: 'student_offer_course > 0',
             conditionDataAggregations: JSON.parse('{"student_offer_course":{"metric":"student_offer_course","aggregator":"count"}}'),
             isActive: true,
@@ -504,16 +542,18 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             description:
                 'Du erhältst diesen Erfolg sobald alle Termine deines Kurses "{{course.name}}" beendet wurden. Kontinuierliche Termine ermöglichen den Schüler:innen nicht nur, das Beste aus dem Kurs herauszuholen, sondern stärken auch ihre Lernfortschritte und das Verständnis der Kursinhalte.',
             achievedDescription:
                 'Herzlichen Glückwunsch zum erfolgreichen Abschluss des letzten Termins deines Kurses {{course.name}}! Wir hoffen, die Kursleitung hat dir viel Freude bereitet und dass die Schüler:innen viel mitnehmen konnten. Dein Feedback ist uns sehr wichtig – wir freuen uns darauf, von deinen Erfahrungen zu hören! ',
             image: 'course-image',
             achievedImage: null,
-            actionName: null,
+            actionName: 'Kurs beenden',
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             condition: 'student_conducted_subcourse_appointment > 0',
             conditionDataAggregations: JSON.parse(
                 '{"student_conducted_subcourse_appointment":{"metric":"student_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
@@ -531,6 +571,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Rhythmus-Rekord',
             tagline: 'Nachhilfe mit {{partner.firstname}}',
+            subtitle: 'Du hast {{num}} Woche(n) in Folge mit {{partner.firstname}} gelernt!',
+            footer: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             achievedDescription: null,
@@ -539,7 +582,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'student_match_learning_events > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_learning_events":{"metric":"student_match_learned_regular","aggregator":"last_streak_length","createBuckets":"by_weeks","bucketAggregator":"presence_of_events"}}'
@@ -557,6 +599,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Pünktlichkeits-Power',
             tagline: 'Zur richtigen Uhrzeit',
+            subtitle: 'Du warst {{num}} Termine(n) in Folge pünktlich!',
+            footer: 'Noch {{num}} Termin(e) bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
             achievedDescription: null,
@@ -565,7 +610,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'student_participated_in_meeting > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"student_participated_in_meeting":{"metric":"student_participated_in_meeting","aggregator":"last_streak_length","createBuckets":"by_lecture_start","bucketAggregator":"presence_of_events"}}'
@@ -583,6 +627,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Login-Legende',
             tagline: 'User-Bereich',
+            subtitle: 'Du hast dich {{num}} Monat(e) in Folge angemeldet!',
+            footer: 'Noch {{num}} Monat(e) mit Login bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
             achievedDescription: null,
@@ -591,7 +638,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'student_regular_learning > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"student_regular_learning":{"metric":"student_regular_learning","aggregator":"last_streak_length","createBuckets":"by_months","bucketAggregator":"presence_of_events"}}'
@@ -609,6 +655,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
@@ -617,7 +666,6 @@ export async function importAchievements() {
             actionName: 'E-Mail verifizieren',
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Action,
-            achievedFooter: null,
             condition: 'pupil_verified_events > 0',
             conditionDataAggregations: JSON.parse('{"pupil_verified_events":{"metric":"pupil_onboarding_verified","aggregator":"count"}}'),
             isActive: true,
@@ -633,6 +681,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
             description:
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription:
@@ -640,9 +691,8 @@ export async function importAchievements() {
             image: 'gamification/achievements/tmp/finish_onboarding/two_pieces/step_1.png',
             achievedImage: 'gamification/achievements/tmp/finish_onboarding/two_pieces/step_2.png',
             actionName: 'Kennenlerngespräch absolvieren',
-            actionRedirectLink: null,
+            actionRedirectLink: 'Calendly SuS Erstgespräch',
             actionType: achievement_action_type_enum.Appointment,
-            achievedFooter: null,
             condition: 'pupil_screened_events > 0',
             conditionDataAggregations: JSON.parse('{"pupil_screened_events":{"metric":"pupil_onboarding_screened","aggregator":"count"}}'),
             isActive: true,
@@ -658,6 +708,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -667,7 +720,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 0',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":1}}'
@@ -685,6 +737,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -694,7 +749,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 2',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":3}}'
@@ -712,6 +766,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -721,7 +778,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 4',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":5}}'
@@ -739,6 +795,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -748,7 +807,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 9',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":10}}'
@@ -766,6 +824,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -775,7 +836,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 14',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":15}}'
@@ -793,6 +853,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
@@ -802,7 +865,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_match_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
@@ -820,6 +882,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -829,7 +894,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_count > 0',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":1}}'
@@ -847,6 +911,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -856,7 +923,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_coun > 2',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":3}}'
@@ -874,6 +940,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -883,7 +952,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_count > 4',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":5}}'
@@ -901,6 +969,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -910,7 +981,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_count > 9',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":10}}'
@@ -928,6 +998,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -937,7 +1010,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_count > 14',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":15}}'
@@ -955,6 +1027,9 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
@@ -964,7 +1039,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             condition: 'pupil_course_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
@@ -982,6 +1056,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs beigetreten',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'This is not in use',
             description: 'This is not in use',
             achievedDescription: null,
             image: 'course-image',
@@ -989,7 +1066,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'This is not in use',
             condition: 'pupil_course_joined > 0',
             conditionDataAggregations: JSON.parse('{"pupil_course_joined":{"metric":"pupil_course_joined","aggregator":"count"}}'),
             isActive: true,
@@ -1005,6 +1081,9 @@ export async function importAchievements() {
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             description:
                 'Um diesen Erfolg zu erhalten, sei bei allen Terminen des Kurses {{course.name}} dabei. Die kontinuierliche Teilnahme ermöglicht dir nicht nur, das Beste aus dem Kurs herauszuholen, sondern stärkt auch deine Lernfortschritte und das Verständnis der Kursinhalte. Du bist auf dem richtigen Weg, bleib dran!',
             achievedDescription:
@@ -1014,7 +1093,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             condition: 'pupil_conducted_subcourse_appointment > 0',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_conducted_subcourse_appointment":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
@@ -1032,6 +1110,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Rhythmus-Rekord',
             tagline: 'Nachhilfe mit {{partner.firstname}}',
+            subtitle: 'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt!',
+            footer: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             achievedDescription: null,
@@ -1040,7 +1121,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'pupil_match_learning_events > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_learning_events":{"metric":"pupil_match_learned_regular","aggregator":"last_streak_length","createBuckets":"by_weeks","bucketAggregator":"presence_of_events"}}'
@@ -1058,6 +1138,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Pünktlichkeits-Power',
             tagline: 'Zur richtigen Uhrzeit',
+            subtitle: 'Du warst {{num}} Termine(n) in Folge pünktlich!',
+            footer: 'Noch {{num}} Termin(e) bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
             achievedDescription: null,
@@ -1066,7 +1149,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'pupil_participated_in_meeting > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_participated_in_meeting":{"metric":"pupil_participated_in_meeting","aggregator":"last_streak_length","createBuckets":"by_lecture_start","bucketAggregator":"presence_of_events"}}'
@@ -1084,6 +1166,9 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Login-Legende',
             tagline: 'User-Bereich',
+            subtitle: 'Du hast dich {{num}} Monat(e) in Folge angemeldet!',
+            footer: 'Noch {{num}} Monat(e) mit Login bis zum neuen Rekord!',
+            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
             achievedDescription: null,
@@ -1092,7 +1177,6 @@ export async function importAchievements() {
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
-            achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             condition: 'pupil_regular_learning > recordValue',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_regular_learning":{"metric":"pupil_regular_learning","aggregator":"last_streak_length","createBuckets":"by_months","bucketAggregator":"presence_of_events"}}'
