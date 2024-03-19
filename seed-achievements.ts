@@ -12,8 +12,8 @@ export async function importAchievements() {
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
             subtitle: null,
-            footer: null,
-            achievedFooter: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            achievedFooter: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
@@ -38,8 +38,8 @@ export async function importAchievements() {
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
             subtitle: null,
-            footer: null,
-            achievedFooter: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            achievedFooter: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             description:
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription: null,
@@ -64,7 +64,7 @@ export async function importAchievements() {
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             description:
                 'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
@@ -91,7 +91,7 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -120,7 +120,7 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -149,7 +149,7 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -178,7 +178,7 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -207,7 +207,7 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -235,8 +235,8 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
-            subtitle: null,
-            footer: null,
+            subtitle: '1:1-Nachhilfe',
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -265,7 +265,7 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -294,7 +294,7 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -323,7 +323,7 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -352,7 +352,7 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -381,7 +381,7 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -410,7 +410,7 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -439,7 +439,7 @@ export async function importAchievements() {
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: null,
             description:
                 'Wir freuen uns, wenn du einen Kurs auf unserer Plattform anbieten möchtest! Im Hilfestellungsbereich findest du unsere informativen Schulungs- und Erklärvideos, die dir den Einstieg erleichtern. Falls du Unterstützung benötigst, kannst du dort gerne einen Beratungstermin mit unserem pädagogischen Team buchen. Wir stehen bereit, um dich bei der Konzeption deines Kurses zu unterstützen und dir wertvolle Tipps zu geben. Dein Engagement bedeutet uns viel – wir können es kaum erwarten, gemeinsam mit dir neue Kurse zu entwefen und die Plattform zu bereichern!',
@@ -465,7 +465,7 @@ export async function importAchievements() {
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: null,
             description:
                 'Hurra, du hast den Kurs “{{course.name}}” erfolgreich erstellt. Damit er auf unserer Plattform veröffentlicht werden kann, musst du den Kurs zunächst zur Prüfung freigeben. Wir prüfen deinen Kurs innerhalb weniger Tage und veröffentlichen ihn dann automatisch für alle Schüler:innen.',
@@ -491,7 +491,7 @@ export async function importAchievements() {
             title: 'Neuer Kurs',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
             description:
                 'Dein Kurs “{{course.name}}” wird derzeit von unserem Team überprüft. Wir können es kaum erwarten, ihn für alle Schüler:innen zur Anmeldung freizuschalten und damit das Wissensangebot für unsere Lerncommunity zu erweitern. Wir melden uns umgehend bei dir sobald dein Kurs online ist!',
@@ -518,7 +518,7 @@ export async function importAchievements() {
             title: 'Kurs erstellt',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'This is not in use',
             description: 'This is not in use',
             achievedDescription: null,
@@ -543,7 +543,7 @@ export async function importAchievements() {
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             description:
                 'Du erhältst diesen Erfolg sobald alle Termine deines Kurses "{{course.name}}" beendet wurden. Kontinuierliche Termine ermöglichen den Schüler:innen nicht nur, das Beste aus dem Kurs herauszuholen, sondern stärken auch ihre Lernfortschritte und das Verständnis der Kursinhalte.',
@@ -571,8 +571,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Rhythmus-Rekord',
             tagline: 'Nachhilfe mit {{partner.firstname}}',
-            subtitle: 'Du hast {{num}} Woche(n) in Folge mit {{partner.firstname}} gelernt!',
-            footer: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
+            subtitle: 'Du hast {{maxValue}} Woche(n) in Folge mit {{partner.firstname}} gelernt!',
+            footer: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
@@ -599,8 +599,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Pünktlichkeits-Power',
             tagline: 'Zur richtigen Uhrzeit',
-            subtitle: 'Du warst {{num}} Termine(n) in Folge pünktlich!',
-            footer: 'Noch {{num}} Termin(e) bis zum neuen Rekord!',
+            subtitle: 'Du warst {{maxValue}} Termine(n) in Folge pünktlich!',
+            footer: 'Noch {{remainingProgress}} Termin(e) bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
@@ -627,8 +627,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Login-Legende',
             tagline: 'User-Bereich',
-            subtitle: 'Du hast dich {{num}} Monat(e) in Folge angemeldet!',
-            footer: 'Noch {{num}} Monat(e) mit Login bis zum neuen Rekord!',
+            subtitle: 'Du hast dich {{maxValue}} Monat(e) in Folge angemeldet!',
+            footer: 'Noch {{remainingProgress}} Monat(e) mit Login bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
@@ -657,7 +657,7 @@ export async function importAchievements() {
             tagline: 'Willkommen bei Lern-Fair 👋',
             subtitle: null,
             footer: null,
-            achievedFooter: null,
+            achievedFooter: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
@@ -683,7 +683,7 @@ export async function importAchievements() {
             tagline: 'Willkommen bei Lern-Fair 👋',
             subtitle: null,
             footer: null,
-            achievedFooter: null,
+            achievedFooter: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             description:
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription:
@@ -709,7 +709,7 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -738,7 +738,7 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -767,7 +767,7 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -796,7 +796,7 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -825,7 +825,7 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -854,7 +854,7 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
@@ -883,7 +883,7 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -912,7 +912,7 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -941,7 +941,7 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -970,7 +970,7 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -999,7 +999,7 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -1028,7 +1028,7 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
@@ -1057,7 +1057,7 @@ export async function importAchievements() {
             title: 'Kurs beigetreten',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'This is not in use',
             description: 'This is not in use',
             achievedDescription: null,
@@ -1082,7 +1082,7 @@ export async function importAchievements() {
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
             subtitle: null,
-            footer: null,
+            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
             achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
             description:
                 'Um diesen Erfolg zu erhalten, sei bei allen Terminen des Kurses {{course.name}} dabei. Die kontinuierliche Teilnahme ermöglicht dir nicht nur, das Beste aus dem Kurs herauszuholen, sondern stärkt auch deine Lernfortschritte und das Verständnis der Kursinhalte. Du bist auf dem richtigen Weg, bleib dran!',
@@ -1110,8 +1110,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Rhythmus-Rekord',
             tagline: 'Nachhilfe mit {{partner.firstname}}',
-            subtitle: 'Du hast {{num}} Woche(n) in Folge mit {{name}} gelernt!',
-            footer: 'Noch {{num}} Woche(n) bis zum neuen Rekord!',
+            subtitle: 'Du hast {{maxValue}} Woche(n) in Folge mit {{partner.firstname}} gelernt!',
+            footer: 'Noch {{remainingProgress}} Woche(n) bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
@@ -1138,8 +1138,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Pünktlichkeits-Power',
             tagline: 'Zur richtigen Uhrzeit',
-            subtitle: 'Du warst {{num}} Termine(n) in Folge pünktlich!',
-            footer: 'Noch {{num}} Termin(e) bis zum neuen Rekord!',
+            subtitle: 'Du warst {{maxValue}} Termine(n) in Folge pünktlich!',
+            footer: 'Noch {{remainingProgress}} Termin(e) bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
@@ -1166,8 +1166,8 @@ export async function importAchievements() {
             type: achievement_type_enum.STREAK,
             title: 'Login-Legende',
             tagline: 'User-Bereich',
-            subtitle: 'Du hast dich {{num}} Monat(e) in Folge angemeldet!',
-            footer: 'Noch {{num}} Monat(e) mit Login bis zum neuen Rekord!',
+            subtitle: 'Du hast dich {{maxValue}} Monat(e) in Folge angemeldet!',
+            footer: 'Noch {{remainingProgress}} Monat(e) mit Login bis zum neuen Rekord!',
             achievedFooter: 'Hurra, du erhöhst deinen Rekord weiter!',
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
