@@ -173,7 +173,7 @@ export class ExtendedFieldsLectureResolver {
         return await getZoomMeeting(appointment);
     }
     @FieldResolver((returns) => String, { nullable: true })
-    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.INSTRUCTOR, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)
     async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
         const { user } = context;
         const isAdmin = user.roles.includes(Role.ADMIN);
