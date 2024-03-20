@@ -99,7 +99,7 @@ async function sendMessage(message: SendParamsMessage) {
     let sandboxMode = false;
 
     if (process.env.MAILJET_LIVE === 'TEST') {
-        message.Subject = `TESTEMAIL`;
+        message.Subject = `(TESTEMAIL) ${message.Subject}`;
         logger.warn(`Mail is in Test Mode`);
     } else if (process.env.MAILJET_LIVE != '1') {
         logger.warn(`Mail is in Sandbox Mode`);
