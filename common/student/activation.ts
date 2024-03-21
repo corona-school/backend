@@ -98,7 +98,7 @@ export async function deactivateStudent(student: Student, silent = false, reason
         where: { id: student.id },
     });
 
-    await logTransaction('deActivate', student, { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason });
 
     return updatedStudent;
 }
@@ -111,5 +111,5 @@ export async function reactivateStudent(student: Student, reason: string) {
         throw new PrerequisiteError('Student already got redacted, too late... :(');
     }
     await prisma.student.update({ where: { id: student.id }, data: { active: true } });
-    await logTransaction('deActivate', student, { newStatus: true, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: true, deactivationReason: reason });
 }

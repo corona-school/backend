@@ -8,6 +8,7 @@ import {
 import { getLogger } from '../../common/logger/logger';
 import { InterestConfirmationStatus } from '../match/interest';
 import { prisma } from '../prisma';
+import { User } from '../user';
 
 /* To ensure consistency with existing logs,
   the JSON data in the log is validated against this schema */
@@ -48,13 +49,13 @@ type LogData<Type extends LogType> = {
 
 const logger = getLogger();
 
-export async function logTransaction<Type extends LogType>(logtype: Type, user: Pupil | Student | null, data: LogData<Type>) {
+export async function logTransaction<Type extends LogType>(logtype: Type, user: User | null, data: LogData<Type>) {
     try {
         await prisma.log.create({
             data: {
                 logtype,
                 createdAt: new Date(),
-                user: user?.wix_id ?? 'unknown',
+                user: user?.userID ?? 'unknown',
                 data: JSON.stringify(data),
             },
         });

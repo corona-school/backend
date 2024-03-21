@@ -103,7 +103,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
         await Notification.actionTaken(userForPupil(pupil), 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
-    await logTransaction('verificationRequets', pupil, {});
+    await logTransaction('verificationRequets', userForPupil(pupil), {});
 
     return pupil;
 }

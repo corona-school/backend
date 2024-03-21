@@ -92,7 +92,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
         await Notification.actionTaken(userForStudent(student), 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
-    await logTransaction('verificationRequets', student, {});
+    await logTransaction('verificationRequets', userForStudent(student), {});
 
     return student;
 }

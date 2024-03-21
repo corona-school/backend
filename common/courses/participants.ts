@@ -90,7 +90,7 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
             },
         });
 
-        await logTransaction('participantJoinedWaitingList', pupil, { courseID: subcourse.id });
+        await logTransaction('participantJoinedWaitingList', userForPupil(pupil), { courseID: subcourse.id });
     } catch (error) {
         throw new RedundantError(`Failed to join waiting list, pupil is already on it`);
     }
@@ -106,7 +106,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
 
     if (queueEnrollmentDeletions.count > 0) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
-        await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });
+        await logTransaction('participantLeftWaitingList', userForPupil(pupil), { courseID: subcourse.id });
         return true;
     } else if (force) {
         throw new RedundantError(`Pupil is not on the waiting list`);
@@ -226,7 +226,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
-        await logTransaction('participantJoinedCourse', pupil, { subcourseID: subcourse.id });
+        await logTransaction('participantJoinedCourse', userForPupil(pupil), { subcourseID: subcourse.id });
 
         await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
         if (isChatFeatureActive() && subcourse.conversationId) {
@@ -280,7 +280,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     }
 
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);
-    await logTransaction('participantLeftCourse', pupil, { subcourseID: subcourse.id });
+    await logTransaction('participantLeftCourse', userForPupil(pupil), { subcourseID: subcourse.id });
 
     const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
