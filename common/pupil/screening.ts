@@ -59,7 +59,7 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
         return;
     }
 
-    const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId, invalidated: false } });
+    const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId } });
     const isFirstScreening = validScreeningCount === 1;
     const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
@@ -84,11 +84,9 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             break;
 
         case PupilScreeningStatus.pending:
-            if (isFirstScreening) {
-                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_missed', {});
-            } else {
-                await Notification.actionTaken(asUser, 'pupil_screening_missed', {});
-            }
+            /**
+             * Notifications for missed screenings are handled in `pupil/mutations.ts` `pupilMissedScreening`
+             */
             break;
     }
 }
