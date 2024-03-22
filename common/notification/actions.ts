@@ -115,6 +115,18 @@ const _notificationActions = {
         description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
         sampleContext: {},
     },
+    pupil_screening_after_registration_succeeded: {
+        description: 'Pupil / Screening after registration was successful',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_rejected: {
+        description: 'Pupil / Screening after registration was rejected',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_missed: {
+        description: 'Pupil / Screening after registration was missed',
+        sampleContext: {},
+    },
     pupil_registration_finished: {
         description: 'Pupil / Registration finished',
         sampleContext: {},
