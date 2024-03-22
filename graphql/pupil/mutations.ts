@@ -339,9 +339,7 @@ export class MutatePupilResolver {
         @Arg('comment') comment: string
     ): Promise<boolean> {
         const screener = await getSessionScreener(context);
-        const { pupil } = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: pupilScreeningId }, include: { pupil: true } });
         await updatePupilScreening(screener, pupilScreeningId, { status: PupilScreeningStatus.pending, comment });
-        await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_missed', {});
         return true;
     }
 

@@ -59,13 +59,23 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
         return;
     }
 
+    const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId, invalidated: false } });
+    const isFirstScreening = validScreeningCount === 1;
     const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
-            await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
+            if (isFirstScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_rejected', {});
+            } else {
+                await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
+            }
             break;
         case PupilScreeningStatus.success:
-            await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+            if (isFirstScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {});
+            } else {
+                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+            }
             await updateSessionRolesOfUser(asUser.userID);
             break;
 
@@ -74,6 +84,11 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             break;
 
         case PupilScreeningStatus.pending:
+            if (isFirstScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_missed', {});
+            } else {
+                await Notification.actionTaken(asUser, 'pupil_screening_missed', {});
+            }
             break;
     }
 }
