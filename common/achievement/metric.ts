@@ -92,6 +92,14 @@ const batchOfMetrics = [
     createMetric('pupil_participated_in_meeting', ['pupil_presence_in_meeting'], () => {
         return 1;
     }),
+
+    /* Lern-Fair / Corona-School original */
+    createMetric('user_original_corona_school', ['user_original_corona_school'], () => {
+        return 1;
+    }),
+    createMetric('user_original_lern_fair', ['user_original_lern_fair'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {
