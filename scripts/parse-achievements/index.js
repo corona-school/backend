@@ -23,6 +23,23 @@ function parseTemplateFor(templateFor) {
     }
 }
 
+function parseTemplateForGQL(templateFor) {
+    switch (templateFor) {
+        case 'Course':
+            return '"Course"';
+        case 'GlobalCourse':
+            return '"Global_Courses"';
+        case 'Match':
+            return '"Match"';
+        case 'GlobalMatch':
+            return '"Global_Matches"';
+        case 'Global':
+            return '"Global"';
+        default:
+            throw new Error('Unknown templateFor: ' + templateFor);
+    }
+}
+
 function parseType(type) {
     switch (type) {
         case 'Sequential':
@@ -31,6 +48,19 @@ function parseType(type) {
             return 'achievement_type_enum.STREAK';
         case 'Tiered':
             return 'achievement_type_enum.TIERED';
+        default:
+            throw new Error('Unknown type: ' + type);
+    }
+}
+
+function parseTypeForGQL(type) {
+    switch (type) {
+        case 'Sequential':
+            return '"SEQUENTIAL"';
+        case 'Streak':
+            return '"STREAK"';
+        case 'Tiered':
+            return '"TIERED"';
         default:
             throw new Error('Unknown type: ' + type);
     }
@@ -53,17 +83,36 @@ function parseActionType(actionType) {
     }
 }
 
-function escapeString(str) {
+function parseActionTypeGQL(actionType) {
+    switch (actionType) {
+        case 'Appointment':
+            return '"Appointment"';
+        case 'Action':
+            return '"Action"';
+        case 'Wait':
+            return '"Wait"';
+        case 'Info':
+            return '"Info"';
+        case 'None':
+            return 'null';
+        default:
+            throw new Error('Unknown actionType: ' + actionType);
+    }
+}
+
+function escapeString(str, doubleQuotes = false) {
     if (str === '' || str === undefined || str === null) {
         return 'null';
     }
     // We had to replace all , with ; to support export to csv from google sheets
     str = str.replaceAll(';', ',');
+    if (doubleQuotes) {
+        return `"${str.replaceAll('"', '\\"')}"`;
+    }
     return `'${str}'`;
 }
 
-const data = fs.readFileSync('./achievements.csv', 'utf8');
-parser.parse(data, { delimiter: ',', columns: true }, (_err, records) => {
+function writeSeedFile(records) {
     const data = records
         .filter((row) => row.group !== '')
         .map(
@@ -105,4 +154,65 @@ ${data.join('')}
   `;
 
     fs.writeFileSync('../../seed-achievements.ts', file);
+}
+
+function writeGQLSeedFile(records) {
+    const data = records
+        .filter((row) => row.group !== '')
+        .map(
+            (row) => `
+${row.group}_${row.step}: achievementTemplateCreate(data:{
+  templateFor: ${parseTemplateForGQL(row.templateFor)},
+  group: ${escapeString(row.group, true)},
+  groupOrder: ${row.step},
+  sequentialStepName: ${escapeString(row.sequentialStepName, true)},
+  type: ${parseTypeForGQL(row.type)},
+  title: ${escapeString(row.title, true)},
+  tagline: ${escapeString(row.tagline, true)},
+  subtitle: ${escapeString(row.subtitle, true)},
+  footer: ${escapeString(row.footer, true)},
+  achievedFooter: ${escapeString(row.achievedFooter, true)},
+  description: ${escapeString(row.description, true)},
+  achievedDescription: ${escapeString(row.achievedDescription, true)},
+  image: ${escapeString(row.imageLink, true)},
+  achievedImage: ${escapeString(row.achievedImage, true)},
+  actionName: ${escapeString(row.actionName, true)},
+  actionRedirectLink: ${escapeString(row.linkTo, true)},
+  actionType: ${parseActionTypeGQL(row.actionType)},
+  condition: ${escapeString(row.condition, true)},
+  conditionDataAggregations: ${escapeString(row.conditionDataAggr.replaceAll(';', ','), true)},
+})
+      `
+        );
+
+    const file = `
+mutation {
+${data.join('\n')}
+}
+  `;
+
+    fs.writeFileSync('./gql-seed.txt', file);
+}
+
+function writeEnableAchievementsGQLFile(records) {
+    const data = records
+        .filter((row) => row.group !== '')
+        .map(
+            (row, idx) => `
+${row.group}_${row.step}:achievementTemplateActivate(achievementTemplateId:${idx + 1}) 
+      `
+        );
+    const file = `
+mutation {
+${data.join('\n')}
+}
+`;
+    fs.writeFileSync('./gql-enable.txt', file);
+}
+
+const data = fs.readFileSync('./achievements.csv', 'utf8');
+parser.parse(data, { delimiter: ',', columns: true }, (_err, records) => {
+    writeSeedFile(records);
+    writeGQLSeedFile(records);
+    writeEnableAchievementsGQLFile(records);
 });
