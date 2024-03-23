@@ -7,7 +7,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 1,
-            sequentialStepName: 'Verifizieren',
+            sequentialStepName: 'E-Mail verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
@@ -17,7 +17,7 @@ export async function importAchievements() {
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/empty_state.png',
+            image: 'gamification/achievements/release/finish_onboarding/three_pieces/empty_state.png',
             achievedImage: null,
             actionName: 'E-Mail verifizieren',
             actionRedirectLink: null,
@@ -33,7 +33,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Global,
             group: 'student_onboarding',
             groupOrder: 2,
-            sequentialStepName: 'Screening absolvieren',
+            sequentialStepName: 'Kennenlerngespräch absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
@@ -43,9 +43,9 @@ export async function importAchievements() {
             description:
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen Engagement-Möglichkeiten vorstellen und alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_1.png',
+            image: 'gamification/achievements/release/finish_onboarding/three_pieces/step_1.png',
             achievedImage: null,
-            actionName: 'Kennenlerngespräch absolvieren',
+            actionName: 'Termin buchen',
             actionRedirectLink: 'Calendly HuH Erstgespräch',
             actionType: achievement_action_type_enum.Appointment,
             condition: 'student_screened_events > 0',
@@ -70,9 +70,9 @@ export async function importAchievements() {
                 'Der Schutz von Kindern und Jugendlichen liegt uns sehr am Herzen, daher benötigen wir von allen Ehrenamtlichen ein erweitertes Führungszeugnis. Im nächsten Schritt findest du eine Anleitung zur Beantragung sowie eine Bescheinigung zur Kostenübernahme für das erweiterte Führungszeugnis. Um deinen Account aktiv zu halten, bitten wir dich, das erweiterte Führungszeugnis bis zum {{date}} bei uns einzureichen. Gemeinsam setzen wir uns für eine sichere Umgebung ein, in der alle sich wohl und geschützt fühlen können.',
             achievedDescription:
                 'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unseres Teams bist und Schüler:innen auf ihrem Lernweg begleitest. Gemeinsam setzen wir uns für eine bessere Bildung in Deutschland ein. Du bist bereits jetzt ein:e Lern-Fair Held:in! ❤️ Danke für dein Engagement und deine Begeisterung!',
-            image: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_2.png',
-            achievedImage: 'gamification/achievements/tmp/finish_onboarding/three_pieces/step_3.png',
-            actionName: 'Führungszeugnis einreichen',
+            image: 'gamification/achievements/release/finish_onboarding/three_pieces/step_2.png',
+            achievedImage: 'gamification/achievements/release/finish_onboarding/three_pieces/step_3.png',
+            actionName: 'Infos zum Führungszeugnis',
             actionRedirectLink: '/certificate-of-conduct',
             actionType: achievement_action_type_enum.Action,
             condition: 'student_coc_success_events > 0',
@@ -91,13 +91,13 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Super! Du hattest deinen ersten Nachhilfe-Termin mit deinem:r Lernpartner:in. Bleibt am Ball und setzt eure Lernreise motiviert fort. Genau wie unsere Eule Loki noch eine lange Reise vor sich hat, gibt es auch für deine:n Lernpartner:in noch vieles zu lernen. Wir hoffen, dass ihr beim gemeinsamen Lernen genauso viel Spaß haben werdet wie Loki beim Paddeln.',
-            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/one_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -120,13 +120,13 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Prima! Du hattest nun schon drei Nachhilfe-Termine. Schön, dass ihr eure Lernreise so fleißig startet. Lokis Reise führt heute vorbei an einem schönen, blühenden Kirschbaum. Auch der Baum hat einmal klein angefangen.Genauso wie der Baum gewachsen ist, wächst auch das Wissen deines:r Lernpartner:in mit jedem Termin in der Lernunterstützung. Also macht weiter so!',
-            image: 'gamification/achievements/tmp/x_lectures_held/three_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/three_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -149,13 +149,13 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Klasse! Fünf Nachhilfe-Termine in der Lernunterstützung habt ihr schon gemeinsam geschafft. Damit seid ihr auf eurer Lernreise schon weit gekommen. Loki schützt sich auf der Reise vor der Kälte in einem Iglu, das aus Eis gebaut wurde. Baut auch ihr weiter an dem Wissensschatz deiner:s Lernpartner:in, indem ihr weitere Termine in der Lernunterstützung absolviert. Tolle Arbeit, macht weiter!',
-            image: 'gamification/achievements/tmp/x_lectures_held/five_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/five_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -178,13 +178,13 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Beeindruckend! Nun habt ihr schon zehn Nachhilfe-Termine in der Lernunterstützung wahrgenommen und ihr setzt eure gemeinsame Lernreise immer weiter fort. Loki befindet sich aktuell in der Wüste und ist beeindruckt von den unendlichen Weiten. Ähnlich wie in einer Wüste gibt es beim Lernen immer neue Möglichkeiten, weiter zu gehen. Und mit jedem Termin in der Lernunterstützung können du und dein:e Lernpartner:in Neues entdecken. Bleibt dran!',
-            image: 'gamification/achievements/tmp/x_lectures_held/ten_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/ten_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -207,13 +207,13 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Absolut großartig! 15-mal habt ihr nun schon in der Lernunterstützung gemeinsam gelernt. Genau wie die Heißluftballons, die Loki auf der Reise entdeckt hat, steigt auch das Wissen deiner:s Lernpartner:in durch Lernen. Jedes Mal, wenn ihr gemeinsam lernt, füllt sich der Ballon des Wissens mit heißer Luft und hebt ab in neue Höhen. Je mehr Wissen angesammelt wird, desto höher steigt der Ballon und desto mehr könnt ihr in der Ferne entdecken. Bleibt dabei und fliegt weiter mit Loki!',
-            image: 'gamification/achievements/tmp/x_lectures_held/fifteen_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/fifteen_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -235,14 +235,14 @@ export async function importAchievements() {
             type: achievement_type_enum.TIERED,
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
-            subtitle: '1:1-Nachhilfe',
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            subtitle: null,
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Wow! Unglaubliche 25 Termine in der Lernunterstützung liegen jetzt schon hinter euch. Das ist wirklich beeindruckend und ein guter Zeitpunkt, um auf eure bisherige Lernreise zurückzublicken. Du kannst dir gemeinsam mit Loki die Nordlichter auf dem Bild anschauen und daran denken, was du schon alles gemeinsam mit deiner:m Lernpartner:in erreicht hast. Gut gemacht, macht weiter so!',
-            image: 'gamification/achievements/tmp/x_lectures_held/twentyfive_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/twentyfive_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -250,6 +250,35 @@ export async function importAchievements() {
             condition: 'student_match_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global_Matches,
+            group: 'student_conduct_match_appointment',
+            groupOrder: 7,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: '50 durchgeführte Termine',
+            tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
+            description:
+                'Sobald du 50 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
+            achievedDescription:
+                'Wahnsinn! Du hast dich schon 50-mal in der Lernunterstützung engagiert. Dabei haben dein:e Lernpartner:in und du schon viel geschafft. Loki trifft sich gerade mit Freunden zu einem Picknick am Strand, wo sie sich daran erinnern, was sie bereits zusammen erlebt haben und die nächste Station ihrer Reise planen. Was wird die nächste Station eurer gemeinsamen Lernreise sein?',
+            image: 'gamification/achievements/release/x_lectures_held/fifty_lectures_held.png',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_match_appointments_count > 49',
+            conditionDataAggregations: JSON.parse(
+                '{"student_match_appointments_count":{"metric":"student_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":50}}'
             ),
             isActive: true,
         },
@@ -265,13 +294,13 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Fantastisch! Du hast heute deinen ersten Termin in einem Gruppenkurs gegeben. Wir sind uns sicher, dass dieser Termin eine wertvolle Erfahrung für die Teilnehmer:innen war und sie auf ihrer Lernreise vorangebracht hat. Das neu gewonnene Wissen kann sie nun zu neuen Horizonten führen. Auch unsere Eule Loki geht gemeinsam mit Freunden auf Reisen. Fliegt gemeinsam weiter und erkundet die Welt des Wissens! ',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/one_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/one_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -294,13 +323,13 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Wunderbar! Du hast drei Termine in Gruppenkursen durchgeführt. Damit bist du und die Teilnehmer:innen auf eurer gemeinsamen Lernreise schon weit gekommen. Loki reist gerade mit seinen Freunden in einem Auto. Wir sind gespannt, wo Lokis Reise hinführt und welche Stationen die nächsten auf eurer Lernreise sein werden. Weiter geht’s!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/three_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/three_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -323,13 +352,13 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Super! Du hast schon fünf Termine in Gruppenkursen veranstaltet. Wir hoffen, dass du und die Teilnehmer:innen eine spannende Lernreise habt und dabei viel Neues entdeckt. Loki hat auf der Reise ein neues Fortbewegungsmittel für sich entdeckt und paddelt nun gemeinsam mit Freunden in einem kleinen Boot, auch Gondel genannt, über Wasserkanäle. Bleibt neugierig und erlebt weitere Lern-Abenteuer!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/five_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/five_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -352,13 +381,13 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Klasse! Zehn Termine in Gruppenkursen liegen hinter dir und den Kursteilnehmer:innen. Dabei habt ihr bestimmt viel Neues gelernt und entdeckt. Loki macht auf der Reise gerade Halt in einer großen Stadt. Hier ist sehr viel los. Deshalb gibt es immer etwas zu beobachten und zu lernen für Loki. Was schaut ihr euch als nächstes an?',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/ten_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/ten_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -381,13 +410,13 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Großartig! In den vergangenen 15 Gruppenkursterminen haben du und die Kursteilnehmer:innen viel neues Wissen aufgebaut. Das ist mindestens genauso toll wie die Sandburgen, die Loki auf der Reise mit Freunden am Strand gebaut hat. Ihr könnt sehr zufrieden sein mit dem, was ihr bisher erreicht habt. Macht weiter so!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/fifteen_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/fifteen_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -410,13 +439,13 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Wow! Beeindruckende 25 Termine in Gruppenkursen liegen nun hinter euch. Wir sind uns sicher, dass du und die Kursteilnehmer:innen dabei sehr viel gelernt und erlebt habt. Das ist ein guter Zeitpunkt, um sich daran zu erinnern. Auch Loki schaut auf viele tolle Erlebnisse während der Reise zurück und fliegt mit den Freunden weiter. Halte weitere Kurstermine und fliege auch du gemeinsam mit den Teilnehmer:innen weiter!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/twentyfive_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/twentyfive_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -424,6 +453,35 @@ export async function importAchievements() {
             condition: 'student_course_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global_Courses,
+            group: 'student_conduct_course_appointment',
+            groupOrder: 7,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: '50 durchgeführte Termine',
+            tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
+            description:
+                'Sobald du 50 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
+            achievedDescription:
+                'Wahnsinn! Du hast 50 Gruppenkurstermine veranstaltet. Dabei haben die Kursteilnehmer:innen bestimmt viel gelernt. Du hast es dir verdient, dich einmal gedanklich auf einer Luftmatratze treiben zu lassen, so wie Loki auf dem Bild. Danach kannst du dich mit neuer Energie auf die Fortsetzung deiner Reise bei Lern-Fair begeben. Auf zum nächsten Lern-Abenteuer!',
+            image: 'gamification/achievements/release/x_group_lectures_held/fifty_group_lectures_held.jpg',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'student_course_appointments_count > 49',
+            conditionDataAggregations: JSON.parse(
+                '{"student_course_appointments_count":{"metric":"student_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":50}}'
             ),
             isActive: true,
         },
@@ -499,7 +557,7 @@ export async function importAchievements() {
                 'Juhu! Dein Kurs “{{course.name}}” ist veröffentlicht! Wir haben direkt nach der Freischaltung passende Schüler:innen auf deinen Kurs aufmerksam gemacht und rühren nun die Werbetrommel in unserer Community. Du kannst die Anmeldungen zu deinem Kurs jederzeit einsehen und live verfolgen, wie sich die Lernbegeisterten einschreiben. Vielen Dank für deinen wertvollen Beitrag zu unserer Lernplattform!',
             image: 'course-image',
             achievedImage: null,
-            actionName: 'Kurs veröffentlichen',
+            actionName: null,
             actionRedirectLink: null,
             actionType: achievement_action_type_enum.Wait,
             condition: 'student_approve_course_events > 0',
@@ -513,9 +571,9 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Course,
             group: 'student_course_participation',
             groupOrder: 1,
-            sequentialStepName: 'Kurs anbieten',
+            sequentialStepName: 'Kurs veröffentlichen',
             type: achievement_type_enum.SEQUENTIAL,
-            title: 'Kurs erstellt',
+            title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
             subtitle: null,
             footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
@@ -538,7 +596,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Course,
             group: 'student_course_participation',
             groupOrder: 2,
-            sequentialStepName: 'Kurs beenden',
+            sequentialStepName: 'Alle Kurs-Termine abschließen',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
@@ -551,9 +609,9 @@ export async function importAchievements() {
                 'Herzlichen Glückwunsch zum erfolgreichen Abschluss des letzten Termins deines Kurses {{course.name}}! Wir hoffen, die Kursleitung hat dir viel Freude bereitet und dass die Schüler:innen viel mitnehmen konnten. Dein Feedback ist uns sehr wichtig – wir freuen uns darauf, von deinen Erfahrungen zu hören! ',
             image: 'course-image',
             achievedImage: null,
-            actionName: 'Kurs beenden',
-            actionRedirectLink: null,
-            actionType: null,
+            actionName: 'Zu den Terminen',
+            actionRedirectLink: '/single-course/{{subcourse.id}}',
+            actionType: achievement_action_type_enum.Appointment,
             condition: 'student_conducted_subcourse_appointment > 0',
             conditionDataAggregations: JSON.parse(
                 '{"student_conducted_subcourse_appointment":{"metric":"student_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
@@ -577,8 +635,8 @@ export async function importAchievements() {
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            image: 'gamification/achievements/release/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/regular_learning_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -605,8 +663,8 @@ export async function importAchievements() {
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/punctuality_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/punctuality_achieved.png',
+            image: 'gamification/achievements/release/streaks/punctuality_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/punctuality_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -633,8 +691,8 @@ export async function importAchievements() {
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            image: 'gamification/achievements/release/streaks/member_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/member_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -651,7 +709,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 1,
-            sequentialStepName: 'Verifizieren',
+            sequentialStepName: 'E-Mail verifizieren',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
@@ -661,7 +719,7 @@ export async function importAchievements() {
             description:
                 'Hurra! Am {{date}} haben wir eine E-Mail an deine Adresse {{email}} gesendet. Um deine E-Mail zu bestätigen, klicke einfach auf den Button in der Nachricht. Solltest du unsere E-Mail nicht finden, kannst du hier eine erneute Zustellung anfordern und voller Vorfreude auf unser Weiterkommen warten.',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/finish_onboarding/two_pieces/empty_state.png',
+            image: 'gamification/achievements/release/finish_onboarding/two_pieces/empty_state.png',
             achievedImage: null,
             actionName: 'E-Mail verifizieren',
             actionRedirectLink: null,
@@ -677,7 +735,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Global,
             group: 'pupil_onboarding',
             groupOrder: 2,
-            sequentialStepName: 'Screening absolvieren',
+            sequentialStepName: 'Kennenlerngespräch absolvieren',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Onboarding',
             tagline: 'Willkommen bei Lern-Fair 👋',
@@ -688,9 +746,9 @@ export async function importAchievements() {
                 'Wir sind gespannt darauf, dich kennenzulernen! In einem kurzen, 15-minütigen Zoom-Gespräch möchten wir dir gerne unsere vielfältigen kostenlose Angebote vorstellen und dir die beste Unterstützung ermöglichen sowie alle deine Fragen beantworten. Buche einfach einen Termin, um mehr zu erfahren und dann voller Tatendrang direkt durchzustarten. Falls dir etwas dazwischen kommt, sage den Termin bitte ab und buche dir einen neuen.',
             achievedDescription:
                 'Herzlichen Glückwunsch! Du hast alle Onboarding-Schritte erfolgreich gemeistert und dir das Abflugticket für Loki gesichert. Wir sind begeistert, dass du nun Teil unserer Lerncommunity bist und hoffen dich gut auf deiner Lernreise begleiten zu können. Loki und unser Team werden immer für dich da sein!',
-            image: 'gamification/achievements/tmp/finish_onboarding/two_pieces/step_1.png',
-            achievedImage: 'gamification/achievements/tmp/finish_onboarding/two_pieces/step_2.png',
-            actionName: 'Kennenlerngespräch absolvieren',
+            image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_1.png',
+            achievedImage: 'gamification/achievements/release/finish_onboarding/two_pieces/step_2.png',
+            actionName: 'Termin buchen',
             actionRedirectLink: 'Calendly SuS Erstgespräch',
             actionType: achievement_action_type_enum.Appointment,
             condition: 'pupil_screened_events > 0',
@@ -709,13 +767,13 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Nachhilfe-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Super! Du hattest deinen ersten Termin in der Lernunterstützung. Bleib am Ball und setze deine Lernreise motiviert fort. Genau wie unsere Eule Loki noch eine lange Reise vor sich hat, gibt es auch für dich noch vieles zu lernen. Wir hoffen, dass du beim Lernen genauso viel Spaß haben wirst wie Loki beim Paddeln.',
-            image: 'gamification/achievements/tmp/x_lectures_held/one_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/one_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -738,13 +796,13 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Prima! Du hast nun schon drei Termine in der Lernunterstützung gehabt. Schön, dass du deine Lernreise so fleißig startest. Lokis Reise führt heute vorbei an einem schönen, blühenden Kirschbaum. Auch der Baum hat einmal klein angefangen. Genauso wie der Baum gewachsen ist, wächst auch dein Wissen mit jedem Termin in der Lernunterstützung. Also mach weiter so!',
-            image: 'gamification/achievements/tmp/x_lectures_held/three_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/three_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -767,13 +825,13 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Klasse! Fünf Termine in der Lernunterstützung hast du schon geschafft. Damit bist du auf deiner Lernreise schon weit gekommen. Loki schützt sich auf der Reise vor der Kälte in einem Iglu, das aus Eis gebaut wurde. Baue auch du weiter an deinem Wissensschatz, indem du weitere Termine in der Lernunterstützung machst. Tolle Arbeit, mach weiter!',
-            image: 'gamification/achievements/tmp/x_lectures_held/five_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/five_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -796,13 +854,13 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Beeindruckend! Nun hast du schon zehn Termine in der Lernunterstützung wahrgenommen und setzt deine Lernreise immer weiter fort. Loki befindet sich aktuell in der Wüste und ist beeindruckt von den unendlichen Weiten. Ähnlich wie in einer Wüste gibt es beim Lernen immer neue Möglichkeiten, weiter zu gehen. Und mit jedem Termin in der Lernunterstützung kannst du Neues entdecken und dein Wissen erweitern. Bleib dran!',
-            image: 'gamification/achievements/tmp/x_lectures_held/ten_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/ten_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -825,13 +883,13 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Absolut großartig! 15-mal hast du nun schon in der Lernunterstützung gelernt. Genau wie die Heißluftballons, die Loki auf der Reise entdeckt hat, steigt dein Wissen durch Lernen. Jedes Mal, wenn du gemeinsam mit deinem:r Lernpartner:in lernst, füllt sich der Ballon deines Wissens mit heißer Luft und hebt ab in neue Höhen. Je mehr Wissen angesammelt wird, desto höher steigt der Ballon und desto mehr kannst du in der Ferne entdecken. Bleib dabei und flieg weiter mit Loki!',
-            image: 'gamification/achievements/tmp/x_lectures_held/fifteen_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/fifteen_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -854,13 +912,13 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: '1:1-Nachhilfe',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
             achievedDescription:
                 'Wow! Unglaubliche 25 Termine in der Lernunterstützung liegen jetzt schon hinter dir. Das ist wirklich beeindruckend und ein guter Zeitpunkt, um auf deine bisherige Lernreise zurückzublicken. Du kannst dir gemeinsam mit Loki die Nordlichter auf dem Bild anschauen und daran denken, was du schon alles gemeinsam mit deiner:m Lernpartner:in erreicht hast. Gut gemacht, mach weiter so!',
-            image: 'gamification/achievements/tmp/x_lectures_held/twentyfive_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_lectures_held/twentyfive_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -868,6 +926,35 @@ export async function importAchievements() {
             condition: 'pupil_match_appointments_count > 24',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":25}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global_Matches,
+            group: 'pupil_conduct_match_appointment',
+            groupOrder: 7,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: '50 durchgeführte Termine',
+            tagline: '1:1-Nachhilfe',
+            subtitle: null,
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
+            description:
+                'Sobald du 50 Nachhilfe-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin euch die Lernreise als Nächstes führt.',
+            achievedDescription:
+                'Unglaublich! Du hast dich schon 50-mal mit deinem:r Lernpartner:in getroffen. Dabei habt ihr gemeinsam schon viel geschafft. Loki trifft sich gerade mit Freunden zu einem Picknick am Strand, wo sie sich daran erinnern, was sie bereits zusammen erlebt haben und die nächste Station ihrer Reise planen. Was wird die nächste Station eurer gemeinsamen Lernreise sein?',
+            image: 'gamification/achievements/release/x_lectures_held/fifty_lectures_held.png',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'pupil_match_appointments_count > 49',
+            conditionDataAggregations: JSON.parse(
+                '{"pupil_match_appointments_count":{"metric":"pupil_conducted_match_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":50}}'
             ),
             isActive: true,
         },
@@ -883,13 +970,13 @@ export async function importAchievements() {
             title: '1 durchgeführter Termin',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du einen Kurs-Termin erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Fantastisch! Du hast heute an deinem ersten Termin in einem Gruppenkurs teilgenommen. Wir hoffen, dass du viel gelernt hast und dass dieser Termin dich auf deiner Lernreise vorangebracht hat. Gemeinsam mit den anderen Teilnehmer:innen kann euch euer neu gewonnenes Wissen zu neuen Horizonten führen. Auch unsere Eule Loki geht gemeinsam mit Freunden auf Reisen. Lass uns gemeinsam fliegen und die Welt des Wissens erkunden!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/one_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/one_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -912,13 +999,13 @@ export async function importAchievements() {
             title: '3 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du drei Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Wunderbar! Du hast an drei Terminen eines Gruppenkurses teilgenommen. Damit bist du und die anderen Teilnehmer:innen auf eurer gemeinsamen Lernreise schon weit gekommen. Loki reist gerade mit seinen Freunden in einem Auto. Wir sind gespannt, wo Lokis Reise hinführt und welche Stationen die nächsten auf eurer Lernreise sein werden. Weiter geht’s!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/three_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/three_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -941,13 +1028,13 @@ export async function importAchievements() {
             title: '5 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du fünf Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Super! Du hast schon fünf Termine eines Gruppenkurses besucht. Wir hoffen, dass du eine spannende Lernreise hast und dabei viel Neues entdeckst. Loki hat auf der Reise ein neues Fortbewegungsmittel für sich entdeckt und paddelt nun gemeinsam mit Freunden in einem kleinen Boot, auch Gondel genannt, über Wasserkanäle. Bleib neugierig und erlebe neue Lern-Abenteuer!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/five_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/five_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -970,13 +1057,13 @@ export async function importAchievements() {
             title: '10 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du zehn Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Klasse! Zehn Kurstermine in Gruppenkursen liegen hinter dir und den anderen Kursteilnehmer:innen. Dabei habt ihr bestimmt viel Neues gelernt und entdeckt. Loki macht auf der Reise gerade Halt in einer großen Stadt. Hier ist sehr viel los. Deshalb gibt es immer etwas zu beobachten und zu lernen für Loki. Was schaust du dir als nächstes an?',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/ten_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/ten_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -999,13 +1086,13 @@ export async function importAchievements() {
             title: '15 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 15 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Großartig! In den vergangenen 15 Gruppenkursterminen haben du und die anderen Kursteilnehmer:innen viel neues Wissen aufgebaut. Das ist mindestens genauso toll wie die Sandburgen, die Loki auf der Reise mit Freunden am Strand gebaut hat. Ihr könnt sehr zufrieden sein mit dem, was ihr bisher erreicht habt. Macht weiter so!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/fifteen_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/fifteen_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -1028,13 +1115,13 @@ export async function importAchievements() {
             title: '25 durchgeführte Termine',
             tagline: 'Gruppenkurse',
             subtitle: null,
-            footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
             achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
             description:
                 'Sobald du 25 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
             achievedDescription:
                 'Wow! Beeindruckende 25 Gruppenkurstermine liegen nun hinter dir. Wir sind uns sicher, dass du und die anderen Kursteilnehmer:innen dabei sehr viel gelernt und erlebt habt. Das ist ein guter Zeitpunkt, um sich daran zu erinnern. Auch Loki schaut auf viele tolle Erlebnisse während der Reise zurück und fliegt mit den Freunden weiter. Besuche weitere Kurstermine und fliege auch du gemeinsam mit anderen Teilnehmer:innen weiter!',
-            image: 'gamification/achievements/tmp/x_group_lectures_held/twentyfive_group_lectures_held.jpg',
+            image: 'gamification/achievements/release/x_group_lectures_held/twentyfive_group_lectures_held.jpg',
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
@@ -1049,12 +1136,41 @@ export async function importAchievements() {
 
     await prisma.achievement_template.create({
         data: {
+            templateFor: achievement_template_for_enum.Global_Courses,
+            group: 'pupil_conduct_course_appointment',
+            groupOrder: 7,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: '50 durchgeführte Termine',
+            tagline: 'Gruppenkurse',
+            subtitle: null,
+            footer: '{{progress}} von {{maxValue}} Terminen abgeschlossen',
+            achievedFooter: 'Wow! Du hast alle Termine abgeschlossen.',
+            description:
+                'Sobald du 50 Kurs-Termine erfolgreich durchgeführt hast, geht die Reise mit unserer Eule Loki weiter. Bleib dran und schließe alle Termine ab, um zu sehen wohin dich die Reise als Nächstes führt.',
+            achievedDescription:
+                'Unglaublich! Du hast an 50 Gruppenkursterminen teilgenommen und gemeinsam mit den anderen Kursteilnehmer:innen viel gelernt. Du hast es dir verdient, dich einmal gedanklich auf einer Luftmatratze treiben zu lassen, so wie Loki auf dem Bild. Danach kannst du dich mit neuer Energie auf die Fortsetzung deiner Lernreise begeben. Auf zum nächsten Lern-Abenteuer!',
+            image: 'gamification/achievements/release/x_group_lectures_held/fifty_group_lectures_held.jpg',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'pupil_course_appointments_count > 49',
+            conditionDataAggregations: JSON.parse(
+                '{"pupil_course_appointments_count":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"count","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events","valueToAchieve":50}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
             templateFor: achievement_template_for_enum.Course,
             group: 'pupil_course_participation',
             groupOrder: 1,
-            sequentialStepName: 'An Kurs Teilnehmen',
+            sequentialStepName: 'Zum Kurs anmelden',
             type: achievement_type_enum.SEQUENTIAL,
-            title: 'Kurs beigetreten',
+            title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
             subtitle: null,
             footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
@@ -1077,7 +1193,7 @@ export async function importAchievements() {
             templateFor: achievement_template_for_enum.Course,
             group: 'pupil_course_participation',
             groupOrder: 2,
-            sequentialStepName: 'Kurs beenden',
+            sequentialStepName: 'Alle Kurs-Termine abschließen',
             type: achievement_type_enum.SEQUENTIAL,
             title: 'Kurs erfolgreich beendet',
             tagline: '{{course.name}}',
@@ -1090,9 +1206,9 @@ export async function importAchievements() {
                 'Herzlichen Glückwunsch zum erfolgreichen Abschluss des letzten Termins des Kurses {{course.name}}! Wir hoffen, dir hat der Kurs viel Freude bereitet und dass du etwas mitnehmen konntest. Dein Feedback ist uns sehr wichtig – wir freuen uns darauf, von deinen Erfahrungen zu hören! ',
             image: 'course-image',
             achievedImage: null,
-            actionName: null,
-            actionRedirectLink: null,
-            actionType: null,
+            actionName: 'Zu den Terminen',
+            actionRedirectLink: '/single-course/{{subcourse.id}}',
+            actionType: achievement_action_type_enum.Appointment,
             condition: 'pupil_conducted_subcourse_appointment > 0',
             conditionDataAggregations: JSON.parse(
                 '{"pupil_conducted_subcourse_appointment":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
@@ -1116,8 +1232,8 @@ export async function importAchievements() {
             description:
                 'Um diese Serie aufrechtzuerhalten, setze deine gemeinsamen Lernsessions mit {{partner.firstname}} weiter fort. Regelmäßiges Lernen bringt eine Fülle an Vorteilen mit sich, von verbessertem Wissen und Verständnis bis hin zu gesteigerter Effizienz und Selbstvertrauen. Ihr seid definitiv auf dem richtigen Weg, um eure Ziele zu erreichen!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            image: 'gamification/achievements/release/streaks/regular_learning_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/regular_learning_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -1144,8 +1260,8 @@ export async function importAchievements() {
             description:
                 'Halte diesen tollen Trend aufrecht und baue ihn weiter aus. Jedes Mal, wenn du innerhalb der ersten 5 Minuten zum Termin erscheinst, steigt deine Erfolgsstreak. Mit deiner Pünktlichkeit wie ein Uhrwerk bist du auf dem besten Weg zum:r Pünktlichkeits-Meister:in. Weiter so, du bist auf dem richtigen Kurs!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/punctuality_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/punctuality_achieved.png',
+            image: 'gamification/achievements/release/streaks/punctuality_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/punctuality_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -1172,8 +1288,8 @@ export async function importAchievements() {
             description:
                 'Bleib dran und melde dich weiterhin jeden Monat auf unserer Plattform an, um deinen Streak zu verlängern. Regelmäßige Aktivität hilft dir dabei immer auf dem neuesten Stand zu bleiben. Du bist auf dem richtigen Weg – mach weiter so, du Anmelde-Champion!',
             achievedDescription: null,
-            image: 'gamification/achievements/tmp/streaks/regular_learning_set.png',
-            achievedImage: 'gamification/achievements/tmp/streaks/regular_learning_achieved.png',
+            image: 'gamification/achievements/release/streaks/member_set.png',
+            achievedImage: 'gamification/achievements/release/streaks/member_achieved.png',
             actionName: null,
             actionRedirectLink: null,
             actionType: null,
@@ -1181,6 +1297,62 @@ export async function importAchievements() {
             conditionDataAggregations: JSON.parse(
                 '{"pupil_regular_learning":{"metric":"pupil_regular_learning","aggregator":"last_streak_length","createBuckets":"by_months","bucketAggregator":"presence_of_events"}}'
             ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
+            group: 'user_original_corona_school',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: 'Corona School Original',
+            tagline: 'Von Anfang an',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Du bist ein wahrer Pionier in unserer Lern-Community. Du warst schon Teil von Lern-Fair als es noch den Namen Corona School hatte. Deine Ausdauer und Hingabe haben dich zu einem wertvollen Teil dieser Reise gemacht, und wir sind unglaublich stolz darauf, dich an unserer Seite zu wissen. Bleib dran, denn der Weg, den wir gemeinsam gehen, ist noch lange nicht zu Ende. Gemeinsam werden wir weiter lernen, wachsen und triumphieren. Auf zu neuen Höhen!',
+            achievedDescription:
+                'Du bist ein wahrer Pionier in unserer Lern-Community. Du warst schon Teil von Lern-Fair als es noch den Namen Corona School hatte. Deine Ausdauer und Hingabe haben dich zu einem wertvollen Teil dieser Reise gemacht, und wir sind unglaublich stolz darauf, dich an unserer Seite zu wissen. Bleib dran, denn der Weg, den wir gemeinsam gehen, ist noch lange nicht zu Ende. Gemeinsam werden wir weiter lernen, wachsen und triumphieren. Auf zu neuen Höhen!',
+            image: 'gamification/achievements/release/original/corona_school_original.svg',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'user_original_corona_school > 0',
+            conditionDataAggregations: JSON.parse(
+                '{"user_original_corona_school":{"metric":"user_original_corona_school","aggregator":"count","valueToAchieve":0}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Global,
+            group: 'user_original_lern_fair',
+            groupOrder: 1,
+            sequentialStepName: null,
+            type: achievement_type_enum.TIERED,
+            title: 'Loki Original',
+            tagline: 'Von Anfang an',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Du bist ein wahrer Pionier in unserer Lern-Community. Deine Ausdauer und Hingabe haben dich zu einem wertvollen Teil dieser Reise gemacht, und wir sind unglaublich stolz darauf, dich an unserer Seite zu wissen. Bleib dran, denn der Weg, den wir gemeinsam gehen, ist noch lange nicht zu Ende. Gemeinsam werden wir weiter lernen, wachsen und triumphieren. Auf zu neuen Höhen!',
+            achievedDescription:
+                'Du bist ein wahrer Pionier in unserer Lern-Community. Deine Ausdauer und Hingabe haben dich zu einem wertvollen Teil dieser Reise gemacht, und wir sind unglaublich stolz darauf, dich an unserer Seite zu wissen. Bleib dran, denn der Weg, den wir gemeinsam gehen, ist noch lange nicht zu Ende. Gemeinsam werden wir weiter lernen, wachsen und triumphieren. Auf zu neuen Höhen!',
+            image: 'gamification/achievements/release/original/lern_fair_original.svg',
+            achievedImage: null,
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: null,
+            condition: 'user_original_lern_fair > 0',
+            conditionDataAggregations: JSON.parse('{"user_original_lern_fair":{"metric":"user_original_lern_fair","aggregator":"count","valueToAchieve":0}}'),
             isActive: true,
         },
     });

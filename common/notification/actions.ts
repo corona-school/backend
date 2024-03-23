@@ -740,6 +740,14 @@ const _notificationActions = {
         description: 'Pupil joined a meeting',
         sampleContext: {},
     },
+    user_original_corona_school: {
+        description: 'User Original Corona School',
+        sampleContext: {},
+    },
+    user_original_lern_fair: {
+        description: 'User Original Lern Fair',
+        sampleContext: {},
+    },
     TEST: {
         description: 'For Tests',
         sampleContext: { a: 'a' },
