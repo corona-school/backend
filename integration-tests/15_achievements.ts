@@ -552,11 +552,15 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
 }
 
 async function createTemplate(template: Partial<AchievementTemplateCreate>, skipActivation = false) {
+    const createInputData = {
+        ...template,
+        conditionDataAggregations: JSON.stringify(template.conditionDataAggregations),
+    };
     const result = await adminClient.request(
         `mutation CreateTemplate($template: AchievementTemplateCreateInput!) {
         achievementTemplateCreate(data: $template)
     }`,
-        { template }
+        { template: createInputData }
     );
 
     if (!skipActivation) {

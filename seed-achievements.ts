@@ -559,7 +559,7 @@ export async function importAchievements() {
             achievedImage: null,
             actionName: null,
             actionRedirectLink: null,
-            actionType: achievement_action_type_enum.Wait,
+            actionType: null,
             condition: 'student_approve_course_events > 0',
             conditionDataAggregations: JSON.parse('{"student_approve_course_events":{"metric":"student_approve_course","aggregator":"count"}}'),
             isActive: true,

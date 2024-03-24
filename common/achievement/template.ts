@@ -168,11 +168,11 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
     logger.info(`Checking AchievementTemplate(${template.id}) for consistency`, { template, group });
 
     // ---- Template Metadata -----
-    if (!template.title || !template.description || !template.subtitle) {
+    if (!template.title || !template.description) {
         throw new PrerequisiteError(`AchievementTemplates need a name, description and subtitle`);
     }
 
-    const actionFields = [!!template.actionName, !!template.actionRedirectLink, !!template.actionType];
+    const actionFields = [!!template.actionName, !!template.actionType];
     if (actionFields.some((it) => it) && !actionFields.every((it) => it)) {
         throw new PrerequisiteError(`actionName, actionRedirectLink and actionType must either all be set or all empty`);
     }
@@ -192,7 +192,7 @@ export async function checkTemplateConsistencyBeforeActivating(template: Achieve
             throw new PrerequisiteError(`Aggregation ${name} uses unknown metric ${aggregation.metric}`);
         }
 
-        if ((template.type === AchievementType.TIERED) !== !!aggregation.valueToAchieve) {
+        if ((template.type === AchievementType.TIERED) !== (typeof aggregation.valueToAchieve === 'number')) {
             throw new PrerequisiteError(`valueToAchieve must be set for aggregations of tiered achievements, and only for them`);
         }
 
