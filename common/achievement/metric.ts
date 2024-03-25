@@ -40,9 +40,13 @@ const batchOfMetrics = [
     createMetric('pupil_onboarding_appointment_booked', ['pupil_calendly_appointment_booked'], () => {
         return 1;
     }),
-    createMetric('pupil_onboarding_screened', ['pupil_screening_appointment_done', 'pupil_screening_add', 'pupil_screening_succeeded'], () => {
-        return 1;
-    }),
+    createMetric(
+        'pupil_onboarding_screened',
+        ['pupil_screening_appointment_done', 'pupil_screening_add', 'pupil_screening_after_registration_succeeded'],
+        () => {
+            return 1;
+        }
+    ),
 
     /* CONDUCTED MATCH APPOINTMENT */
     createMetric('student_conducted_match_appointment', ['student_joined_match_meeting'], () => {

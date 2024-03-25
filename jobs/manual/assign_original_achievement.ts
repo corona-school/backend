@@ -27,7 +27,7 @@ async function assignOriginalAchievementForPupils(): Promise<void> {
             active: true,
             verifiedAt: { not: null },
             isRedacted: false,
-            AND: [{ createdAt: { gte: LernFairSince } }, { createdAt: { lt: OriginalAchievementUntil } }],
+            AND: [{ createdAt: { gte: LernFairSince } }, { createdAt: { lte: OriginalAchievementUntil } }],
         },
     });
 
@@ -55,7 +55,7 @@ async function assignOriginalAchievementForStudents(): Promise<void> {
             active: true,
             verifiedAt: { not: null },
             isRedacted: false,
-            AND: [{ createdAt: { gte: LernFairSince } }, { createdAt: { lt: OriginalAchievementUntil } }],
+            AND: [{ createdAt: { gte: LernFairSince } }, { createdAt: { lte: OriginalAchievementUntil } }],
         },
     });
 
