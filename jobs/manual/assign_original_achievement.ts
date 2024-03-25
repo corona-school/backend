@@ -6,7 +6,7 @@ import { userForPupil, userForStudent } from '../../common/user';
 const LernFairSince = new Date('2021-05-17');
 // Date of achievement system release
 // All users that are registered and active before, should gain he achievment.
-const OriginalAchievementUntil = new Date('2024-03-25');
+const OriginalAchievementUntil = new Date('2024-03-26');
 
 export async function assignOriginalAchievement(): Promise<void> {
     await assignOriginalAchievementForPupils();
