@@ -11,6 +11,7 @@ Components:
 -   [Appointments](common/appointment/README.md)
 -   [Chat (TalkJS)](common/chat/README.md)
 -   [Video Chat (Zoom)](common/zoom/README.md)
+-   [Gamification](common/achievement/README.md)
 
 The backend exposes various APIs to other services and runs various background jobs on top of a PostgreSQL database.
 It is deployed in two Heroku Dynos, one answering API requests and one running jobs.
