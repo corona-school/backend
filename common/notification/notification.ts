@@ -147,6 +147,21 @@ export async function create(notification: Prisma.notificationCreateInput) {
     return result;
 }
 
+export async function deleteOne(id: NotificationID) {
+    if (!getNotification(id)) {
+        // using getNotification here also has the side effect of not allowing deactivated notifications to be deleted. TBD: Ask if this is a desired behaviour
+        throw new Error(`Unknown Notification (${id})`);
+    } else if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
+        throw new Error('Cannot delete a notification which has concrete notifications.');
+    }
+
+    await prisma.notification.delete({
+        where: { id },
+    });
+
+    return true;
+}
+
 /* Imports Changes to the Notification System
    If overwrite is set, all existing notifications will be dropped and the passed notifications will be recreated exactly as they are.
    Unless apply is set, the transaction is rolled back and no import is actually done. This is an extra safety net to not break the notification system
