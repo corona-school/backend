@@ -200,7 +200,7 @@ export const mailjetChannel: Channel = {
         }
 
         // Create a new login token
-        let authToken = null;
+        let authToken = undefined;
         if (!notification.onActions.includes('user-email-change')) {
             authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
         }
@@ -230,7 +230,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID,
             TemplateLanguage: true,
-            Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '', authToken: authToken },
+            Variables: { authToken, ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '' },
             Attachments: context.attachments,
             CustomID: `${concreteID}`,
             TemplateErrorReporting: {
