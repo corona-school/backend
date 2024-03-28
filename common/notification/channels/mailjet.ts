@@ -200,7 +200,10 @@ export const mailjetChannel: Channel = {
         }
 
         // Create a new login token
-        const authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
+        let authToken = undefined;
+        if (!notification.onActions.includes('user-email-change')) {
+            authToken = await createSecretEmailToken(to, undefined, moment().add(7, 'days'));
+        }
 
         // For campaigns, support notifications with a custom mailjet template for each campaign
         // This feature is restricted to Notifications that provide a sample_context (= Campaign Notifications),
@@ -227,7 +230,7 @@ export const mailjetChannel: Channel = {
             ],
             TemplateID,
             TemplateLanguage: true,
-            Variables: { ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '', authToken },
+            Variables: { authToken, ...context, attachmentGroup: attachments ? attachments.attachmentListHTML : '' },
             Attachments: context.attachments,
             CustomID: `${concreteID}`,
             TemplateErrorReporting: {
