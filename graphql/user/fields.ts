@@ -181,7 +181,6 @@ export class UserFieldsResolver {
                     verification: null,
                     pupil_screening: {
                         some: {
-                            invalidated: false,
                             status: 'success',
                         },
                     },

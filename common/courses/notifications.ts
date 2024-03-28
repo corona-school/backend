@@ -119,7 +119,6 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
             isParticipant: true,
             pupil_screening: {
                 some: {
-                    invalidated: false,
                     status: 'success',
                 },
             },
