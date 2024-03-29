@@ -87,7 +87,7 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.OWNER)
-    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<Boolean> {
+    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         const result = await deleteCourse(course);

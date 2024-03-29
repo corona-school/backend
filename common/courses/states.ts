@@ -107,12 +107,12 @@ export async function deleteCourse(course: Course) {
         throw new ValidationError(`Cannot delete Course ${course.id}, reason: ${can.reason}`);
     }
 
-    prisma.course.delete({ where: { id: course.id } });
+    await prisma.course.delete({ where: { id: course.id } });
 }
 
 /* ------------------ Subcourse Delete ------------- */
 
-export async function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
+export function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
     if (subcourse.published) {
         return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
     } else {
