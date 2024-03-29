@@ -113,11 +113,13 @@ export async function deleteCourse(course: Course) {
 /* ------------------ Subcourse Delete ------------- */
 
 export function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
-    if (subcourse.published) {
-        return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
-    } else {
-        return { allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` };
-    }
+    return new Promise<Decision>((resolve) => {
+        if (subcourse.published) {
+            resolve({ allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` });
+        } else {
+            resolve({ allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` });
+        }
+    });
 }
 
 export async function deleteSubcourse(subcourse: Subcourse) {

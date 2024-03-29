@@ -203,7 +203,7 @@ export class MutateSubcourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
-    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
+    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
