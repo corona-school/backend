@@ -205,11 +205,8 @@ export class MutateSubcourseResolver {
     async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<Boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
-        console.log(`Got subcourse ${subcourseId}`);
         await hasAccess(context, 'Subcourse', subcourse);
-        console.log('We have access');
         await deleteSubcourse(subcourse);
-        console.log('Deleted subcourse');
         return true;
     }
 

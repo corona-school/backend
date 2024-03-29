@@ -415,7 +415,6 @@ void test('Delete course', async () => {
         )
         .then(async () => {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
-            console.log(subcourse);
             assert.ok(!subcourse);
         });
 
