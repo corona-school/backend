@@ -208,7 +208,7 @@ export class MutateSubcourseResolver {
         console.log(`Got subcourse ${subcourseId}`);
         await hasAccess(context, 'Subcourse', subcourse);
         console.log('We have access');
-        deleteSubcourse(subcourse);
+        await deleteSubcourse(subcourse);
         console.log('Deleted subcourse');
         return true;
     }
