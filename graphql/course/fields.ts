@@ -81,11 +81,13 @@ export class ExtendedFieldsCourseResolver {
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         const courseSearchFilters = await courseSearch(search);
+
         const courses = await prisma.course.findMany({
             where: {
-                OR: [
+                AND: [
+                    courseSearchFilters,
                     {
-                        AND: [
+                        OR: [
                             {
                                 course_instructors_student: {
                                     some: {
@@ -93,17 +95,17 @@ export class ExtendedFieldsCourseResolver {
                                     },
                                 },
                             },
-                            courseSearchFilters,
+                            {
+                                shared: true,
+                            },
                         ],
-                    },
-                    {
-                        shared: true,
                     },
                 ],
             },
             take,
             skip,
         });
+
         return courses;
     }
 }
