@@ -1,9 +1,11 @@
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { User, userForStudent } from '../user';
+import { User, getUser, userForStudent } from '../user';
 import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zoom/scheduled-meeting';
 import { student as Student, lecture as Appointment } from '@prisma/client';
 import { getOrCreateZoomUser } from '../zoom/user';
+import * as Notification from '../notification';
+import { getAppointmentForNotification, getContextForGroupAppointmentReminder } from './util';
 
 const logger = getLogger('Appointment Participants');
 
@@ -22,6 +24,9 @@ export async function isAppointmentParticipant(lecture: Appointment, user: User)
 }
 
 export async function addGroupAppointmentsParticipant(subcourseId: number, userId: string) {
+    const user = await getUser(userId);
+    const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
+
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(userId)) {
             logger.info(`User(${userId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
@@ -34,11 +39,19 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
 
         await prisma.lecture.update({ where: { id: lecture.id }, data: { participantIds: { push: userId } } });
         logger.info(`User(${userId}) added as participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+
+        await Notification.actionTakenAt(
+            new Date(lecture.start),
+            user,
+            'pupil_group_appointment_starts',
+            await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
+        );
     }
 }
 
 export async function removeGroupAppointmentsParticipant(subcourseId: number, userId: string) {
     const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { hasSome: userId }, start: { gte: new Date() } } });
+    const user = await getUser(userId);
 
     await Promise.all(
         appointments.map(async (a) => {
@@ -50,12 +63,18 @@ export async function removeGroupAppointmentsParticipant(subcourseId: number, us
             });
 
             logger.info(`Removed User(${userId}) from Appointment(${a.id}) of Subcourse(${subcourseId})`);
+
+            await Notification.actionTaken(user, 'cancel_group_appointment_reminder', {
+                appointment: getAppointmentForNotification(a),
+                uniqueId: a.id.toString(),
+            });
         })
     );
 }
 
 export async function addGroupAppointmentsOrganizer(subcourseId: number, organizer: Student) {
     const organizerId = userForStudent(organizer).userID;
+    const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(organizerId)) {
@@ -75,6 +94,13 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
             const zoomUser = await getOrCreateZoomUser(organizer);
             await addOrganizerToZoomMeeting(lecture, zoomUser);
         }
+
+        await Notification.actionTakenAt(
+            new Date(lecture.start),
+            userForStudent(organizer),
+            'student_group_appointment_starts',
+            await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
+        );
     }
 }
 

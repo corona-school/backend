@@ -58,11 +58,14 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;
-    const lastAppointment = await prisma.lecture.findFirst({ where: { matchId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
 
-    // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
+    // the correct meeting link is provided via appointmentsToBeCreated.
+    // Cases:
+    // - override meeting link is adopted
+    // - new override meeting link
+    // - create zoom meeting
     let hosts: ZoomUser[] | null = null;
-    if (isZoomFeatureActive() && !lastAppointment?.override_meeting_link && !appointmentsToBeCreated[0].meetingLink) {
+    if (isZoomFeatureActive() && !appointmentsToBeCreated[0].meetingLink) {
         hosts = await hostsForStudents([student]);
     }
 
@@ -85,7 +88,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                     organizerIds: [studentUserId],
                     participantIds: [pupilUserId],
                     zoomMeetingId,
-                    override_meeting_link: appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link,
+                    override_meeting_link: appointmentToBeCreated.meetingLink,
                 },
             });
         })
@@ -163,19 +166,26 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
         // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                student: organizer,
-            });
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForPupil(participant.pupil),
+                'pupil_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+            );
         }
     }
 
     for (const instructor of instructors) {
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                student: organizer,
-            });
+            if (subcourse.published) {
+                // For unpublished courses, this is deferred to a later point
+                await Notification.actionTakenAt(
+                    new Date(appointment.start),
+                    userForStudent(instructor.student),
+                    'student_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+                );
+            }
         }
     }
 

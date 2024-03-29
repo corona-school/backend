@@ -32,6 +32,11 @@ const sampleCourse = {
     },
 };
 
+const sampleAchievementCourse = {
+    course: { name: 'Apollo' },
+    subcourse: { id: '1' },
+};
+
 const sampleAppointment = {
     start_day: 'Sonntag',
     start_date: '20. Juli 1969',
@@ -108,6 +113,18 @@ const _notificationActions = {
     },
     pupil_screening_dispute: {
         description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_succeeded: {
+        description: 'Pupil / Screening after registration was successful',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_rejected: {
+        description: 'Pupil / Screening after registration was rejected',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_missed: {
+        description: 'Pupil / Screening after registration was missed',
         sampleContext: {},
     },
     pupil_registration_finished: {
@@ -210,21 +227,21 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
     instructor_course_submitted: {
         description: 'Instructor / Course submitted for review',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
     instructor_course_approved: {
         description: 'Instructor / Course approved',
         sampleContext: {
-            courseName: 'Beispielkurs',
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
         },
     },
@@ -512,21 +529,14 @@ const _notificationActions = {
         sampleContext: {},
     },
     student_add_appointment_group: {
-        description: 'Student / Group Appointment Added',
-        sampleContext: {
-            student: sampleUser,
-            ...sampleCourse,
-        },
-    },
-    student_add_appointments_group: {
-        description: 'Student / Group Appointments Added',
+        description: 'Participant / Instructor added Group Appointment',
         sampleContext: {
             student: sampleUser,
             ...sampleCourse,
         },
     },
     student_add_appointment_match: {
-        description: 'Student / Match Appointment Added',
+        description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
             student: sampleUser,
             matchId: '1',
@@ -548,7 +558,7 @@ const _notificationActions = {
         },
     },
     student_cancel_appointment_group: {
-        description: 'Student / Group Appointment Cancelled',
+        description: 'Participant / Group Appointment Cancelled by Instructor',
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
@@ -595,37 +605,49 @@ const _notificationActions = {
     },
     pupil_match_appointment_starts: {
         description: 'Remind pupil of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            student: { firstname: 'Student' },
+        },
     },
     student_match_appointment_starts: {
         description: 'Remind student of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            pupil: { firstname: 'Pupil' },
+        },
     },
     pupil_group_appointment_starts: {
         description: 'Remind pupil of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     student_group_appointment_starts: {
         description: 'Remind student of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     cancel_group_appointment_reminder: {
         description: 'Cancel / group appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },
     cancel_match_appointment_reminder: {
         description: 'Cancel / match appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },
@@ -684,12 +706,13 @@ const _notificationActions = {
         description: 'Student joined a match meeting',
         sampleContext: {
             relation: 'match/1',
-            name: 'Max Muster',
+            partner: { firstname: 'Puipl' },
         },
     },
     student_joined_subcourse_meeting: {
         description: 'Student joined subcourse meeting',
         sampleContext: {
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
         },
@@ -702,18 +725,27 @@ const _notificationActions = {
         description: 'Pupil joined a match meeting',
         sampleContext: {
             relation: 'match/1',
-            name: 'Max Muster',
+            partner: { firstname: 'Student' },
         },
     },
     pupil_joined_subcourse_meeting: {
         description: 'Pupil joined subcourse meeting',
         sampleContext: {
+            ...sampleAchievementCourse,
             relation: 'subcourse/1',
             subcourseLecturesCount: '5',
         },
     },
     pupil_presence_in_meeting: {
         description: 'Pupil joined a meeting',
+        sampleContext: {},
+    },
+    user_original_corona_school: {
+        description: 'User Original Corona School',
+        sampleContext: {},
+    },
+    user_original_lern_fair: {
+        description: 'User Original Lern Fair',
         sampleContext: {},
     },
     TEST: {

@@ -102,7 +102,8 @@ export class MutateSubcourseResolver {
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
         await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
-            courseName: course.name,
+            course: { name: course.name },
+            subcourse: { id: result.id.toString() },
             relation: `subcourse/${result.id}`,
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);

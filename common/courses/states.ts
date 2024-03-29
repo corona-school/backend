@@ -24,6 +24,7 @@ import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './no
 import * as Notification from '../../common/notification';
 import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
 import { ValidationError } from 'apollo-server-express';
+import { getContextForGroupAppointmentReminder } from '../appointment/util';
 
 const logger = getLogger('Course States');
 
@@ -169,11 +170,25 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     await Promise.all(
         subcourse.subcourse_instructors_student.map((instructor) =>
             Notification.actionTaken(userForStudent(instructor.student), 'instructor_course_approved', {
-                courseName: course.name,
+                course: { name: course.name },
+                subcourse: { id: subcourse.id.toString() },
                 relation: `subcourse/${subcourse.id}`,
             })
         )
     );
+
+    const subcourseAppointments = await prisma.lecture.findMany({ where: { isCanceled: false, subcourseId: subcourse.id } });
+
+    for (const { student: instructor } of subcourse.subcourse_instructors_student) {
+        for (const appointment of subcourseAppointments) {
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForStudent(instructor),
+                'student_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, course)
+            );
+        }
+    }
 }
 
 /* ---------------- Subcourse Cancel ------------ */
@@ -291,7 +306,8 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
 
     const { name } = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { name: true } });
     await Notification.actionTaken(userForStudent(newInstructor), 'instructor_course_created', {
-        courseName: name,
+        course: { name },
+        subcourse: { id: subcourse.id.toString() },
         relation: `subcourse/${subcourse.id}`,
     });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);

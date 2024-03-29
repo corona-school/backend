@@ -269,18 +269,6 @@ void test('Reward student regular learning', async () => {
     assert.notStrictEqual(achievement, null);
     assert.strictEqual(achievement!.recordValue, 1);
 
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    await prisma.achievement_event.create({
-        data: {
-            userId: student.userID,
-            metric: metric,
-            value: 1,
-            createdAt: date,
-            action: 'student_joined_match_meeting',
-            relation: 'match/' + match.id,
-        },
-    });
     // request to set the achievements record value to 2 due to the past event generated
     await client.request(`
         mutation StudentJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
@@ -301,7 +289,6 @@ void test('Reward student regular learning', async () => {
         where: {
             userId: student.userID,
             metric: metric,
-            relation: `match/${match.id}`,
         },
     });
 
@@ -360,18 +347,6 @@ void test('Reward pupil regular learning', async () => {
     assert.notStrictEqual(achievement, null);
     assert.strictEqual(achievement.recordValue, 1);
 
-    const date = new Date();
-    date.setDate(date.getDate() - 7);
-    await prisma.achievement_event.create({
-        data: {
-            userId: pupil.userID,
-            metric: metric,
-            value: 1,
-            createdAt: date,
-            action: 'pupil_joined_match_meeting',
-            relation: 'match/' + match.id,
-        },
-    });
     // request to set the achievements record value to 2 due to the past event generated
     await client.request(`
         mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
@@ -380,7 +355,7 @@ void test('Reward pupil regular learning', async () => {
     await prisma.achievement_event.deleteMany({
         where: {
             userId: pupil.userID,
-            metric: 'pupil_match_regular_learning',
+            metric: 'pupil_match_learned_regular',
         },
     });
     await client.request(`
@@ -577,11 +552,15 @@ function generateLectures(dates: Date[], match: Match, organizerID: string, part
 }
 
 async function createTemplate(template: Partial<AchievementTemplateCreate>, skipActivation = false) {
+    const createInputData = {
+        ...template,
+        conditionDataAggregations: JSON.stringify(template.conditionDataAggregations),
+    };
     const result = await adminClient.request(
         `mutation CreateTemplate($template: AchievementTemplateCreateInput!) {
         achievementTemplateCreate(data: $template)
     }`,
-        { template }
+        { template: createInputData }
     );
 
     if (!skipActivation) {
