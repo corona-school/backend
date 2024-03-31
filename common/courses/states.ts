@@ -95,9 +95,9 @@ export async function denyCourse(course: Course, screeningComment: string | null
 export async function canDeleteCourse(course: Course): Promise<Decision> {
     const subcoursesForCourse = await getSubcoursesForCourse(course.id, false);
     if (subcoursesForCourse.length == 0) {
-        return { allowed: true, reason: `Course ${course.id} has no subcourses` };
+        return { allowed: true };
     } else {
-        return { allowed: false, reason: `Course ${course.id} has subcourses` };
+        return { allowed: false, reason: `has-subcourses` };
     }
 }
 
@@ -115,9 +115,9 @@ export async function deleteCourse(course: Course) {
 
 export function canDeleteSubcourse(subcourse: Subcourse) {
     if (subcourse.published) {
-        return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
+        return { allowed: false, reason: `is-published` };
     } else {
-        return { allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` };
+        return { allowed: true };
     }
 }
 
