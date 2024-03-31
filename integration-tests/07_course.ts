@@ -106,7 +106,103 @@ const courseOne = test('Create Course One', async () => {
     return { courseId };
 });
 
-export const subcourseOne = test('Create Subcourse', async () => {
+const courseTwo = test('Create Course Two', async () => {
+    const { client } = await screenedInstructorOne;
+    const {
+        courseCreate: { id: courseId, isInstructor, courseState },
+    } = await client.request(`
+        mutation CreateCourse {
+            courseCreate(course:{
+            name: "Wie schreibe ich Integrationstests"
+            outline: "Am besten gar nicht, ist viel zu viel Arbeit"
+            description: "Why should I test if my users can do that for me in production?"
+            category: club
+            allowContact: true
+            subject: Informatik
+            schooltype: gymnasium
+        }) {
+            id
+            isInstructor
+            courseState
+        }
+        }
+    `);
+
+    assert.ok(isInstructor);
+    assert.strictEqual(courseState, 'created');
+
+    await client.request(`mutation SubmitCourse { courseSubmit(courseId: ${courseId}) }`);
+
+    const {
+        me: {
+            student: { coursesInstructing },
+        },
+    } = await client.request(`
+        query GetCoursesInstructing {
+            me {
+                student {
+                    coursesInstructing {
+                        id
+                        courseState
+                    }
+                }
+            }
+        }
+    `);
+
+    assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
+
+    // Admin Course Search
+    const { courseSearch } = await adminClient.request(`
+        query AdminFindsCourseByName {
+            courseSearch(search: "integrationstest", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+        query AdminFindsCourseByOutline {
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch3 } = await adminClient.request(`
+        query AdminFindsCourseBySubject {
+            courseSearch(search: "informatik", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch3.some((it) => it.id === courseId));
+
+    await adminClient.request(`
+        mutation AllowCourse {
+            courseAllow(courseId: ${courseId} screeningComment: "Kreative Kursbeschreibung!")
+        }
+    `);
+
+    const {
+        me: {
+            student: { coursesInstructing: coursesInstructing2 },
+        },
+    } = await client.request(`
+        query GetCoursesInstructing {
+            me {
+                student {
+                    coursesInstructing {
+                        id
+                        courseState
+                    }
+                }
+            }
+        }
+    `);
+
+    assert.ok(coursesInstructing2.some((it) => it.id === courseId && it.courseState === 'allowed'));
+
+    return { courseId };
+});
+
+export const subcourseOne = test('Create Subcourse one', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
     const nextMonth = new Date();
@@ -114,6 +210,43 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     const { client, instructor } = await screenedInstructorOne;
     const { courseId } = await courseOne;
+
+    const {
+        subcourseCreate: { id: subcourseId },
+    } = await client.request(`
+        mutation CreateSubcourse {
+            subcourseCreate(courseId: ${courseId} subcourse: {
+                minGrade: 5
+                maxGrade: 10
+                maxParticipants: 1
+                joinAfterStart: true
+                allowChatContactProspects: true
+                allowChatContactParticipants: true
+                groupChatType: ${ChatType.NORMAL}
+            }) { id }
+        }
+    `);
+
+    const { subcoursesPublic } = await client.request(`
+        query PublicSubcourses {
+            subcoursesPublic(take: 100) { id }
+        }
+    `);
+
+    // Does not yet appear in public subcourses
+    assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
+
+    return { subcourseId, client, instructor, courseId };
+});
+
+export const subcourseTwo = test('Create Subcourse two', async () => {
+    const nextMinute = new Date();
+    nextMinute.setMinutes(nextMinute.getMinutes() + 1);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const { client, instructor } = await screenedInstructorOne;
+    const { courseId } = await courseTwo;
 
     const {
         subcourseCreate: { id: subcourseId },
@@ -393,7 +526,7 @@ void test('Add / Remove another instructor', async () => {
 });
 
 void test('Delete course', async () => {
-    const { courseId, client: courseClient, subcourseId } = await subcourseOne;
+    const { courseId, client: courseClient, subcourseId } = await subcourseTwo;
 
     await courseClient.requestShallFail(
         `
