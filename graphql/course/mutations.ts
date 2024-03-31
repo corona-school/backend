@@ -91,7 +91,6 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         const result = await deleteCourse(course);
-        logger.info(`Course (${courseId}) deleted successfully`);
         return true;
     }
 
