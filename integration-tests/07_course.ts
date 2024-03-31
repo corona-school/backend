@@ -6,7 +6,6 @@ import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
-import { ValidationError } from 'apollo-server-express';
 import { prisma } from '../common/prisma';
 
 const appointmentTitle = 'Group Appointment 1';
@@ -396,14 +395,11 @@ void test('Add / Remove another instructor', async () => {
 void test('Delete course', async () => {
     const { courseId, client: courseClient, subcourseId } = await subcourseOne;
 
-    await courseClient
-        .request(
-            `
+    await courseClient.requestShallFail(
+        `
         mutation DeleteCourseWithSubcourses {courseDelete(courseId: ${courseId})}      
     `
-        )
-        .then(() => assert.fail('Deletion should fail since course has subcourses'))
-        .catch(() => assert.ok('Deletion failed successfully'));
+    );
 
     await prisma.subcourse.updateMany({ where: { id: subcourseId }, data: { published: false } });
 

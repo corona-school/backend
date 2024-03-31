@@ -108,18 +108,17 @@ export async function deleteCourse(course: Course) {
     }
 
     await prisma.course.delete({ where: { id: course.id } });
+    logger.info(`Course (${course.id}) deleted successfully`);
 }
 
 /* ------------------ Subcourse Delete ------------- */
 
-export function canDeleteSubcourse(subcourse: Subcourse): Promise<Decision> {
-    return new Promise<Decision>((resolve) => {
-        if (subcourse.published) {
-            resolve({ allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` });
-        } else {
-            resolve({ allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` });
-        }
-    });
+export function canDeleteSubcourse(subcourse: Subcourse) {
+    if (subcourse.published) {
+        return { allowed: false, reason: `Subcourse ${subcourse.id} cannot be deleted because it is published` };
+    } else {
+        return { allowed: true, reason: `Subcourse ${subcourse.id} can be deleted because it is not published yet.` };
+    }
 }
 
 export async function deleteSubcourse(subcourse: Subcourse) {

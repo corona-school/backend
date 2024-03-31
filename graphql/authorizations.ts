@@ -587,7 +587,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             student: nobody,
             imageKey: nobody,
             _count: nobody,
-            shared: nobody,
         }),
     },
     Lecture: {
