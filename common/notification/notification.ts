@@ -154,6 +154,13 @@ export async function deleteOne(id: NotificationID) {
         throw new Error('Cannot delete a notification which has concrete notifications.');
     }
 
+    // If there is a related message_translation for this notification it has to be deleted first due to foreign key constraint
+    if ((await prisma.message_translation.count({ where: { notificationId: id } })) > 0) {
+        await prisma.message_translation.deleteMany({
+            where: { notificationId: id },
+        });
+    }
+
     await prisma.notification.delete({
         where: { id },
     });
