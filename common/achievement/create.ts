@@ -13,16 +13,7 @@ export async function findUserAchievement<ID extends ActionID>(
     userId: string,
     context: SpecificNotificationContext<ID>
 ): Promise<AchievementToCheck | null> {
-    let relation = context?.relation || null;
-    switch (templateFor) {
-        case AchievementTemplateFor.Global_Courses:
-            relation = 'subcourse';
-            break;
-        case AchievementTemplateFor.Global_Matches:
-            relation = 'match';
-            break;
-        default:
-    }
+    const relation = context?.relation || null;
     const userAchievement = await prisma.user_achievement.findFirst({
         where: {
             templateId,
@@ -57,16 +48,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     const achievementContext = isGlobal ? undefined : context;
 
     const templatesForGroup = templatesByGroup.get(currentTemplate.group)!.sort((a, b) => a.groupOrder - b.groupOrder);
-    let relation = context?.relation || null;
-    switch (currentTemplate.templateFor) {
-        case AchievementTemplateFor.Global_Courses:
-            relation = 'subcourse';
-            break;
-        case AchievementTemplateFor.Global_Matches:
-            relation = 'match';
-            break;
-        default:
-    }
+    const relation = context?.relation || null;
 
     const userAchievementsByGroup = await prisma.user_achievement.findMany({
         where: {

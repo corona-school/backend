@@ -7,9 +7,10 @@ import { accessURLForKey } from '../file-bucket';
 import { User, getUserTypeAndIdForUserId } from '../user';
 import { renderTemplate } from '../../utils/helpers';
 import { getLogger } from '../logger/logger';
-import { RelationTypes, BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
+import { BucketContextType, AchievementState, BucketEvents, TemplateContextType } from './types';
 import { SpecificNotificationContext, ActionID } from '../notification/actions';
 import { getCourseImageURL } from '../courses/util';
+import { EventRelationType, parseRelation } from './relation';
 
 const logger = getLogger('Achievement');
 
@@ -36,15 +37,6 @@ export async function getAchievementImageURL(template: achievement_template, sta
     return accessURLForKey(image);
 }
 
-function getRelationTypeAndId(relation: string): [type: RelationTypes, id: string] {
-    const validRelationTypes = ['match', 'subcourse'];
-    const [relationType, id] = relation.split('/');
-    if (!validRelationTypes.includes(relationType)) {
-        throw Error('No valid relation found in relation: ' + relationType);
-    }
-    return [relationType as RelationTypes, id];
-}
-
 type WhereInput = Prisma.matchWhereInput | Prisma.subcourseWhereInput;
 
 export async function getBucketContext(userID: string, relation?: string): Promise<BucketContextType> {
@@ -52,9 +44,9 @@ export async function getBucketContext(userID: string, relation?: string): Promi
 
     const whereClause: WhereInput = {};
 
-    let relationType: string | null = null;
+    let relationType: EventRelationType | null = null;
     if (relation) {
-        const [relationTypeTmp, relationId] = getRelationTypeAndId(relation);
+        const [relationTypeTmp, relationId] = parseRelation(relation);
         relationType = relationTypeTmp;
 
         if (relationId) {
@@ -72,7 +64,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
                 id: true,
                 lecture: {
                     where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
-                    select: { start: true, duration: true },
+                    select: { id: true, start: true, duration: true },
                 },
             },
         });
@@ -91,7 +83,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
                 id: true,
                 lecture: {
                     where: { NOT: { declinedBy: { hasSome: [`${userType}/${id}`] } } },
-                    select: { start: true, duration: true },
+                    select: { id: true, start: true, duration: true },
                 },
             },
         });
@@ -136,14 +128,14 @@ export function removeBucketsAfter(ts: Date, bucketEvents: BucketEvents[], keepB
         if (keepBucketsWithEvents && bucket.events.length > 0) {
             return true;
         }
-        return bucket.startTime <= ts;
+        return bucket.endTime <= ts;
     });
 }
 
 export function transformPrismaJson(user: User, relation: string | null, json: Prisma.JsonObject): TemplateContextType {
     const transformedJson: TemplateContextType = { user: user };
     if (relation) {
-        const [relationType, relationId] = getRelationTypeAndId(relation);
+        const [relationType, relationId] = parseRelation(relation);
         transformedJson[`${relationType}Id`] = relationId;
         transformedJson['relation'] = relation;
     }

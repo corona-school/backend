@@ -58,11 +58,14 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;
-    const lastAppointment = await prisma.lecture.findFirst({ where: { matchId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
 
-    // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
+    // the correct meeting link is provided via appointmentsToBeCreated.
+    // Cases:
+    // - override meeting link is adopted
+    // - new override meeting link
+    // - create zoom meeting
     let hosts: ZoomUser[] | null = null;
-    if (isZoomFeatureActive() && !lastAppointment?.override_meeting_link && !appointmentsToBeCreated[0].meetingLink) {
+    if (isZoomFeatureActive() && !appointmentsToBeCreated[0].meetingLink) {
         hosts = await hostsForStudents([student]);
     }
 
@@ -85,7 +88,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                     organizerIds: [studentUserId],
                     participantIds: [pupilUserId],
                     zoomMeetingId,
-                    override_meeting_link: appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link,
+                    override_meeting_link: appointmentToBeCreated.meetingLink,
                 },
             });
         })

@@ -10,8 +10,7 @@ import {
     updateAchievementTemplate,
 } from '../../common/achievement/template';
 import { ensureNoNullObject } from '../util';
-import { AchievementActionType, AchievementTemplateFor, AchievementType, ConditionDataAggregations } from '../../common/achievement/types';
-import { JSONResolver } from 'graphql-scalars';
+import { AchievementActionType, AchievementTemplateFor, AchievementType } from '../../common/achievement/types';
 import { Role } from '../authorizations';
 
 @InputType()
@@ -39,8 +38,8 @@ class AchievementTemplateCreateInput implements AchievementTemplateCreate {
 
     @Field()
     condition: string;
-    @Field((type) => JSONResolver)
-    conditionDataAggregations: ConditionDataAggregations;
+    @Field()
+    conditionDataAggregations: string;
     @Field()
     type: AchievementType;
     @Field()
@@ -83,8 +82,8 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
 
     @Field({ nullable: true })
     condition: string | null;
-    @Field((type) => JSONResolver, { nullable: true })
-    conditionDataAggregations: ConditionDataAggregations | null;
+    @Field({ nullable: true })
+    conditionDataAggregations: string | null;
     @Field({ nullable: true })
     type: AchievementType | null;
     @Field({ nullable: true })
@@ -106,7 +105,11 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
 export class MutateAchievementTemplateResolver {
     @Mutation((returns) => GraphQLInt)
     @Authorized(Role.ADMIN)
-    async achievementTemplateCreate(@Arg('data') data: AchievementTemplateCreateInput) {
+    async achievementTemplateCreate(@Arg('data') inputData: AchievementTemplateCreateInput) {
+        const data: AchievementTemplateCreate = {
+            ...inputData,
+            conditionDataAggregations: JSON.parse(inputData.conditionDataAggregations),
+        };
         const id = await createTemplate(data);
         return id;
     }
@@ -115,9 +118,13 @@ export class MutateAchievementTemplateResolver {
     @Authorized(Role.ADMIN)
     async achievementTemplateUpdate(
         @Arg('achievementTemplateId', (type) => GraphQLInt) achievementTemplateId: number,
-        @Arg('update') update: AchievementTemplateUpdateInput
+        @Arg('update') updateData: AchievementTemplateUpdateInput
     ) {
         // TODO: Currently one cannot set a field back to null :/
+        const update: AchievementTemplateUpdate = {
+            ...updateData,
+            conditionDataAggregations: updateData.conditionDataAggregations ? JSON.parse(updateData.conditionDataAggregations) : undefined,
+        };
         await updateAchievementTemplate(achievementTemplateId, ensureNoNullObject(update));
         return true;
     }

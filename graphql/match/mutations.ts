@@ -15,6 +15,9 @@ import { AuthenticationError } from '../error';
 import { dissolved_by_enum } from '@prisma/client';
 import { dissolve_reason } from '../generated';
 import { prisma } from '../../common/prisma';
+import { getFullName, getUserTypeAndIdForUserId } from '../../common/user';
+import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
+import { isDev } from '../../common/util/environment';
 
 @InputType()
 class MatchDissolveInput {
@@ -22,6 +25,14 @@ class MatchDissolveInput {
     matchId!: number;
     @TypeGraphQL.Field((_type) => [dissolve_reason])
     dissolveReasons!: dissolve_reason[];
+}
+
+@InputType()
+class MatchReportInput {
+    @TypeGraphQL.Field((_type) => Int)
+    matchId!: number;
+    @TypeGraphQL.Field((_type) => String)
+    description!: string;
 }
 
 @Resolver((of) => GraphQLModel.Match)
@@ -60,6 +71,48 @@ export class MutateMatchResolver {
         }
 
         await dissolveMatch(match, info.dissolveReasons, dissolver, dissolvedBy);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async matchReport(@Ctx() context: GraphQLContext, @Arg('report') report: MatchReportInput): Promise<boolean> {
+        const match = await getMatch(report.matchId);
+        await hasAccess(context, 'Match', match);
+
+        const reporter = context.user;
+        const [reporterType] = getUserTypeAndIdForUserId(reporter.userID);
+
+        let reported = null;
+        const reportedType = reporterType === 'student' ? 'pupil' : 'student';
+        reported = null;
+        if (reportedType === 'student') {
+            reported = await prisma.student.findUnique({ where: { id: match.studentId } });
+        } else {
+            reported = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
+        }
+
+        const userTypeLabel = {
+            student: 'Helfer:in',
+            pupil: 'Schüler:in',
+        };
+
+        let body =
+            `Meldende Person: ${reporter.email} (${userTypeLabel[reporterType]})\n` + `Gemeldete Person: ${reported.email} (${userTypeLabel[reportedType]})\n`;
+        if (report.description) {
+            body += `-----------------------------------------------------\n\n` + `Nachricht von ${reporter.firstname}: ${report.description}`;
+        }
+
+        await sendMail(
+            `User-App - ${getFullName(reporter)} hat ein Problem mit ${getFullName(reported)} gemeldet`,
+            body,
+            /* from */ DEFAULTSENDERS.noreply,
+            /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
+            /* from name */ 'User-App Problemmeldung Formular',
+            /* to name */ `Das beste Supportteam der Welt`,
+            /* reply to */ context.user.email,
+            /* reply to name */ getFullName(context.user)
+        );
         return true;
     }
 

@@ -71,4 +71,41 @@ export class ExtendedFieldsCourseResolver {
         const student = await getSessionStudent(context, studentId);
         return (await prisma.course_instructors_student.count({ where: { courseId: course.id, studentId: student.id } })) > 0;
     }
+
+    @Query((returns) => [Course])
+    @Authorized(Role.ADMIN, Role.OWNER, Role.INSTRUCTOR)
+    async templateCourses(
+        @Arg('studentId', { nullable: true }) studentId: number,
+        @Arg('search') search: string,
+        @Arg('take', () => GraphQLInt) take,
+        @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
+    ) {
+        const courseSearchFilters = await courseSearch(search);
+
+        const courses = await prisma.course.findMany({
+            where: {
+                AND: [
+                    courseSearchFilters,
+                    {
+                        OR: [
+                            {
+                                course_instructors_student: {
+                                    some: {
+                                        studentId: studentId,
+                                    },
+                                },
+                            },
+                            {
+                                shared: true,
+                            },
+                        ],
+                    },
+                ],
+            },
+            take,
+            skip,
+        });
+
+        return courses;
+    }
 }

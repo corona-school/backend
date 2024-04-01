@@ -515,7 +515,10 @@ export class StatisticsResolver {
             },
         ];
         lifetimes.forEach(({ student_id, lifetime }) => {
-            buckets.find((b) => b.from <= lifetime * 1000 && (b.to > lifetime * 1000 || b.to === -1)).value += 1;
+            if (lifetime > 0) {
+                // sometimes, the initial screening took place after the last action for historical purposes, we don't want to count those accounts...
+                buckets.find((b) => b.from <= lifetime * 1000 && (b.to > lifetime * 1000 || b.to === -1)).value += 1;
+            }
         });
         return buckets;
     }

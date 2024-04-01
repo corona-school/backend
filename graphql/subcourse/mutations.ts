@@ -73,7 +73,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -81,7 +81,19 @@ export class MutateSubcourseResolver {
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
-        await hasAccess(context, 'Course', course);
+        const student = await getSessionStudent(context, studentId);
+
+        const courseInstructorAssociation = await prisma.course_instructors_student.findFirst({
+            where: {
+                courseId: courseId,
+                studentId: student.id,
+            },
+        });
+        const isCourseSharedOrOwned = !!courseInstructorAssociation || course.shared;
+        if (!isCourseSharedOrOwned) {
+            logger.error(`Course(${courseId}) is not shared or Student(${studentId}) is not an instructor of this course`);
+            throw new PrerequisiteError('This course is not shared or you are not the instructor of this course!');
+        }
 
         const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
         const result = await prisma.subcourse.create({
@@ -97,12 +109,11 @@ export class MutateSubcourseResolver {
                 groupChatType,
             },
         });
-
-        const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
         await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
-            courseName: course.name,
+            course: { name: course.name },
+            subcourse: { id: result.id.toString() },
             relation: `subcourse/${result.id}`,
         });
         logger.info(`Subcourse(${result.id}) was created for Course(${courseId}) and Student(${student.id})`);

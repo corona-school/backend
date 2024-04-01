@@ -5,11 +5,21 @@ import { AchievementState, AchievementType, PublicAchievement, PublicStep } from
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
 import { getAchievementImageURL } from './util';
 import { isDefined } from './util';
-import { isAchievementConditionMet } from '.';
+import { isAchievementConditionMet } from './evaluate';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('Achievement');
 
 export async function getUserAchievementsWithTemplates(user: User) {
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, AND: { template: { isActive: true } } },
+        where: {
+            userId: user.userID,
+            template: { isActive: true },
+            // This will ensure that we only get achievements that are either not streaks or have a recordValue of at least 1
+            // Otherwise, we would get all streaks that have not been started yet.
+            // This can happen if an event related to a streak was emitted, but does not match any bucket, like "join on time".
+            OR: [{ recordValue: null }, { recordValue: { gt: 0 } }],
+        },
         include: { template: true },
     });
     return userAchievementsWithTemplates;
@@ -47,10 +57,7 @@ const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]>
 // Inactive achievements are achievements that are not yet existing but could be achieved in the future.
 // They are created for every template in a Tiered achievements group that is not yet used as a achievement for a specific user.
 const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> => {
-    const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, template: { isActive: true } },
-        include: { template: true },
-    });
+    const userAchievements = await getUserAchievementsWithTemplates(user);
 
     const groups = Array.from(new Set(userAchievements.map((ua) => ua.template.group)));
     const templates = Array.from(new Set(userAchievements.map((ua) => ua.templateId)));
@@ -152,36 +159,37 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
 
     let maxValue: number = achievementTemplates.length;
     let currentValue: number = currentAchievementIndex;
-    if (
-        userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK ||
-        userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED
-    ) {
-        const dataAggregationKeys = Object.keys(userAchievements[currentAchievementIndex].template.conditionDataAggregations as Prisma.JsonObject);
+    if (userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK) {
         const evaluationResult = await isAchievementConditionMet(userAchievements[currentAchievementIndex]);
-        if (evaluationResult) {
-            currentValue = dataAggregationKeys.map((key) => evaluationResult.resultObject[key]).reduce((a, b) => a + b, 0);
-            maxValue =
-                userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK
-                    ? userAchievements[currentAchievementIndex].recordValue !== null && userAchievements[currentAchievementIndex].recordValue > currentValue
-                        ? userAchievements[currentAchievementIndex].recordValue
-                        : currentValue
-                    : dataAggregationKeys
-                          .map((key) => {
-                              // TODO: check if we can remove valueToAchieve
-                              return Number((userAchievements[currentAchievementIndex].template.conditionDataAggregations as any)[key].valueToAchieve || 0);
-                          })
-                          .reduce((a, b) => a + b, 0);
-            if (
-                userAchievements[currentAchievementIndex].template.type === AchievementType.STREAK &&
-                currentValue < maxValue &&
-                userAchievements[currentAchievementIndex].achievedAt
-            ) {
-                await prisma.user_achievement.update({
-                    where: { id: userAchievements[currentAchievementIndex].id },
-                    data: { achievedAt: null, isSeen: false },
-                });
-            }
+        currentValue = evaluationResult.aggregationResult;
+        maxValue = userAchievements[currentAchievementIndex].recordValue;
+
+        // Streaks are usually invalidated if a user does not show up for a certain meeting / course / etc.
+        // This means we don't have an event to reevaluate the streak naturally.
+        // There are two ways to solve this:
+        // 1. We could reevaluate the streak every time the user opens the app.
+        // 2. We could create a cronjob that reevaluates all streaks every now and then.
+        // As the cron would be more complex and less efficient, we chose the first option, which is implemented here:
+        if (evaluationResult.shouldInvalidateStreak) {
+            logger.info('Streak will be invalidated', {
+                userId: user.userID,
+                achievementId: userAchievements[currentAchievementIndex].id,
+                currentValue,
+                maxValue,
+            });
+            await prisma.user_achievement.update({
+                where: { id: userAchievements[currentAchievementIndex].id },
+                data: { achievedAt: null, isSeen: false },
+            });
         }
+    }
+    if (userAchievements[currentAchievementIndex].template.type === AchievementType.TIERED) {
+        const evaluationResult = await isAchievementConditionMet(userAchievements[currentAchievementIndex]);
+        const {
+            template: { conditionDataAggregations },
+        } = userAchievements[currentAchievementIndex];
+        currentValue = evaluationResult.aggregationResult;
+        maxValue = Object.keys(conditionDataAggregations).reduce((acc, key) => acc + conditionDataAggregations[key].valueToAchieve, 0);
     }
 
     const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);

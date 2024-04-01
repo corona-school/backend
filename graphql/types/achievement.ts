@@ -26,6 +26,9 @@ export class Achievement implements PublicAchievement {
     @Field()
     description: string;
 
+    @Field({ nullable: true })
+    footer?: string;
+
     @Field()
     image: string;
 
