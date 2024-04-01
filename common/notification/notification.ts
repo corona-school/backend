@@ -148,8 +148,7 @@ export async function create(notification: Prisma.notificationCreateInput) {
 }
 
 export async function deleteOne(id: NotificationID) {
-    if (!getNotification(id)) {
-        // using getNotification here also has the side effect of not allowing deactivated notifications to be deleted. TBD: Ask if this is a desired behaviour
+    if (!getNotification(id, true)) {
         throw new Error(`Unknown Notification (${id})`);
     } else if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
         throw new Error('Cannot delete a notification which has concrete notifications.');
