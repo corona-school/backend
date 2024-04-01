@@ -96,6 +96,20 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => GraphQLModel.Course)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const updatedCourse = await prisma.course.update({
+            where: { id: course.id },
+            data: { shared: shared },
+        });
+        logger.info(`Course(${course.id} was ${shared ? 'shared' : 'unshared'} by User(${context.user.userID})`);
+        return updatedCourse;
+    }
+
+    @Mutation((returns) => GraphQLModel.Course)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async courseEdit(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
