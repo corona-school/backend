@@ -536,25 +536,19 @@ void test('Delete course', async () => {
 
     await prisma.subcourse.updateMany({ where: { id: subcourseId }, data: { published: false } });
 
-    await courseClient
-        .request(
-            `
+    await courseClient.request(
+        `
         mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}      
     `
-        )
-        .then(async () => {
-            const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
-            assert.ok(!subcourse);
-        });
+    );
+    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+    assert.ok(!subcourse);
 
     //Test deletion of empty course => should work
 
-    await courseClient
-        .request(
-            `
+    await courseClient.request(
+        `
         mutation DeleteEmptyCourse {courseDelete(courseId: ${courseId})}      
     `
-        )
-        .then(() => assert.ok('Successfully deleted empty course'))
-        .catch(() => assert.fail('Something went wrong!'));
+    );
 });
