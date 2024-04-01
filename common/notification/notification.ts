@@ -148,7 +148,7 @@ export async function create(notification: Prisma.notificationCreateInput) {
 }
 
 export async function deleteOne(id: NotificationID) {
-    if (!getNotification(id, true)) {
+    if (!(await getNotification(id, true))) {
         throw new Error(`Unknown Notification (${id})`);
     } else if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
         throw new Error('Cannot delete a notification which has concrete notifications.');
