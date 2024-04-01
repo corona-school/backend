@@ -127,11 +127,17 @@ export async function deleteSubcourse(subcourse: Subcourse) {
         throw new ValidationError(`Cannot delete Subcourse ${subcourse.id}, reason: ${can.reason}`);
     }
     await prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
+    logger.info(`Deleted course participation certificate for subcourse ${subcourse.id}`);
     await prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
+    logger.info(`Deleted lectures for subcourse ${subcourse.id}`);
     await prisma.subcourse_instructors_student.deleteMany({ where: { subcourseId: subcourse.id } });
+    logger.info(`Deleted instructor assignments for subcourse ${subcourse.id}`);
     await prisma.subcourse_participants_pupil.deleteMany({ where: { subcourseId: subcourse.id } });
+    logger.info(`Deleted subcourse participants certificate for subcourse ${subcourse.id}`);
     await prisma.waiting_list_enrollment.deleteMany({ where: { subcourseId: subcourse.id } });
+    logger.info(`Deleted waitinglist enrollments for subcourse ${subcourse.id}`);
     const deleteResult = await prisma.subcourse.delete({ where: { id: subcourse.id } });
+    logger.info(`Deleted subcourse ${subcourse.id}`);
 }
 
 /* ------------------ Subcourse Publish ------------- */
