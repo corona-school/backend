@@ -577,6 +577,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'description'
             | 'createdAt'
             | 'updatedAt'
+            | 'shared'
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
