@@ -148,24 +148,21 @@ export async function create(notification: Prisma.notificationCreateInput) {
 }
 
 export async function deleteOne(id: NotificationID) {
-    if (!(await getNotification(id, true))) {
-        throw new Error(`Unknown Notification (${id})`);
-    } else if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
+    await getNotification(id, true); //throws error if notification doesn't exist
+    if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
         throw new Error('Cannot delete a notification which has concrete notifications.');
     }
 
     // If there is a related message_translation for this notification it has to be deleted first due to foreign key constraint
-    if ((await prisma.message_translation.count({ where: { notificationId: id } })) > 0) {
-        await prisma.message_translation.deleteMany({
-            where: { notificationId: id },
-        });
-    }
+    await prisma.message_translation.deleteMany({
+        where: { notificationId: id },
+    });
 
     await prisma.notification.delete({
         where: { id },
     });
 
-    return true;
+    logger.info(`Notification(${id}) deleted\n`);
 }
 
 /* Imports Changes to the Notification System

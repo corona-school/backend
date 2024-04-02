@@ -81,7 +81,7 @@ export class MutateNotificationResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async notificationDelete(@Arg('notificationId') notificationId: number): Promise<boolean> {
+    async notificationDelete(@Arg('notificationId', (type) => Int) notificationId: number): Promise<boolean> {
         await Notification.deleteOne(notificationId);
 
         return true;
