@@ -147,6 +147,24 @@ export async function create(notification: Prisma.notificationCreateInput) {
     return result;
 }
 
+export async function deleteOne(id: NotificationID) {
+    await getNotification(id, true); //throws error if notification doesn't exist
+    if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
+        throw new Error('Cannot delete a notification which has concrete notifications.');
+    }
+
+    // If there is a related message_translation for this notification it has to be deleted first due to foreign key constraint
+    await prisma.message_translation.deleteMany({
+        where: { notificationId: id },
+    });
+
+    await prisma.notification.delete({
+        where: { id },
+    });
+
+    logger.info(`Notification(${id}) deleted\n`);
+}
+
 /* Imports Changes to the Notification System
    If overwrite is set, all existing notifications will be dropped and the passed notifications will be recreated exactly as they are.
    Unless apply is set, the transaction is rolled back and no import is actually done. This is an extra safety net to not break the notification system
