@@ -3,7 +3,7 @@ import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-g
 import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
@@ -14,7 +14,7 @@ import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
-import { chat_type } from '../generated';
+import { chat_type, Subcourse } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
@@ -208,6 +208,16 @@ export class MutateSubcourseResolver {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
         logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user.userID})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
+        const { user } = context;
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        await deleteSubcourse(subcourse);
         return true;
     }
 
