@@ -62,6 +62,8 @@ export async function addTutorScreening(
 
     if (!batchMode) {
         if (screening.success) {
+            const asUser = userForStudent(student);
+            await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
         } else {
