@@ -380,7 +380,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
 
             email: adminOrOwnerOrScreener,
             verification: nobody,
-            verifiedAt: adminOrOwner,
+            verifiedAt: adminOrOwnerOrScreener,
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwnerOrScreener,
