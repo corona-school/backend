@@ -100,7 +100,7 @@ export class ExtendFieldsPupilResolver {
     @LimitEstimated(100)
     async logs(@Root() pupil: Required<Pupil>) {
         return await prisma.log.findMany({
-            where: { user: pupil.wix_id },
+            where: { userID: userForPupil(pupil).userID },
             orderBy: { createdAt: 'asc' },
         });
     }
