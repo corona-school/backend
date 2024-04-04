@@ -3,7 +3,7 @@ import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-g
 import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
-import { addSubcourseInstructor, cancelSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
@@ -14,7 +14,7 @@ import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
-import { chat_type } from '../generated';
+import { chat_type, Subcourse } from '../generated';
 import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
@@ -73,7 +73,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -81,7 +81,19 @@ export class MutateSubcourseResolver {
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Subcourse> {
         const course = await getCourse(courseId);
-        await hasAccess(context, 'Course', course);
+        const student = await getSessionStudent(context, studentId);
+
+        const courseInstructorAssociation = await prisma.course_instructors_student.findFirst({
+            where: {
+                courseId: courseId,
+                studentId: student.id,
+            },
+        });
+        const isCourseSharedOrOwned = !!courseInstructorAssociation || course.shared;
+        if (!isCourseSharedOrOwned) {
+            logger.error(`Course(${courseId}) is not shared or Student(${studentId}) is not an instructor of this course`);
+            throw new PrerequisiteError('This course is not shared or you are not the instructor of this course!');
+        }
 
         const { joinAfterStart, minGrade, maxGrade, maxParticipants, allowChatContactParticipants, allowChatContactProspects, groupChatType } = subcourse;
         const result = await prisma.subcourse.create({
@@ -97,8 +109,6 @@ export class MutateSubcourseResolver {
                 groupChatType,
             },
         });
-
-        const student = await getSessionStudent(context, studentId);
         await prisma.subcourse_instructors_student.create({ data: { subcourseId: result.id, studentId: student.id } });
 
         await Notification.actionTaken(userForStudent(student), 'instructor_course_created', {
@@ -198,6 +208,16 @@ export class MutateSubcourseResolver {
             await markConversationAsReadOnly(subcourse.conversationId);
         }
         logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user.userID})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
+        const { user } = context;
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        await deleteSubcourse(subcourse);
         return true;
     }
 

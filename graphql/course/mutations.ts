@@ -15,7 +15,7 @@ import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
-import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
+import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteSubcourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 import { userForStudent } from '../../common/user';
@@ -83,6 +83,29 @@ export class MutateCourseResolver {
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
         logger.info(`Course (${result.id}) created by Student (${student.id})`);
         return result;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+        const result = await deleteCourse(course);
+        return true;
+    }
+
+    @Mutation((returns) => GraphQLModel.Course)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const updatedCourse = await prisma.course.update({
+            where: { id: course.id },
+            data: { shared: shared },
+        });
+        logger.info(`Course(${course.id} was ${shared ? 'shared' : 'unshared'} by User(${context.user.userID})`);
+        return updatedCourse;
     }
 
     @Mutation((returns) => GraphQLModel.Course)

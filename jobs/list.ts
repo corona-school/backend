@@ -10,6 +10,7 @@ import { sendInactivityNotification } from './periodic/redact-inactive-accounts/
 import syncToWebflow from './periodic/sync-to-webflow';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
+import { assignOriginalAchievement } from './manual/assign_original_achievement';
 import migrateDissolveReasonEnum from './migrate-dissolve-reason-enum';
 export const allJobs = {
     cleanupSecrets,
@@ -25,6 +26,8 @@ export const allJobs = {
     notificationsEndedYesterday,
     checkReminders,
     migrateDissolveReasonEnum,
+
+    assignOriginalAchievement,
 
     // For Integration Tests only:
     NOTHING_DO_NOT_USE: async () => {

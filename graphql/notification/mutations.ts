@@ -81,6 +81,14 @@ export class MutateNotificationResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
+    async notificationDelete(@Arg('notificationId', (type) => Int) notificationId: number): Promise<boolean> {
+        await Notification.deleteOne(notificationId);
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
     async notificationSetMessageTranslation(
         @Arg('notificationId') notificationId: number,
         @Arg('language', { defaultValue: TranslationLanguage.de }) language: TranslationLanguage,

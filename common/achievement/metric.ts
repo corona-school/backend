@@ -40,9 +40,13 @@ const batchOfMetrics = [
     createMetric('pupil_onboarding_appointment_booked', ['pupil_calendly_appointment_booked'], () => {
         return 1;
     }),
-    createMetric('pupil_onboarding_screened', ['pupil_screening_appointment_done', 'pupil_screening_add', 'pupil_screening_succeeded'], () => {
-        return 1;
-    }),
+    createMetric(
+        'pupil_onboarding_screened',
+        ['pupil_screening_appointment_done', 'pupil_screening_add', 'pupil_screening_after_registration_succeeded'],
+        () => {
+            return 1;
+        }
+    ),
 
     /* CONDUCTED MATCH APPOINTMENT */
     createMetric('student_conducted_match_appointment', ['student_joined_match_meeting'], () => {
@@ -90,6 +94,14 @@ const batchOfMetrics = [
         return 1;
     }),
     createMetric('pupil_participated_in_meeting', ['pupil_presence_in_meeting'], () => {
+        return 1;
+    }),
+
+    /* Lern-Fair / Corona-School original */
+    createMetric('user_original_corona_school', ['user_original_corona_school'], () => {
+        return 1;
+    }),
+    createMetric('user_original_lern_fair', ['user_original_lern_fair'], () => {
         return 1;
     }),
 ];
