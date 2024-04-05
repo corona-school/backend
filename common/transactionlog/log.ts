@@ -55,7 +55,7 @@ export async function logTransaction<Type extends LogType>(logtype: Type, user: 
             data: {
                 logtype,
                 createdAt: new Date(),
-                user: user?.userID ?? 'unknown',
+                user: user?.wix_id ?? 'unknown',
                 userID: user?.userID ?? 'unknown',
                 data: JSON.stringify(data),
             },

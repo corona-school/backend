@@ -22,6 +22,9 @@ export type User = {
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
+
+    // TODO: Remove after userID migration
+    wix_id: string;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
@@ -105,6 +108,8 @@ function userForType(user: Pupil | Student | Screener, type: 'student' | 'pupil'
         active: user.active,
         lastLogin: user.lastLogin,
         [`${type}Id`]: user.id,
+        // TODO: Remove after userID migration
+        wix_id: (user as Pupil | Student)?.wix_id || '',
     };
 }
 
@@ -197,6 +202,8 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 email: true,
                 active: true,
                 lastLogin: true,
+                // TODO: Remove after userID migration
+                wix_id: true,
             },
         })
     ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` }));
@@ -216,6 +223,8 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 email: true,
                 active: true,
                 lastLogin: true,
+                // TODO: Remove after userID migration
+                wix_id: true,
             },
         })
     ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` }));
