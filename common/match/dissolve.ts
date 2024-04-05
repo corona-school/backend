@@ -44,7 +44,7 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
     }
     // by default, assume null is passed
     let dissolverUserForLog: User | null = dissolver as null;
-    // now, let's trust ont he dissolvedBy property to determine the right type for `dissolver`
+    // now, let's trust on the dissolvedBy property to determine the right type for `dissolver`
     if (dissolver && dissolvedBy === 'pupil') {
         dissolverUserForLog = userForPupil(dissolver as Pupil);
     } else if (dissolver && dissolvedBy === 'student') {
