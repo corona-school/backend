@@ -202,8 +202,6 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 email: true,
                 active: true,
                 lastLogin: true,
-                // TODO: Remove after userID migration
-                wix_id: true,
             },
         })
     ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` }));
@@ -223,8 +221,6 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 email: true,
                 active: true,
                 lastLogin: true,
-                // TODO: Remove after userID migration
-                wix_id: true,
             },
         })
     ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` }));
