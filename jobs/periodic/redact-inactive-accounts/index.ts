@@ -167,7 +167,11 @@ export default async function execute() {
     await prisma.log.deleteMany({
         where: {
             userID: {
-                in: [...persons.pupils.map((p) => userForPupil(p).userID), ...persons.students.map((s) => userForStudent(s).userID)], // ...persons.mentors.map((m) => m.wix_id)
+                in: [
+                    ...persons.pupils.map((p) => userForPupil(p).userID),
+                    ...persons.students.map((s) => userForStudent(s).userID),
+                    ...persons.mentors.map((m) => `mentor/${m.id}`),
+                ],
             },
         },
     });
