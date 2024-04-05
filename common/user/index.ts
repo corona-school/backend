@@ -24,7 +24,7 @@ export type User = {
     screenerId?: number;
 
     // TODO: Remove after userID migration
-    wix_id: string;
+    wix_id?: string;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
