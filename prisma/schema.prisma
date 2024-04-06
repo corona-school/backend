@@ -362,6 +362,7 @@ model log {
   createdAt DateTime         @default(now()) @db.Timestamp(6)
   // Instead of the UserID, this uses the WixID of pupils and students (which also happens to be a unique identifier)
   user      String           @db.VarChar
+  userID    String?           @db.VarChar
   // This is usually valid JSON:
   data      String           @db.VarChar
 }

@@ -31,7 +31,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         if (!skipCoC) {
             await scheduleCoCReminders(student);
         } else {
-            await logTransaction('skippedCoC', student, { screenerId: screener.id });
+            await logTransaction('skippedCoC', userForStudent(student), { screenerId: screener.id });
             logger.info(`Skipped CoC for Student (${student.id}) by Screener (${screener.id}) `);
         }
 
@@ -91,5 +91,5 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 
 export async function cancelCoCReminders(student: Student) {
     await Notification.actionTaken(userForStudent(student), 'coc_cancelled', {});
-    await logTransaction('cocCancel', student, { studentId: student.id });
+    await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
 }

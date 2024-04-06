@@ -9,6 +9,7 @@ import { UserInputError } from '../error';
 import { InterestConfirmationStatus, requestInterestConfirmation } from '../../common/match/interest';
 import { getLogger } from '../../common/logger/logger';
 import { v4 as uuid } from 'uuid';
+import { userForPupil } from '../../common/user';
 
 const logger = getLogger('MutateTutoringInterest');
 
@@ -33,7 +34,7 @@ async function changeStatus(token: string, status: InterestConfirmationStatus) {
     });
 
     const pupil = await getPupil(confirmation.pupilId);
-    await logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
+    await logTransaction('pupilInterestConfirmationRequestStatusChange', userForPupil(pupil), {
         changeDate: Date.now(),
         previousStatus: InterestConfirmationStatus.PENDING,
         newStatus: status,
@@ -72,7 +73,7 @@ export class MutateTutoringInterestConfirmationResolver {
             data: { token: uuid(), pupilId, status, invalidated: false },
         });
 
-        void logTransaction('pupilInterestConfirmationRequestStatusChange', pupil, {
+        void logTransaction('pupilInterestConfirmationRequestStatusChange', userForPupil(pupil), {
             changeDate: Date.now(),
             previousStatus: InterestConfirmationStatus.PENDING,
             newStatus: status,

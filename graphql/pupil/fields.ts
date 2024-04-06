@@ -95,16 +95,6 @@ export class ExtendFieldsPupilResolver {
         return await prisma.concrete_notification.findMany({ where: { userId: userForPupil(pupil).userID } });
     }
 
-    @FieldResolver((type) => [Log])
-    @Authorized(Role.ADMIN)
-    @LimitEstimated(100)
-    async logs(@Root() pupil: Required<Pupil>) {
-        return await prisma.log.findMany({
-            where: { user: pupil.wix_id },
-            orderBy: { createdAt: 'asc' },
-        });
-    }
-
     @FieldResolver((type) => [Subject])
     @Authorized(Role.USER, Role.SCREENER, Role.ADMIN)
     subjectsFormatted(@Root() pupil: Required<Pupil>) {

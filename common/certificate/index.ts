@@ -130,7 +130,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
         include: { student: true, pupil: true },
     });
 
-    await logTransaction('certificateRequest', requestor as any, { uuid: match.uuid });
+    await logTransaction('certificateRequest', userForStudent(requestor), { uuid: match.uuid });
 
     if (params.state === 'awaiting-approval') {
         await issueCertificateRequest(certificate);

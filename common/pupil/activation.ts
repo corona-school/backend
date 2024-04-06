@@ -21,7 +21,7 @@ export async function activatePupil(pupil: Pupil) {
         where: { id: pupil.id },
     });
 
-    await logTransaction('deActivate', pupil, { newStatus: true });
+    await logTransaction('deActivate', userForPupil(pupil), { newStatus: true });
     logger.info(`Reactivated Pupil(${pupil.id})`);
 
     return updatedPupil;
@@ -67,7 +67,7 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
         where: { id: pupil.id },
     });
 
-    await logTransaction('deActivate', pupil, { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForPupil(pupil), { newStatus: false, deactivationReason: reason });
     logger.info(`Deactivated Pupil(${pupil.id})`);
 
     return updatedPupil;

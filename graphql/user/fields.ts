@@ -1,4 +1,14 @@
-import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
+import {
+    Student,
+    Pupil,
+    Screener,
+    Secret,
+    Concrete_notification as ConcreteNotification,
+    Lecture,
+    StudentWhereInput,
+    PupilWhereInput,
+    Log,
+} from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -340,5 +350,15 @@ export class UserFieldsResolver {
     async zoomUserLicenses() {
         const zoomUsers = await getZoomUsers();
         return zoomUsers;
+    }
+
+    @FieldResolver((type) => [Log])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(100)
+    async logs(@Root() user: Required<User>) {
+        return await prisma.log.findMany({
+            where: { userID: user.userID },
+            orderBy: { createdAt: 'asc' },
+        });
     }
 }

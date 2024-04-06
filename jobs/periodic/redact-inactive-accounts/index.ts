@@ -4,6 +4,7 @@ import moment from 'moment';
 import { deleteAttachment } from '../../../common/attachments';
 import { ConcreteNotificationState } from '../../../common/notification/types';
 import { findAllPersons } from './query';
+import { userForPupil, userForStudent } from '../../../common/user';
 
 const logger = getLogger();
 
@@ -162,11 +163,15 @@ export default async function execute() {
         await deleteAttachment(attachment);
     }
 
-    // remove transaction logs where wix id corresponds to user who is to be redacted
+    // remove transaction logs where userID corresponds to user who is to be redacted
     await prisma.log.deleteMany({
         where: {
-            user: {
-                in: [...persons.pupils.map((p) => p.wix_id), ...persons.students.map((s) => s.wix_id), ...persons.mentors.map((m) => m.wix_id)],
+            userID: {
+                in: [
+                    ...persons.pupils.map((p) => userForPupil(p).userID),
+                    ...persons.students.map((s) => userForStudent(s).userID),
+                    ...persons.mentors.map((m) => `mentor/${m.id}`),
+                ],
             },
         },
     });

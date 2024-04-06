@@ -1,7 +1,7 @@
 import { dissolve_reason, dissolved_by_enum, match as Match, pupil as Pupil, student as Student } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { userForStudent, userForPupil } from '../user';
+import { userForStudent, userForPupil, User } from '../user';
 import { logTransaction } from '../transactionlog/log';
 // eslint-disable-next-line camelcase
 import { Project_match } from '../../graphql/generated';
@@ -42,8 +42,16 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
             await deleteZoomMeeting(lecture);
         }
     }
+    // by default, assume null is passed
+    let dissolverUserForLog: User | null = dissolver as null;
+    // now, let's trust on the dissolvedBy property to determine the right type for `dissolver`
+    if (dissolver && dissolvedBy === 'pupil') {
+        dissolverUserForLog = userForPupil(dissolver as Pupil);
+    } else if (dissolver && dissolvedBy === 'student') {
+        dissolverUserForLog = userForStudent(dissolver as Student);
+    }
 
-    await logTransaction('matchDissolve', dissolver, {
+    await logTransaction('matchDissolve', dissolverUserForLog, {
         matchId: match.id,
     });
 
