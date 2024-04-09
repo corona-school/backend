@@ -475,19 +475,6 @@ export async function _actionTakenAt<ID extends ActionID>(
         return;
     }
 
-    const userData = await queryUser(user, { createdAt: true, verification: true, verifiedAt: true });
-    // During the registration process, users might get emails before they are verified
-    // We generally allow this for 30 days, but then require verification at some point
-    const oldAccount = +userData.createdAt < +Date.now() - 30 * 24 * HOURS_TO_MS;
-    // Some actions are always allowed to trigger notifications, so that users can recover their account even after 30 days:
-    const isAlwaysAllowed = actionId === 'user-authenticate' || actionId === 'user-password-reset' || actionId === 'user-verify-email';
-
-    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
-    if (!isAlwaysAllowed && oldAccount && !userData.verifiedAt && userData.verification) {
-        logger.error(`Tried to trigger action '${actionId}' for unverified User(${user.userID}) who is unverified for more than 30 days`);
-        return;
-    }
-
     const startTime = Date.now();
 
     // Use this timestamp instead of Date.now(), as otherwise calculations might differ based on runtime:
@@ -613,6 +600,21 @@ export async function _actionTakenAt<ID extends ActionID>(
         }
 
         // --------------- Send out Notifications to send directly --------------------------------------
+        const userData = await queryUser(user, { createdAt: true, verification: true, verifiedAt: true });
+        // During the registration process, users might get emails before they are verified
+        // We generally allow this for 30 days, but then require verification at some point
+        const oldAccount = +userData.createdAt < +Date.now() - 30 * 24 * HOURS_TO_MS;
+        // Some actions are always allowed to trigger notifications, so that users can recover their account even after 30 days:
+        const isAlwaysAllowed = actionId === 'user-authenticate' || actionId === 'user-password-reset' || actionId === 'user-verify-email';
+
+        // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
+        if (!isAlwaysAllowed && oldAccount && !userData.verifiedAt && userData.verification) {
+            logger.error(
+                `Tried to send notifications for triggered action '${actionId}' for unverified User(${user.userID}) who is unverified for more than 30 days`
+            );
+            return;
+        }
+
         if (!dryRun) {
             for (const directSend of directSends) {
                 const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);
