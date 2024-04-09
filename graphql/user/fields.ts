@@ -185,16 +185,7 @@ export class UserFieldsResolver {
             // Make sure only active users with verified email are returned
             const pupils = await prisma.pupil.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
-                where: {
-                    ...pupilQuery,
-                    active: true,
-                    verification: null,
-                    pupil_screening: {
-                        some: {
-                            status: 'success',
-                        },
-                    },
-                },
+                where: { ...pupilQuery, active: true, verification: null },
             });
             result.push(...pupils.map(userForPupil));
         }
