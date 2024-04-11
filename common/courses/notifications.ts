@@ -117,11 +117,25 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
             active: true,
             verification: null,
             isParticipant: true,
-            pupil_screening: {
-                some: {
-                    status: 'success',
+            OR: [
+                {
+                    subcourse_participants_pupil: {
+                        some: {},
+                    },
                 },
-            },
+                {
+                    match: {
+                        some: {},
+                    },
+                },
+                {
+                    pupil_screening: {
+                        some: {
+                            status: 'success',
+                        },
+                    },
+                },
+            ],
             grade: { in: grades },
             subcourse_participants_pupil: { none: { subcourseId: subcourse.id } },
         },
