@@ -189,11 +189,25 @@ export class UserFieldsResolver {
                     ...pupilQuery,
                     active: true,
                     verification: null,
-                    pupil_screening: {
-                        some: {
-                            status: 'success',
+                    OR: [
+                        {
+                            subcourse_participants_pupil: {
+                                some: {},
+                            },
                         },
-                    },
+                        {
+                            match: {
+                                some: {},
+                            },
+                        },
+                        {
+                            pupil_screening: {
+                                some: {
+                                    status: 'success',
+                                },
+                            },
+                        },
+                    ],
                 },
             });
             result.push(...pupils.map(userForPupil));
