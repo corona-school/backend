@@ -9,6 +9,7 @@ import { Subject } from '../types/subject';
 import { GraphQLContext } from '../context';
 import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
+import { getAppointmentsForMatch } from '../../common/appointment/get';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -52,17 +53,26 @@ export class ExtendedFieldsMatchResolver {
 
     @FieldResolver((returns) => [Appointment])
     @Authorized(Role.ADMIN, Role.OWNER)
-    async appointments(@Ctx() context: GraphQLContext, @Root() match: Match) {
+    async appointments(
+        @Ctx() context: GraphQLContext,
+        @Root() match: Match,
+        @Arg('take', { nullable: true }) take?: number,
+        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('cursor', { nullable: true }) cursor?: number,
+        @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
+    ) {
         const { user } = context;
-        return await prisma.lecture.findMany({
+        return await getAppointmentsForMatch(match.id, user.userID, take, skip, cursor, direction);
+    }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async appointmentsCount(@Root() match: Match) {
+        return await prisma.lecture.count({
             where: {
                 matchId: match.id,
                 isCanceled: false,
-                NOT: {
-                    declinedBy: { has: user.userID },
-                },
             },
-            orderBy: { start: 'asc' },
         });
     }
 
