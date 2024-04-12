@@ -418,13 +418,13 @@ void test('Notification sent via Mailjet', async () => {
     expectFetch({
         url: 'https://api.mailjet.com/v3.1/send',
         method: 'POST',
-        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"authToken":"*","a":"a","uniqueId":"2","user":{"userID":"${
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"a":"a","uniqueId":"2","user":{"userID":"${
             pupil.userID
         }","firstname":"${pupil.firstname}","lastname":"${pupil.lastname}","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":${
             pupil.pupil.id
         },"fullName":"${pupil.firstname} ${
             pupil.lastname
-        }"},"USER_APP_DOMAIN":"*","attachmentGroup":""},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
         responseStatus: 200,
         response: '{ "Messages": [{ "Status": "success" }]}',
     });
@@ -488,13 +488,13 @@ void test('Notification sent via Mailjet to overrideEmail', async () => {
     expectFetch({
         url: 'https://api.mailjet.com/v3.1/send',
         method: 'POST',
-        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"override@example.org"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"authToken":"*","a":"a","uniqueId":"2","overrideReceiverEmail":"override@example.org","user":{"userID":"${
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"override@example.org"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"a":"a","uniqueId":"2","overrideReceiverEmail":"override@example.org","user":{"userID":"${
             pupil.userID
         }","firstname":"${pupil.firstname}","lastname":"${pupil.lastname}","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":${
             pupil.pupil.id
         },"fullName":"${pupil.firstname} ${
             pupil.lastname
-        }"},"USER_APP_DOMAIN":"*","attachmentGroup":""},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"Backend Notification ${id}"}]}`,
         responseStatus: 200,
         response: '{ "Messages": [{ "Status": "success" }]}',
     });
@@ -626,13 +626,13 @@ void test('Create Campaign with Overrides', async () => {
     expectFetch({
         url: 'https://api.mailjet.com/v3.1/send',
         method: 'POST',
-        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"authToken":"*","overrideMailjetTemplateID":"42","overrideType":"suggestion","uniqueId":"${campaignId}","campaign":"${campaignId}","user":{"userID":"${
+        body: `{"SandboxMode":true,"Messages":[{"From":{"Email":"support@lern-fair.de","Name":"Lern-Fair Team"},"To":[{"Email":"${pupil.email.toLowerCase()}"}],"TemplateID":42,"TemplateLanguage":true,"Variables":{"overrideMailjetTemplateID":"42","overrideType":"suggestion","uniqueId":"${campaignId}","campaign":"${campaignId}","user":{"userID":"${
             pupil.userID
         }","firstname":"${pupil.firstname}","lastname":"${
             pupil.lastname
         }","email":"${pupil.email.toLowerCase()}","active":true,"lastLogin":"*","pupilId":*,"fullName":"${pupil.firstname} ${
             pupil.lastname
-        }"},"USER_APP_DOMAIN":"*","attachmentGroup":""},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"${campaignId}"}]}`,
+        }"},"USER_APP_DOMAIN":"*","attachmentGroup":"","authToken":"*"},"CustomID":"*","TemplateErrorReporting":{"Email":"backend@lern-fair.de"},"CustomCampaign":"${campaignId}"}]}`,
         responseStatus: 200,
         response: '{ "Messages": [{ "Status": "success" }]}',
     });
