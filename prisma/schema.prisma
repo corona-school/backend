@@ -360,8 +360,6 @@ model log {
   id        Int              @id(map: "PK_350604cbdf991d5930d9e618fbd") @default(autoincrement())
   logtype   log_logtype_enum @default(misc)
   createdAt DateTime         @default(now()) @db.Timestamp(6)
-  // Instead of the UserID, this uses the WixID of pupils and students (which also happens to be a unique identifier)
-  user      String           @db.VarChar
   userID    String?           @db.VarChar
   // This is usually valid JSON:
   data      String           @db.VarChar
