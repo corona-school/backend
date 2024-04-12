@@ -22,9 +22,6 @@ export type User = {
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
-
-    // TODO: Remove after userID migration
-    wix_id?: string;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
@@ -108,8 +105,6 @@ function userForType(user: Pupil | Student | Screener, type: 'student' | 'pupil'
         active: user.active,
         lastLogin: user.lastLogin,
         [`${type}Id`]: user.id,
-        // TODO: Remove after userID migration
-        wix_id: (user as Pupil | Student)?.wix_id || '',
     };
 }
 
