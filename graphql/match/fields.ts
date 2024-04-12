@@ -1,7 +1,7 @@
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
-import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Subcourse, Pupil, Match, Student, Lecture as Appointment } from '../generated';
+import { Pupil, Match, Student, Lecture as Appointment } from '../generated';
 import { LimitEstimated } from '../complexity';
 import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
@@ -9,7 +9,7 @@ import { Subject } from '../types/subject';
 import { GraphQLContext } from '../context';
 import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
-import { getAppointmentsForMatch } from '../../common/appointment/get';
+import { getAppointmentsForMatch, getLastMatchAppointmentId } from '../../common/appointment/get';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -74,6 +74,12 @@ export class ExtendedFieldsMatchResolver {
                 isCanceled: false,
             },
         });
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async lastAppointmentId(@Ctx() context: GraphQLContext, @Root() match: Match): Promise<number> {
+        return await getLastMatchAppointmentId(match.id, context.user.userID);
     }
 
     @FieldResolver((returns) => Chat, { nullable: true })

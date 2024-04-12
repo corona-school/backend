@@ -209,3 +209,18 @@ export const getAppointmentsForMatch = async (
     }
     return appointments;
 };
+
+export const getLastMatchAppointmentId = async (matchId: Match['id'], userId: User['userID']) => {
+    const lastAppointment = await prisma.lecture.findFirst({
+        where: {
+            isCanceled: false,
+            NOT: {
+                declinedBy: { has: userId },
+            },
+            matchId,
+        },
+        orderBy: [{ start: 'desc' }],
+        take: 1,
+    });
+    return lastAppointment?.id;
+};
