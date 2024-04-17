@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import { User } from '../user';
 
 type QueryDirection = 'last' | 'next';
+type Edge = 'first' | 'last';
 
 /**
  * The current maximum duration of an appointment is 4 hours.
@@ -40,8 +41,9 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     });
     return appointmentsCount > 0;
 };
-export const getLastAppointmentId = async (user: User): Promise<number> => {
-    const lastAppointment = await prisma.lecture.findFirst({
+export const getEdgeAppointmentId = async (user: User, edge: Edge): Promise<number> => {
+    const isFirst = edge === 'first';
+    const edgeAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
             NOT: {
@@ -65,10 +67,10 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
                 },
             ],
         },
-        orderBy: [{ start: 'desc' }],
+        orderBy: [isFirst ? { start: 'asc' } : { start: 'desc' }],
         take: 1,
     });
-    return lastAppointment?.id;
+    return edgeAppointment?.id;
 };
 
 export const getAppointmentsForUser = async (user: User, take: number, skip: number, cursor?: number, direction?: QueryDirection): Promise<Appointment[]> => {
@@ -210,8 +212,9 @@ export const getAppointmentsForMatch = async (
     return appointments;
 };
 
-export const getLastMatchAppointmentId = async (matchId: Match['id'], userId: User['userID']) => {
-    const lastAppointment = await prisma.lecture.findFirst({
+export const getEdgeMatchAppointmentId = async (matchId: Match['id'], userId: User['userID'], edge: Edge) => {
+    const isFirst = edge === 'first';
+    const edgeAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
             NOT: {
@@ -219,8 +222,8 @@ export const getLastMatchAppointmentId = async (matchId: Match['id'], userId: Us
             },
             matchId,
         },
-        orderBy: [{ start: 'desc' }],
+        orderBy: [isFirst ? { start: 'asc' } : { start: 'desc' }],
         take: 1,
     });
-    return lastAppointment?.id;
+    return edgeAppointment?.id;
 };
