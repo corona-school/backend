@@ -12,6 +12,7 @@ import { secret_type_enum as SecretType } from '@prisma/client';
 import { createSecretEmailToken } from './emailToken';
 import moment from 'moment';
 import { updateUser } from '../user/update';
+import { PrerequisiteError } from '../util/error';
 
 const logger = getLogger('Token');
 
@@ -141,7 +142,7 @@ export async function loginToken(token: string): Promise<User | never> {
             const newEmail = secret.description;
 
             if (!(await isEmailAvailable(newEmail))) {
-                throw new Error(`User(${user.userID}) tried to change their email to ${newEmail}, but this is already used`);
+                throw new PrerequisiteError(`Email already in use`);
             }
 
             user = await updateUser(secret.userId, { email: newEmail });
