@@ -21,7 +21,7 @@ import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
-import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
+import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
@@ -189,11 +189,25 @@ export class UserFieldsResolver {
                     ...pupilQuery,
                     active: true,
                     verification: null,
-                    pupil_screening: {
-                        some: {
-                            status: 'success',
+                    OR: [
+                        {
+                            subcourse_participants_pupil: {
+                                some: {},
+                            },
                         },
-                    },
+                        {
+                            match: {
+                                some: {},
+                            },
+                        },
+                        {
+                            pupil_screening: {
+                                some: {
+                                    status: 'success',
+                                },
+                            },
+                        },
+                    ],
                 },
             });
             result.push(...pupils.map(userForPupil));
@@ -246,8 +260,14 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
+    async firstAppointmentId(@Root() user: User): Promise<number> {
+        return await getEdgeAppointmentId(user, 'first');
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return await getLastAppointmentId(user);
+        return await getEdgeAppointmentId(user, 'last');
     }
 
     // ------------- Achievements ------------
