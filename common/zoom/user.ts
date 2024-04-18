@@ -165,7 +165,7 @@ async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 
         throw new Error(`Zoom failed to update user: ${response.status} ${await response.text()}`);
     }
 
-    const data = response.json() as unknown as ZoomUser;
+    const data = (await response.json()) as unknown as ZoomUser;
 
     if (response.status === 204) {
         logger.info(`Zoom - Updated Zoom user ${data.id} with email ${data.email}`);
