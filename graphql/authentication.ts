@@ -208,7 +208,7 @@ export class AuthenticationResolver {
             }
             return true;
         } catch (error) {
-            logger.info(`Failed to log in with token: `, error);
+            logger.info(`Failed to log in with token: ${error}`);
             throw new AuthenticationError('Invalid Token');
         }
     }

@@ -25,3 +25,13 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
         await deactivateStudent(student);
     }
 }
+
+export async function checkExistence(studentId: number) {
+    const student = await getStudent(studentId);
+    const result = await prisma.certificate_of_conduct.findFirst({ where: { studentId: student.id } });
+    if (result) {
+        return true;
+    } else {
+        return false;
+    }
+}
