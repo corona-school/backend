@@ -943,6 +943,10 @@ model pupil_screening {
   // During the Pupil Screening, various screeners are involved ('four eye principle')
   // This was not tracked before September 23
   screenerIds Int[] @default([])
+  // This is a String and not an enum to be able to quickly support further values without a DB migration,
+  // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
+  // so a COUNT(*) GROUP BY should work relatively well:
+  knowsCoronaSchoolFrom String? @db.VarChar
 }
 
 // When a subcourse is already full, pupils can still enroll on a waiting list
