@@ -89,6 +89,9 @@ export class PupilScreeningUpdateInput {
 
     @Field(() => String, { nullable: true })
     comment?: string;
+
+    @Field(() => String, { nullable: true })
+    knowsCoronaSchoolFrom?: string;
 }
 
 @InputType()
