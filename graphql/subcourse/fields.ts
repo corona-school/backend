@@ -404,6 +404,12 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver(() => [Pupil])
+    @Authorized(Role.OWNER)
+    async prospectParticipants(@Root() subcourse: Subcourse) {
+        const chat = await getChat(subcourse.conversationId);
+        const prospect = JSON.parse(chat.conversation.custom.prospectSubcourse || '[]');
+    }
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
