@@ -204,9 +204,12 @@ export class MutateSubcourseResolver {
         await hasAccess(context, 'Subcourse', subcourse);
 
         await cancelSubcourse(user, subcourse);
-        if (subcourse.conversationId) {
-            await markConversationAsReadOnly(subcourse.conversationId);
-        }
+
+        // Deliberately kept open:
+        // if (subcourse.conversationId) {
+        //     await markConversationAsReadOnly(subcourse.conversationId);
+        // }
+
         logger.info(`Subcourse(${subcourseId}) was canceled by User(${context.user.userID})`);
         return true;
     }
