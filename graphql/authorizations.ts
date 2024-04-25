@@ -525,6 +525,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             notificationPreferences: onlyOwner,
 
             is_trusted: onlyAdminOrScreener,
+            is_course_screener: onlyAdminOrScreener,
+            is_pupil_screener: onlyAdminOrScreener,
+            is_student_screener: onlyAdminOrScreener,
             active: onlyAdminOrScreener,
             createdAt: onlyAdminOrScreener,
             firstname: onlyAdminOrScreener,
