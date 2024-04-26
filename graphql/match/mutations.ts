@@ -24,8 +24,8 @@ class AdHocMeeting {
     id: number;
     @TypeGraphQL.Field()
     appointmentType: string;
-    @TypeGraphQL.Field()
-    zoomUrl: string;
+    @TypeGraphQL.Field({ nullable: true })
+    zoomUrl?: string;
 }
 
 @InputType()
