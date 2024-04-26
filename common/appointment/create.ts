@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
-import { getOrCreateZoomUser, ZoomUser } from '../zoom/user';
+import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
@@ -265,6 +265,7 @@ export async function createAdHocMeeting(matchId: number, user: User) {
     // Silent as we trigger a dedicated notification action for it anyways
     const matchAppointment = await createMatchAppointments(matchId, appointment, /* silent */ true);
     const { id, appointmentType } = matchAppointment[0];
+    const zoomUrl = await getZoomUrl(user, matchAppointment[0]);
 
     await Notification.actionTaken(userForPupil(pupil), 'student_add_ad_hoc_meeting', {
         appointmentId: id.toString(),
@@ -274,5 +275,5 @@ export async function createAdHocMeeting(matchId: number, user: User) {
         },
     });
 
-    return { id, appointmentType };
+    return { id, appointmentType, zoomUrl };
 }

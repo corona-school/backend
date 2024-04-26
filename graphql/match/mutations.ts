@@ -1,5 +1,5 @@
 import * as TypeGraphQL from 'type-graphql';
-import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import * as Notification from '../../common/notification';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
@@ -9,7 +9,6 @@ import { createMatch } from '../../common/match/create';
 import { GraphQLContext } from '../context';
 import { ConcreteMatchPool, pools } from '../../common/match/pool';
 import { getMatcheeConversation, markConversationAsWriteable } from '../../common/chat';
-import { JSONResolver } from 'graphql-scalars';
 import { createAdHocMeeting } from '../../common/appointment/create';
 import { AuthenticationError } from '../error';
 import { dissolved_by_enum } from '@prisma/client';
@@ -18,6 +17,16 @@ import { prisma } from '../../common/prisma';
 import { getFullName, getUserTypeAndIdForUserId } from '../../common/user';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
 import { isDev } from '../../common/util/environment';
+
+@ObjectType()
+class AdHocMeeting {
+    @TypeGraphQL.Field()
+    id: number;
+    @TypeGraphQL.Field()
+    appointmentType: string;
+    @TypeGraphQL.Field()
+    zoomUrl: string;
+}
 
 @InputType()
 class MatchDissolveInput {
@@ -132,7 +141,7 @@ export class MutateMatchResolver {
         return true;
     }
 
-    @Mutation((returns) => JSONResolver, { nullable: true })
+    @Mutation((returns) => AdHocMeeting, { nullable: true })
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async matchCreateAdHocMeeting(@Ctx() context: GraphQLContext, @Arg('matchId', (type) => Int) matchId: number) {
         const { user } = context;
@@ -140,8 +149,7 @@ export class MutateMatchResolver {
         await hasAccess(context, 'Match', match);
 
         if (user.studentId) {
-            const { id, appointmentType } = await createAdHocMeeting(matchId, user);
-            return { id, appointmentType };
+            return await createAdHocMeeting(matchId, user);
         }
         throw new AuthenticationError(`User is not allowed to create ad-hoc meeting for match ${matchId}`);
     }
