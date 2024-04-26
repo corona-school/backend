@@ -13,7 +13,7 @@ import { GraphQLInt } from 'graphql';
 @Resolver((of) => Course)
 export class ExtendedFieldsCourseResolver {
     @Query((returns) => [Course])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     @LimitedQuery()
     async courseSearch(
         @Arg('search') search: string,

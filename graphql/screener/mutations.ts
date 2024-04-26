@@ -92,4 +92,32 @@ export class MutateScreenerResolver {
 
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async screenerAllowScreening(
+        @Arg('screenerId') screenerId: number,
+        @Arg('pupils') pupils: boolean,
+        @Arg('students') students: boolean,
+        @Arg('courses') courses: boolean
+    ) {
+        const screener = await getScreener(screenerId);
+        await prisma.screener.update({
+            where: {
+                id: screener.id,
+            },
+            data: {
+                is_course_screener: courses,
+                is_pupil_screener: pupils,
+                is_student_screener: students,
+            },
+        });
+        log.info(
+            `Screener(${screener.id}) was allowed to screen ${pupils ? 'pupils, ' : ''} ${students ? 'students, ' : ''} ${
+                courses ? 'courses, ' : ''
+            } by an admin`
+        );
+
+        return true;
+    }
 }

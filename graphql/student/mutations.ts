@@ -289,7 +289,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
@@ -297,7 +297,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
         const student = await getStudent(studentId);
         await reactivateStudent(student, reason);
@@ -305,7 +305,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
 
@@ -315,7 +315,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
         await deleteStudentMatchRequest(student);
@@ -324,7 +324,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentInstructorScreeningCreate(
         @Ctx() context: GraphQLContext,
         @Arg('studentId') studentId: number,
@@ -348,7 +348,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
 
@@ -363,7 +363,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => [StudentRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
         const { entries } = data;
         log.info(`Starting studentRegisterPlusMany, received ${entries.length} students`);
