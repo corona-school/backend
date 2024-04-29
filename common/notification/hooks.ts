@@ -24,5 +24,5 @@ registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pe
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {
-    await deactivatePupil(pupil);
+    await deactivatePupil(pupil, true, 'deactivated by admin', true);
 });
