@@ -37,6 +37,7 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
 interface PupilScreeningUpdate {
     status?: PupilScreeningStatus;
     comment?: string;
+    knowsCoronaSchoolFrom?: string;
 }
 
 export async function updatePupilScreening(screener: Screener, pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {

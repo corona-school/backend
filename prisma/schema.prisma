@@ -360,8 +360,6 @@ model log {
   id        Int              @id(map: "PK_350604cbdf991d5930d9e618fbd") @default(autoincrement())
   logtype   log_logtype_enum @default(misc)
   createdAt DateTime         @default(now()) @db.Timestamp(6)
-  // Instead of the UserID, this uses the WixID of pupils and students (which also happens to be a unique identifier)
-  user      String           @db.VarChar
   userID    String?           @db.VarChar
   // This is usually valid JSON:
   data      String           @db.VarChar
@@ -692,6 +690,9 @@ model screener {
   project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
   is_trusted                   Boolean                      @default(false)
+  is_student_screener          Boolean                      @default(false)
+  is_pupil_screener            Boolean                      @default(false)
+  is_course_screener           Boolean                      @default(false)
 }
 
 // A Screening for Students that want to tutor pupils
@@ -945,6 +946,10 @@ model pupil_screening {
   // During the Pupil Screening, various screeners are involved ('four eye principle')
   // This was not tracked before September 23
   screenerIds Int[] @default([])
+  // This is a String and not an enum to be able to quickly support further values without a DB migration,
+  // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
+  // so a COUNT(*) GROUP BY should work relatively well:
+  knowsCoronaSchoolFrom String? @db.VarChar
 }
 
 // When a subcourse is already full, pupils can still enroll on a waiting list

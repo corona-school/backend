@@ -30,8 +30,22 @@ export const screenerOne = test('Admin can create Screener Account', async () =>
         mutation ScreenerSetPassword { passwordCreate(password: "${password}") }
     `);
 
+    const {
+        me: {
+            screener: { id },
+        },
+    } = await client.request(`
+        query { me { screener { id }}}
+    `);
+
     await client.request(`
         mutation ScreenerLogout { logout }
+    `);
+
+    await adminClient.request(`
+        mutation screenerAllowScreening {
+            screenerAllowScreening(screenerId: ${id}, pupils: true, students: true, courses: true)
+        }
     `);
 
     const { userDetermineLoginOptions } = await client.request(`

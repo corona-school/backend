@@ -182,7 +182,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @Query((returns) => [Student])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentsToBeScreened() {
         return await prisma.student.findMany({
             where: {
