@@ -73,7 +73,7 @@ class PublicLectureInput {
 @Resolver((of) => GraphQLModel.Subcourse)
 export class MutateSubcourseResolver {
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN, Role.COURSE_SCREENER)
     async subcourseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -121,7 +121,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseAddInstructor(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -137,7 +137,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseDeleteInstructor(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -160,7 +160,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcoursePublish(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await prisma.subcourse.findUniqueOrThrow({
             where: { id: subcourseId },
@@ -172,7 +172,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseFill(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
@@ -183,7 +183,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Subcourse)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseEdit(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -197,7 +197,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseCancel(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
@@ -215,7 +215,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseDelete(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const { user } = context;
         const subcourse = await getSubcourse(subcourseId);
@@ -225,7 +225,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.PUPIL, Role.COURSE_SCREENER)
     async subcourseJoin(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -240,7 +240,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async subcourseJoinManual(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -288,7 +288,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_PARTICIPANT, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -320,7 +320,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.PUPIL, Role.COURSE_SCREENER)
     async subcourseJoinWaitinglist(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -333,7 +333,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.PUPIL, Role.COURSE_SCREENER)
     async subcourseLeaveWaitinglist(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -399,7 +399,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);

@@ -690,6 +690,9 @@ model screener {
   project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
   is_trusted                   Boolean                      @default(false)
+  is_student_screener          Boolean                      @default(false)
+  is_pupil_screener            Boolean                      @default(false)
+  is_course_screener           Boolean                      @default(false)
 }
 
 // A Screening for Students that want to tutor pupils

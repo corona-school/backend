@@ -264,10 +264,65 @@ void (async function setupDevDB() {
             password: 'LEGACY',
             verified: true,
             active: true,
+            is_course_screener: true,
+            is_pupil_screener: true,
+            is_student_screener: true,
+            is_trusted: true,
         },
     });
     await _createFixedToken(userForScreener(screener1), `authtokenSC1`);
     await createPassword(userForScreener(screener1), `test`);
+
+    const screener2 = await prisma.screener.create({
+        data: {
+            firstname: 'Chani',
+            lastname: '',
+            email: 'test+dev+sc2@lern-fair.de',
+            password: 'LEGACY',
+            verified: true,
+            active: true,
+            is_course_screener: true,
+            is_pupil_screener: false,
+            is_student_screener: false,
+            is_trusted: false,
+        },
+    });
+    await _createFixedToken(userForScreener(screener2), `authtokenSC2`);
+    await createPassword(userForScreener(screener2), `test`);
+
+    const screener3 = await prisma.screener.create({
+        data: {
+            firstname: 'Leto',
+            lastname: 'Atreides',
+            email: 'test+dev+sc3@lern-fair.de',
+            password: 'LEGACY',
+            verified: true,
+            active: true,
+            is_course_screener: false,
+            is_pupil_screener: true,
+            is_student_screener: false,
+            is_trusted: false,
+        },
+    });
+    await _createFixedToken(userForScreener(screener3), `authtokenSC3`);
+    await createPassword(userForScreener(screener3), `test`);
+
+    const screener4 = await prisma.screener.create({
+        data: {
+            firstname: 'Paul',
+            lastname: 'Atreides',
+            email: 'test+dev+sc4@lern-fair.de',
+            password: 'LEGACY',
+            verified: true,
+            active: true,
+            is_course_screener: false,
+            is_pupil_screener: false,
+            is_student_screener: true,
+            is_trusted: false,
+        },
+    });
+    await _createFixedToken(userForScreener(screener4), `authtokenSC4`);
+    await createPassword(userForScreener(screener4), `test`);
 
     const student1 = await registerStudent({
         firstname: 'Leon',
