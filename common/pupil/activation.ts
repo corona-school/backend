@@ -27,12 +27,16 @@ export async function activatePupil(pupil: Pupil) {
     return updatedPupil;
 }
 
-export async function deactivatePupil(pupil: Pupil, reason?: string) {
+export async function deactivatePupil(pupil: Pupil, silent = false, reason?: string, byAdmin = false) {
     if (!pupil.active) {
         throw new RedundantError('Pupil was already deactivated');
     }
 
-    await Notification.actionTaken(userForPupil(pupil), 'pupil_account_deactivated', {});
+    if (!silent) {
+        const action = byAdmin ? 'pupil_account_deactivated_by_admin' : 'pupil_account_deactivated';
+        await Notification.actionTaken(userForPupil(pupil), action, {});
+    }
+
     await Notification.cancelRemindersFor(userForPupil(pupil));
     // Setting 'active' to false will not send out any notifications during deactivation
     pupil.active = false;

@@ -272,7 +272,7 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil);
+        await deactivatePupil(pupil, false, 'deactivated by admin', true);
         return true;
     }
 
