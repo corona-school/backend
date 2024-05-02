@@ -8,7 +8,7 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -137,11 +137,15 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitedQuery()
     async subcourseSearch(
         @Arg('search') search: string,
+        @Arg('courseStates', () => [String], { nullable: true }) courseStates: course_coursestate_enum[],
         @Arg('take', () => GraphQLInt) take: number,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         return await prisma.subcourse.findMany({
-            where: await subcourseSearch(search),
+            where: {
+                ...(await subcourseSearch(search)),
+                course: { courseState: { in: courseStates } },
+            },
             take,
             skip,
         });
