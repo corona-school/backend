@@ -29,6 +29,8 @@ class Participant {
     lastname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => pupil_schooltype_enum)
     schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
     @Field((_type) => String)
@@ -43,6 +45,8 @@ class OtherParticipant {
     firstname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
 }
@@ -290,7 +294,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.OWNER)
     @LimitEstimated(100)
     async participants(@Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -307,13 +311,14 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [OtherParticipant])
     @Authorized(Role.SUBCOURSE_PARTICIPANT)
     @LimitEstimated(100)
     async otherParticipants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -329,6 +334,7 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [Pupil])
@@ -376,7 +382,10 @@ export class ExtendedFieldsSubcourseResolver {
                 +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
         );
 
-        return pupils;
+        return pupils.map((e) => ({
+            ...e,
+            gradeAsInt: gradeAsInt(e.grade),
+        }));
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
