@@ -336,6 +336,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         upsertOneNotification: nobody,
     },
     Pupil_tutoring_interest_confirmation_request: allAdmin,
+    Push_subscription: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
