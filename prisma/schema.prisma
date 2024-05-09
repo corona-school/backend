@@ -639,6 +639,17 @@ model pupil_tutoring_interest_confirmation_request {
   pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 
+// A Push Subcscription according to https://w3c.github.io/push-api/#pushsubscription-interface
+model push_subscription {
+    id        Int      @id @default(autoincrement())
+    // relation to pupil, student, screener
+    userID    String
+    // The endpoint that can be pushed to
+    endpoint String
+    // The time at which the subscription expires
+    expirationTime DateTime
+}
+
 // We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free
 model remission_request {
   id        Int      @id(map: "PK_4ea2cbe40d9d5cfe1d39a44558f") @default(autoincrement())
@@ -857,6 +868,7 @@ model subcourse_participants_pupil {
   @@index([pupilId], map: "IDX_47d9d98b6496554165e08ff61d")
   @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
 }
+
 
 // We require a Certifcate of Conduct to be handed in by Students, which is verified by Support
 model certificate_of_conduct {
