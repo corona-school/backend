@@ -647,7 +647,7 @@ model push_subscription {
     // The endpoint that can be pushed to
     endpoint String
     // The time at which the subscription expires
-    expirationTime DateTime
+    expirationTime DateTime?
 }
 
 // We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free
