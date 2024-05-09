@@ -8,7 +8,7 @@ import { userForPupil } from '../user';
 import { dissolved_by_enum } from '../../graphql/generated';
 import { leaveSubcourse } from '../courses/participants';
 import { getLogger } from '../logger/logger';
-import { removeAllSubcriptions } from '../notification/channels/push';
+import { removeAllPushSubcriptions } from '../notification/channels/push';
 
 const logger = getLogger('Pupil Activation');
 
@@ -67,7 +67,7 @@ export async function deactivatePupil(pupil: Pupil, silent = false, reason?: str
         logger.info(`Pupil(${pupil.id}) left ongoing Subcourse(${subcourse.id}) as the account was deactivated`);
     }
 
-    await removeAllSubcriptions(userForPupil(pupil));
+    await removeAllPushSubcriptions(userForPupil(pupil));
 
     const updatedPupil = await prisma.pupil.update({
         data: { active: false },
