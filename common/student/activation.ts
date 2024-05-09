@@ -9,6 +9,7 @@ import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
 import { CertificateState } from '../certificate';
+import { removeAllSubcriptions } from '../notification/channels/push';
 
 export async function deactivateStudent(student: Student, silent = false, reason?: string) {
     if (!student.active) {
@@ -92,6 +93,8 @@ export async function deactivateStudent(student: Student, silent = false, reason
     if (isZoomFeatureActive() && student.zoomUserId) {
         await deleteZoomUser(student);
     }
+
+    await removeAllSubcriptions(userForStudent(student));
 
     const updatedStudent = await prisma.student.update({
         data: { active: false },
