@@ -1,6 +1,6 @@
 import syncCourses from './sync-courses';
 import { getLogger } from '../../../common/logger/logger';
-import syncLectures from './sync-lectures';
+import { syncDeleteLectures, syncLectures } from './sync-lectures';
 
 const logger = getLogger('WebflowAPISync');
 
@@ -31,8 +31,10 @@ export default async function execute(): Promise<void> {
     try {
         logger.info('Run Webflow sync');
         validateEnvVars();
-        await syncLectures(logger);
+        const { itemsToDelete } = await syncLectures(logger);
         await syncCourses(logger);
+        // The outdated lectures have to be removed from the courses first
+        await syncDeleteLectures(logger, itemsToDelete);
         logger.info('Finished Webflow sync');
     } catch (e) {
         logger.error('Failed to sync Webflow data', e);

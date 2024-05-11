@@ -1,8 +1,12 @@
-import { diff, hash } from './diff';
+import { diff } from './diff';
 import { WebflowMetadata } from './webflow-adapter';
 
 interface TestData extends WebflowMetadata {
-    data: string;
+    fieldData: {
+        hash?: string;
+        slug: string;
+        data: string;
+    };
 }
 
 function randomString(): string {
@@ -16,13 +20,15 @@ function randomBool(): boolean {
 function newTestObj(id: number, data: string): TestData {
     // We are randomizing the _id & _archived values, to make sure that they are ignored during hashing.
     const res: TestData = {
-        _id: randomString(),
-        _archived: randomBool(),
-        _draft: randomBool(),
-        slug: `${id}`,
-        data: data,
+        id: randomString(),
+        isArchived: randomBool(),
+        isDraft: randomBool(),
+        fieldData: {
+            slug: `${id}`,
+            data: data,
+        },
     };
-    res.hash = hash(res);
+    // res.fieldData.hash = hash(res);
     return res;
 }
 
@@ -43,7 +49,7 @@ describe('diff', () => {
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
-        expect(result.changed).toStrictEqual([{ ...right, _id: left._id }]);
+        expect(result.changed).toStrictEqual([{ ...right, id: left.id }]);
     });
     it('should create new object as id was not found', () => {
         const newObj = newTestObj(2, 'foo');
@@ -68,7 +74,7 @@ describe('diff', () => {
     it('should notice a diff in id even if the hash is the same', () => {
         const oldObj = newTestObj(1, 'foo');
         const newObj = structuredClone(oldObj) as TestData;
-        newObj.slug = '2';
+        newObj.fieldData.slug = '2';
 
         const left: TestData[] = [oldObj];
         const right: TestData[] = [newObj];

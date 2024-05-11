@@ -1,31 +1,31 @@
 import { getLogger } from '../../../common/logger/logger';
-import { join } from 'path';
 import moment from 'moment';
 
 const logger = getLogger('WebflowApiAdapter');
 const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
 
 export interface WebflowMetadata {
-    _id?: string;
-    _archived?: boolean;
-    _draft?: boolean;
-    name?: string;
-    // The slug is a unique value that should never be changed because it cannot be reused.
-    // Said that we are using it to store the database id, which should always match the actual data stored in the item.
-    slug?: string;
-    hash?: string;
-    'updated-on'?: string;
-    'published-on'?: string;
+    id?: string;
+    isArchived?: boolean;
+    isDraft?: boolean;
+    lastUpdated?: string;
+    lastPublished?: string;
+
+    fieldData: {
+        name?: string;
+        // The slug is a unique value that should never be changed because it cannot be reused.
+        // Said that we are using it to store the database id, which should always match the actual data stored in the item.
+        slug?: string;
+    };
 }
 
 export const emptyMetadata: WebflowMetadata = {
-    _id: '',
-    _archived: false,
-    _draft: false,
-    slug: '',
-    hash: '',
-    'updated-on': '',
-    'published-on': '',
+    id: '',
+    isArchived: false,
+    isDraft: false,
+    lastPublished: '',
+    lastUpdated: '',
+    fieldData: {},
 };
 
 function basicMetaFactory(data: any): WebflowMetadata {
@@ -37,7 +37,7 @@ function basicMetaFactory(data: any): WebflowMetadata {
 
 export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
     // TODO: implement pagination
-    const data = await request({ path: `collections/${collectionID}/items`, method: 'GET' });
+    const data = await request({ path: `v2/collections/${collectionID}/items`, method: 'GET' });
     if (!data.items) {
         throw new Error('Response did not include any items');
     }
@@ -45,41 +45,39 @@ export async function getCollectionItems<T extends WebflowMetadata>(collectionID
 }
 
 export async function createNewItem<T extends WebflowMetadata>(collectionID: string, data: T): Promise<string> {
-    // We have to remove the _id field for new items, otherwise we would try to set an empty id, which is not permitted.
-    const body = { fields: structuredClone(data) as WebflowMetadata };
-    delete body.fields._id;
+    const body = structuredClone(data) as WebflowMetadata;
+    delete body.id;
 
-    const response = await request({ path: `collections/${collectionID}/items`, method: 'POST', data: body });
-    return response._id;
+    const response = await request({ path: `v2/collections/${collectionID}/items/live`, method: 'POST', data: body });
+    return response.id;
 }
 
 export async function deleteItems(collectionId: string, itemIds: string[]) {
-    const body = { itemIds: itemIds };
-    await request({ path: `collections/${collectionId}/items?live=false`, method: 'DELETE', data: body });
+    for (const id of itemIds) {
+        await request({ path: `v2/collections/${collectionId}/items/${id}`, method: 'DELETE' });
+    }
 }
 
 export async function patchItem<T extends WebflowMetadata>(collectionId: string, item: T) {
-    const itemId = item._id;
-    const body = { fields: structuredClone(item) as WebflowMetadata };
-    delete body.fields._id;
-    await request({ path: `collections/${collectionId}/items/${itemId}`, method: 'PATCH', data: body });
+    const itemId = item.id;
+    await request({ path: `v2/collections/${collectionId}/items/${itemId}/live`, method: 'PATCH', data: { fieldData: item.fieldData } });
 }
 
 export async function publishItems(collectionId: string) {
     const items = await getCollectionItems(collectionId, basicMetaFactory);
     const itemIds = items
         .filter((item) => {
-            const updated = moment(item['updated-on']);
-            const published = moment(item['published-on']);
+            const updated = moment(item.lastUpdated);
+            const published = moment(item.lastPublished);
             // Published on is null if the item is new. If there was an update updated-by is after published-by.
-            return item['published-on'] === null || updated.isAfter(published);
+            return item.lastPublished === null || !item.lastPublished || updated.isAfter(published);
         })
-        .map((item) => item._id);
+        .map((item) => item.id);
 
     const requests = [];
     for (let i = 0; i < itemIds.length; i += WEBFLOW_MAX_PUBLISH_ITEMS) {
         const chunk = itemIds.slice(i, i + WEBFLOW_MAX_PUBLISH_ITEMS);
-        requests.push(request({ path: `collections/${collectionId}/items/publish`, method: 'PUT', data: { itemIds: chunk } }));
+        requests.push(request({ path: `v2/collections/${collectionId}/items/publish`, method: 'POST', data: { itemIds: chunk } }));
     }
     await Promise.all(requests);
     return itemIds;
@@ -92,7 +90,7 @@ interface Request {
 }
 
 async function request(req: Request): Promise<any> {
-    const url = join(process.env.WEBFLOW_API_BASE_URL, req.path);
+    const url = `${process.env.WEBFLOW_API_BASE_URL}/${req.path}`;
     const token = process.env.WEBFLOW_API_KEY;
 
     const options: RequestInit = {
@@ -113,6 +111,10 @@ async function request(req: Request): Promise<any> {
         const data = await res.json();
         logger.error('webflow api request failed', new Error('webflow api request failed'), { status: res.status, data });
         throw new Error(`API returned invalid status ${res.status}: `);
+    }
+    // If 204 it means there is no content
+    if (res.status === 204) {
+        return null;
     }
     return res.json();
 }
