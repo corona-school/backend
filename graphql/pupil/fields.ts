@@ -130,7 +130,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => Int)
-    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER, Role.TUTOR, Role.INSTRUCTOR)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
     }

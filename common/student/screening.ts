@@ -93,3 +93,29 @@ export async function cancelCoCReminders(student: Student) {
     await Notification.actionTaken(userForStudent(student), 'coc_cancelled', {});
     await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
 }
+
+export async function updateTutorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
+    const screening = await prisma.screening.update({
+        where: {
+            id: screeningId,
+        },
+        data: {
+            comment: data.comment,
+        },
+        include: { student: true },
+    });
+    logger.info(`Screener(${screenerId}) updated tutor screening of Student(${screening.studentId})`, data);
+}
+
+export async function updateInstructorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
+    const screening = await prisma.instructor_screening.update({
+        where: {
+            id: screeningId,
+        },
+        data: {
+            comment: data.comment,
+        },
+        include: { student: true },
+    });
+    logger.info(`Screener(${screenerId}) updated instructor screening of Student(${screening.studentId})`, data);
+}

@@ -8,7 +8,7 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -29,6 +29,8 @@ class Participant {
     lastname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => pupil_schooltype_enum)
     schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
     @Field((_type) => String)
@@ -43,6 +45,8 @@ class OtherParticipant {
     firstname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
 }
@@ -133,11 +137,15 @@ export class ExtendedFieldsSubcourseResolver {
     @LimitedQuery()
     async subcourseSearch(
         @Arg('search') search: string,
+        @Arg('courseStates', () => [String], { nullable: true }) courseStates: course_coursestate_enum[],
         @Arg('take', () => GraphQLInt) take: number,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         return await prisma.subcourse.findMany({
-            where: await subcourseSearch(search),
+            where: {
+                ...(await subcourseSearch(search)),
+                course: { courseState: { in: courseStates } },
+            },
             take,
             skip,
         });
@@ -290,7 +298,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.OWNER)
     @LimitEstimated(100)
     async participants(@Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -307,13 +315,14 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [OtherParticipant])
     @Authorized(Role.SUBCOURSE_PARTICIPANT)
     @LimitEstimated(100)
     async otherParticipants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -329,6 +338,7 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [Pupil])
@@ -376,7 +386,10 @@ export class ExtendedFieldsSubcourseResolver {
                 +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
         );
 
-        return pupils;
+        return pupils.map((e) => ({
+            ...e,
+            gradeAsInt: gradeAsInt(e.grade),
+        }));
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
