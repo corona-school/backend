@@ -7,6 +7,13 @@ export enum Role {
     SCREENER = 'SCREENER',
     /* A screener who is additionally able to log in with users' accounts */
     TRUSTED_SCREENER = 'TRUSTED_SCREENER',
+    /* A screener that can manage courses */
+    COURSE_SCREENER = 'COURSE_SCREENER',
+    /* A screener that can screen pupils */
+    PUPIL_SCREENER = 'PUPIL_SCREENER',
+    /* A screener that can screen students */
+    STUDENT_SCREENER = 'STUDENT_SCREENER',
+
     /* Access via User Interface, not yet E-Mail verified */
     PUPIL = 'PUPIL',
     STUDENT = 'STUDENT',

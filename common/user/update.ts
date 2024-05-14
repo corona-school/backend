@@ -10,7 +10,10 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
         if (isZoomFeatureActive()) {
-            await changeEmail(await getStudent(user), validatedEmail);
+            const student = await getStudent(user);
+            if (student.zoomUserId) {
+                await changeEmail(student, validatedEmail);
+            }
         }
 
         return userForStudent(

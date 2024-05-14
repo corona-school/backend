@@ -18,6 +18,11 @@ registerStudentHook('cancel-remission-request', 'Cancels the remission request(s
 });
 
 import { deletePupilMatchRequest } from '../match/request';
+import { deactivatePupil } from '../pupil/activation';
 registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
     await deletePupilMatchRequest(pupil);
+});
+
+registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {
+    await deactivatePupil(pupil, true, 'deactivated by admin', true);
 });

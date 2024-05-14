@@ -28,9 +28,10 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id } });
     const isSubcourseCancelled = subcourse.cancelled;
 
-    if (isSubcourseCancelled) {
-        return false;
-    }
+    // Deliberately keep the chat open after cancellation:
+    // if (isSubcourseCancelled) {
+    //    return false;
+    // }
 
     const lastLecture = await getLastLecture(subcourse);
     const lastLecturePlus30Days = moment(lastLecture.start).add(30, 'days');

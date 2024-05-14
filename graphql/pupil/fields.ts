@@ -130,7 +130,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => Int)
-    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER, Role.TUTOR, Role.INSTRUCTOR)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
     }
@@ -156,7 +156,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @Query((returns) => [Pupil])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilsToBeScreened(@Arg('onlyDisputed', () => GraphQLBoolean, { nullable: true }) onlyDisputed = false) {
         return await prisma.pupil.findMany({
             where: {

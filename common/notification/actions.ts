@@ -487,6 +487,10 @@ const _notificationActions = {
         description: 'Pupil / Account deactivated',
         sampleContext: {},
     },
+    pupil_account_deactivated_by_admin: {
+        description: 'Pupil / Account deactivated by admin',
+        sampleContext: {},
+    },
     student_account_deactivated: {
         description: 'Student / Account deactivated',
         sampleContext: {},

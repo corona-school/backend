@@ -336,6 +336,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         upsertOneNotification: nobody,
     },
     Pupil_tutoring_interest_confirmation_request: allAdmin,
+    Push_subscription: allAdmin,
     Certificate_of_conduct: allAdmin,
     Match_pool_run: allAdmin,
     Secret: { _all: nobody },
@@ -525,6 +526,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             notificationPreferences: onlyOwner,
 
             is_trusted: onlyAdminOrScreener,
+            is_course_screener: onlyAdminOrScreener,
+            is_pupil_screener: onlyAdminOrScreener,
+            is_student_screener: onlyAdminOrScreener,
             active: onlyAdminOrScreener,
             createdAt: onlyAdminOrScreener,
             firstname: onlyAdminOrScreener,

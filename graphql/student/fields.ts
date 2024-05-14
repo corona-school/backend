@@ -112,7 +112,7 @@ export class ExtendFieldsStudentResolver {
 
     // eslint-disable-next-line camelcase
     @FieldResolver((type) => CertificateOfConduct, { nullable: true })
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.STUDENT_SCREENER)
     @LimitEstimated(1)
     async certificateOfConduct(@Root() student: Student) {
         return await prisma.certificate_of_conduct.findUnique({
@@ -182,7 +182,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @Query((returns) => [Student])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentsToBeScreened() {
         return await prisma.student.findMany({
             where: {
