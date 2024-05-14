@@ -92,30 +92,28 @@ const getMatcheeConversation = async (matchees: { studentId: number; pupilId: nu
     return { conversation, conversationId };
 };
 
-async function getProspectChats(subcourseId: number): TJConversation {
+export async function getProspectChats(subcourseId: number): Promise<{ createdBy: string; conversationId: string }[]> {
     try {
         const response = await chatRetry(
             async () =>
                 await fetch(
-                    `${TALKJS_CONVERSATION_API_URL}/?filter=${encodeURIComponent(JSON.stringify({ custom: { prospectSubcourse: ['==', subcourseId] } }))}`,
+                    `${TALKJS_CONVERSATION_API_URL}/?filter=${encodeURIComponent(
+                        JSON.stringify({ custom: { prospectSubcourse: ['==', `[${subcourseId}]`] } })
+                    )}`,
                     {
                         method: 'GET',
                         headers: {
                             Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            name: userName,
-                            email: [user.email],
-                            role: user.studentId ? 'student' : 'pupil',
-                        }),
                     }
                 ),
             3,
             1000
         );
         await checkResponseStatus(response);
-        logger.info(`Created ChatUser for User(${user.userID})`);
+        const chats: { data: { id: string; custom: { createdBy: string } }[] } = await response.json();
+        return chats.data.map((c) => ({ conversationId: c.id, createdBy: c.custom.createdBy }));
     } catch (error) {
         throw new Error(error);
     }

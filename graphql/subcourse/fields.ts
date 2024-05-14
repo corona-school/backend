@@ -18,6 +18,8 @@ import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
 import { getCourseCapacity } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
+import { getProspectChats } from '../../common/chat';
+import { getPupilsFromList } from '../../common/user';
 
 @ObjectType()
 class Participant {
@@ -49,6 +51,14 @@ class OtherParticipant {
     gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
+}
+
+@ObjectType()
+class SparseParticipant {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String)
+    firstname: string;
 }
 
 export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
@@ -417,12 +427,14 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [Pupil])
+    @FieldResolver(() => [SparseParticipant])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse) {
-        const chat = await getChat(subcourse.conversationId);
-        const prospect = JSON.parse(chat.conversation.custom.prospectSubcourse || '[]');
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<SparseParticipant[]> {
+        const chats = await getProspectChats(subcourse.id);
+        const pupils = await getPupilsFromList(chats.map((chat) => chat.createdBy));
+        return pupils.map((p) => ({ id: p.id, firstname: p.firstname }));
     }
+
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.UNAUTHENTICATED)
     async isParticipant(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
