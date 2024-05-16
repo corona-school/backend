@@ -132,6 +132,10 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
                     },
                 },
             ],
+            notificationPreferences: {
+                path: ['suggestion', 'email'],
+                equals: true,
+            },
             grade: { in: grades },
             subcourse_participants_pupil: { none: { subcourseId: subcourse.id } },
         },
