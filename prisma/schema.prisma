@@ -829,6 +829,7 @@ model subcourse {
   published                        Boolean
   publishedAt                      DateTime?                          @db.Timestamp(6)
   cancelled                        Boolean                            @default(false)
+  // DEPRECATED: In favor of subcourse_promotions
   alreadyPromoted                  Boolean                            @default(false)
   // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants
   // of a Subcourse might change, we create a random ID for it and store it:
@@ -843,6 +844,15 @@ model subcourse {
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
   waiting_list_enrollment          waiting_list_enrollment[]
+  subcourse_promotions             subcourse_promotion[]
+}
+
+model subcourse_promotion {
+  id          Int            @id @default(autoincrement())
+  createdAt   DateTime       @default(now()) @db.Timestamp(6)
+  type        subcourse_promotion_type_enum
+  subcourse   subcourse      @relation(fields: [subcourseId], references: [id], onDelete: Cascade)
+  subcourseId Int
 }
 
 // This is redundant with the Appointment.organizerIds of the appointments attached to the Subcourse and should generally be in sync
@@ -983,6 +993,12 @@ model job_run {
     worker    String
 
     @@id([job_name, startedAt])
+}
+
+enum subcourse_promotion_type_enum {
+  system
+  instructor
+  admin
 }
 
 enum course_category_enum {
