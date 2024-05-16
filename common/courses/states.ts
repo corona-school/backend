@@ -174,11 +174,11 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     if (!can.allowed) {
         throw new Error(`Cannot Publish Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
-    await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
+    const publishedSubcourse = await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
     const course = await getCourse(subcourse.courseId);
-    await sendPupilCoursePromotion(subcourse, SubcoursePromotionType.system);
+    await sendPupilCoursePromotion(publishedSubcourse, SubcoursePromotionType.system);
     logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
 
     await Promise.all(

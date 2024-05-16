@@ -5,10 +5,10 @@ import { userForPupil } from '../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from './lectures';
 import { parseSubjectString } from '../util/subjectsutils';
-import { getCourseCapacity, getCourseFreePlaces, getCourseImageURL } from './util';
+import { getCourseCapacity, getCourseImageURL } from './util';
 import { getCourse } from '../../graphql/util';
-import { shuffleArray } from '../../common/util/basic';
 import { NotificationContext } from '../notification/types';
+import moment from 'moment';
 
 const logger = getLogger('Course Notification');
 
@@ -82,15 +82,109 @@ const getDaysDifference = (date: Date): number => {
     return diffInDays;
 };
 
-const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
-    const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
-    return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
+const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attemptedPromotionType: Prisma.subcourse_promotion_type_enum): Promise<boolean> => {
+    const { alreadyPromoted, publishedAt, published, cancelled } = subcourse;
+
+    //  ----------- Validate promotion type -----------
+    const allowedPromotions = [
+        Prisma.subcourse_promotion_type_enum.admin,
+        Prisma.subcourse_promotion_type_enum.instructor,
+        Prisma.subcourse_promotion_type_enum.system,
+    ];
+    if (!allowedPromotions.includes(attemptedPromotionType)) {
+        return false;
+    }
+
+    //  ----------- Subcourse can't be cancelled -----------
+    if (cancelled) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}) because it's cancelled`);
+        return false;
+    }
+
+    // ----------- Subcourse can't be in the past -----------
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id, isCanceled: false } });
+    const isInThePast = lectures.every((lecture) => moment(lecture.start).valueOf() + lecture.duration * 60000 < moment().valueOf());
+    if (isInThePast) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}) because it's in the past`);
+        return false;
+    }
+
+    // -----------  Subcourse can't have a capacity higher than 75% -----------
+    const MAX_CAPACITY_FOR_PROMOTIONS = 0.75;
+    const capacity = await getCourseCapacity(subcourse);
+    const meetCapacityRequirements = capacity < MAX_CAPACITY_FOR_PROMOTIONS;
+    if (!meetCapacityRequirements) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}) because it doesn't meet capacity requirements`);
+        return false;
+    }
+
+    // -----------  Subcourse must be published and have been so for at least 3 days (3 days requirement doesn't apply for system promotions) -----------
+    const isSystemPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.system;
+    const MIN_DAYS_PUBLISHED_FOR_PROMOTIONS = 3;
+    const daysSincePublished = getDaysDifference(publishedAt);
+    const isMatureForPromotion = daysSincePublished > MIN_DAYS_PUBLISHED_FOR_PROMOTIONS || isSystemPromotion;
+    const meetPublishedRequirements = published && isMatureForPromotion;
+    if (!meetPublishedRequirements) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}) because it doesn't meet published/maturity requirements`);
+        return false;
+    }
+
+    // -----------  We only have one automatic promotion, it should be the first -----------
+    if (isSystemPromotion) {
+        const promotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id },
+        });
+        const canAutoPromote = promotionsCount === 0 && !alreadyPromoted;
+        if (!canAutoPromote) {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). No automatic promotions left`);
+            return false;
+        }
+    }
+
+    // -----------  Instructors can only promote once -----------
+    const isInstructorPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.instructor;
+    const MAX_INSTRUCTOR_PROMOTIONS = 1;
+    if (isInstructorPromotion) {
+        const instructorPromotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id, type: Prisma.subcourse_promotion_type_enum.instructor },
+        });
+        const hasPromotionsLeft = MAX_INSTRUCTOR_PROMOTIONS - instructorPromotionsCount > 0;
+        // TODO: Removed the alreadyPromoted validation after we migrate the data to the new subcourse_promotion table
+        const canPromote = hasPromotionsLeft && !alreadyPromoted;
+        if (!canPromote) {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). No promotions left for instructors`);
+            return false;
+        }
+    }
+
+    // -----------  Admins can only promote once -----------
+    const isAdminPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.admin;
+    const MAX_ADMIN_PROMOTIONS = 1;
+    if (isAdminPromotion) {
+        const adminPromotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id, type: Prisma.subcourse_promotion_type_enum.admin },
+        });
+        const hasPromotionsLeft = MAX_ADMIN_PROMOTIONS - adminPromotionsCount > 0;
+        if (!hasPromotionsLeft) {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). No promotions left for admins`);
+            return false;
+        }
+    }
+
+    // -----------  There must be a gap of at least 3 days between promotions -----------
+    const threeDaysAgo = moment().subtract(3, 'days').toDate();
+    const promotionWithinThreeDays = await prisma.subcourse_promotion.findFirst({ where: { subcourseId: subcourse.id, createdAt: { gte: threeDaysAgo } } });
+    if (promotionWithinThreeDays) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}) because the last promotion was within the last 3 days`);
+        return false;
+    }
+
+    return true;
 };
 
 export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
-    const courseCapacity = await getCourseCapacity(subcourse);
-    const { alreadyPromoted, publishedAt } = subcourse;
-    if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+    const canPromote = await canPromoteSubcourse(subcourse, promotionType);
+    if (!canPromote) {
         throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
     }
 
