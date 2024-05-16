@@ -7,7 +7,14 @@ import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } 
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { addInstructorScreening, addTutorScreening, cancelCoCReminders, scheduleCoCReminders } from '../../common/student/screening';
+import {
+    addInstructorScreening,
+    addTutorScreening,
+    cancelCoCReminders,
+    scheduleCoCReminders,
+    updateInstructorScreening,
+    updateTutorScreening,
+} from '../../common/student/screening';
 import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
@@ -59,6 +66,14 @@ export class ScreeningInput {
         nullable: true,
     })
     knowsCoronaSchoolFrom?: string | undefined;
+}
+
+@InputType()
+class ScreeningUpdateInput {
+    @Field((_type) => String, {
+        nullable: true,
+    })
+    comment?: string | undefined;
 }
 
 @ObjectType()
@@ -359,6 +374,22 @@ export class MutateStudentResolver {
 
         const screener = await getSessionScreener(context);
         await addTutorScreening(screener, student, screening);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentTutorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateTutorScreening(screeningId, data, screener.id);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentInstructorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateInstructorScreening(screeningId, data, screener.id);
         return true;
     }
 

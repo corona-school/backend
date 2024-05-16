@@ -13,6 +13,8 @@ import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
 import { prisma } from '../../common/prisma';
+import { CreatePushSubscription, addPushSubcription, removePushSubscription } from '../../common/notification/channels/push';
+import { GraphQLInt } from 'graphql';
 
 @InputType()
 class SupportMessage {
@@ -23,6 +25,15 @@ class SupportMessage {
     @Field()
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
+}
+
+@InputType()
+class CreatePushSubscriptionInput implements CreatePushSubscription {
+    @Field()
+    @Length(/* min */ 1, /* max */ 10_000)
+    endpoint: string;
+    @Field({ nullable: true })
+    expirationTime?: Date;
 }
 
 const logger = getLogger('User Mutations');
@@ -73,7 +84,22 @@ export class MutateUserResolver {
 
         return true;
     }
-    @Mutation(() => Boolean)
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userPushSubcriptionAdd(@Ctx() context: GraphQLContext, @Arg('subscription') subscription: CreatePushSubscriptionInput) {
+        await addPushSubcription(context.user, subscription);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userPushSubcriptionRemove(@Ctx() context: GraphQLContext, @Arg('subscriptionID', () => GraphQLInt) id: number) {
+        await removePushSubscription(context.user, id);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
     async markAchievementAsSeen(@Ctx() context: GraphQLContext, @Arg('achievementId') achievementId: number) {
         const achievement = await prisma.user_achievement.findFirstOrThrow({

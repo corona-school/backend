@@ -118,7 +118,7 @@ model attachment {
 model bbb_meeting {
   id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
   createdAt      DateTime @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @db.Timestamp(6) @updatedAt
   meetingID      String   @db.VarChar
   meetingName    String?  @db.VarChar
   attendeePW     String?  @db.VarChar
@@ -157,7 +157,7 @@ model concrete_notification {
 model course {
   id                         Int                          @id(map: "PK_bf95180dd756fd204fb01ce4916") @default(autoincrement())
   createdAt                  DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                  DateTime                     @default(now()) @db.Timestamp(6) @updatedAt
   name                       String                       @db.VarChar
   outline                    String                       @db.VarChar
   description                String                       @db.VarChar
@@ -189,7 +189,7 @@ model course {
 model course_attendance_log {
   id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
   createdAt    DateTime @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime @default(now()) @db.Timestamp(6) @updatedAt
   attendedTime Int?
   ip           String?  @db.VarChar
   pupilId      Int?
@@ -202,7 +202,7 @@ model course_attendance_log {
 model course_guest {
   id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6) @updatedAt
   token     String   @unique(map: "IDX_8fb7b15823c3ed0fea3c508ac4") @db.VarChar
   firstname String   @db.VarChar
   lastname  String   @db.VarChar
@@ -229,7 +229,7 @@ model course_instructors_student {
 model course_participation_certificate {
   id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
   createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime   @default(now()) @db.Timestamp(6) @updatedAt
   issuerId    Int?
   pupilId     Int?
   subcourseId Int?
@@ -263,7 +263,7 @@ model course_tags_course_tag {
 model expert_data {
   id                                       Int                                        @id(map: "PK_096e6e0f8fcc7e142b555fde91e") @default(autoincrement())
   createdAt                                DateTime                                   @default(now()) @db.Timestamp(6)
-  updatedAt                                DateTime                                   @default(now()) @db.Timestamp(6)
+  updatedAt                                DateTime                                   @default(now()) @db.Timestamp(6) @updatedAt
   contactEmail                             String                                     @db.VarChar
   description                              String?                                    @db.VarChar
   active                                   Boolean                                    @default(false)
@@ -302,7 +302,7 @@ model instructor_screening {
   // so a COUNT(*) GROUP BY should work relatively well:
   knowsCoronaSchoolFrom String?                   @db.VarChar
   createdAt             DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6) @updatedAt
   screenerId            Int?
   studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
   student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
@@ -324,7 +324,7 @@ model jufo_verification_transmission {
 model lecture {
   id                    Int                          @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                     @default(now()) @db.Timestamp(6) @updatedAt
   start                 DateTime                     @db.Timestamp(6)
   duration              Int // in seconds
   title                 String?
@@ -385,7 +385,7 @@ model match {
   // The functionality was removed a long time ago, and is generally replaced with Appointments
   proposedTime          DateTime?          @db.Timestamp(6)
   createdAt             DateTime           @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime           @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime           @default(now()) @db.Timestamp(6) @updatedAt
   // DEPRECATED: With the Notification System we now use Concrete Notifications to track 
   // whether a notification was already sent. These booleans were used a long time ago by some cron jobs:
   feedbackToPupilMail   Boolean            @default(false)
@@ -421,7 +421,7 @@ model match {
 model mentor {
   id                           Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
   createdAt                    DateTime                @default(now()) @db.Timestamp(6)
-  updatedAt                    DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                @default(now()) @db.Timestamp(6) @updatedAt
   firstname                    String?                 @db.VarChar
   lastname                     String?                 @db.VarChar
   active                       Boolean                 @default(true)
@@ -510,7 +510,7 @@ model project_coaching_screening {
   comment               String?   @db.VarChar
   knowsCoronaSchoolFrom String?   @db.VarChar
   createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @db.Timestamp(6) @updatedAt
   screenerId            Int?
   studentId             Int?      @unique(map: "REL_565d757e2fd9a97fc3f30f5129")
   student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_565d757e2fd9a97fc3f30f51297")
@@ -521,7 +521,7 @@ model project_coaching_screening {
 model project_field_with_grade_restriction {
   id           Int                                                    @id(map: "PK_9f450f4d0e5e20c5a0a6fee6dea") @default(autoincrement())
   createdAt    DateTime                                               @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime                                               @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime                                               @default(now()) @db.Timestamp(6) @updatedAt
   projectField project_field_with_grade_restriction_projectfield_enum
   min          Int?
   max          Int?
@@ -536,7 +536,7 @@ model project_match {
   id             Int      @id(map: "PK_14902d121cc871092943b3857e5") @default(autoincrement())
   uuid           String   @unique(map: "IDX_58dbaf83a377f347d9fab47fc5") @db.VarChar
   createdAt      DateTime @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @db.Timestamp(6) @updatedAt
   dissolved      Boolean  @default(false)
   dissolveReason Int?
   studentId      Int?
@@ -550,7 +550,7 @@ model project_match {
 model pupil {
   id                           Int                   @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
   createdAt                    DateTime              @default(now()) @db.Timestamp(6)
-  updatedAt                    DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime              @default(now()) @db.Timestamp(6) @updatedAt
   firstname                    String?               @db.VarChar
   lastname                     String?               @db.VarChar
   active                       Boolean               @default(true)
@@ -627,7 +627,7 @@ model pupil {
 model pupil_tutoring_interest_confirmation_request {
   id               Int       @id(map: "PK_5f3515ba0bd182b1cc34f06ef11") @default(autoincrement())
   createdAt        DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime  @default(now()) @db.Timestamp(6) @updatedAt
   status           String    @default("pending") @db.VarChar
   // invalidated if a Match was created or the Match Request was revoked
   invalidated      Boolean   @default(false)
@@ -639,11 +639,22 @@ model pupil_tutoring_interest_confirmation_request {
   pupil            pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5928ac6454eee0bfbdb8e538ef8")
 }
 
+// A Push Subcscription according to https://w3c.github.io/push-api/#pushsubscription-interface
+model push_subscription {
+    id        Int      @id @default(autoincrement())
+    // relation to pupil, student, screener
+    userID    String
+    // The endpoint that can be pushed to
+    endpoint String
+    // The time at which the subscription expires
+    expirationTime DateTime?
+}
+
 // We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free
 model remission_request {
   id        Int      @id(map: "PK_4ea2cbe40d9d5cfe1d39a44558f") @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6) @updatedAt
   uuid      String   @unique(map: "IDX_2ede2092e5c464510c99fcfd05") @db.VarChar
   studentId Int?     @unique(map: "REL_5b96e9df53055059ad903ebc98")
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5b96e9df53055059ad903ebc98c")
@@ -653,7 +664,7 @@ model remission_request {
 model school {
   id                Int                    @id(map: "PK_57836c3fe2f2c7734b20911755e") @default(autoincrement())
   createdAt         DateTime               @default(now()) @db.Timestamp(6)
-  updatedAt         DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime               @default(now()) @db.Timestamp(6) @updatedAt
   name              String                 @db.VarChar
   website           String?                @unique(map: "IDX_b365d0ef66facdfeb842d45683") @db.VarChar
   // Used to associate pupils with schools through their teacher's mail address
@@ -670,7 +681,7 @@ model school {
 model screener {
   id                           Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
   createdAt                    DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt                    DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                     @default(now()) @db.Timestamp(6) @updatedAt
   firstname                    String?                      @db.VarChar
   lastname                     String?                      @db.VarChar
   active                       Boolean                      @default(true)
@@ -706,7 +717,7 @@ model screening {
   // so a COUNT(*) GROUP BY should work relatively well:
   knowsCoronaSchoolFrom String?                   @db.VarChar
   createdAt             DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @db.Timestamp(6) @updatedAt
   screenerId            Int?
   studentId             Int?                      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
   screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
@@ -716,7 +727,7 @@ model screening {
 model student {
   id                                        Int                      @id(map: "PK_3d8016e1cb58429474a3c041904") @default(autoincrement())
   createdAt                                 DateTime                 @default(now()) @db.Timestamp(6)
-  updatedAt                                 DateTime                 @default(now()) @db.Timestamp(6)
+  updatedAt                                 DateTime                 @default(now()) @db.Timestamp(6) @updatedAt
   firstname                                 String?                  @db.VarChar
   lastname                                  String?                  @db.VarChar
   active                                    Boolean                  @default(true)
@@ -810,7 +821,7 @@ model student {
 model subcourse {
   id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
   createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
-  updatedAt                        DateTime                           @default(now()) @db.Timestamp(6)
+  updatedAt                        DateTime                           @default(now()) @db.Timestamp(6) @updatedAt
   minGrade                         Int
   maxGrade                         Int
   maxParticipants                  Int
@@ -858,11 +869,12 @@ model subcourse_participants_pupil {
   @@index([subcourseId], map: "IDX_cde91c063947d1302d50c906dc")
 }
 
+
 // We require a Certifcate of Conduct to be handed in by Students, which is verified by Support
 model certificate_of_conduct {
   id               Int      @id(map: "PK_95058dd1916a7fb5ff77170c374") @default(autoincrement())
   createdAt        DateTime @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime @default(now()) @db.Timestamp(6) @updatedAt
   // Filled by support:
   dateOfInspection DateTime @db.Timestamp(6)
   dateOfIssue      DateTime @db.Timestamp(6)
@@ -935,7 +947,7 @@ model important_information {
 model pupil_screening {
   id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
   createdAt   DateTime                    @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime                    @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime                    @default(now()) @db.Timestamp(6) @updatedAt
   status      pupil_screening_status_enum @default(pending)
   // invalidated when a Match is created or the Match Request is revoked
   invalidated Boolean                     @default(false)

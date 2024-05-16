@@ -29,12 +29,12 @@ export const ENABLED_NEWSLETTER: Preferences = {
 
 export const DISABLED_NEWSLETTER: Preferences = {
     chat: { email: true },
-    survey: { email: true },
+    survey: { email: false },
     appointment: { email: true },
-    advice: { email: true },
-    suggestion: { email: true },
+    advice: { email: false },
+    suggestion: { email: false },
     announcement: { email: true },
-    call: { email: true },
+    call: { email: false },
     news: { email: false },
     event: { email: false },
     request: { email: false },

@@ -8,6 +8,7 @@ import {
     StudentWhereInput,
     PupilWhereInput,
     Log,
+    Push_subscription as PushSubscription,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
@@ -31,6 +32,7 @@ import { Achievement } from '../types/achievement';
 import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
+import { getPushSubscriptions } from '../../common/notification/channels/push';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -154,6 +156,12 @@ export class UserFieldsResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
         return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
+    }
+
+    @FieldResolver((returns) => [PushSubscription])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async pushSubscriptions(@Root() user: User) {
+        return await getPushSubscriptions(user);
     }
 
     // ------------- User Queries ----------------
