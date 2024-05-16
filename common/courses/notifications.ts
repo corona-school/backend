@@ -87,10 +87,6 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-const PREDICTED_PUPIL_RESPONSE_RATE = 5; /* % */
-// The maximum amount of notifications to send for a course:
-const MAX_PROMOTIONS = 500;
-
 export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, countAsPromotion: boolean = true) {
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
@@ -148,26 +144,13 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
         return !courseSubject || isPupilsSubject;
     });
 
-    const shuffledFilteredPupils = shuffleArray(filteredPupils);
-
-    // get random subset of filtered pupils
-    const seatsLeft = await getCourseFreePlaces(subcourse);
-    const randomPupilSampleSize = Math.min((seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100, MAX_PROMOTIONS);
-    const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
-
-    logger.info(
-        `Filtered ${filteredPupils.length} pupils that could join the course and reduced that to ${randomFilteredPupilSample.length} (for ${seatsLeft} available places)
-        for Subcourse(${subcourse.id}) based on the predicted response rate of ${PREDICTED_PUPIL_RESPONSE_RATE}%`,
-        { subcourseId: subcourse.id }
-    );
-
     const context = await getNotificationContextForSubcourse(course, subcourse);
     (context as NotificationContext).uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
     await Notification.bulkActionTaken(
-        randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
+        filteredPupils.map((pupil) => userForPupil(pupil)),
         'available_places_on_subcourse',
         context
     );
 
-    logger.info(`Sent ${randomFilteredPupilSample.length} notifications to promote Subcourse(${subcourse.id})`);
+    logger.info(`Sent ${filteredPupils.length} notifications to promote Subcourse(${subcourse.id})`);
 }
