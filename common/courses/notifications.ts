@@ -87,18 +87,16 @@ const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: 
     return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
 };
 
-export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, countAsPromotion: boolean = true) {
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
     const courseCapacity = await getCourseCapacity(subcourse);
     const { alreadyPromoted, publishedAt } = subcourse;
     if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
         throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
     }
 
-    if (countAsPromotion) {
-        // Store this before sending out the notifications (which may take a while), to prevent this from accidentally being
-        // triggered twice
-        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
-    }
+    await prisma.subcourse_promotion.create({
+        data: { type: promotionType, subcourseId: subcourse.id },
+    });
 
     const course = await getCourse(subcourse.courseId);
     const minGrade = subcourse.minGrade;
