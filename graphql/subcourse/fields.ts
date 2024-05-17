@@ -552,7 +552,8 @@ export class ExtendedFieldsSubcourseResolver {
         const promotionCount = await prisma.subcourse_promotion.count({
             where: { type: SubcoursePromotionType.instructor, subcourseId: subcourse.id },
         });
-        return promotionCount > 0;
+        // TODO: Remove alreadyPromoted after migrations
+        return promotionCount > 0 || subcourse.alreadyPromoted;
     }
 
     @FieldResolver((returns) => Boolean)
