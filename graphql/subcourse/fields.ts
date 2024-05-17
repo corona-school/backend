@@ -545,4 +545,22 @@ export class ExtendedFieldsSubcourseResolver {
         const response = await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
         return response.canPromote;
     }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async wasPromotedByInstructor(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.instructor, subcourseId: subcourse.id },
+        });
+        return promotionCount > 0;
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async wasPromotedByAdmin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.admin, subcourseId: subcourse.id },
+        });
+        return promotionCount > 0;
+    }
 }
