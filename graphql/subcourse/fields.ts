@@ -8,7 +8,7 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Course, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -29,6 +29,8 @@ class Participant {
     lastname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => pupil_schooltype_enum)
     schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
     @Field((_type) => String)
@@ -43,6 +45,8 @@ class OtherParticipant {
     firstname: string;
     @Field((_type) => String)
     grade: string;
+    @Field((_type) => Int)
+    gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
 }
@@ -129,15 +133,18 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @Query((returns) => [Subcourse])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     @LimitedQuery()
     async subcourseSearch(
         @Arg('search') search: string,
+        @Arg('courseStates', () => [String], { nullable: true }) courseStates: course_coursestate_enum[],
         @Arg('take', () => GraphQLInt) take: number,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0
     ) {
         return await prisma.subcourse.findMany({
-            where: await subcourseSearch(search),
+            where: {
+                AND: [await subcourseSearch(search), { course: { courseState: { in: courseStates } } }],
+            },
             take,
             skip,
         });
@@ -290,7 +297,7 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.OWNER)
     @LimitEstimated(100)
     async participants(@Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -307,13 +314,14 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [OtherParticipant])
     @Authorized(Role.SUBCOURSE_PARTICIPANT)
     @LimitEstimated(100)
     async otherParticipants(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse) {
-        return await prisma.pupil.findMany({
+        const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
                     some: {
@@ -329,10 +337,11 @@ export class ExtendedFieldsSubcourseResolver {
                 aboutMe: true,
             },
         });
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
 
     @FieldResolver((returns) => [Pupil])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     @LimitEstimated(100)
     async participantsAsPupil(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
@@ -356,7 +365,7 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => [Participant])
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     @LimitEstimated(100)
     async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
         const pupils = await prisma.pupil.findMany({
@@ -376,12 +385,15 @@ export class ExtendedFieldsSubcourseResolver {
                 +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
         );
 
-        return pupils;
+        return pupils.map((e) => ({
+            ...e,
+            gradeAsInt: gradeAsInt(e.grade),
+        }));
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
     @FieldResolver((returns) => [Pupil])
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     @LimitEstimated(100)
     async pupilsWaiting(@Root() subcourse: Subcourse) {
         return await prisma.pupil.findMany({
@@ -438,57 +450,57 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.PUPIL, Role.COURSE_SCREENER)
     async canJoin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await canJoinSubcourse(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.PUPIL)
+    @Authorized(Role.ADMIN, Role.PUPIL, Role.COURSE_SCREENER)
     async canJoinWaitinglist(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>, @Arg('pupilId', { nullable: true }) pupilId: number) {
         const pupil = await getSessionPupil(context, pupilId);
         return await couldJoinSubcourse(subcourse, pupil);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async canPublish(@Root() subcourse: Required<Subcourse>) {
         return await canPublish(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async canCancel(@Root() subcourse: Required<Subcourse>) {
         return await canCancel(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async canEdit(@Root() subcourse: Required<Subcourse>) {
         return await canEditSubcourse(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async canDelete(@Root() subcourse: Required<Subcourse>) {
         return await canDeleteSubcourse(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
         return await canContactInstructors(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async canContactParticipants(@Root() subcourse: Required<Subcourse>) {
         return await canContactParticipants(subcourse);
     }
 
     @FieldResolver((returns) => Number)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async capacity(@Root() subcourse: Required<Subcourse>) {
         return await getCourseCapacity(subcourse);
     }

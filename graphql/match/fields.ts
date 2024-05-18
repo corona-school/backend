@@ -9,7 +9,7 @@ import { Subject } from '../types/subject';
 import { GraphQLContext } from '../context';
 import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
-import { getAppointmentsForMatch, getLastMatchAppointmentId } from '../../common/appointment/get';
+import { getAppointmentsForMatch, getEdgeMatchAppointmentId } from '../../common/appointment/get';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -78,8 +78,14 @@ export class ExtendedFieldsMatchResolver {
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
+    async firstAppointmentId(@Ctx() context: GraphQLContext, @Root() match: Match): Promise<number> {
+        return await getEdgeMatchAppointmentId(match.id, context.user.userID, 'first');
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Ctx() context: GraphQLContext, @Root() match: Match): Promise<number> {
-        return await getLastMatchAppointmentId(match.id, context.user.userID);
+        return await getEdgeMatchAppointmentId(match.id, context.user.userID, 'last');
     }
 
     @FieldResolver((returns) => Chat, { nullable: true })

@@ -9,6 +9,7 @@ import {
     PupilWhereInput,
     Log,
     Important_information,
+    Push_subscription as PushSubscription,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
@@ -22,7 +23,7 @@ import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
-import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
+import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
@@ -32,6 +33,8 @@ import { Achievement } from '../types/achievement';
 import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import { deriveAchievements } from '../../common/achievement/derive';
+import assert from 'assert';
+import { getPushSubscriptions } from '../../common/notification/channels/push';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -157,10 +160,16 @@ export class UserFieldsResolver {
         return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
     }
 
+    @FieldResolver((returns) => [PushSubscription])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async pushSubscriptions(@Root() user: User) {
+        return await getPushSubscriptions(user);
+    }
+
     // ------------- User Queries ----------------
 
     @Query((returns) => [UserType])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.STUDENT_SCREENER)
     async usersSearch(
         @Ctx() context: GraphQLContext,
         @Arg('query') query: string,
@@ -168,6 +177,22 @@ export class UserFieldsResolver {
         @Arg('take', () => Int, { nullable: true }) take?: number
     ) {
         const strict = false; // !(context.user.roles?.includes(Role.ADMIN) ?? false);
+
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
+        if (!isAdmin) {
+            const isPupilScreener = context.user.roles.includes(Role.PUPIL_SCREENER);
+            const isStudentScreener = context.user.roles.includes(Role.STUDENT_SCREENER);
+            if (!isPupilScreener) {
+                assert(isStudentScreener);
+                only = 'student';
+            }
+
+            if (!isStudentScreener) {
+                assert(isPupilScreener);
+                only = 'pupil';
+            }
+        }
+
         return await findUsers(query, only, take, strict);
     }
 
@@ -268,8 +293,14 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
+    async firstAppointmentId(@Root() user: User): Promise<number> {
+        return await getEdgeAppointmentId(user, 'first');
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return await getLastAppointmentId(user);
+        return await getEdgeAppointmentId(user, 'last');
     }
 
     // ------------- Achievements ------------

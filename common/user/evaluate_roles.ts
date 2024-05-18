@@ -128,4 +128,16 @@ export function evaluateScreenerRoles(screener: Screener, roles: Role[]) {
         roles.push(Role.TRUSTED_SCREENER);
         logger.info(`Screener(${screener.id}) has TRUSTED_SCREENER role`);
     }
+    if (screener.is_course_screener) {
+        roles.push(Role.COURSE_SCREENER);
+        logger.info(`Screener(${screener.id}) has COURSE_SCREENER role`);
+    }
+    if (screener.is_pupil_screener) {
+        roles.push(Role.PUPIL_SCREENER);
+        logger.info(`Screener(${screener.id}) has PUPIL_SCREENER role`);
+    }
+    if (screener.is_student_screener) {
+        roles.push(Role.STUDENT_SCREENER);
+        logger.info(`Screener(${screener.id}) has STUDENT_SCREENER role`);
+    }
 }

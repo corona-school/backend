@@ -8,7 +8,6 @@ import {
     Subcourse,
     Course,
     StudentWhereInput,
-    SubcourseWhereInput,
 } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -29,6 +28,7 @@ import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { isSessionStudent } from '../authentication';
 import { subcourseSearch } from '../../common/courses/search';
+import * as CertificateOfConductCommon from '../../common/certificate-of-conduct/certificateOfConduct';
 
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
@@ -112,7 +112,7 @@ export class ExtendFieldsStudentResolver {
 
     // eslint-disable-next-line camelcase
     @FieldResolver((type) => CertificateOfConduct, { nullable: true })
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.STUDENT_SCREENER)
     @LimitEstimated(1)
     async certificateOfConduct(@Root() student: Student) {
         return await prisma.certificate_of_conduct.findUnique({
@@ -127,6 +127,12 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     async certificateOfConductDeactivationDate(@Root() student: Required<Student>) {
         return await predictedHookActionDate('coc_reminder', 'deactivate-student', userForStudent(student));
+    }
+
+    @FieldResolver((type) => Boolean)
+    @Authorized(Role.SCREENER, Role.ADMIN, Role.OWNER)
+    async certificateOfConductPresent(@Root() studentId: number) {
+        return await CertificateOfConductCommon.checkExistence(studentId);
     }
 
     @FieldResolver((type) => [Screening])
@@ -176,7 +182,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @Query((returns) => [Student])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentsToBeScreened() {
         return await prisma.student.findMany({
             where: {

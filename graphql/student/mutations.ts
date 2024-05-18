@@ -7,7 +7,14 @@ import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } 
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { addInstructorScreening, addTutorScreening, cancelCoCReminders, scheduleCoCReminders } from '../../common/student/screening';
+import {
+    addInstructorScreening,
+    addTutorScreening,
+    cancelCoCReminders,
+    scheduleCoCReminders,
+    updateInstructorScreening,
+    updateTutorScreening,
+} from '../../common/student/screening';
 import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
@@ -59,6 +66,14 @@ export class ScreeningInput {
         nullable: true,
     })
     knowsCoronaSchoolFrom?: string | undefined;
+}
+
+@InputType()
+class ScreeningUpdateInput {
+    @Field((_type) => String, {
+        nullable: true,
+    })
+    comment?: string | undefined;
 }
 
 @ObjectType()
@@ -289,7 +304,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
@@ -297,7 +312,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
         const student = await getStudent(studentId);
         await reactivateStudent(student, reason);
@@ -305,7 +320,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
 
@@ -315,7 +330,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
         await deleteStudentMatchRequest(student);
@@ -324,7 +339,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentInstructorScreeningCreate(
         @Ctx() context: GraphQLContext,
         @Arg('studentId') studentId: number,
@@ -348,7 +363,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
 
@@ -362,8 +377,24 @@ export class MutateStudentResolver {
         return true;
     }
 
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentTutorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateTutorScreening(screeningId, data, screener.id);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentInstructorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateInstructorScreening(screeningId, data, screener.id);
+        return true;
+    }
+
     @Mutation((returns) => [StudentRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
         const { entries } = data;
         log.info(`Starting studentRegisterPlusMany, received ${entries.length} students`);

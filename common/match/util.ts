@@ -9,7 +9,7 @@ import { hashToken } from '../util/hashing';
 
 export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
     MIN: 1,
-    MAX: 13,
+    MAX: 14,
 };
 
 export function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): SubjectWithGradeRestriction {

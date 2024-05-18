@@ -72,7 +72,7 @@ const logger = getLogger('MutateCourseResolver');
 @Resolver((of) => GraphQLModel.Course)
 export class MutateCourseResolver {
     @Mutation((returns) => GraphQLModel.Course)
-    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
+    @Authorized(Role.ADMIN, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async courseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('course') course: PublicCourseCreateInput,
@@ -86,7 +86,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
     async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -95,7 +95,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Course)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -109,7 +109,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Course)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseEdit(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -139,7 +139,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSetTags(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('courseTagIds', (_type) => [Number]) courseTagIds: number[]) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -168,7 +168,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -193,7 +193,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseAddInstructor(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -204,7 +204,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseDeleteInstructor(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -216,7 +216,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSubmit(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -243,21 +243,21 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await allowCourse(await getCourse(courseId), screeningComment);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseDeny(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await denyCourse(await getCourse(courseId), screeningComment);
         return true;
     }
 
     @Mutation((returns) => GraphQLModel.Course_tag)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
         const tag = await createCourseTag(context.user, name, category as course_category_enum);
@@ -266,7 +266,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => GraphQLModel.Course_tag)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseTagDelete(@Ctx() context: GraphQLContext, @Arg('courseTagId') courseTagId: number) {
         const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId } });
         if (!tag) {

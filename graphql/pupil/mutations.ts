@@ -89,6 +89,9 @@ export class PupilScreeningUpdateInput {
 
     @Field(() => String, { nullable: true })
     comment?: string;
+
+    @Field(() => String, { nullable: true })
+    knowsCoronaSchoolFrom?: string;
 }
 
 @InputType()
@@ -242,7 +245,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.PUPIL, Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);
@@ -250,7 +253,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.SCREENER)
+    @Authorized(Role.PUPIL_SCREENER)
     async pupilUpdateSubjects(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateSubjectsInput, @Arg('pupilId') pupilId: number) {
         const pupil = await getPupil(pupilId);
         await updatePupil(context, pupil, { subjects: data.subjects });
@@ -266,15 +269,15 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil);
+        await deactivatePupil(pupil, false, 'deactivated by admin', true);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTEE, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
 
@@ -284,7 +287,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTEE, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
@@ -293,7 +296,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => [PupilRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
         const { entries } = data;
         logger.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
@@ -311,7 +314,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilCreateScreening(@Arg('pupilId') pupilId: number, @Arg('silent', { nullable: true }) silent?: boolean): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await addPupilScreening(pupil, undefined, silent ?? false);
@@ -320,7 +323,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdateScreening(
         @Ctx() context: GraphQLContext,
         @Arg('pupilScreeningId') pupilScreeningId: number,
@@ -332,7 +335,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilMissedScreening(
         @Ctx() context: GraphQLContext,
         @Arg('pupilScreeningId') pupilScreeningId: number,
@@ -353,7 +356,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
         await invalidatePupilScreening(pupilScreeningId);
         return true;

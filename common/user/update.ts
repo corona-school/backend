@@ -1,8 +1,8 @@
-import { User, getUser, userForPupil, userForStudent, userSelection } from '.';
+import { User, getUser, userForPupil, userForStudent, userSelection, getStudent } from '.';
 import { pupil as Pupil, student as Student } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
 import { prisma } from '../prisma';
-import { updateZoomUser } from '../zoom/user';
+import { changeEmail } from '../zoom/user';
 import { isZoomFeatureActive } from '../zoom/util';
 
 export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
@@ -10,7 +10,10 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
     const user = await getUser(userId, /* active */ true);
     if (user.studentId) {
         if (isZoomFeatureActive()) {
-            await updateZoomUser(user);
+            const student = await getStudent(user);
+            if (student.zoomUserId) {
+                await changeEmail(student, validatedEmail);
+            }
         }
 
         return userForStudent(

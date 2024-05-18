@@ -162,7 +162,7 @@ export class MutateMeResolver {
     async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil, reason);
+            const updatedPupil = await deactivatePupil(pupil, false, reason, false);
 
             const roles: Role[] = [];
             await evaluatePupilRoles(updatedPupil, roles);

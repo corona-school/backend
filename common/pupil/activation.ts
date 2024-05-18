@@ -8,6 +8,7 @@ import { userForPupil } from '../user';
 import { dissolved_by_enum } from '../../graphql/generated';
 import { leaveSubcourse } from '../courses/participants';
 import { getLogger } from '../logger/logger';
+import { removeAllPushSubcriptions } from '../notification/channels/push';
 
 const logger = getLogger('Pupil Activation');
 
@@ -27,12 +28,16 @@ export async function activatePupil(pupil: Pupil) {
     return updatedPupil;
 }
 
-export async function deactivatePupil(pupil: Pupil, reason?: string) {
+export async function deactivatePupil(pupil: Pupil, silent = false, reason?: string, byAdmin = false) {
     if (!pupil.active) {
         throw new RedundantError('Pupil was already deactivated');
     }
 
-    await Notification.actionTaken(userForPupil(pupil), 'pupil_account_deactivated', {});
+    if (!silent) {
+        const action = byAdmin ? 'pupil_account_deactivated_by_admin' : 'pupil_account_deactivated';
+        await Notification.actionTaken(userForPupil(pupil), action, {});
+    }
+
     await Notification.cancelRemindersFor(userForPupil(pupil));
     // Setting 'active' to false will not send out any notifications during deactivation
     pupil.active = false;
@@ -61,6 +66,8 @@ export async function deactivatePupil(pupil: Pupil, reason?: string) {
         await leaveSubcourse(subcourse, pupil);
         logger.info(`Pupil(${pupil.id}) left ongoing Subcourse(${subcourse.id}) as the account was deactivated`);
     }
+
+    await removeAllPushSubcriptions(userForPupil(pupil));
 
     const updatedPupil = await prisma.pupil.update({
         data: { active: false },
