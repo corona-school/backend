@@ -81,7 +81,9 @@ export const webpushChannel: Channel = {
     type: 'push',
 
     async canSend(notification: Notification, user: User) {
-        if (!enabled) return false;
+        if (!enabled) {
+            return false;
+        }
 
         const subscriptions = await getPushSubscriptions(user);
         const canSend = subscriptions.length > 0;
