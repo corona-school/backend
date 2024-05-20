@@ -124,7 +124,7 @@ async function deliverNotification(
             }
         }
 
-        const activeChannels: Channel[] = [];
+        activeChannels = [];
         for (const enabled of enabledChannels) {
             if (await enabled.canSend(notification, user)) {
                 activeChannels.push(enabled);
