@@ -250,7 +250,7 @@ export const mailjetChannel: Channel = {
         logger.info(`Sent Mail(${message.TemplateID})`);
     },
 
-    canSend: (notification: Notification, _user: User) => {
+    canSend: async (notification: Notification, _user: User) => {
         return notification.mailjetTemplateId != null || (notification.sample_context && 'overrideMailjetTemplateID' in (notification.sample_context as any));
     },
 };

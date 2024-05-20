@@ -15,7 +15,7 @@ export const inAppChannel: Channel = {
         };
         await ws.sendMessageToUser(to.userID, message);
     },
-    canSend: (_notification: Notification, user: User) => {
+    canSend: async (_notification: Notification, user: User) => {
         if (!WebSocketService.hasInstance()) {
             // In the Jobs Dyno (when sending Reminders) we do not have a connection to the Web Dyno which runs the Websocket Server
             // thus we cannot deliver an In App Notification in that case
