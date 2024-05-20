@@ -15,6 +15,7 @@ import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mai
 import { prisma } from '../../common/prisma';
 import { CreatePushSubscription, addPushSubcription, removePushSubscription } from '../../common/notification/channels/push';
 import { GraphQLInt } from 'graphql';
+import { GraphQLJSON } from 'graphql-scalars';
 
 @InputType()
 class SupportMessage {
@@ -34,6 +35,8 @@ class CreatePushSubscriptionInput implements CreatePushSubscription {
     endpoint: string;
     @Field({ nullable: true })
     expirationTime?: Date;
+    @Field((type) => GraphQLJSON)
+    keys: object;
 }
 
 const logger = getLogger('User Mutations');
