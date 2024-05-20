@@ -171,7 +171,7 @@ export class UserFieldsResolver {
     @Query((returns) => String, { nullable: true })
     @Authorized(Role.UNAUTHENTICATED)
     @Doc("Returns the 'applicationServerKey' as described by the WebPush Spec")
-    async pushPublicKey() {
+    pushPublicKey() {
         return publicKey;
     }
 

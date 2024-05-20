@@ -71,7 +71,7 @@ export interface Context extends NotificationContext {
 export interface Channel {
     type: 'email' | 'inapp' | 'push';
     send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification, user: User): Promise<boolean>;
+    canSend(notification: Notification, user: User): boolean | Promise<boolean>;
 }
 
 export interface BulkAction<Entity> {
