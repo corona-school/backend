@@ -116,14 +116,20 @@ export const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attempted
         return { allowed: false, reason: 'course-capacity-too-high' };
     }
 
-    // -----------  Subcourse must be published and have been so for at least 3 days (3 days requirement doesn't apply for system promotions) -----------
+    // -----------  Subcourse must be published -----------
+    if (!published) {
+        return { allowed: false, reason: 'course-is-not-published' };
+    }
+
+    // ----------- Subcourse must be published for at least 3 days (This does NOT apply to system promotions) -----------
     const isSystemPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.system;
-    const MIN_DAYS_PUBLISHED_FOR_PROMOTIONS = 3;
-    const daysSincePublished = getDaysDifference(publishedAt);
-    const isMatureForPromotion = daysSincePublished > MIN_DAYS_PUBLISHED_FOR_PROMOTIONS || isSystemPromotion;
-    const meetPublishedRequirements = published && isMatureForPromotion;
-    if (!meetPublishedRequirements) {
-        return { allowed: false, reason: 'course-is-not-mature-or-published' };
+    if (!isSystemPromotion) {
+        const MIN_DAYS_PUBLISHED_FOR_PROMOTIONS = 3;
+        const daysSincePublished = getDaysDifference(publishedAt);
+        const isMatureForPromotion = daysSincePublished > MIN_DAYS_PUBLISHED_FOR_PROMOTIONS;
+        if (!isMatureForPromotion) {
+            return { allowed: false, reason: 'course-is-not-mature-enough' };
+        }
     }
 
     // -----------  We only have one automatic promotion, it should be the first -----------
