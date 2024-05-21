@@ -79,6 +79,7 @@
         "talkjs": "^0.15.9",
         "type-graphql": "^1.1.1",
         "uuid": "^7.0.3",
+        "web-push": "^3.6.7",
         "wildcard-match": "^5.1.2",
         "ws": "^8.11.0"
     },
@@ -102,6 +103,7 @@
         "@types/qrcode": "^1.5.1",
         "@types/react-select": "^3.0.12",
         "@types/uuid": "^8.3.4",
+        "@types/web-push": "^3.6.3",
         "@types/ws": "^8.5.3",
         "@typescript-eslint/eslint-plugin": "^6.4.1",
         "@typescript-eslint/parser": "^6.4.1",

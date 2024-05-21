@@ -17,6 +17,7 @@ import { Prisma } from '@prisma/client';
 import tracer, { addTagsToActiveSpan } from '../logger/tracing';
 // eslint-disable-next-line import/no-cycle
 import * as Achievement from '../../common/achievement';
+import { webpushChannel } from './channels/push';
 
 const logger = getLogger('Notification');
 
@@ -24,7 +25,7 @@ const logger = getLogger('Notification');
 // Default Channels are always on, the user cannot turn them off
 const DEFAULT_CHANNELS = [inAppChannel];
 // The optional channels are steered via the user preferences
-const OPTIONAL_CHANNELS = [mailjetChannel];
+const OPTIONAL_CHANNELS = [mailjetChannel, webpushChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -123,7 +124,12 @@ async function deliverNotification(
             }
         }
 
-        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+        activeChannels = [];
+        for (const enabled of enabledChannels) {
+            if (await enabled.canSend(notification, user)) {
+                activeChannels.push(enabled);
+            }
+        }
 
         if (!activeChannels.length) {
             logger.warn(
