@@ -543,7 +543,7 @@ export class ExtendedFieldsSubcourseResolver {
         const { user } = context;
         const isAdmin = user.roles.includes(Role.ADMIN);
         const response = await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
-        return response.canPromote;
+        return response.allowed;
     }
 
     @FieldResolver((returns) => Boolean)
