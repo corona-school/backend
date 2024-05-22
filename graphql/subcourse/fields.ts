@@ -152,8 +152,7 @@ export class ExtendedFieldsSubcourseResolver {
     ) {
         return await prisma.subcourse.findMany({
             where: {
-                ...(await subcourseSearch(search)),
-                course: { courseState: { in: courseStates } },
+                AND: [await subcourseSearch(search), { course: { courseState: { in: courseStates } } }],
             },
             take,
             skip,

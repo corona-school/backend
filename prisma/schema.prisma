@@ -648,6 +648,9 @@ model push_subscription {
     endpoint String
     // The time at which the subscription expires
     expirationTime DateTime?
+    // Public key of the subscription which we can encrypt messages with
+    // (so that only the user's device can decrypt them)
+    keys Json
 }
 
 // We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free

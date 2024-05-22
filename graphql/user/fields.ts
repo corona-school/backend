@@ -32,7 +32,7 @@ import { Achievement } from '../types/achievement';
 import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
-import { getPushSubscriptions } from '../../common/notification/channels/push';
+import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -158,10 +158,21 @@ export class UserFieldsResolver {
         return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
     }
 
+    // ------------- Web Push ----------------
+
     @FieldResolver((returns) => [PushSubscription])
     @Authorized(Role.OWNER, Role.ADMIN)
     async pushSubscriptions(@Root() user: User) {
         return await getPushSubscriptions(user);
+    }
+
+    // Query doesn't really belong to the User entity, but there isn't a better place
+    // for such global config
+    @Query((returns) => String, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @Doc("Returns the 'applicationServerKey' as described by the WebPush Spec")
+    pushPublicKey() {
+        return publicKey;
     }
 
     // ------------- User Queries ----------------
