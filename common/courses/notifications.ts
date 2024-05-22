@@ -10,6 +10,7 @@ import { getCourse } from '../../graphql/util';
 import { NotificationContext } from '../notification/types';
 import moment from 'moment';
 import { Decision } from '../util/decision';
+import { shuffleArray } from '../util/basic';
 
 const logger = getLogger('Course Notification');
 
@@ -234,11 +235,24 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
     });
 
     const courseSubject = course.subject;
-    const filteredPupils = pupils.filter((pupil) => {
+    let filteredPupils = pupils.filter((pupil) => {
         const subjects = parseSubjectString(pupil.subjects);
         const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
         return !courseSubject || isPupilsSubject;
     });
+
+    const MAX_PROMOTIONS = Number(process.env.MAX_PROMOTIONS);
+
+    if (MAX_PROMOTIONS && !isNaN(MAX_PROMOTIONS)) {
+        const randomPupilSampleSize = Math.min(filteredPupils.length, MAX_PROMOTIONS);
+        const shuffledFilteredPupils = shuffleArray(filteredPupils);
+        const initialAmountOfPupils = filteredPupils.length;
+        filteredPupils = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
+        const reducedAmountOfPupils = filteredPupils.length;
+        logger.info(`Filtered ${initialAmountOfPupils} pupils that could join the Subcourse(${subcourse.id}) and reduced that to ${reducedAmountOfPupils}`, {
+            subcourseId: subcourse.id,
+        });
+    }
 
     const context = await getNotificationContextForSubcourse(course, subcourse);
     (context as NotificationContext).uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
