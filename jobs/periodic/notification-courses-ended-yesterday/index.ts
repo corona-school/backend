@@ -18,6 +18,11 @@ export default async function execute() {
                     },
                 },
             },
+            cancelled: false,
+            course: {
+                courseState: 'allowed',
+            },
+            published: true,
         },
         include: {
             course: true,
