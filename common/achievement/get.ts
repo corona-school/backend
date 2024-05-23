@@ -1,7 +1,7 @@
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
 import { User } from '../user';
-import { AchievementState, AchievementType, PublicAchievement, PublicStep } from './types';
+import { AchievementState, AchievementType, PublicAchievement, PublicStep, ThenArg } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
 import { getAchievementImageURL } from './util';
 import { isDefined } from './util';
@@ -24,7 +24,6 @@ export async function getUserAchievementsWithTemplates(user: User) {
     });
     return userAchievementsWithTemplates;
 }
-type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
 
 const getAchievementById = async (user: User, achievementId: number): Promise<PublicAchievement> => {

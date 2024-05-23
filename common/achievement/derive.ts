@@ -1,8 +1,13 @@
-import { pupil as Pupil } from '@prisma/client';
-import { User, getPupil, getStudent } from '../user';
+import {
+    pupil as Pupil,
+    achievement_action_type_enum as AchievementActionType,
+    achievement_template_for_enum as AchievementTemplateFor,
+    achievement_type_enum as AchievementType,
+} from '@prisma/client';
+import { User, getPupil, getStudent, userForPupil } from '../user';
 // TODO: Fix import when other PR is in
-import { Achievement } from '../../graphql/types/achievement';
 import { prisma } from '../prisma';
+import { achievement_with_template } from './types';
 
 interface ImportantInformation {
     title: string;
@@ -12,7 +17,7 @@ interface ImportantInformation {
 
 interface DerivedInfo {
     importantInformations: ImportantInformation[];
-    achievements: Achievement[];
+    achievements: achievement_with_template[];
 }
 
 // Large parts of our user communication are event based, i.e. users get a notification for an appointment,
@@ -30,7 +35,7 @@ export async function deriveAchievements(user: User): Promise<DerivedInfo> {
         const pupil = await getPupil(user);
 
         // await derivePupilOnboarding(pupil, result);
-        await derivePupilMatching(pupil, result);
+        await derivePupilMatching(user, pupil, result);
     }
 
     if (user.studentId) {
@@ -44,31 +49,88 @@ export async function deriveAchievements(user: User): Promise<DerivedInfo> {
     return result;
 }
 
-async function derivePupilMatching(pupil: Pupil, result: DerivedInfo) {
+async function derivePupilMatching(user: User, pupil: Pupil, result: DerivedInfo) {
     const hasRequest = pupil.openMatchRequestCount > 0;
-    const hasOpenScreening = (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'pending', invalidated: false } })) > 0;
-
-    if (!hasRequest && !hasOpenScreening) return;
-
-    if (!hasRequest && hasOpenScreening) {
-        result.importantInformations.push({
-            title: 'Einladung zum Screening',
-            description: '...',
-            navigateTo: '/...',
-        });
-    }
-
+    // const hasOpenScreening = (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'pending', invalidated: false } })) > 0;
     const hasSuccessfulScreening = await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'success', invalidated: false } });
-    if (hasSuccessfulScreening) {
-        result.achievements.push({
-            subtitle: 'Warten auf Match',
-            steps: [{ name: 'Screening absolviert' }, { name: 'Warte auf Match' }],
-            // ...
-        } as any);
-    } else {
-        result.achievements.push({
-            subtitle: 'Screening absolvieren',
-            // ...
-        } as any);
-    }
+
+    // 1) Pupil has to be sucessfully screened
+    // 2) Check if they've created a new request
+
+    // TODO: check if necessary
+    if (!hasSuccessfulScreening) return;
+
+    result.achievements.push({
+        id: -1,
+        templateId: -1,
+        userId: user.userID,
+        isSeen: true,
+        template: {
+            id: -1,
+            templateFor: AchievementTemplateFor.Match,
+            group: 'pupil_new_match',
+            groupOrder: 1,
+            type: AchievementType.SEQUENTIAL,
+            image: '',
+            tagline: 'Starte eine Lernpatenschaft',
+            title: 'Neue Lernunterstützung',
+            subtitle: null,
+            description:
+                'Es war großartig, dich am {{date}} besser kennenzulernen und freuen uns, dass du gemeinsam mit uns die Bildungschancen von Schüler:innen verbessern möchtest. Um dir eine:n passende:n Lernpartner:in zuzuweisen, bitten wir dich zunächst, eine Anfrage auf unserer Plattform zu stellen. Hier kannst du die Fächer und Jahrgangsstufe angeben, die für dich passend sind. Wir freuen uns auf den Start!',
+            footer: '',
+            actionName: 'Anfrage stellen',
+            actionRedirectLink: null,
+            actionType: AchievementActionType.Action,
+            condition: 'false', // This will ensure that an evaluation will always fail
+            conditionDataAggregations: {},
+            isActive: true,
+            achievedDescription: null,
+            achievedFooter: null,
+            achievedImage: null,
+            sequentialStepName: null,
+        },
+        context: {},
+        recordValue: null,
+        achievedAt: hasRequest ? new Date() : null,
+        relation: '',
+    });
+
+    result.achievements.push({
+        id: -1,
+        templateId: -1,
+        userId: user.userID,
+        isSeen: true,
+        template: {
+            id: -1,
+            templateFor: AchievementTemplateFor.Course,
+            group: 'pupil_new_match',
+            groupOrder: 1,
+            type: AchievementType.SEQUENTIAL,
+            image: '',
+            tagline: null,
+            title: '',
+            subtitle: null,
+            description: '',
+            footer: '',
+            actionName: null,
+            actionRedirectLink: null,
+            actionType: AchievementActionType.Action,
+            condition: '',
+            conditionDataAggregations: {},
+            isActive: true,
+            achievedDescription: null,
+            achievedFooter: null,
+            achievedImage: null,
+            sequentialStepName: null,
+        },
+        context: {},
+        recordValue: null,
+        achievedAt: new Date(),
+        relation: '',
+    });
+    result.achievements.push({
+        subtitle: 'Warten auf Match',
+        steps: [{ name: 'Screening absolviert' }, { name: 'Warte auf Match' }],
+        // ...
+    } as any);
 }
