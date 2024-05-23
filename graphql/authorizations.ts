@@ -319,6 +319,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
         updateManyImportant_information: adminOrOwner,
         important_informations: everyone,
     },
+    Subcourse_promotion: allAdmin,
     Subcourse_instructors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Concrete_notification: allAdmin,
@@ -564,6 +565,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,
             waiting_list_enrollment: adminOrOwner,
+            subcourse_promotions: onlyAdmin,
         }),
     },
     Course: {

@@ -586,7 +586,7 @@ void test('Create Campaign', async () => {
 });
 
 void test('Create Campaign with Overrides', async () => {
-    const { pupil } = await pupilOne;
+    const { pupil, client: pupilOneClient } = await pupilOne;
     const { pupil: pupil2, client: pupilTwoClient } = await pupilTwo;
 
     const {
@@ -616,6 +616,9 @@ void test('Create Campaign with Overrides', async () => {
       )
     }`);
 
+    await pupilOneClient.request(`mutation PupilEnableNotifications {
+        meUpdate(update: { notificationPreferences: { suggestion: { email: true }}})
+    }`);
     await pupilTwoClient.request(`mutation PupilDisabledNotifications {
         meUpdate(update: { notificationPreferences: { suggestion: { email: false }}})
     }`);

@@ -8,7 +8,15 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import {
+    Course,
+    course_coursestate_enum,
+    Lecture,
+    Pupil,
+    pupil_schooltype_enum,
+    Subcourse,
+    subcourse_promotion_type_enum as SubcoursePromotionType,
+} from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -18,6 +26,7 @@ import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
 import { getCourseCapacity } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
+import { canPromoteSubcourse } from '../../common/courses/notifications';
 
 @ObjectType()
 class Participant {
@@ -525,5 +534,33 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         return await getChat(subcourse.conversationId);
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async canPromote(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+        const response = await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
+        return response.allowed;
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async wasPromotedByInstructor(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.instructor, subcourseId: subcourse.id },
+        });
+        // TODO: Remove alreadyPromoted after migrations
+        return promotionCount > 0 || subcourse.alreadyPromoted;
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async wasPromotedByAdmin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.admin, subcourseId: subcourse.id },
+        });
+        return promotionCount > 0;
     }
 }

@@ -1,4 +1,11 @@
-import { subcourse as Subcourse, course as Course, student as Student, course_coursestate_enum as CourseState, Prisma } from '@prisma/client';
+import {
+    subcourse as Subcourse,
+    course as Course,
+    student as Student,
+    course_coursestate_enum as CourseState,
+    subcourse_promotion_type_enum as SubcoursePromotionType,
+    Prisma,
+} from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
@@ -167,11 +174,11 @@ export async function publishSubcourse(subcourse: Prisma.subcourseGetPayload<{ i
     if (!can.allowed) {
         throw new Error(`Cannot Publish Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
-    await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
+    const publishedSubcourse = await prisma.subcourse.update({ data: { published: true, publishedAt: new Date() }, where: { id: subcourse.id } });
     logger.info(`Subcourse (${subcourse.id}) was published`);
 
     const course = await getCourse(subcourse.courseId);
-    await sendPupilCoursePromotion(subcourse, /* countAsPromotion */ false);
+    await sendPupilCoursePromotion(publishedSubcourse, SubcoursePromotionType.system);
     logger.info(`Subcourse(${subcourse.id}) was automatically promoted`);
 
     await Promise.all(

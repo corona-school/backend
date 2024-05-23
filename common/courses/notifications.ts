@@ -5,10 +5,12 @@ import { userForPupil } from '../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from './lectures';
 import { parseSubjectString } from '../util/subjectsutils';
-import { getCourseCapacity, getCourseFreePlaces, getCourseImageURL } from './util';
+import { getCourseCapacity, getCourseImageURL } from './util';
 import { getCourse } from '../../graphql/util';
-import { shuffleArray } from '../../common/util/basic';
 import { NotificationContext } from '../notification/types';
+import moment from 'moment';
+import { Decision } from '../util/decision';
+import { shuffleArray } from '../util/basic';
 
 const logger = getLogger('Course Notification');
 
@@ -82,27 +84,114 @@ const getDaysDifference = (date: Date): number => {
     return diffInDays;
 };
 
-const isPromotionValid = (publishedAt: Date, capacity: number, alreadyPromoted: boolean): boolean => {
-    const daysDiff: number | null = publishedAt ? getDaysDifference(publishedAt) : null;
-    return capacity < 0.75 && alreadyPromoted === false && (daysDiff === null || daysDiff > 3);
+export const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attemptedPromotionType: Prisma.subcourse_promotion_type_enum): Promise<Decision> => {
+    const { alreadyPromoted, publishedAt, published, cancelled } = subcourse;
+
+    //  ----------- Validate promotion type -----------
+    const allowedPromotions = [
+        Prisma.subcourse_promotion_type_enum.admin,
+        Prisma.subcourse_promotion_type_enum.instructor,
+        Prisma.subcourse_promotion_type_enum.system,
+    ];
+    if (!allowedPromotions.includes(attemptedPromotionType)) {
+        return { allowed: false, reason: 'invalid-promotion-type' };
+    }
+
+    //  ----------- Subcourse can't be cancelled -----------
+    if (cancelled) {
+        return { allowed: false, reason: 'course-cancelled' };
+    }
+
+    // ----------- Subcourse can't be in the past -----------
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id, isCanceled: false } });
+    const isInThePast = lectures.every((lecture) => moment(lecture.start).valueOf() + lecture.duration * 60000 < moment().valueOf());
+    if (isInThePast) {
+        return { allowed: false, reason: 'course-in-the-past' };
+    }
+
+    // -----------  Subcourse can't have a capacity higher than 75% -----------
+    const MAX_CAPACITY_FOR_PROMOTIONS = 0.75;
+    const capacity = await getCourseCapacity(subcourse);
+    const meetCapacityRequirements = capacity < MAX_CAPACITY_FOR_PROMOTIONS;
+    if (!meetCapacityRequirements) {
+        return { allowed: false, reason: 'course-capacity-too-high' };
+    }
+
+    // -----------  Subcourse must be published -----------
+    if (!published) {
+        return { allowed: false, reason: 'course-is-not-published' };
+    }
+
+    // ----------- Subcourse must be published for at least 3 days (This does NOT apply to system promotions) -----------
+    const isSystemPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.system;
+    if (!isSystemPromotion) {
+        const MIN_DAYS_PUBLISHED_FOR_PROMOTIONS = 3;
+        const daysSincePublished = getDaysDifference(publishedAt);
+        const isMatureForPromotion = daysSincePublished > MIN_DAYS_PUBLISHED_FOR_PROMOTIONS;
+        if (!isMatureForPromotion) {
+            return { allowed: false, reason: 'course-is-not-mature-enough' };
+        }
+    }
+
+    // -----------  We only have one automatic promotion, it should be the first -----------
+    if (isSystemPromotion) {
+        const promotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id },
+        });
+        const canAutoPromote = promotionsCount === 0 && !alreadyPromoted;
+        if (!canAutoPromote) {
+            return { allowed: false, reason: 'already-auto-promoted' };
+        }
+    }
+
+    // -----------  Instructors can only promote once -----------
+    const isInstructorPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.instructor;
+    const MAX_INSTRUCTOR_PROMOTIONS = 1;
+    if (isInstructorPromotion) {
+        const instructorPromotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id, type: Prisma.subcourse_promotion_type_enum.instructor },
+        });
+        const hasPromotionsLeft = MAX_INSTRUCTOR_PROMOTIONS - instructorPromotionsCount > 0;
+        // TODO: Removed the alreadyPromoted validation after we migrate the data to the new subcourse_promotion table
+        const allowed = hasPromotionsLeft && !alreadyPromoted;
+        if (!allowed) {
+            return { allowed: false, reason: 'no-instructor-promotions-left' };
+        }
+    }
+
+    // -----------  Admins can only promote once -----------
+    const isAdminPromotion = attemptedPromotionType === Prisma.subcourse_promotion_type_enum.admin;
+    const MAX_ADMIN_PROMOTIONS = 1;
+    if (isAdminPromotion) {
+        const adminPromotionsCount = await prisma.subcourse_promotion.count({
+            where: { subcourseId: subcourse.id, type: Prisma.subcourse_promotion_type_enum.admin },
+        });
+        const hasPromotionsLeft = MAX_ADMIN_PROMOTIONS - adminPromotionsCount > 0;
+        if (!hasPromotionsLeft) {
+            return { allowed: false, reason: 'no-admin-promotions-left' };
+        }
+    }
+
+    // -----------  There must be a gap of at least 3 days between promotions -----------
+    const threeDaysAgo = moment().subtract(3, 'days').toDate();
+    const promotionWithinThreeDays = await prisma.subcourse_promotion.findFirst({ where: { subcourseId: subcourse.id, createdAt: { gte: threeDaysAgo } } });
+    if (promotionWithinThreeDays) {
+        return { allowed: false, reason: 'recently-promoted' };
+    }
+
+    return { allowed: true, reason: '' };
 };
 
-const PREDICTED_PUPIL_RESPONSE_RATE = 5; /* % */
-// The maximum amount of notifications to send for a course:
-const MAX_PROMOTIONS = 500;
-
-export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, countAsPromotion: boolean = true) {
-    const courseCapacity = await getCourseCapacity(subcourse);
-    const { alreadyPromoted, publishedAt } = subcourse;
-    if (!isPromotionValid(publishedAt, courseCapacity, alreadyPromoted)) {
+export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
+    const { allowed, reason } = await canPromoteSubcourse(subcourse, promotionType);
+    if (!allowed) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
         throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
     }
 
-    if (countAsPromotion) {
-        // Store this before sending out the notifications (which may take a while), to prevent this from accidentally being
-        // triggered twice
-        await prisma.subcourse.update({ data: { alreadyPromoted: true }, where: { id: subcourse.id } });
-    }
+    await prisma.subcourse_promotion.create({
+        data: { type: promotionType, subcourseId: subcourse.id },
+    });
 
     const course = await getCourse(subcourse.courseId);
     const minGrade = subcourse.minGrade;
@@ -136,38 +225,42 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, coun
                     },
                 },
             ],
+            notificationPreferences: {
+                path: ['suggestion', 'email'],
+                equals: true,
+            },
             grade: { in: grades },
             subcourse_participants_pupil: { none: { subcourseId: subcourse.id } },
         },
     });
 
     const courseSubject = course.subject;
-    const filteredPupils = pupils.filter((pupil) => {
+    let filteredPupils = pupils.filter((pupil) => {
         const subjects = parseSubjectString(pupil.subjects);
         const isPupilsSubject = subjects.some((subject) => subject.name == courseSubject);
         return !courseSubject || isPupilsSubject;
     });
 
-    const shuffledFilteredPupils = shuffleArray(filteredPupils);
+    const MAX_PROMOTIONS = Number(process.env.MAX_PROMOTIONS);
 
-    // get random subset of filtered pupils
-    const seatsLeft = await getCourseFreePlaces(subcourse);
-    const randomPupilSampleSize = Math.min((seatsLeft / PREDICTED_PUPIL_RESPONSE_RATE) * 100, MAX_PROMOTIONS);
-    const randomFilteredPupilSample = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
-
-    logger.info(
-        `Filtered ${filteredPupils.length} pupils that could join the course and reduced that to ${randomFilteredPupilSample.length} (for ${seatsLeft} available places)
-        for Subcourse(${subcourse.id}) based on the predicted response rate of ${PREDICTED_PUPIL_RESPONSE_RATE}%`,
-        { subcourseId: subcourse.id }
-    );
+    if (MAX_PROMOTIONS && !isNaN(MAX_PROMOTIONS)) {
+        const randomPupilSampleSize = Math.min(filteredPupils.length, MAX_PROMOTIONS);
+        const shuffledFilteredPupils = shuffleArray(filteredPupils);
+        const initialAmountOfPupils = filteredPupils.length;
+        filteredPupils = shuffledFilteredPupils.slice(0, randomPupilSampleSize);
+        const reducedAmountOfPupils = filteredPupils.length;
+        logger.info(`Filtered ${initialAmountOfPupils} pupils that could join the Subcourse(${subcourse.id}) and reduced that to ${reducedAmountOfPupils}`, {
+            subcourseId: subcourse.id,
+        });
+    }
 
     const context = await getNotificationContextForSubcourse(course, subcourse);
     (context as NotificationContext).uniqueId = 'promote_subcourse_' + subcourse.id + '_at_' + Date.now();
     await Notification.bulkActionTaken(
-        randomFilteredPupilSample.map((pupil) => userForPupil(pupil)),
+        filteredPupils.map((pupil) => userForPupil(pupil)),
         'available_places_on_subcourse',
         context
     );
 
-    logger.info(`Sent ${randomFilteredPupilSample.length} notifications to promote Subcourse(${subcourse.id})`);
+    logger.info(`Sent ${filteredPupils.length} notifications to promote Subcourse(${subcourse.id})`);
 }

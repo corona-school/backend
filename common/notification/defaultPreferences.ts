@@ -44,16 +44,16 @@ export const DISABLED_NEWSLETTER: Preferences = {
 // These are taken until the user changes their preferences in the settings
 export const DEFAULT_PREFERENCES: Preferences = {
     chat: { email: true, push: true },
-    survey: { email: true, push: true },
+    survey: { email: false, push: false },
     appointment: { email: true, push: true },
-    advice: { email: true, push: true },
-    suggestion: { email: true, push: true },
+    advice: { email: false, push: false },
+    suggestion: { email: false, push: false },
     announcement: { email: true, push: true },
-    call: { email: true, push: true },
-    news: { email: true, push: true },
-    event: { email: true, push: true },
-    request: { email: true, push: true },
-    alternative: { email: true, push: true },
+    call: { email: false, push: false },
+    news: { email: false, push: false },
+    event: { email: false, push: false },
+    request: { email: false, push: false },
+    alternative: { email: false, push: false },
 };
 
 const categories = [
