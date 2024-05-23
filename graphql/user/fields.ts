@@ -35,7 +35,7 @@ import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
-import { deriveAchievements } from '../../common/achievement/derive';
+import { AchievementState } from '../../common/achievement/types';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -297,7 +297,18 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [Important_information])
     @Authorized(Role.ADMIN, Role.OWNER)
     async importantInformations(@Ctx() context: GraphQLContext) {
-        return (await deriveAchievements(context.user)).importantInformations;
+        const achievements = await getUserAchievements(context.user);
+        return achievements
+            .filter((a) => a.achievementType === 'SEQUENTIAL' && a.achievementState === AchievementState.ACTIVE)
+            .map(
+                (a): Important_information => ({
+                    id: a.id,
+                    description: a.description,
+                    title: a.title,
+                    recipients: 'students',
+                    language: 'de',
+                })
+            );
     }
 
     @FieldResolver((returns) => Boolean)
