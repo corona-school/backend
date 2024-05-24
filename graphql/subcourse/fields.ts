@@ -536,13 +536,12 @@ export class ExtendedFieldsSubcourseResolver {
         return await getChat(subcourse.conversationId);
     }
 
-    @FieldResolver((returns) => Boolean)
+    @FieldResolver((returns) => Decision)
     @Authorized(Role.OWNER, Role.ADMIN)
     async canPromote(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
         const { user } = context;
         const isAdmin = user.roles.includes(Role.ADMIN);
-        const response = await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
-        return response.allowed;
+        return await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
     }
 
     @FieldResolver((returns) => Boolean)
