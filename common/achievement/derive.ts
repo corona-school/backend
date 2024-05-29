@@ -104,6 +104,12 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
     });
 
     const userAchievement = userAchievements.find((row) => row.template.group === 'pupil_new_match');
+    const matches = await prisma.match.findMany({ where: { pupilId: pupil.id } });
+
+    // if (!userAchievement && matches.length > 0) {
+    // return [];
+    // }
+
     if (!userAchievement) {
         const groups = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
         if (!groups.has('pupil_new_match') || groups.get('pupil_new_match').length === 0) {
