@@ -67,7 +67,7 @@ async function _createAchievement<ID extends ActionID>(currentTemplate: achievem
     // Consequently, the screening process would trigger the creation of the Onboarding achievement, implying several steps that are inappropriate for the student.
     // Thus, the line below ensures that only the current or subsequent achievement steps are created, while others are automatically bypassed.
     // Note: +1 is added because the index is 0-based, while the groupOrder is 1-based.
-    if (nextStepIndex + 1 < currentTemplate.groupOrder) {
+    if (templatesForGroup[nextStepIndex].groupOrder + 1 < currentTemplate.groupOrder) {
         return null;
     }
 
@@ -105,7 +105,7 @@ async function createNextUserAchievement<ID extends ActionID>(
                 recordValue: nextStepTemplate.type === 'STREAK' ? 0 : null,
                 achievedAt: null,
             },
-            select: { id: true, userId: true, context: true, template: true, achievedAt: true, recordValue: true, relation: true },
+            include: { template: true },
         });
         metrics.AchievementsCreated.inc({
             id: createdUserAchievement.template.id.toString(),
