@@ -166,10 +166,10 @@ export function renderAchievementWithContext(
     return currentAchievementContext as achievement_template;
 }
 
-export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number) {
+export function getAchievementState(userAchievements: user_achievement[], currentAchievementIndex: number, templates: achievement_template[]) {
     return userAchievements.length === 0
         ? AchievementState.INACTIVE
-        : userAchievements[currentAchievementIndex].achievedAt
+        : userAchievements.length === templates.length && userAchievements[currentAchievementIndex].achievedAt
         ? AchievementState.COMPLETED
         : AchievementState.ACTIVE;
 }

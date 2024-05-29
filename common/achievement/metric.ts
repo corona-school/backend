@@ -104,6 +104,11 @@ const batchOfMetrics = [
     createMetric('user_original_lern_fair', ['user_original_lern_fair'], () => {
         return 1;
     }),
+
+    /* Matching */
+    createMetric('pupil_match_create', ['tutee_matching_success'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {
