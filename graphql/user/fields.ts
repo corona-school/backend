@@ -307,6 +307,7 @@ export class UserFieldsResolver {
                     title: a.title,
                     recipients: 'students',
                     language: 'de',
+                    image: '',
                 })
             );
     }
