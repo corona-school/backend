@@ -159,12 +159,12 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
     let currentAchievementIndex = userAchievements.findIndex((ua) => !ua.achievedAt);
     currentAchievementIndex = currentAchievementIndex >= 0 ? currentAchievementIndex : userAchievements.length - 1;
 
-    let achievementTemplates = await prisma.achievement_template.findMany({
+    const achievementTemplates = await prisma.achievement_template.findMany({
         where: { group: userAchievements[currentAchievementIndex].template.group, isActive: true },
         orderBy: { groupOrder: 'asc' },
     });
     const derivedTemplates = deriveAchievementTemplates(userAchievements[currentAchievementIndex].template.group);
-    achievementTemplates = [...achievementTemplates, ...derivedTemplates];
+    achievementTemplates.push(...derivedTemplates);
     achievementTemplates.sort((left, right) => left.groupOrder - right.groupOrder);
 
     let maxValue: number = achievementTemplates.length;
@@ -202,7 +202,7 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         maxValue = Object.keys(conditionDataAggregations).reduce((acc, key) => acc + conditionDataAggregations[key].valueToAchieve, 0);
     }
 
-    const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex, achievementTemplates);
+    const state: AchievementState = getAchievementState(userAchievements, currentAchievementIndex);
     const isNewAchievement = state === AchievementState.COMPLETED && !userAchievements[currentAchievementIndex].isSeen;
 
     const achievementContext = transformPrismaJson(
