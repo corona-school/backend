@@ -14,11 +14,12 @@ import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
-import { chat_type, Subcourse } from '../generated';
-import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
+import { chat_type } from '../generated';
+import { removeParticipantFromCourseChat } from '../../common/chat';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
 import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
+import { getSubcourseProspects } from '../../common/courses/util';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -284,6 +285,37 @@ export class MutateSubcourseResolver {
         // Joining the subcourse will automatically remove the pupil from the waitinglist
         await joinSubcourse(subcourse, pupil, true);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from waitinglist`);
+        return true;
+    }
+
+    // Join the course from list of prospects; i.e. pupil was a prospect and is now joining the course as requested by the instructor
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async subcourseJoinFromProspects(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('pupilId', { nullable: false }) pupilId: number
+    ) {
+        let subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        const pupil = await getPupil(pupilId);
+
+        const isProspect = getSubcourseProspects(subcourse).some((p) => p.pupilId === pupilId);
+        if (!isProspect) {
+            throw new PrerequisiteError(`Pupil(${pupil.id}) is not a prospect of the Subcourse(${subcourse.id}) and can thus not be joined by the instructor`);
+        }
+
+        const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCount >= subcourse.maxParticipants) {
+            // Course is full, create one single place for the pupil
+            subcourse = await prisma.subcourse.update({
+                where: { id: subcourse.id },
+                data: { maxParticipants: { increment: 1 } },
+                include: { lecture: true, subcourse_instructors_student: false },
+            });
+        }
+        await joinSubcourse(subcourse, pupil, true);
+        logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from prospects`);
         return true;
     }
 

@@ -1,7 +1,11 @@
-import { subcourse as Subcourse } from '@prisma/client';
+import { Prisma, subcourse as Subcourse } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { join } from 'path';
 import { prisma } from '../prisma';
+import { getSubcourse } from '../../graphql/util';
+import { getLogger } from '../logger/logger';
+
+const logger = getLogger('CourseUtil');
 
 const courseDefaultImage = process.env.WEBFLOW_COURSE_DEFAULT_IMAGE;
 
@@ -44,4 +48,47 @@ export async function getCourseCapacity(subcourse: Subcourse) {
 
 export async function getCourseFreePlaces(subcourse: Subcourse) {
     return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
+}
+
+export interface SubcourseProspect {
+    pupilId: number;
+    conversationId: string;
+}
+
+export function getSubcourseProspects(subcourse: Subcourse): SubcourseProspect[] {
+    return subcourse.prospectChats as unknown as SubcourseProspect[];
+}
+
+export async function addSubcourseProspect(subcourseId: number, prospect: SubcourseProspect) {
+    await prisma.subcourse.update({
+        where: {
+            id: subcourseId,
+        },
+        data: {
+            prospectChats: {
+                push: prospect as unknown as Prisma.InputJsonObject,
+            },
+        },
+    });
+    logger.info(`Added Pupil(${prospect.pupilId}) to the prospects of Subcourse(${subcourseId})`);
+}
+
+export async function removeSubcourseProspect(subcourseId: number, pupilId: number): Promise<boolean> {
+    const prospects = getSubcourseProspects(await getSubcourse(subcourseId));
+    const updatedProspects = prospects.filter((it) => it.pupilId !== pupilId);
+    if (prospects.length === updatedProspects.length) {
+        return false;
+    }
+    await prisma.subcourse.update({
+        where: {
+            id: subcourseId,
+        },
+        data: {
+            prospectChats: {
+                set: updatedProspects as unknown as Prisma.InputJsonValue[],
+            },
+        },
+    });
+    logger.info(`Removed Pupil(${pupilId}) from the prospects of Subcourse(${subcourseId})`);
+    return true;
 }

@@ -59,6 +59,8 @@ class SparseParticipant {
     id: number;
     @Field(() => String)
     firstname: string;
+    @Field(() => String)
+    lastname: string;
 }
 
 export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
@@ -432,7 +434,7 @@ export class ExtendedFieldsSubcourseResolver {
     async prospectParticipants(@Root() subcourse: Subcourse): Promise<SparseParticipant[]> {
         const chats = await getProspectChats(subcourse.id);
         const pupils = await getPupilsFromList(chats.map((chat) => chat.createdBy));
-        return pupils.map((p) => ({ id: p.id, firstname: p.firstname }));
+        return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
     }
 
     @FieldResolver((returns) => Boolean)

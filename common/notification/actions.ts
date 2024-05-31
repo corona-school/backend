@@ -173,6 +173,13 @@ const _notificationActions = {
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
+    participant_course_joined_from_prospects: {
+        description: 'Participant / Joined Course from Prospects',
+        sampleContext: {
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
     participant_course_joined_directly: {
         description: 'Participant / Joined Course directly (not from Waitinglist)',
         sampleContext: {
