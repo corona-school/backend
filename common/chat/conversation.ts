@@ -7,7 +7,6 @@ import { ChatAccess, ChatType, Conversation, ConversationInfos, SystemMessage, T
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
 import { assureChatFeatureActive } from './util';
-import chatRetry from './retry';
 
 dotenv.config();
 const logger = getLogger('Conversation');

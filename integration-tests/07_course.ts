@@ -620,7 +620,6 @@ void test('Find shared course', async () => {
 void test('Create Prospect Chat, then join', async () => {
     const { client: instructorClient, instructor, courseId, subcourseId } = await subcourseOne;
     const { client: pupilClient, pupil } = await pupilUpdated;
-    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
 
     expectFetch({
         url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
