@@ -49,6 +49,10 @@ export function setupFetchMock() {
         if (!urlMatches) {
             logger.failure(`Request to ${url} not mocked (next mock is for ${mock?.url ?? '-'}). The integration tests must be self containing. Mock with:\n`);
             logger.mark(`expectFetch(${JSON.stringify({ url, method: options.method, body: options.body, responseStatus: 200, response: '?' }, null, 2)})`);
+            new Error().stack
+                ?.split('\n')
+                .slice(2)
+                .forEach((line) => logger.failure(line));
             process.exit(1);
         }
 

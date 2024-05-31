@@ -12,13 +12,12 @@ import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum,
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
-import { Deprecated, getCourse } from '../util';
+import { Deprecated } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
-import { getCourseCapacity } from '../../common/courses/util';
+import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
-import { getProspectChats } from '../../common/chat';
 import { getPupilsFromList } from '../../common/user';
 
 @ObjectType()
@@ -432,8 +431,8 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver(() => [SparseParticipant])
     @Authorized(Role.OWNER)
     async prospectParticipants(@Root() subcourse: Subcourse): Promise<SparseParticipant[]> {
-        const chats = await getProspectChats(subcourse.id);
-        const pupils = await getPupilsFromList(chats.map((chat) => chat.createdBy));
+        const chats = getSubcourseProspects(subcourse);
+        const pupils = await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
         return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
     }
 

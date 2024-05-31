@@ -564,7 +564,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,
             waiting_list_enrollment: adminOrOwner,
-            prospectChats: adminOrOwner,
+            prospectChats: nobody,
         }),
     },
     Course: {

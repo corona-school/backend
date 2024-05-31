@@ -18,7 +18,7 @@ const talkJsIdToUserId = (userId: string): UserId => {
     return userId.replace('_', '/') as UserId;
 };
 
-function createOneOnOneId(userA: User, userB: User): string {
+function createOneOnOneId(userA: Pick<User, 'userID'>, userB: Pick<User, 'userID'>): string {
     const userIds = JSON.stringify([userA.userID, userB.userID].sort());
     const hashedIds = sha1(userIds);
     return truncate(hashedIds, { length: 10 });

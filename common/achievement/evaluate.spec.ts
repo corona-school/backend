@@ -239,6 +239,7 @@ function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLe
         allowChatContactProspects: false,
         groupChatType: 'NORMAL',
         courseId: 1,
+        prospectChats: [],
     };
 }
 

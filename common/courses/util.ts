@@ -55,7 +55,7 @@ export interface SubcourseProspect {
     conversationId: string;
 }
 
-export function getSubcourseProspects(subcourse: Subcourse): SubcourseProspect[] {
+export function getSubcourseProspects(subcourse: Pick<Subcourse, 'prospectChats'>): SubcourseProspect[] {
     return subcourse.prospectChats as unknown as SubcourseProspect[];
 }
 
