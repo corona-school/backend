@@ -15,8 +15,6 @@ import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
 import { chat_type, subcourse_promotion_type_enum as SubcoursePromotionType } from '../generated';
-import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
-import { chat_type } from '../generated';
 import { removeParticipantFromCourseChat } from '../../common/chat';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
