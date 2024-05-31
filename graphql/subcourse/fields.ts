@@ -8,7 +8,15 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import { Course, course_coursestate_enum, Lecture, Pupil, pupil_schooltype_enum, Subcourse } from '../generated';
+import {
+    Course,
+    course_coursestate_enum,
+    Lecture,
+    Pupil,
+    pupil_schooltype_enum,
+    Subcourse,
+    subcourse_promotion_type_enum as SubcoursePromotionType,
+} from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -19,6 +27,7 @@ import { GraphQLInt } from 'graphql';
 import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
 import { getPupilsFromList } from '../../common/user';
+import { canPromoteSubcourse } from '../../common/courses/notifications';
 
 @ObjectType()
 class Participant {
@@ -154,8 +163,7 @@ export class ExtendedFieldsSubcourseResolver {
     ) {
         return await prisma.subcourse.findMany({
             where: {
-                ...(await subcourseSearch(search)),
-                course: { courseState: { in: courseStates } },
+                AND: [await subcourseSearch(search), { course: { courseState: { in: courseStates } } }],
             },
             take,
             skip,
@@ -545,5 +553,32 @@ export class ExtendedFieldsSubcourseResolver {
         }
 
         return await getChat(subcourse.conversationId);
+    }
+
+    @FieldResolver((returns) => Decision)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async canPromote(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+        return await canPromoteSubcourse(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async wasPromotedByInstructor(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.instructor, subcourseId: subcourse.id },
+        });
+        // TODO: Remove alreadyPromoted after migrations
+        return promotionCount > 0 || subcourse.alreadyPromoted;
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async wasPromotedByAdmin(@Ctx() context: GraphQLContext, @Root() subcourse: Required<Subcourse>) {
+        const promotionCount = await prisma.subcourse_promotion.count({
+            where: { type: SubcoursePromotionType.admin, subcourseId: subcourse.id },
+        });
+        return promotionCount > 0;
     }
 }

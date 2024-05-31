@@ -14,6 +14,8 @@ import { GraphQLContext } from '../context';
 import { getFile, removeFile } from '../files';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getPupil, getStudent, getSubcourse } from '../util';
+import { chat_type, subcourse_promotion_type_enum as SubcoursePromotionType } from '../generated';
+import { markConversationAsReadOnly, removeParticipantFromCourseChat } from '../../common/chat/conversation';
 import { chat_type } from '../generated';
 import { removeParticipantFromCourseChat } from '../../common/chat';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
@@ -431,13 +433,15 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
+    @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async subcoursePromote(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number): Promise<boolean> {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
 
-        await sendPupilCoursePromotion(subcourse);
-        logger.info(`Subcourse(${subcourseId}) was manually promoted by instructor(${context.user.userID})`);
+        await sendPupilCoursePromotion(subcourse, isAdmin ? SubcoursePromotionType.admin : SubcoursePromotionType.instructor);
+        logger.info(`Subcourse(${subcourseId}) was manually promoted by User(${context.user.userID})`);
         return true;
     }
 }

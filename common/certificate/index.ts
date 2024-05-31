@@ -13,6 +13,7 @@ import { generatePDFFromHTML } from '../util/pdf';
 import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
+import QRCode from 'qrcode';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
@@ -345,6 +346,7 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         SIGNATURE_PUPIL: certificate.signaturePupil?.toString('utf-8'),
         SIGNATURE_LOCATION: certificate.signatureLocation,
         SIGNATURE_DATE: certificate.signatureDate && moment(certificate.signatureDate).format('D.M.YYYY'),
+        QR_CODE: await QRCode.toDataURL(link),
     });
 
     return await generatePDFFromHTML(result, {
