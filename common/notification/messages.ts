@@ -85,7 +85,7 @@ async function loadTemplate(notificationID: number, language: TranslationLanguag
 
 // Renders a Message for a certain Concrete Notification
 export async function getMessage(
-    concreteNotification: ConcreteNotification,
+    concreteNotification: Pick<ConcreteNotification, 'id' | 'notificationID' | 'userId' | 'context'>,
     language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessageType | null> {
     const template = await loadTemplate(concreteNotification.notificationID, language);
