@@ -53,6 +53,15 @@ export async function addPushSubcription(user: User, subscription: CreatePushSub
     });
 
     if (existing) {
+        if (JSON.stringify(existing.keys) !== JSON.stringify(subscription.keys) || existing.expirationTime !== subscription.expirationTime) {
+            await prisma.push_subscription.update({
+                where: { id: existing.id },
+                data: { keys: subscription.keys, expirationTime: subscription.expirationTime },
+            });
+
+            logger.info(`User(${user.userID}) updated existing subscription`);
+        }
+
         logger.info(`User(${user.userID}) added existing subscription`, { subscription, existing });
         return existing;
     }
