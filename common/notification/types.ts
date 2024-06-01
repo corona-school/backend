@@ -1,8 +1,9 @@
 // Prisma exports lowercase types, but we want capitalized types
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
-import { User } from '../user';
+import { User, getFullName } from '../user';
 import { ActionID } from './actions';
+import { USER_APP_DOMAIN } from '../util/environment';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
@@ -65,6 +66,14 @@ export interface NotificationContext extends NotificationContextExtensions {
 export interface Context extends NotificationContext {
     user: User & { fullName: string };
     USER_APP_DOMAIN: string;
+}
+
+export function getContext(notificationContext: NotificationContext, user: User): Context {
+    return {
+        ...notificationContext,
+        user: { ...user, fullName: getFullName(user) },
+        USER_APP_DOMAIN,
+    };
 }
 
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)

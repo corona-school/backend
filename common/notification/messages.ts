@@ -1,11 +1,10 @@
 import { message_translation_language_enum as TranslationLanguage } from '@prisma/client';
 import { getNotification, getSampleContext } from './notification';
-import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate } from './types';
+import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate, getContext } from './types';
 import { prisma } from '../prisma';
 import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
 import { MessageTemplateType, NotificationMessageType } from '../../graphql/types/notificationMessage';
-import { getContext } from '.';
 import { getUser } from '../user';
 import { getLogger } from '../logger/logger';
 
