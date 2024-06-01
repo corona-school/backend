@@ -7,7 +7,7 @@ import { User } from '../../user';
 import { RedundantError } from '../../util/error';
 import { Channel, Context, Notification } from '../types';
 import WebPush from 'web-push';
-import { getMessage } from '../messages';
+import { getMessage, hasMessage } from '../messages';
 
 const logger = getLogger('Push');
 
@@ -101,6 +101,10 @@ export const webpushChannel: Channel = {
 
     async canSend(notification: Notification, user: User) {
         if (!enabled) {
+            return false;
+        }
+
+        if (!(await hasMessage(notification.id))) {
             return false;
         }
 
