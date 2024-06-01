@@ -164,7 +164,7 @@ async function deliverNotification(
         logger.warn(
             `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
                 user.userID
-            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')}) - ${error?.message}`,
             error
         );
 
