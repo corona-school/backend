@@ -11,7 +11,7 @@ import WebPush from 'web-push';
 const logger = getLogger('Push');
 
 // Feature toggle for push notifications:
-const enabled = process.env.WEBPUSH_ENABLED;
+const enabled = process.env.WEBPUSH_ENABLED === 'true';
 
 // The public key used by the push service to authenticate messages sent by us
 export const publicKey = process.env.WEBPUSH_PUBLIC_KEY;
