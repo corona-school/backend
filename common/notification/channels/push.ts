@@ -7,6 +7,7 @@ import { User } from '../../user';
 import { RedundantError } from '../../util/error';
 import { Channel, Context, Notification } from '../types';
 import WebPush from 'web-push';
+import { getMessage, hasMessage } from '../messages';
 
 const logger = getLogger('Push');
 
@@ -103,6 +104,10 @@ export const webpushChannel: Channel = {
             return false;
         }
 
+        if (!(await hasMessage(notification.id))) {
+            return false;
+        }
+
         const subscriptions = await getPushSubscriptions(user);
         const canSend = subscriptions.length > 0;
         logger.debug(`Can send Notification(${notification.id}) to User(${user.userID}) - ${canSend}`);
@@ -112,6 +117,8 @@ export const webpushChannel: Channel = {
     async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(enabled);
 
+        const message = await getMessage({ id: concreteID, notificationID: notification.id, context, userId: to.userID });
+
         const subscriptions = await getPushSubscriptions(to);
 
         for (const subscription of subscriptions) {
@@ -119,10 +126,10 @@ export const webpushChannel: Channel = {
             const result = await WebPush.sendNotification(
                 { endpoint: subscription.endpoint, keys: subscription.keys as any },
                 JSON.stringify({
-                    // As we use the keys of the client to encrypt the message, we could potentially include
-                    // more details here, as only the user's device will be able to read it
-                    // For now the concrete notification id should be enough, the client can then fetch further data
+                    // As we use the keys of the client to encrypt the message, we can include
+                    // more details here, as only the user's device will be able to decrypt it
                     concreteNotificationId: concreteID,
+                    message,
                 })
             );
 
