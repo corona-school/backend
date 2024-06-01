@@ -48,6 +48,24 @@ export async function getPushSubscriptions(user: User) {
 }
 
 export async function addPushSubcription(user: User, subscription: CreatePushSubscription): Promise<PushSubscription> {
+    const existing = await prisma.push_subscription.findFirst({
+        where: { userID: user.userID, endpoint: subscription.endpoint },
+    });
+
+    if (existing) {
+        if (JSON.stringify(existing.keys) !== JSON.stringify(subscription.keys) || existing.expirationTime !== subscription.expirationTime) {
+            await prisma.push_subscription.update({
+                where: { id: existing.id },
+                data: { keys: subscription.keys, expirationTime: subscription.expirationTime },
+            });
+
+            logger.info(`User(${user.userID}) updated existing subscription`);
+        }
+
+        logger.info(`User(${user.userID}) added existing subscription`, { subscription, existing });
+        return existing;
+    }
+
     const result = await prisma.push_subscription.create({
         data: { ...subscription, userID: user.userID },
     });
