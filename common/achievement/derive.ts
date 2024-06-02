@@ -5,18 +5,22 @@ import {
     achievement_type_enum as AchievementType,
     achievement_template,
     pupil_screening_status_enum,
+    Prisma,
 } from '@prisma/client';
-import { User, getPupil, getStudent } from '../user';
-// TODO: Fix import when other PR is in
+import { User, getPupil } from '../user';
 import { prisma } from '../prisma';
 import { achievement_with_template } from './types';
 import { getAchievementTemplates, TemplateSelectEnum } from './template';
+import { createRelation, EventRelationType } from './relation';
+
+const PupilNewMatchGroup = 'pupil_new_match';
+const PupilNewMatchGroupOrder = 3;
 
 const GhostAchievements: { [key: string]: achievement_template } = {
     pupil_new_match_1: {
         id: -1,
         templateFor: AchievementTemplateFor.Match,
-        group: 'pupil_new_match',
+        group: PupilNewMatchGroup,
         groupOrder: 1,
         type: AchievementType.SEQUENTIAL,
         image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_1.png',
@@ -40,7 +44,7 @@ const GhostAchievements: { [key: string]: achievement_template } = {
     pupil_new_match_2: {
         id: -1,
         templateFor: AchievementTemplateFor.Match,
-        group: 'pupil_new_match',
+        group: PupilNewMatchGroup,
         groupOrder: 2,
         type: AchievementType.SEQUENTIAL,
         image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_2.png',
@@ -82,8 +86,7 @@ export async function deriveAchievements(user: User, realAchievements: achieveme
     }
 
     if (user.studentId) {
-        const student = await getStudent(user);
-
+        // const student = await getStudent(user);
         // await deriveStudentOnboarding(student, result);
         // await deriveStudentMatching(student, result);
         // ...
@@ -96,23 +99,19 @@ export function deriveAchievementTemplates(group: string): achievement_template[
     return Object.values(GhostAchievements).filter((row) => row.group === group);
 }
 
-async function derivePupilMatching(user: User, pupil: Pupil, result: achievement_with_template[], userAchievements: achievement_with_template[]) {
-    const hasRequest = pupil.openMatchRequestCount > 0;
-    // const hasOpenScreening = (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, status: 'pending', invalidated: false } })) > 0;
-    const hasSuccessfulScreening = await prisma.pupil_screening.count({
-        where: { pupilId: pupil.id, status: pupil_screening_status_enum.success, invalidated: false },
-    });
-
-    const userAchievement = userAchievements.find((row) => row.template.group === 'pupil_new_match');
-    const matches = await prisma.match.findMany({ where: { pupilId: pupil.id } });
-
-    // if (!userAchievement && matches.length > 0) {
-    // return [];
-    // }
-
-    if (!userAchievement) {
+async function generatePupilMatching(
+    achievement: achievement_with_template | null,
+    user: User,
+    hasRequest: boolean,
+    hasSuccessfulScreening: boolean,
+    ctx: PupilNewMatchGhostContext
+): Promise<achievement_with_template[]> {
+    const result: achievement_with_template[] = [];
+    // Generating a ramdom relation to be able to show multiple sequences of this kind in parallel
+    const randomRelation = createRelation(EventRelationType.Match, Math.random()) + '-tmp';
+    if (!achievement) {
         const groups = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
-        if (!groups.has('pupil_new_match') || groups.get('pupil_new_match').length === 0) {
+        if (!groups.has(PupilNewMatchGroup) || groups.get(PupilNewMatchGroup).length === 0) {
             throw new Error('group template not found!');
         }
         // If there is no real achievement yet, we have to fake the first one in the row as well
@@ -121,11 +120,11 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
             templateId: -1,
             userId: user.userID,
             isSeen: true,
-            template: groups.get('pupil_new_match')[0],
-            context: {},
+            template: groups.get(PupilNewMatchGroup)[0],
+            context: ctx,
             recordValue: null,
             achievedAt: null,
-            relation: null,
+            relation: randomRelation,
         });
     }
 
@@ -135,11 +134,10 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
         userId: user.userID,
         isSeen: true,
         template: GhostAchievements.pupil_new_match_1,
-        context: {},
+        context: ctx,
         recordValue: null,
-        achievedAt: hasRequest || userAchievement ? new Date() : null,
-        // achievedAt: new Date(),
-        relation: userAchievement?.relation ?? null,
+        achievedAt: hasRequest || achievement ? new Date() : null,
+        relation: achievement?.relation ?? randomRelation,
     });
 
     result.push({
@@ -148,9 +146,42 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
         userId: user.userID,
         isSeen: true,
         template: GhostAchievements.pupil_new_match_2,
-        context: {},
+        context: ctx,
         recordValue: null,
-        achievedAt: hasSuccessfulScreening || userAchievement ? new Date() : null,
-        relation: userAchievement?.relation ?? null,
+        achievedAt: hasSuccessfulScreening || achievement ? new Date() : null,
+        relation: achievement?.relation ?? randomRelation,
     });
+    return result;
+}
+
+interface PupilNewMatchGhostContext extends Prisma.JsonObject {
+    lastScreeningDate: string | null;
+}
+
+async function derivePupilMatching(user: User, pupil: Pupil, result: achievement_with_template[], userAchievements: achievement_with_template[]) {
+    const hasRequest = pupil.openMatchRequestCount > 0;
+    const successfulScreenings = await prisma.pupil_screening.findMany({
+        where: { pupilId: pupil.id, status: pupil_screening_status_enum.success, invalidated: false },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    const newMatchAchievements = userAchievements.filter(
+        (row) => row.template.group === PupilNewMatchGroup && row.template.groupOrder === PupilNewMatchGroupOrder
+    );
+
+    const ctx: PupilNewMatchGhostContext = {
+        lastScreeningDate: null,
+    };
+    if (successfulScreenings.length > 0) {
+        ctx.lastScreeningDate = successfulScreenings[0].updatedAt.toISOString();
+    }
+    for (let i = 0; i < pupil.openMatchRequestCount; i++) {
+        const ghosts = await generatePupilMatching(null, user, hasRequest, successfulScreenings.length > 0, ctx);
+        result.push(...ghosts);
+    }
+
+    for (const userAchievement of newMatchAchievements) {
+        const ghosts = await generatePupilMatching(userAchievement, user, hasRequest, successfulScreenings.length > 0, ctx);
+        result.push(...ghosts);
+    }
 }
