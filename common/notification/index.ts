@@ -1,5 +1,5 @@
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel, getContext } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications, getSampleContextExternal } from './notification';
 import { getFullName, User, queryUser, getUser } from '../user';
@@ -7,7 +7,7 @@ import { getLogger } from '../logger/logger';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
 import { triggerHook } from './hook';
-import { USER_APP_DOMAIN, isDev } from '../util/environment';
+import { isDev } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
@@ -87,14 +87,6 @@ const getNotificationChannelPreferences = async (user: User, concreteNotificatio
     return result;
 };
 
-export function getContext(notificationContext: NotificationContext, user: User): Context {
-    return {
-        ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        USER_APP_DOMAIN,
-    };
-}
-
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
     notification: Notification,
@@ -164,7 +156,7 @@ async function deliverNotification(
         logger.warn(
             `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
                 user.userID
-            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')}) - ${error?.message}`,
             error
         );
 
