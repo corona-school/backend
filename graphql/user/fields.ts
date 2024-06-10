@@ -155,7 +155,8 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
-        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
+        const storedPreferences = (await queryUser(user, { notificationPreferences: true })).notificationPreferences;
+        return storedPreferences ? Object.assign(storedPreferences, DEFAULT_PREFERENCES) : DEFAULT_PREFERENCES;
     }
 
     // ------------- Web Push ----------------
