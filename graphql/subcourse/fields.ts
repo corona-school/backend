@@ -149,15 +149,19 @@ export class ExtendedFieldsSubcourseResolver {
         @Arg('courseStates', () => [String], { nullable: true }) courseStates: course_coursestate_enum[],
         @Arg('take', () => GraphQLInt) take: number,
         @Arg('skip', () => GraphQLInt, { nullable: true }) skip: number = 0,
-        @Arg('orderDesc', { nullable: true }) orderDesc: boolean
+        @Arg('orderBy', { nullable: true }) orderBy: string
     ) {
+        const orderOptions = {
+            'last-update': { updatedAt: 'desc' },
+        };
+
         return await prisma.subcourse.findMany({
             where: {
                 AND: [await subcourseSearch(search), { course: { courseState: { in: courseStates } } }],
             },
             take,
             skip,
-            orderBy: orderDesc ? { updatedAt: 'desc' } : {},
+            orderBy: orderOptions[orderBy] || {},
         });
     }
 
