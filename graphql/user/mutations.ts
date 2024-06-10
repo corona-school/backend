@@ -31,6 +31,7 @@ class SupportMessage {
 @InputType()
 class AppFeedbackAttachment implements Attachment {
     @Field()
+    @Length(/* min */ 1, /* max */ 2 * 1024 * 1024)
     Base64Content: string;
     @Field()
     ContentType: string;
