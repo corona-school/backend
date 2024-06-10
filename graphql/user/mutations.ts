@@ -11,7 +11,7 @@ import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
+import { Attachment, DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
 import { prisma } from '../../common/prisma';
 import { CreatePushSubscription, addPushSubcription, removePushSubscription } from '../../common/notification/channels/push';
 import { GraphQLInt } from 'graphql';
@@ -26,6 +26,30 @@ class SupportMessage {
     @Field()
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
+}
+
+@InputType()
+class AppFeedbackAttachment implements Attachment {
+    @Field()
+    @Length(/* min */ 1, /* max */ 2 * 1024 * 1024)
+    Base64Content: string;
+    @Field()
+    ContentType: string;
+    @Field()
+    Filename: string;
+}
+
+@InputType()
+class AppFeedback {
+    @Field()
+    @Length(/* min */ 1, /* max */ 10_000)
+    notes: string;
+
+    @Field()
+    allowContact: boolean;
+
+    @Field(() => AppFeedbackAttachment, { nullable: true })
+    attachment?: AppFeedbackAttachment;
 }
 
 @InputType()
@@ -83,6 +107,33 @@ export class MutateUserResolver {
             /* to name */ `Das beste Supportteam der Welt`,
             /* reply to */ context.user.email,
             /* reply to name */ getFullName(context.user)
+        );
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userSendAppFeedback(@Ctx() context: GraphQLContext, @Arg('message') message: AppFeedback) {
+        const body =
+            `Von: ${context.user.email}\n\n` +
+            `Dürfen uns melden: ${message.allowContact ? 'Ja' : 'Nein'}\n\n` +
+            `Deine Anmerkung:\n ${message.notes}\n` +
+            `\n\n\n` +
+            `+------ Tech-Team Infos ------------------------+\n` +
+            `SessionID: ${context.sessionToken ? toPublicToken(context.sessionToken) : '-'}\n` +
+            `Roles: ${context.user.roles.join(', ')}\n`;
+
+        await sendMail(
+            'Feedback aus User App',
+            body,
+            /* from */ DEFAULTSENDERS.noreply,
+            /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
+            /* from name */ 'User-App Feedback',
+            /* to name */ `Das beste Supportteam der Welt`,
+            /* reply to */ context.user.email,
+            /* reply to name */ getFullName(context.user),
+            message.attachment ? [message.attachment] : undefined
         );
 
         return true;

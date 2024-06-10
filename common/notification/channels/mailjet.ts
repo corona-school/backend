@@ -49,7 +49,7 @@ interface SendParamsRecipient {
     Name?: string;
 }
 
-interface Attachment {
+export interface Attachment {
     ContentType: string;
     Filename: string;
     Base64Content: string;
@@ -145,7 +145,8 @@ export async function sendMail(
     senderName?: string,
     receiverName?: string,
     replyToAddress?: string,
-    replyToName?: string
+    replyToName?: string,
+    attachments?: Attachment[]
 ) {
     // construct mailjet API message
     const message: SendParamsMessage = {
@@ -162,6 +163,10 @@ export async function sendMail(
         Subject: subject,
         TextPart: text,
     };
+
+    if (attachments?.length) {
+        message.Attachments = attachments;
+    }
 
     if (replyToAddress) {
         message.ReplyTo = {
