@@ -115,7 +115,7 @@ export class MutateUserResolver {
     @Authorized(Role.USER)
     async userSendAppFeedback(@Ctx() context: GraphQLContext, @Arg('message') message: AppFeedback) {
         const body =
-            `From: ${context.user.email}\n\n` +
+            `Von: ${context.user.email}\n\n` +
             `Dürfen uns melden: ${message.allowContact ? 'Ja' : 'Nein'}\n\n` +
             `Deine Anmerkung:\n ${message.notes}\n` +
             `\n\n\n` +
