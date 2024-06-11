@@ -168,7 +168,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
             image: {
                 fileId: 'placeholder', // not needed
                 url: image,
-                alt: '',
+                alt: image,
             },
         },
     };
@@ -178,16 +178,14 @@ function syncCourseImages(dbCourses: CourseDTO[], webflowCourses: CourseDTO[]) {
     const webflowCourseIdMap = mapToDBId(webflowCourses);
 
     for (const i in dbCourses) {
-        console.log('id', dbCourses[i].fieldData.slug);
         if (!webflowCourseIdMap[dbCourses[i].fieldData.slug]) {
             continue;
         }
-        console.log('hier');
         const webflowCourse = webflowCourseIdMap[dbCourses[i].fieldData.slug];
-        console.log(dbCourses[i].fieldData.image.url, webflowCourse.fieldData.image.url);
-        if (dbCourses[i].fieldData.image.url === webflowCourse.fieldData.image.url) {
-            console.log('found img');
-            dbCourses[i].fieldData.image === webflowCourse.fieldData.image;
+        // We are misusing the alt of the image to store the original link.
+        // Otherwise, we'll never know if webflow will change the link under the hood.
+        if (dbCourses[i].fieldData.image.alt === webflowCourse.fieldData.image.alt) {
+            dbCourses[i].fieldData.image = webflowCourse.fieldData.image;
         }
     }
 }

@@ -26,10 +26,8 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
         }
 
         const left = { ...leftMap[dbId].fieldData, hash: '' };
-        // if (leftMap[dbId].fieldData.hash != rightMap[dbId].fieldData.hash) {
-        if (!isEqual(left, { ...rightMap[dbId].fieldData, hash: '' })) {
-            console.log(JSON.stringify({ ...leftMap[dbId].fieldData, hash: '' }, null, 2));
-            console.log(JSON.stringify({ ...rightMap[dbId].fieldData, hash: '' }, null, 2));
+        const right = { ...rightMap[dbId].fieldData, hash: '' };
+        if (!isEqual(left, right)) {
             // We have to save the old item id, so that it can be used for the update operation
             rightMap[dbId].id = leftMap[dbId].id;
             changedEntries.push(rightMap[dbId]);

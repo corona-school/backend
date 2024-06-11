@@ -1,5 +1,6 @@
 import { getLogger } from '../../../common/logger/logger';
 import moment from 'moment';
+import { isWebflowSyncDryRun } from '../../../utils/environment';
 
 const logger = getLogger('WebflowApiAdapter');
 const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
@@ -104,6 +105,11 @@ async function request(req: Request): Promise<any> {
     if (req.data) {
         options.body = JSON.stringify(req.data);
         options.headers['Content-Type'] = 'application/json';
+    }
+
+    if (req.method !== 'GET' && isWebflowSyncDryRun()) {
+        logger.info(`Webflow sync dry run`, { url, options: { ...options, headers: { ...options.headers, authorization: '' } } });
+        return null;
     }
 
     const res = await fetch(url, options);

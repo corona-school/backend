@@ -21,3 +21,7 @@ export function getHostname(): string {
 export function isGamificationFeatureActive(): boolean {
     return JSON.parse(process.env.GAMIFICATION_ACTIVE || 'false');
 }
+
+export function isWebflowSyncDryRun(): boolean {
+    return JSON.parse(process.env.WEBFLOW_SYNC_DRY_RUN || 'true');
+}
