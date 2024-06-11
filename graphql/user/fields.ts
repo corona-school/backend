@@ -33,6 +33,8 @@ import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
+import _ from 'lodash';
+import { getUserNotificationPreferences } from '../../common/notification';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -155,7 +157,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
-        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
+        return await getUserNotificationPreferences(user, false);
     }
 
     // ------------- Web Push ----------------
