@@ -11,13 +11,14 @@ import { isDev } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
-import { ALL_PREFERENCES } from './defaultPreferences';
+import { ALL_PREFERENCES, DEFAULT_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
 import tracer, { addTagsToActiveSpan } from '../logger/tracing';
 // eslint-disable-next-line import/no-cycle
 import * as Achievement from '../../common/achievement';
 import { webpushChannel } from './channels/push';
+import _ from 'lodash';
 
 const logger = getLogger('Notification');
 
@@ -64,27 +65,29 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
+export const getUserNotificationPreferences = async (user: User, includeAlwaysEnabledPreferences: boolean) => {
+    const basePreferences = includeAlwaysEnabledPreferences ? ALL_PREFERENCES : DEFAULT_PREFERENCES;
+
+    const storedPreferences = (await queryUser(user, { notificationPreferences: true })).notificationPreferences as Record<string, unknown> | null;
+    return storedPreferences ? _.merge({ ...basePreferences }, { ...storedPreferences }) : basePreferences;
+};
+
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
     const notification = await getNotification(concreteNotification.notificationID);
-
-    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-
     const type = (concreteNotification.context as Context)?.overrideType ?? notification.type;
 
-    const channelsBasePreference = ALL_PREFERENCES[type];
-    assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
+    const notificationPreferences = await getUserNotificationPreferences(user, true);
 
-    const channelsUserPreference = notificationPreferences?.[type] ?? {};
+    const channelPreference = notificationPreferences?.[type];
+    assert.ok(channelPreference, `No default channel preferences maintained for notification type ${type}`);
 
-    const result = Object.assign({}, channelsBasePreference, channelsUserPreference);
     logger.info(`Got Notification preferences for User(${user.userID})`, {
         type,
         notificationPreferences,
-        channelsBasePreference,
-        result,
+        channelPreference,
     });
 
-    return result;
+    return channelPreference;
 };
 
 async function deliverNotification(
