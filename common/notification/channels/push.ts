@@ -7,11 +7,12 @@ import { User } from '../../user';
 import { RedundantError } from '../../util/error';
 import { Channel, Context, Notification } from '../types';
 import WebPush from 'web-push';
+import { getMessage, hasMessage } from '../messages';
 
 const logger = getLogger('Push');
 
 // Feature toggle for push notifications:
-const enabled = process.env.WEBPUSH_ENABLED;
+const enabled = process.env.WEBPUSH_ENABLED === 'true';
 
 // The public key used by the push service to authenticate messages sent by us
 export const publicKey = process.env.WEBPUSH_PUBLIC_KEY;
@@ -48,6 +49,24 @@ export async function getPushSubscriptions(user: User) {
 }
 
 export async function addPushSubcription(user: User, subscription: CreatePushSubscription): Promise<PushSubscription> {
+    const existing = await prisma.push_subscription.findFirst({
+        where: { userID: user.userID, endpoint: subscription.endpoint },
+    });
+
+    if (existing) {
+        if (JSON.stringify(existing.keys) !== JSON.stringify(subscription.keys) || existing.expirationTime !== subscription.expirationTime) {
+            await prisma.push_subscription.update({
+                where: { id: existing.id },
+                data: { keys: subscription.keys, expirationTime: subscription.expirationTime },
+            });
+
+            logger.info(`User(${user.userID}) updated existing subscription`);
+        }
+
+        logger.info(`User(${user.userID}) added existing subscription`, { subscription, existing });
+        return existing;
+    }
+
     const result = await prisma.push_subscription.create({
         data: { ...subscription, userID: user.userID },
     });
@@ -85,6 +104,10 @@ export const webpushChannel: Channel = {
             return false;
         }
 
+        if (!(await hasMessage(notification.id))) {
+            return false;
+        }
+
         const subscriptions = await getPushSubscriptions(user);
         const canSend = subscriptions.length > 0;
         logger.debug(`Can send Notification(${notification.id}) to User(${user.userID}) - ${canSend}`);
@@ -94,6 +117,8 @@ export const webpushChannel: Channel = {
     async send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup) {
         assert(enabled);
 
+        const message = await getMessage({ id: concreteID, notificationID: notification.id, context, userId: to.userID });
+
         const subscriptions = await getPushSubscriptions(to);
 
         for (const subscription of subscriptions) {
@@ -101,10 +126,10 @@ export const webpushChannel: Channel = {
             const result = await WebPush.sendNotification(
                 { endpoint: subscription.endpoint, keys: subscription.keys as any },
                 JSON.stringify({
-                    // As we use the keys of the client to encrypt the message, we could potentially include
-                    // more details here, as only the user's device will be able to read it
-                    // For now the concrete notification id should be enough, the client can then fetch further data
+                    // As we use the keys of the client to encrypt the message, we can include
+                    // more details here, as only the user's device will be able to decrypt it
                     concreteNotificationId: concreteID,
+                    message,
                 })
             );
 
