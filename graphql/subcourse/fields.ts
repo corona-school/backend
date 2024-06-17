@@ -62,7 +62,7 @@ class OtherParticipant {
 }
 
 @ObjectType()
-class SparseParticipant {
+class PupilIdName {
     @Field(() => Int)
     id: number;
     @Field(() => String)
@@ -436,9 +436,9 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [SparseParticipant])
+    @FieldResolver(() => [PupilIdName])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse): Promise<SparseParticipant[]> {
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<PupilIdName[]> {
         const chats = getSubcourseProspects(subcourse);
         const pupils = await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
         return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
