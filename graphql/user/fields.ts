@@ -10,10 +10,8 @@ import {
     Log,
     Push_subscription as PushSubscription,
     notification_channel_enum as NotificationChannelEnum,
-    Important_information,
 } from '../generated';
-import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int, createUnionType } from 'type-graphql';
-import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
+import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -36,7 +34,6 @@ import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
-import { AchievementState } from '../../common/achievement/types';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -59,54 +56,6 @@ export class Contact {
     @Field((_type) => String, { nullable: true })
     chatId?: string;
 }
-
-@ObjectType()
-export class ImportantInformationNew {
-    @Field((_type) => String)
-    title: string;
-    @Field((_type) => String)
-    description: string;
-    @Field((_type) => String)
-    type: 'normal' | 'sequence';
-
-    @Field((_type) => Int, { nullable: true })
-    maxSteps: number | null;
-    @Field((_type) => Int, { nullable: true })
-    finishedSteps: number | null;
-    // @Field((_type) => important_information_recipients_enum)
-    @Field((_type) => String)
-    recipients: 'students' | 'pupils';
-    // @Field((_type) => important_information_language_enum)
-    @Field((_type) => String)
-    language: 'en' | 'de';
-    @Field((_type) => ImportantInformationModal)
-    modal: typeof ImportantInformationModal;
-}
-
-@ObjectType()
-export class ImportantInformationTextModal {
-    @Field((_type) => String)
-    text: string;
-    @Field((_type) => String, { nullable: true })
-    navigateTo: string | null;
-}
-
-export const ImportantInformationAchievementModal = Achievement;
-
-export const ImportantInformationModal = createUnionType({
-    name: 'Modal',
-    types: () => [ImportantInformationAchievementModal, ImportantInformationTextModal] as const,
-    resolveType: (value) => {
-        if ('tagline' in value) {
-            return ImportantInformationAchievementModal;
-        }
-        if ('text' in value) {
-            return ImportantInformationTextModal;
-        }
-        return undefined;
-    },
-});
-
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
@@ -341,26 +290,6 @@ export class UserFieldsResolver {
         @Arg('direction', { nullable: true }) direction?: 'next' | 'last'
     ): Promise<Lecture[]> {
         return await getAppointmentsForUser(user, take, skip, cursor, direction);
-    }
-
-    @FieldResolver((returns) => [ImportantInformationNew])
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async importantInformations(@Ctx() context: GraphQLContext) {
-        const achievements = await getUserAchievements(context.user);
-        return achievements
-            .filter((a) => a.achievementType === 'SEQUENTIAL' && a.achievementState === AchievementState.ACTIVE)
-            .map(
-                (a): ImportantInformationNew => ({
-                    description: a.description,
-                    title: a.title,
-                    recipients: 'students',
-                    language: 'de',
-                    type: 'sequence',
-                    maxSteps: a.maxSteps,
-                    finishedSteps: a.currentStep,
-                    modal: a,
-                })
-            );
     }
 
     @FieldResolver((returns) => Boolean)
