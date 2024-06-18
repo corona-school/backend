@@ -109,6 +109,9 @@ const batchOfMetrics = [
     createMetric('pupil_match_create', ['tutee_matching_success'], () => {
         return 1;
     }),
+    createMetric('student_match_create', ['tutor_matching_success'], () => {
+        return 1;
+    }),
 ];
 
 export function registerAchievementMetrics() {
