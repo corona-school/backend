@@ -81,7 +81,7 @@
         "uuid": "^7.0.3",
         "web-push": "^3.6.7",
         "wildcard-match": "^5.1.2",
-        "ws": "^8.11.0"
+        "ws": "^8.17.1"
     },
     "devDependencies": {
         "@types/basic-auth": "^1.1.3",
