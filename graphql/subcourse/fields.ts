@@ -20,12 +20,13 @@ import {
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
-import { Deprecated, getCourse } from '../util';
+import { Deprecated } from '../util';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
-import { getCourseCapacity } from '../../common/courses/util';
+import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
+import { getPupilsFromList } from '../../common/user';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
 
 @ObjectType()
@@ -58,6 +59,16 @@ class OtherParticipant {
     gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
+}
+
+@ObjectType()
+class PupilIdName {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String)
+    firstname: string;
+    @Field(() => String)
+    lastname: string;
 }
 
 export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
@@ -429,6 +440,14 @@ export class ExtendedFieldsSubcourseResolver {
         return await prisma.waiting_list_enrollment.count({
             where: { subcourseId: subcourse.id },
         });
+    }
+
+    @FieldResolver(() => [PupilIdName])
+    @Authorized(Role.OWNER)
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<PupilIdName[]> {
+        const chats = getSubcourseProspects(subcourse);
+        const pupils = await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
+        return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
     }
 
     @FieldResolver((returns) => Boolean)

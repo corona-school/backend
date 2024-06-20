@@ -18,7 +18,6 @@ const getOrCreateOneOnOneConversation = async (
     subcourseId?: number
 ): Promise<Conversation> => {
     await ensureChatUsersExist(participants);
-
     const participantsConversationId = createOneOnOneId(participants[0], participants[1]);
     const participantsConversation = await getConversation(participantsConversationId);
 
@@ -126,7 +125,7 @@ async function updateParticipantConversation(conversationId: string, subcourseId
 }
 
 async function updateProspectConversation(conversationId: string, subcourseId: number | undefined, conversation: TJConversation): Promise<void> {
-    const prospectSubcoursesFromConversation = conversation?.custom.prospectSubcourse;
+    const prospectSubcoursesFromConversation = conversation?.custom?.prospectSubcourse;
     let prospectSubcourseIds = [];
 
     prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation || '[]');
@@ -142,7 +141,6 @@ async function updateProspectConversation(conversationId: string, subcourseId: n
     };
 
     logger.info(`Existing prospect conversation ${conversationId} was updated for subcourse ${subcourseId}.`);
-
     await updateConversation(updatedConversation);
 }
 
