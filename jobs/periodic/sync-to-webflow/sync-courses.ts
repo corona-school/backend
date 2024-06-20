@@ -1,5 +1,5 @@
 import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
-import { diff, hash, mapToDBId, DBIdMap } from './diff';
+import { diff, mapToDBId, DBIdMap } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
 import { WebflowSubcourse, getWebflowSubcourses } from './queries';
@@ -12,37 +12,42 @@ const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
 interface CourseDTO extends WebflowMetadata {
-    description: string;
-    instructor: string;
+    fieldData: {
+        slug?: string;
+        name?: string;
 
-    startingdate: string;
-    endingdate: string;
-    weekday: string;
-    courseduration: string; // like "45 min"
-    lecturecount: number;
-    time: string; // like 16:00 Uhr
-    appointments: string;
+        description: string;
+        instructor: string;
 
-    category: string;
-    link: string;
-    maxparticipants: number;
-    participantscount: number;
-    openslots: number;
-    subject: string;
+        startingdate: string;
+        endingdate: string;
+        weekday: string;
+        courseduration: string; // like "45 min"
+        lecturecount: number;
+        time: string; // like 16:00 Uhr
+        appointments: string;
 
-    mingrade: number;
-    maxgrade: number;
+        category: string;
+        link: string;
+        maxparticipants: number;
+        participantscount: number;
+        openslots: number;
+        subject: string;
 
-    lectures: string[];
+        mingrade: number;
+        maxgrade: number;
 
-    image: {
-        fileId: string;
-        url: string;
-        alt: string;
+        lectures: string[];
+
+        image: {
+            fileId: string;
+            url: string;
+            alt: string;
+        };
     };
 }
 
-function courseDTOFactory(data: any): WebflowMetadata {
+function courseDTOFactory(data: any): CourseDTO {
     // This is just some syntactic sugar to convert the api data to an internal interface.
     // Late on we could implement some checks here, to verify the data.
     return data;
@@ -97,7 +102,7 @@ function mapLecturesToCourse(logger: Logger, subcourse: WebflowSubcourse, lectur
     }
 
     // This will make sure that the attached lectures are sorted by their start date.
-    return result.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()).map((lecture) => lecture._id);
+    return result.sort((a, b) => new Date(a.fieldData.start).getTime() - new Date(b.fieldData.start).getTime()).map((lecture) => lecture.id);
 }
 
 // The description is a WYSIWYG editor that translates the information into HTML code, so we should do the same.
@@ -130,56 +135,73 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
     startDate.locale('de');
 
     const image = getCourseImageURL(subcourse.course);
-    const courseDTO: CourseDTO = {
+    return {
         ...emptyMetadata,
 
-        name: subcourse.course.name,
-        slug: `${subcourse.id}`, // We are using a string to be safe for any case.
+        fieldData: {
+            name: subcourse.course.name,
+            slug: `${subcourse.id}`, // We are using a string to be safe for any case.
 
-        description: parseDescription(subcourse.course.description),
-        instructor: generateInstructor(subcourse),
+            description: parseDescription(subcourse.course.description),
+            instructor: generateInstructor(subcourse),
 
-        startingdate: startDate.toISOString(),
-        endingdate: endDate.toISOString(),
-        weekday: startDate.format('dddd'),
-        courseduration: `${getTotalCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
-        lecturecount: subcourse.lecture.length,
-        time: startDate.format('HH:mm'),
-        appointments: listLectureStartDates(subcourse),
+            startingdate: startDate.toISOString(),
+            endingdate: endDate.toISOString(),
+            weekday: startDate.format('dddd'),
+            courseduration: `${getTotalCouseDuration(subcourse)} min`, // TODO: maybe this can be done in a nicer way. Maybe with the help of moment?
+            lecturecount: subcourse.lecture.length,
+            time: startDate.format('HH:mm'),
+            appointments: listLectureStartDates(subcourse),
 
-        category: subcourse.course.category,
-        link: `${appBaseUrl}/${subcourse.id}`,
-        maxparticipants: subcourse.maxParticipants,
-        participantscount: subcourse.subcourse_participants_pupil.length,
-        openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
-        subject: translateSubject(subcourse.course.subject),
+            category: subcourse.course.category,
+            link: `${appBaseUrl}/${subcourse.id}`,
+            maxparticipants: subcourse.maxParticipants,
+            participantscount: subcourse.subcourse_participants_pupil.length,
+            openslots: subcourse.maxParticipants - subcourse.subcourse_participants_pupil.length,
+            subject: translateSubject(subcourse.course.subject),
 
-        mingrade: subcourse.minGrade,
-        maxgrade: subcourse.maxGrade,
+            mingrade: subcourse.minGrade,
+            maxgrade: subcourse.maxGrade,
 
-        lectures: mapLecturesToCourse(logger, subcourse, lectureIds),
+            lectures: mapLecturesToCourse(logger, subcourse, lectureIds),
 
-        image: {
-            fileId: 'placeholder', // not needed
-            url: image,
-            alt: '',
+            image: {
+                fileId: 'placeholder', // not needed
+                url: image,
+                alt: image,
+            },
         },
     };
-    courseDTO.hash = hash(courseDTO);
-    return courseDTO;
+}
+
+function syncCourseImages(dbCourses: CourseDTO[], webflowCourses: CourseDTO[]) {
+    const webflowCourseIdMap = mapToDBId(webflowCourses);
+
+    for (const i in dbCourses) {
+        if (!webflowCourseIdMap[dbCourses[i].fieldData.slug]) {
+            continue;
+        }
+        const webflowCourse = webflowCourseIdMap[dbCourses[i].fieldData.slug];
+        // We are misusing the alt of the image to store the original link.
+        // Otherwise, we'll never know if webflow will change the link under the hood.
+        if (dbCourses[i].fieldData.image.alt === webflowCourse.fieldData.image.alt) {
+            dbCourses[i].fieldData.image = webflowCourse.fieldData.image;
+        }
+    }
 }
 
 export default async function syncCourses(logger: Logger): Promise<void> {
     logger.addContext('CMSCollection', 'Group Courses');
 
     logger.info('Start course sync');
-    const webflowCourses = await getCollectionItems<WebflowMetadata>(collectionId, courseDTOFactory);
+    const webflowCourses = await getCollectionItems<CourseDTO>(collectionId, courseDTOFactory);
     const webflowLectures = await getCollectionItems<LectureDTO>(lectureCollectionId, lectureDTOFactory);
     const lectureDBIdMap = mapToDBId<LectureDTO>(webflowLectures);
 
     const subCourses = await getWebflowSubcourses();
     const dbCourses = subCourses.map((course) => courseToDTO(logger, course, lectureDBIdMap));
 
+    syncCourseImages(dbCourses, webflowCourses);
     const result = diff(webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });
 
@@ -193,9 +215,10 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     for (const row of result.changed) {
         await patchItem(collectionId, row);
     }
+    logger.info('updated items', { itemIds: result.changed.map((row) => row.id) });
 
     if (result.outdated.length > 0) {
-        const outdatedIds = result.outdated.map((row) => row._id);
+        const outdatedIds = result.outdated.map((row) => row.id);
         logger.info('delete outdated items', { itemIds: outdatedIds });
         await deleteItems(collectionId, outdatedIds);
     }
