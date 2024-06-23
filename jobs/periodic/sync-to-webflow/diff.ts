@@ -1,5 +1,6 @@
 import { WebflowMetadata } from './webflow-adapter';
 import { isEqual } from 'lodash';
+import { Logger } from '../../../common/logger/logger';
 
 export type DBIdMap<T> = { [key: number]: T };
 
@@ -11,7 +12,7 @@ export function mapToDBId<T extends WebflowMetadata>(data: T[]): DBIdMap<T> {
     return res;
 }
 
-export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
+export function diff<T extends WebflowMetadata>(logger: Logger, left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
     const leftMap = mapToDBId(left);
     const rightMap = mapToDBId(right);
 
@@ -31,6 +32,7 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
             // We have to save the old item id, so that it can be used for the update operation
             rightMap[dbId].id = leftMap[dbId].id;
             changedEntries.push(rightMap[dbId]);
+            logger.info('found diff in items', { left: JSON.stringify(left, null, 2), right: JSON.stringify(right, null, 2) });
         }
     }
 

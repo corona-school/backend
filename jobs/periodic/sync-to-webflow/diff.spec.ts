@@ -1,3 +1,4 @@
+import { getLogger } from '../../../common/logger/logger';
 import { diff } from './diff';
 import { WebflowMetadata } from './webflow-adapter';
 
@@ -36,7 +37,7 @@ describe('diff', () => {
     it('should not notice any changes', () => {
         const left: TestData[] = [newTestObj(1, 'foo')];
         const right: TestData[] = [newTestObj(1, 'foo')];
-        const result = diff(left, right);
+        const result = diff(getLogger('test'), left, right);
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
@@ -45,7 +46,7 @@ describe('diff', () => {
     it('should notice a change in data', () => {
         const left: TestData = newTestObj(1, 'foo');
         const right: TestData = newTestObj(1, 'foobar');
-        const result = diff([left], [right]);
+        const result = diff(getLogger('test'), [left], [right]);
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([]);
@@ -55,7 +56,7 @@ describe('diff', () => {
         const newObj = newTestObj(2, 'foo');
         const left: TestData[] = [newTestObj(1, 'foo')];
         const right: TestData[] = [newTestObj(1, 'foo'), newObj];
-        const result = diff(left, right);
+        const result = diff(getLogger('test'), left, right);
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([]);
@@ -65,7 +66,7 @@ describe('diff', () => {
         const oldObj = newTestObj(2, 'foo');
         const left: TestData[] = [newTestObj(1, 'foo'), oldObj];
         const right: TestData[] = [newTestObj(1, 'foo')];
-        const result = diff(left, right);
+        const result = diff(getLogger('test'), left, right);
 
         expect(result.new).toStrictEqual([]);
         expect(result.outdated).toStrictEqual([oldObj]);
@@ -79,7 +80,7 @@ describe('diff', () => {
         const left: TestData[] = [oldObj];
         const right: TestData[] = [newObj];
 
-        const result = diff(left, right);
+        const result = diff(getLogger('test'), left, right);
 
         expect(result.new).toStrictEqual([newObj]);
         expect(result.outdated).toStrictEqual([oldObj]);

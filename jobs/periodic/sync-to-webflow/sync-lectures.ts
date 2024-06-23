@@ -51,7 +51,7 @@ export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: Web
         .flat()
         .map(lectureToDTO);
 
-    const result = diff(webflowLectures, dbLectures);
+    const result = diff(logger, webflowLectures, dbLectures);
     logger.debug('Webflow lecture diff', { result });
 
     const newIds: string[] = [];

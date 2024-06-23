@@ -202,7 +202,7 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     const dbCourses = subCourses.map((course) => courseToDTO(logger, course, lectureDBIdMap));
 
     syncCourseImages(dbCourses, webflowCourses);
-    const result = diff(webflowCourses, dbCourses);
+    const result = diff(logger, webflowCourses, dbCourses);
     logger.debug('Webflow course diff', { result });
 
     const newIds: string[] = [];
