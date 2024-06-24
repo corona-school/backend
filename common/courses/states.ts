@@ -155,7 +155,7 @@ export async function canPublish(subcourse: Subcourse): Promise<Decision> {
         return { allowed: false, reason: 'course-not-allowed' };
     }
 
-    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    const lectures = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id, isCanceled: false } });
     if (lectures.length == 0) {
         return { allowed: false, reason: 'no-lectures' };
     }
