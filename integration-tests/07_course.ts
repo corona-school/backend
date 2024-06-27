@@ -1,12 +1,13 @@
 import { test } from './base';
 import { adminClient } from './base/clients';
-import { pupilOne, studentOne } from './01_user';
+import { pupilOne, pupilUpdated, studentOne } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
 import { prisma } from '../common/prisma';
+import { createOneOnOneId } from '../common/chat/helper';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -532,7 +533,7 @@ void test('Delete course', async () => {
 
     await courseClient.requestShallFail(
         `
-        mutation DeleteCourseWithSubcourses {courseDelete(courseId: ${courseId})}      
+        mutation DeleteCourseWithSubcourses {courseDelete(courseId: ${courseId})}
     `
     );
 
@@ -540,7 +541,7 @@ void test('Delete course', async () => {
 
     await courseClient.request(
         `
-        mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}      
+        mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}
     `
     );
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
@@ -550,7 +551,7 @@ void test('Delete course', async () => {
 
     await courseClient.request(
         `
-        mutation DeleteEmptyCourse {courseDelete(courseId: ${courseId})}      
+        mutation DeleteEmptyCourse {courseDelete(courseId: ${courseId})}
     `
     );
 });
@@ -612,4 +613,92 @@ void test('Find shared course', async () => {
 
     //SubcourseOneInstructor must be able to find his own subcourse, even if it is not shared
     assert.ok(courseSearch2.some((it) => it.id === courseId));
+});
+
+// Call prospectChatCreate mutation for a course, then have course instructor add this prospect and check if the prospect
+// is added to the course and if they were removed from prospects list.
+void test('Create Prospect Chat, then join', async () => {
+    const { client: instructorClient, instructor, courseId, subcourseId } = await subcourseOne;
+    const { client: pupilClient, pupil } = await pupilUpdated;
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {},
+    });
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${instructor.student.id}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {},
+    });
+    const conversationId = createOneOnOneId({ userID: `pupil/${pupil.pupil.id}` }, { userID: `student/${instructor.student.id}` });
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' },
+    });
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' },
+    });
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'PUT',
+        responseStatus: 200,
+        body: JSON.stringify({ custom: { prospectSubcourse: `[${subcourseId}]` } }),
+        response: {},
+    });
+
+    await pupilClient.request(`
+        mutation CreateProspectChat {
+            prospectChatCreate(instructorUserId: "student/${instructor.student.id}", subcourseId: ${subcourseId})
+        }
+    `);
+
+    const { subcourse: subcourseRes } = await instructorClient.request(`
+        query GetSubcourse {
+            subcourse(subcourseId: ${subcourseId}) {
+                prospectParticipants {
+                    id
+                }
+            }
+        }
+    `);
+    assert.ok(subcourseRes.prospectParticipants.some((it) => it.id === pupil.pupil.id));
+
+    await instructorClient.request(`
+        mutation AddProspectToSubcourse {
+            subcourseJoinFromProspects(subcourseId: ${subcourseId}, pupilId: ${pupil.pupil.id})
+        }
+    `);
+
+    const { subcourse: subcourse2 } = await instructorClient.request(`
+        query GetSubcourse {
+            subcourse(subcourseId: ${subcourseId}) {
+                prospectParticipants {
+                    id
+                }
+                participants {
+                    id
+                }
+            }
+        }
+    `);
+
+    assert.ok(!subcourse2.prospectParticipants.some((it) => it.id === pupil.pupil.id));
+    assert.ok(subcourse2.participants.some((it) => it.id === pupil.pupil.id));
+
+    // leave subcourse again such that our tests are self-contained
+    await pupilClient.request(`
+        mutation LeaveSubcourse {
+            subcourseLeave(subcourseId: ${subcourseId})
+        }
+    `);
 });

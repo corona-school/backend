@@ -9,7 +9,6 @@ import {
     Course_tag as CourseTag,
     Concrete_notification,
     Screener,
-    User_achievement,
 } from './generated';
 import { Authorized, createMethodDecorator } from 'type-graphql';
 import { UNAUTHENTICATED_USER } from './authentication';
@@ -25,7 +24,6 @@ import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
-import { subcourse } from '@prisma/client';
 
 /* -------------------------- AUTHORIZATION FRAMEWORK ------------------------------------------------------- */
 
@@ -565,6 +563,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             alreadyPromoted: adminOrOwner,
             conversationId: subcourseParticipantOrOwner,
             waiting_list_enrollment: adminOrOwner,
+            prospectChats: nobody,
             subcourse_promotions: onlyAdmin,
         }),
     },

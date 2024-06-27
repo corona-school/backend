@@ -13,7 +13,7 @@ import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } f
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
-import { getCourseOfSubcourse, getSubcourseInstructors } from './util';
+import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
@@ -213,7 +213,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         const pupilUser = userForPupil(pupil);
         const leftWaitingList = await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
-
+        const leftProspects = await removeSubcourseProspect(subcourse.id, pupil.id);
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
                 pupilId: pupil.id,
@@ -239,6 +239,8 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             const context = await getNotificationContextForSubcourse(course, subcourse);
             if (leftWaitingList) {
                 await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', context);
+            } else if (leftProspects) {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_prospects', context);
             } else {
                 await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', context);
             }

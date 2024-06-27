@@ -471,5 +471,5 @@ export const pupilUpdated = test('Update Pupil', async () => {
         }
     }`);
 
-    return { pupilsGrade: me.pupil.grade };
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
 });

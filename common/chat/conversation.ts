@@ -138,26 +138,6 @@ async function* getAllConversations(onlyActive?: boolean): AsyncIterable<TJConve
     } while (true);
 }
 
-async function getLastUnreadConversation(user: User): Promise<{ data: Conversation[] }> {
-    assert(TALKJS_SECRET_KEY, `No TalkJS secret key found to get last unread conversation.`);
-    assureChatFeatureActive();
-
-    const userId = userIdToTalkJsId(user.userID);
-    try {
-        const response = await fetch(`${TALKJS_API_URL}/users/${userId}/conversations?unreadsOnly=true`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${TALKJS_SECRET_KEY}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        await checkResponseStatus(response);
-        return response.json();
-    } catch (error) {
-        throw new Error(error);
-    }
-}
 /**
  * NOTE: PUT merges data with existing data, if any. For example, you cannot remove participants from a conversation by PUTing a list of participants that excludes some existing participants. If you want to remove participants from a conversation, use `removeParticipant`.
  */
@@ -369,7 +349,6 @@ async function sendSystemMessage(message: string, conversationId: string, type?:
 }
 
 export {
-    getLastUnreadConversation,
     createConversation,
     updateConversation,
     removeParticipantFromCourseChat,

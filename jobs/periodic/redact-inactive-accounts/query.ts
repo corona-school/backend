@@ -1,5 +1,6 @@
 import { pupil, student, mentor, screener } from '@prisma/client';
 import { prisma } from '../../../common/prisma';
+import { DEFAULT_SCREENER_NUMBER_ID } from '../../../common/util/screening';
 
 export async function findAllPersons(
     active: boolean,
@@ -32,6 +33,7 @@ export async function findAllPersons(
                 active: active,
                 lastLogin: { lt: lastLoginBefore },
                 isRedacted: false,
+                oldNumberID: { not: DEFAULT_SCREENER_NUMBER_ID },
             },
         }),
     };
