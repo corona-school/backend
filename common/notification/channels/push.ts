@@ -123,19 +123,27 @@ export const webpushChannel: Channel = {
 
         for (const subscription of subscriptions) {
             logger.info(`Sending ConcreteNotification(${concreteID}) to Subscription(${subscription.id}) of User(${to.userID})`);
-            const result = await WebPush.sendNotification(
-                { endpoint: subscription.endpoint, keys: subscription.keys as any },
-                JSON.stringify({
-                    // As we use the keys of the client to encrypt the message, we can include
-                    // more details here, as only the user's device will be able to decrypt it
-                    concreteNotificationId: concreteID,
-                    message,
-                })
-            );
+            try {
+                const result = await WebPush.sendNotification(
+                    { endpoint: subscription.endpoint, keys: subscription.keys as any },
+                    JSON.stringify({
+                        // As we use the keys of the client to encrypt the message, we can include
+                        // more details here, as only the user's device will be able to decrypt it
+                        concreteNotificationId: concreteID,
+                        message,
+                    })
+                );
 
-            logger.info(`Sent ConcreteNotification(${concreteID}) to Subscription(${subscription.id}) of User(${to.userID})`, {
-                result,
-            });
+                logger.info(`Sent ConcreteNotification(${concreteID}) to Subscription(${subscription.id}) of User(${to.userID})`, {
+                    result,
+                });
+            } catch (error) {
+                const webPushError = error as WebPush.WebPushError;
+                // Subscription has expired or is no longer valid
+                if ([404, 410].includes(webPushError.statusCode)) {
+                    removePushSubscription(to, subscription.id).catch((e) => {});
+                }
+            }
         }
     },
 };
