@@ -145,7 +145,7 @@ export const webpushChannel: Channel = {
                         logger.error(`Error removing Subscription(${subscription.id}) of User(${to.userID})`, e);
                     });
                 } else {
-                    logger.error(`Error sending notification for Subscription(${subscription.id}) of User(${to.userID})`, error);
+                    logger.error(`Error sending ConcreteNotification(${concreteID}) to Subscription(${subscription.id}) of User(${to.userID})`, error);
                 }
             }
         }
