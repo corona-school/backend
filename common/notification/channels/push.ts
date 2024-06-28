@@ -141,7 +141,11 @@ export const webpushChannel: Channel = {
                 const webPushError = error as WebPush.WebPushError;
                 // Subscription has expired or is no longer valid
                 if ([404, 410].includes(webPushError.statusCode)) {
-                    removePushSubscription(to, subscription.id).catch((e) => {});
+                    await removePushSubscription(to, subscription.id).catch((e) => {
+                        logger.error(`Error removing Subscription(${subscription.id}) of User(${to.userID})`, e);
+                    });
+                } else {
+                    logger.error(`Error sending notification for Subscription(${subscription.id}) of User(${to.userID})`, error);
                 }
             }
         }
