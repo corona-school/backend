@@ -84,6 +84,7 @@ model user_achievement {
   // Streaks: we have to store the highest record for streaks
   recordValue Int?
   context     Json                 @db.Json
+
   @@unique([relation, userId, templateId], name: "unique_user_achievement")
 }
 
@@ -649,7 +650,7 @@ model push_subscription {
   expirationTime DateTime?
   // Public key of the subscription which we can encrypt messages with
   // (so that only the user's device can decrypt them)
-  keys Json
+  keys           Json
 }
 
 // We require Students to hand in a Certificate of Conduct, for that we issue them a Remission Request to get it for free
@@ -853,10 +854,10 @@ model subcourse {
 }
 
 model subcourse_promotion {
-  id          Int            @id @default(autoincrement())
-  createdAt   DateTime       @default(now()) @db.Timestamp(6)
+  id          Int                           @id @default(autoincrement())
+  createdAt   DateTime                      @default(now()) @db.Timestamp(6)
   type        subcourse_promotion_type_enum
-  subcourse   subcourse      @relation(fields: [subcourseId], references: [id], onDelete: Cascade)
+  subcourse   subcourse                     @relation(fields: [subcourseId], references: [id], onDelete: Cascade)
   subcourseId Int
 }
 
@@ -1321,31 +1322,35 @@ enum course_schooltype_enum {
 }
 
 enum course_subject_enum {
-  Mathematik
-  Deutsch
-  Englisch
+  Altgriechisch
+  Arbeitslehre
   Biologie
   Chemie
-  Physik
-  Informatik
-  Sachkunde
-  Geschichte
-  Erdkunde
-  Wirtschaft
-  Politik
-  Philosophie
-  Kunst
-  Musik
-  P_dagogik                @map("Pädagogik")
-  Franz_sisch              @map("Französisch")
-  Latein
-  Altgriechisch
-  Spanisch
-  Italienisch
-  Russisch
-  Niederl_ndisch           @map("Niederländisch")
+  Deutsch
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
+  Englisch
+  Erdkunde
+  Ethik
+  Franz_sisch              @map("Französisch")
+  Geschichte
+  Gesundheit
+  Informatik
+  Italienisch
+  Kunst
+  Latein
+  Mathematik
+  Musik
+  Niederl_ndisch           @map("Niederländisch")
+  P_dagogik                @map("Pädagogik")
+  Philosophie
+  Physik
+  Politik
   Religion
+  Russisch
+  Sachkunde
+  Spanisch
+  Technik
+  Wirtschaft
   Lernen_lernen            @map("Lernen lernen")
 }
 
