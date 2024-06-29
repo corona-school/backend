@@ -79,6 +79,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
             wix_creation_date: new Date(),
 
             // the authToken is used to verify the e-mail instead
+            //PR Note: Do we have to drop this?
             verification: uuidv4(),
 
             openMatchRequestCount: 0,

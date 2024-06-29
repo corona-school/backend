@@ -55,7 +55,7 @@ const getViableUsers = (toggles: string[]) => {
     };
 
     if (!toggles.includes('allow-unverified')) {
-        viableUsers.verification = null; // require verification to be unset
+        viableUsers.verifiedAt = { not: null }; // require verifiedAt to be set
     }
 
     /* On production we want to avoid that our testusers test+prod-...@lern-fair.de

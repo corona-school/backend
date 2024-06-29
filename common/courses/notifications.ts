@@ -11,6 +11,7 @@ import { NotificationContext } from '../notification/types';
 import moment from 'moment';
 import { Decision } from '../util/decision';
 import { shuffleArray } from '../util/basic';
+import { notNull } from 'jest-mock-extended';
 
 const logger = getLogger('Course Notification');
 
@@ -204,7 +205,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
     const pupils = await prisma.pupil.findMany({
         where: {
             active: true,
-            verification: null,
+            verifiedAt: { not: null },
             isParticipant: true,
             OR: [
                 {

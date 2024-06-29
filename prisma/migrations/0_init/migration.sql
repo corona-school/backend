@@ -347,7 +347,6 @@ CREATE TABLE "mentor" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
@@ -459,7 +458,6 @@ CREATE TABLE "pupil" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
@@ -545,7 +543,6 @@ CREATE TABLE "screener" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
@@ -582,7 +579,6 @@ CREATE TABLE "student" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
@@ -813,9 +809,6 @@ CREATE UNIQUE INDEX "UQ_MATCH" ON "match"("studentId", "pupilId");
 CREATE UNIQUE INDEX "IDX_e03cfa18e81812d44f5cdf9479" ON "mentor"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "IDX_704a7bf0ca9889bd5c4ea1a15b" ON "mentor"("verification");
-
--- CreateIndex
 CREATE UNIQUE INDEX "IDX_5c42dcf75b1abecf9860e54a12" ON "mentor"("wix_id");
 
 -- CreateIndex
@@ -835,9 +828,6 @@ CREATE UNIQUE INDEX "UQ_PJ_MATCH" ON "project_match"("studentId", "pupilId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_24d523169870b7e80f9e68aad3" ON "pupil"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "IDX_90fde657ec008e61a5b07947b3" ON "pupil"("verification");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_16c46adbb2885e591364e476e5" ON "pupil"("wix_id");
@@ -864,9 +854,6 @@ CREATE UNIQUE INDEX "IDX_f3f92f9182a7fccc2858fd63cc" ON "school"("emailDomain");
 CREATE UNIQUE INDEX "IDX_29a6207bc70a2b9e6731d66bcf" ON "screener"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "IDX_c9e25ecca022d0d6cd401d9e5e" ON "screener"("verification");
-
--- CreateIndex
 CREATE UNIQUE INDEX "UQ_96dc11de485d62615e78a875293" ON "screener"("oldNumberID");
 
 -- CreateIndex
@@ -874,9 +861,6 @@ CREATE UNIQUE INDEX "REL_dfb78fd7887c69e3c52e002083" ON "screening"("studentId")
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_a56c051c91dbe1068ad683f536" ON "student"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "IDX_34cbafcb0bcdfb2b6de9010acb" ON "student"("verification");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_545d0c66310ca5df98b4765cc7" ON "student"("wix_id");

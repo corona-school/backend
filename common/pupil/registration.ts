@@ -90,6 +90,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
             isPupil: true,
 
             // the authToken is used to verify the e-mail instead
+            // PR Note: How do we drop this?
             verification,
 
             // Pupils need to specifically request a match
@@ -103,6 +104,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
         await Notification.actionTaken(userForPupil(pupil), 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
+    //PR Note: How do we drop this?
     await logTransaction('verificationRequets', userForPupil(pupil), {});
 
     return pupil;

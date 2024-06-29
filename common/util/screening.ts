@@ -21,7 +21,6 @@ export const defaultScreener = (async function getDefaultScreenerEntry() {
             active: false,
             createdAt: new Date(),
             updatedAt: new Date(),
-            verification: null,
             verifiedAt: new Date(),
         },
     });

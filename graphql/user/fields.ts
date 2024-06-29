@@ -226,7 +226,7 @@ export class UserFieldsResolver {
                 where: {
                     ...pupilQuery,
                     active: true,
-                    verification: null,
+                    verifiedAt: { not: null },
                     OR: [
                         {
                             subcourse_participants_pupil: {
@@ -259,7 +259,7 @@ export class UserFieldsResolver {
                         studentQuery,
                         {
                             active: true,
-                            verification: null,
+                            verifiedAt: { not: null },
                         },
                         // For now we exclude unscreened helpers, as they wont be interested
                         // in most of our marketing campaigns anyways
