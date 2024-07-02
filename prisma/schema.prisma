@@ -426,6 +426,8 @@ model mentor {
   active                       Boolean                 @default(true)
   email                        String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
   verifiedAt                   DateTime?               @db.Timestamp(6)
+  verification                 String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
+
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
@@ -552,6 +554,9 @@ model pupil {
   firstname                    String?               @db.VarChar
   lastname                     String?               @db.VarChar
   active                       Boolean               @default(true)
+  // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
+  //             Replaced by Secret table
+  verification                 String?               @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
   email                        String                @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
   // If set, the user email was verified:
   verifiedAt                   DateTime?             @db.Timestamp(6)
@@ -683,6 +688,7 @@ model screener {
   firstname                    String?                      @db.VarChar
   lastname                     String?                      @db.VarChar
   active                       Boolean                      @default(true)
+  verification                 String?                      @unique(map: "IDX_c9e25ecca022d0d6cd401d9e5e") @db.VarChar
   email                        String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
   verifiedAt                   DateTime?                    @db.Timestamp(6)
   isRedacted                   Boolean                      @default(false)
@@ -729,6 +735,9 @@ model student {
   lastname                                  String?                  @db.VarChar
   active                                    Boolean                  @default(true)
   email                                     String                   @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
+  // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
+  //             Replaced by Secret table
+  verification                              String?                  @unique(map: "IDX_34cbafcb0bcdfb2b6de9010acb") @db.VarChar
   // If set, the user email was verified:
   verifiedAt                                DateTime?                @db.Timestamp(6)
   // The account was anonymized, and all personal data was replaced with placeholders
