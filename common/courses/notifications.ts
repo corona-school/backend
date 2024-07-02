@@ -11,7 +11,6 @@ import { NotificationContext } from '../notification/types';
 import moment from 'moment';
 import { Decision } from '../util/decision';
 import { shuffleArray } from '../util/basic';
-import { notNull } from 'jest-mock-extended';
 
 const logger = getLogger('Course Notification');
 
