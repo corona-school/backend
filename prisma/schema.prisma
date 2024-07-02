@@ -472,6 +472,7 @@ model notification {
   sample_context      Json?                     @db.Json
   // If set, the user gets in-app notifications:
   message_translation message_translation[]
+  disabledChannels    notification_channel_enum[]                  @default([])
 }
 
 // A certificate that a student helped one pupil (= match), signed by the pupil or their parents
@@ -998,6 +999,12 @@ model job_run {
   worker    String
 
   @@id([job_name, startedAt])
+}
+
+enum notification_channel_enum {
+  email
+  inapp
+  push
 }
 
 enum subcourse_promotion_type_enum {
