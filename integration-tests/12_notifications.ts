@@ -464,6 +464,32 @@ void test('Notification sent via Mailjet', async () => {
     });
 
     assert.strictEqual(sent2, 2, 'Expected Notification to be sent');
+
+    await pupilClient.request(`mutation PupilEnableNotifications {
+        meUpdate(update: { notificationPreferences: { chat: { email: true }}})
+    }`);
+
+    await adminClient.request(`mutation DisableEmailChannel {
+        notificationUpdate(notificationId: ${id}, update: {
+          disabledChannels: {
+            set: [email]
+          }
+        })
+      }`);
+
+    await adminClient.request(`mutation TriggerAction3 {
+        _actionTakenAt(action: "TEST", at: "${new Date().toISOString()}" context: { a: "a", uniqueId: "4" } dryRun: false, noDuplicates: true, userID: "${
+        pupil.userID
+    }")
+    }`);
+
+    const sent3 = await prisma.concrete_notification.count({
+        where: {
+            notificationID: id,
+            state: 2 /* SENT */,
+        },
+    });
+    assert.strictEqual(sent3, 3, 'Expected Notification to be sent');
 });
 
 void test('Notification sent via Mailjet to overrideEmail', async () => {
