@@ -639,6 +639,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             contextID: isDev || isTest ? onlyAdmin : nobody,
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
             error: onlyAdmin,
+            notification: adminOrOwner,
         }),
     },
     Pupil_screening: {
