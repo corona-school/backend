@@ -141,16 +141,17 @@ model cooperation {
 
 // A Concrete Notification represents a Notification sent to one specific user
 model concrete_notification {
-  id                Int      @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
-  userId            String   @db.VarChar
+  id                Int           @id(map: "PK_830b05c48e7ba274a9e4bceced3") @default(autoincrement())
+  userId            String        @db.VarChar
   notificationID    Int
   // The contextID moves context.uniqueId out of the JSON field, to be able to query it efficiently:
-  contextID         String?  @db.VarChar
-  context           Json     @db.Json
-  attachmentGroupId String?  @db.VarChar
-  sentAt            DateTime @db.Timestamp(6)
+  contextID         String?       @db.VarChar
+  context           Json          @db.Json
+  attachmentGroupId String?       @db.VarChar
+  sentAt            DateTime      @db.Timestamp(6)
   state             Int // This should be an enum
-  error             String?  @db.VarChar
+  error             String?       @db.VarChar
+  notification      notification? @relation(fields: [notificationID], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 // A Course acts as a template for multiple Subcourses
@@ -445,34 +446,35 @@ model mentor {
 
 // A template for a Notification sent to a User
 model notification {
-  id                  Int                       @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
+  id                    Int                         @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
   // If set, the user is notified via Mail using this template:
-  mailjetTemplateId   Int?
-  description         String                    @db.VarChar
-  active              Boolean
+  mailjetTemplateId     Int?
+  description           String                      @db.VarChar
+  active                Boolean
   // An enum, was intended to be able to i.e. notify the teacher or parent of a pupil
   // Never used in reality so far
-  recipient           Int
-  onActions           String[]
+  recipient             Int
+  onActions             String[]
   // Users can toggle notifications on or off per type:
-  type                notification_type_enum    @default(legacy)
-  cancelledOnAction   String[]
+  type                  notification_type_enum      @default(legacy)
+  cancelledOnAction     String[]
   // If set, the notification is not sent immeadiately but after the delay:
-  delay               Int? // hours
+  delay                 Int? // hours
   // If set, the notification is repeated indefinetly till an action in the 'cancelledOnAction' list is triggered:
-  interval            Int? // hours
+  interval              Int? // hours
   // The sender influences the sender email address, so that replies directly go to the correct team
-  sender              notification_sender_enum?
+  sender                notification_sender_enum?
   // If set a hook is executed when the Notification is sent out:
-  hookID              String?                   @db.VarChar
+  hookID                String?                     @db.VarChar
   // For Notifications that are not related to any actions (= campaigns), this provides a sample context
   // For Notifications with actions one can just take the subset of all sample contexts of all actions
   // This is used to validate message templates to only use the right variables, and to show a rich UI in Retool
   // for maintaining notifications
-  sample_context      Json?                     @db.Json
+  sample_context        Json?                       @db.Json
   // If set, the user gets in-app notifications:
-  message_translation message_translation[]
-  disabledChannels    notification_channel_enum[]                  @default([])
+  message_translation   message_translation[]
+  disabledChannels      notification_channel_enum[] @default([])
+  concrete_notification concrete_notification[]
 }
 
 // A certificate that a student helped one pupil (= match), signed by the pupil or their parents

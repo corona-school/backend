@@ -9,6 +9,7 @@ import {
     PupilWhereInput,
     Log,
     Push_subscription as PushSubscription,
+    notification_channel_enum as NotificationChannelEnum,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
@@ -136,13 +137,27 @@ export class UserFieldsResolver {
     @Authorized(Role.OWNER, Role.ADMIN)
     @LimitedQuery()
     async concreteNotifications(
+        @Ctx() context: GraphQLContext,
         @Root() user: User,
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<ConcreteNotification[]> {
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
+        const userQuery = {
+            notification: {
+                message_translation: {
+                    some: {},
+                },
+            },
+            NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
+        };
         return await prisma.concrete_notification.findMany({
             orderBy: [{ sentAt: 'desc' }],
-            where: { userId: user.userID, state: ConcreteNotificationState.SENT },
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                AND: [isAdmin ? null : userQuery],
+            },
             take,
             skip,
         });
