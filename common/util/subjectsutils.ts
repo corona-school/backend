@@ -16,6 +16,7 @@ export type Subject = {
 
 export const SUBJECTS = [
     'Altgriechisch',
+    'Arbeitslehre',
     'Biologie',
     'Chemie',
     'Chinesisch',
@@ -23,8 +24,10 @@ export const SUBJECTS = [
     'Deutsch als Zweitsprache',
     'Englisch',
     'Erdkunde',
+    'Ethik',
     'Französisch',
     'Geschichte',
+    'Gesundheit',
     'Informatik',
     'Italienisch',
     'Kunst',
@@ -40,6 +43,7 @@ export const SUBJECTS = [
     'Russisch',
     'Sachkunde',
     'Spanisch',
+    'Technik',
     'Wirtschaft',
     'Lernen lernen',
 ] as const;
