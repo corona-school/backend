@@ -305,6 +305,10 @@ const _notificationActions = {
             certificateLink: 'https://...',
         },
     },
+    pupil_grade_increased: {
+        description: 'Pupil Grade was increased',
+        sampleContext: {},
+    },
     tutee_match_requested: {
         description: 'Tutee / Match requested',
         sampleContext: {},
