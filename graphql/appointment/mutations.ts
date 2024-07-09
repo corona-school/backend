@@ -96,7 +96,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
@@ -116,7 +116,7 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
     async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);

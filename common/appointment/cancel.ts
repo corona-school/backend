@@ -1,12 +1,13 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getStudent, User, userForPupil, userForStudent } from '../user';
+import { getScreener, getStudent, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { Student } from '../../graphql/generated';
 
 const logger = getLogger('Appointment');
 
@@ -37,20 +38,21 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
 
     logger.info(`Appointment(${appointment.id}) was cancelled by User(${user.userID})`);
 
-    const student = await getStudent(user);
-
     switch (appointment.appointmentType) {
         case AppointmentType.group: {
+            const _user = user.studentId ? await getStudent(user) : await getScreener(user);
+
             const subcourse = await prisma.subcourse.findFirst({ where: { id: appointment.subcourseId }, include: { course: true } });
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
 
+            // TODO: adjust notification for if screener cancelled the appointment
             for (const participant of participants) {
                 // Notifications are sent only when an appointment is cancelled, not when a subcourse is cancelled
                 if (!silent) {
                     await Notification.actionTaken(userForPupil(participant.pupil), 'student_cancel_appointment_group', {
                         appointment: getAppointmentForNotification(appointment),
-                        student,
+                        student: _user,
                         ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                     });
                 }
@@ -71,6 +73,9 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
             break;
         }
         case AppointmentType.match: {
+            if (user.screenerId) break; //TODO: Throw an error?
+
+            const student = await getStudent(user);
             const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true, student: true } });
 
             if (!silent) {
