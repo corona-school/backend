@@ -375,22 +375,30 @@ export class MutatePupilResolver {
         });
         logger.info(`Attempting to increase the grade of ${pupils.length} pupils`);
         let validCount = 0;
-        for (const pupil of pupils) {
-            const grade = gradeAsInt(pupil.grade);
-            try {
-                await prisma.pupil.update({
-                    where: { id: pupil.id },
-                    data: {
-                        grade: `${grade + 1}. Klasse`,
-                        gradeUpdatedAt: new Date(),
-                    },
-                });
-                await Notification.actionTaken(userForPupil(pupil), 'pupil_grade_increased', {});
-                validCount += 1;
-            } catch (error) {
-                logger.error(`Error increasing Pupil(${pupil.id}) grade`, error);
-            }
+        const batchSize = 1000;
+        for (let i = 0; i < pupils.length; i += batchSize) {
+            const batch = pupils.slice(i, i + batchSize);
+
+            await Promise.all(
+                batch.map(async (pupil) => {
+                    try {
+                        const grade = gradeAsInt(pupil.grade);
+                        await prisma.pupil.update({
+                            where: { id: pupil.id },
+                            data: {
+                                grade: `${grade + 1}. Klasse`,
+                                gradeUpdatedAt: new Date(),
+                            },
+                        });
+                        await Notification.actionTaken(userForPupil(pupil), 'pupil_grade_increased', {});
+                        validCount += 1;
+                    } catch (error) {
+                        logger.error(`Error increasing Pupil(${pupil.id}) grade`, error);
+                    }
+                })
+            );
         }
+
         logger.info(`Successfully increased the grade of ${validCount} pupils`);
         return true;
     }
