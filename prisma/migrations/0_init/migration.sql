@@ -349,7 +349,6 @@ CREATE TABLE "mentor" (
     "email" VARCHAR NOT NULL,
     "verifiedAt" TIMESTAMP(6),
     "verification" VARCHAR,
-
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
     "notificationPreferences" JSON,
@@ -876,7 +875,7 @@ CREATE UNIQUE INDEX "REL_dfb78fd7887c69e3c52e002083" ON "screening"("studentId")
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_a56c051c91dbe1068ad683f536" ON "student"("email");
-    
+
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_34cbafcb0bcdfb2b6de9010acb" ON "student"("verification");
 

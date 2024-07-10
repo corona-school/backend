@@ -427,7 +427,6 @@ model mentor {
   email                        String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
   verifiedAt                   DateTime?               @db.Timestamp(6)
   verification                 String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
-
   isRedacted                   Boolean                 @default(false)
   lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
   notificationPreferences      Json?                   @db.Json
