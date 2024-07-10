@@ -246,6 +246,7 @@ model course_tag {
   name                   String                   @db.VarChar
   category               String                   @db.VarChar
   course_tags_course_tag course_tags_course_tag[]
+  active                 Boolean                  @default(true)
 }
 
 model course_tags_course_tag {
