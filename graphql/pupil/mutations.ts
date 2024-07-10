@@ -32,7 +32,7 @@ import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
 import moment from 'moment';
-import { gradeAsInt } from '../../common/util/gradestrings';
+import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -367,39 +367,33 @@ export class MutatePupilResolver {
     @Mutation(() => Boolean)
     @Authorized(Role.ADMIN)
     async adminIncreasePupilGrades() {
-        const pupils = await prisma.pupil.findMany({
-            where: {
-                grade: { not: null, notIn: ['13. Klasse', '14. Klasse'] },
-                OR: [{ gradeUpdatedAt: { lt: moment().subtract(10, 'months').toDate() } }, { gradeUpdatedAt: { equals: null } }],
-            },
-        });
-        logger.info(`Attempting to increase the grade of ${pupils.length} pupils`);
-        let validCount = 0;
-        const batchSize = 1000;
-        for (let i = 0; i < pupils.length; i += batchSize) {
-            const batch = pupils.slice(i, i + batchSize);
-
-            await Promise.all(
-                batch.map(async (pupil) => {
-                    try {
-                        const grade = gradeAsInt(pupil.grade);
-                        await prisma.pupil.update({
-                            where: { id: pupil.id },
-                            data: {
-                                grade: `${grade + 1}. Klasse`,
-                                gradeUpdatedAt: new Date(),
-                            },
-                        });
-                        await Notification.actionTaken(userForPupil(pupil), 'pupil_grade_increased', {});
-                        validCount += 1;
-                    } catch (error) {
-                        logger.error(`Error increasing Pupil(${pupil.id}) grade`, error);
-                    }
-                })
-            );
+        const grades = Array.from({ length: 12 }, (_, i) => gradeAsString(i + 1)).reverse();
+        for (const grade of grades) {
+            try {
+                const nextGrade = gradeAsString(gradeAsInt(grade) + 1);
+                const query = {
+                    grade,
+                    active: true,
+                    OR: [{ gradeUpdatedAt: { lt: moment().subtract(10, 'months').toDate() } }, { gradeUpdatedAt: { equals: null } }],
+                };
+                const pupils = await prisma.pupil.findMany({ where: query });
+                await prisma.pupil.updateMany({
+                    where: query,
+                    data: {
+                        grade: nextGrade,
+                        gradeUpdatedAt: new Date(),
+                    },
+                });
+                await Notification.bulkActionTaken(
+                    pupils.map((pupil) => userForPupil(pupil)),
+                    'pupil_grade_increased',
+                    { uniqueId: `pupil_grade_increased_${new Date().toISOString()}` }
+                );
+                logger.info(`Successfully increased the grade of ${pupils.length} pupils from ${grade} to ${nextGrade}`);
+            } catch (error) {
+                logger.info(`Attempting to increase the grade of pupils from ${grade}`, error);
+            }
         }
-
-        logger.info(`Successfully increased the grade of ${validCount} pupils`);
         return true;
     }
 }
