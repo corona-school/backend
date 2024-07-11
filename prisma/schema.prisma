@@ -624,6 +624,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
+  gradeUpdatedAt                               DateTime?
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them

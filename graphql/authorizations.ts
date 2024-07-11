@@ -420,6 +420,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             _count: nobody,
             waiting_list_enrollment: nobody,
             lastLogin: adminOrOwner,
+            gradeUpdatedAt: adminOrOwner,
         }),
     },
 
