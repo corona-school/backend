@@ -25,9 +25,7 @@ if  ! test -z "${SECRET_ASSETS_REPOSITORY}"; then
   # We could dynamically retrieve the key like this:
   # mkdir ~/.ssh
   # ssh-keyscan -v -H -t  rsa github.com  >> ~/.ssh/known_hosts
-  # But as long as Github does not change it's key, it is more secure to just pin it here statically
-  # That prevent's MitM attacks between AWS and Github (yeah, very likely that those attackers would target Lern-Fair)
-  # (also see https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/)
+  # Or pin the key here statically, but for now trusting the connection to github is fine for our use case
   
   ssh -o StrictHostKeyChecking=no github.com
   cat ~/.ssh/known_hosts
