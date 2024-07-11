@@ -625,7 +625,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         },
     },
     Course_tag: {
-        fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
+        fields: withPublicFields<CourseTag, 'id' | 'name' | 'category' | 'active'>({
             identifier: nobody,
             _count: nobody,
             course_tags_course_tag: nobody,
