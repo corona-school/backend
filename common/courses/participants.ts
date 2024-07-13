@@ -15,6 +15,7 @@ import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { getLastLecture } from './lectures';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -122,6 +123,7 @@ type CourseDecision =
     | 'grade-to-low'
     | 'grade-to-high'
     | 'already-started'
+    | 'already-ended'
     | 'already-participant'
     | 'already-on-waitinglist';
 
@@ -160,6 +162,13 @@ async function subcourseJoinable(subcourse: Subcourse): Promise<Decision<CourseD
     if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
         return { allowed: false, reason: 'already-started' };
     }
+
+    const lastLecture = await getLastLecture(subcourse);
+    if (lastLecture.start < new Date()) {
+        return { allowed: false, reason: 'already-ended' };
+    }
+
+    return { allowed: true };
 }
 
 // Whether the pupil could join the course if the course was not full (i.e. pupils can still join the waitinglist)
