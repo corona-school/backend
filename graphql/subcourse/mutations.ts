@@ -283,7 +283,7 @@ export class MutateSubcourseResolver {
         }
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
-        await joinSubcourse(subcourse, pupil, true);
+        await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from waitinglist`);
         return true;
     }
@@ -314,7 +314,7 @@ export class MutateSubcourseResolver {
                 include: { lecture: true, subcourse_instructors_student: false },
             });
         }
-        await joinSubcourse(subcourse, pupil, true);
+        await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from prospects`);
         return true;
     }

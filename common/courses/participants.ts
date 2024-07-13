@@ -178,7 +178,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
 
     if (strict && !canJoin.allowed) {
@@ -254,13 +254,15 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
     });
 
-    // Notify instructors if the subcourse is full now
-    const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-    if (participantCountAfter == subcourse.maxParticipants) {
-        const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
+    if (notifyIfFull) {
+        // Notify instructors if the subcourse is full now
+        const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCountAfter == subcourse.maxParticipants) {
+            const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
 
-        for (const instructor of await getSubcourseInstructors(subcourse)) {
-            await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+            for (const instructor of await getSubcourseInstructors(subcourse)) {
+                await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+            }
         }
     }
 }
@@ -309,7 +311,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil, true);
+            await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
