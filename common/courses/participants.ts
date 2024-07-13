@@ -148,6 +148,7 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
+// Whether a subcourse is in principle joinable at this point in time, not considering the number of participants
 async function subcourseJoinable(subcourse: Subcourse): Promise<Decision<CourseDecision>> {
     const firstLecture = await prisma.lecture.findMany({
         where: { subcourseId: subcourse.id },
@@ -311,7 +312,11 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
         course,
     });
 
-    if (subcourse.joinAfterStart) {
+    // If a pupil left a course, maybe some other pupil can join from the waiting list?
+    const joinable = await subcourseJoinable(subcourse);
+    if (joinable.allowed) {
+        // This will check if there are pupils on the waiting list, and short circuit if not
+        await fillSubcourse(subcourse);
     }
 }
 
