@@ -55,7 +55,7 @@ export async function createNewItem<T extends WebflowMetadata>(collectionID: str
 
 export async function deleteItems(collectionId: string, itemIds: string[]) {
     for (const id of itemIds) {
-        await request({ path: `v2/collections/${collectionId}/items/${id}`, method: 'DELETE' });
+        await request({ path: `v2/collections/${collectionId}/items/${id}/live`, method: 'DELETE' });
     }
 }
 
