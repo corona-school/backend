@@ -1,4 +1,4 @@
-import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems } from './webflow-adapter';
 import { diff, mapToDBId, DBIdMap } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment, { Moment } from 'moment';
@@ -6,12 +6,13 @@ import { WebflowSubcourse, getWebflowSubcourses } from './queries';
 import { LectureDTO, lectureDTOFactory } from './sync-lectures';
 import { getCourseImageURL } from '../../../common/courses/util';
 import { course_subject_enum as CourseSubjectEnum } from '@prisma/client';
+import { Webflow } from 'webflow-api';
 
 const collectionId = process.env.WEBFLOW_COURSE_COLLECTION_ID;
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 const appBaseUrl = 'https://app.lern-fair.de/single-course';
 
-interface CourseDTO extends WebflowMetadata {
+interface CourseDTO extends Webflow.CollectionItem {
     fieldData: {
         slug?: string;
         name?: string;

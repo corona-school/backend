@@ -80,6 +80,7 @@
         "type-graphql": "^1.1.1",
         "uuid": "^7.0.3",
         "web-push": "^3.6.7",
+        "webflow-api": "^2.3.5",
         "wildcard-match": "^5.1.2",
         "ws": "^8.17.1"
     },

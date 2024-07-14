@@ -1,26 +1,15 @@
 import { getLogger } from '../../../common/logger/logger';
 import moment from 'moment';
 import { isWebflowSyncDryRun } from '../../../utils/environment';
+import { WebflowClient, Webflow } from 'webflow-api';
 
 const logger = getLogger('WebflowApiAdapter');
 const WEBFLOW_MAX_PUBLISH_ITEMS = 100;
 
-export interface WebflowMetadata {
-    id?: string;
-    isArchived?: boolean;
-    isDraft?: boolean;
-    lastUpdated?: string;
-    lastPublished?: string;
+const webflowClient = new WebflowClient({ accessToken: process.env.WEBFLOW_API_KEY });
+const webflowItemClient = webflowClient.collections.items;
 
-    fieldData: {
-        name?: string;
-        // The slug is a unique value that should never be changed because it cannot be reused.
-        // Said that we are using it to store the database id, which should always match the actual data stored in the item.
-        slug?: string;
-    };
-}
-
-export const emptyMetadata: WebflowMetadata = {
+export const emptyMetadata: Webflow.CollectionItem = {
     id: '',
     isArchived: false,
     isDraft: false,
@@ -29,39 +18,45 @@ export const emptyMetadata: WebflowMetadata = {
     fieldData: {},
 };
 
-function basicMetaFactory(data: any): WebflowMetadata {
+function basicMetaFactory(data: any): Webflow.CollectionItem {
     return data;
 }
 
 // Helper functions to communicate to the Webflow API
 // https://developers.webflow.com/reference/get-authorized-user
 
-export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
+export async function getCollectionItems<T extends Webflow.CollectionItem>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
+    const items = await webflowItemClient.listItems(collectionID);
     // TODO: implement pagination
-    const data = await request({ path: `v2/collections/${collectionID}/items`, method: 'GET' });
-    if (!data.items) {
-        throw new Error('Response did not include any items');
-    }
-    return data.items.map(factory);
+    // const data = await request({ path: `v2/collections/${collectionID}/items`, method: 'GET' });
+    // if (!data.items) {
+    // throw new Error('Response did not include any items');
+    // }
+    return items.items.map(factory);
+    // return data.items.map(factory);
 }
 
-export async function createNewItem<T extends WebflowMetadata>(collectionID: string, data: T): Promise<string> {
-    const body = structuredClone(data) as WebflowMetadata;
-    delete body.id;
+export async function createNewItem<T extends Webflow.CollectionItem>(collectionID: string, data: T): Promise<string> {
+    const body = structuredClone(data) as Webflow.CollectionItem;
+    // delete body.id;
 
-    const response = await request({ path: `v2/collections/${collectionID}/items/live`, method: 'POST', data: body });
-    return response.id;
+    await webflowItemClient.createItemLive(collectionID, body);
+    return body.id;
+
+    // const response = await request({ path: `v2/collections/${collectionID}/items/live`, method: 'POST', data: body });
+    // return response.id;
 }
 
 export async function deleteItems(collectionId: string, itemIds: string[]) {
     for (const id of itemIds) {
-        await request({ path: `v2/collections/${collectionId}/items/${id}`, method: 'DELETE' });
+        await webflowItemClient.deleteItemLive(collectionId, id);
+        // await request({ path: `v2/collections/${collectionId}/items/${id}`, method: 'DELETE' });
     }
 }
 
-export async function patchItem<T extends WebflowMetadata>(collectionId: string, item: T) {
-    const itemId = item.id;
-    await request({ path: `v2/collections/${collectionId}/items/${itemId}/live`, method: 'PATCH', data: { fieldData: item.fieldData } });
+export async function patchItem<T extends Webflow.CollectionItem>(collectionId: string, item: T) {
+    // await request({ path: `v2/collections/${collectionId}/items/${itemId}/live`, method: 'PATCH', data: { fieldData: item.fieldData } });
+    await webflowItemClient.updateItemLive(collectionId, item.id, item);
 }
 
 export async function publishItems(collectionId: string) {
@@ -78,7 +73,8 @@ export async function publishItems(collectionId: string) {
     const requests = [];
     for (let i = 0; i < itemIds.length; i += WEBFLOW_MAX_PUBLISH_ITEMS) {
         const chunk = itemIds.slice(i, i + WEBFLOW_MAX_PUBLISH_ITEMS);
-        requests.push(request({ path: `v2/collections/${collectionId}/items/publish`, method: 'POST', data: { itemIds: chunk } }));
+        requests.push(webflowItemClient.publishItem(collectionId, { itemIds: chunk }));
+        // requests.push(request({ path: `v2/collections/${collectionId}/items/publish`, method: 'POST', data: { itemIds: chunk } }));
     }
     await Promise.all(requests);
     return itemIds;
