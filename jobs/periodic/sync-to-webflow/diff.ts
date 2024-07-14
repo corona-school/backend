@@ -1,10 +1,10 @@
-import { WebflowMetadata } from './webflow-adapter';
+import { Webflow } from 'webflow-api';
 import { isEqual } from 'lodash';
 import { Logger } from '../../../common/logger/logger';
 
 export type DBIdMap<T> = { [key: number]: T };
 
-export function mapToDBId<T extends WebflowMetadata>(data: T[]): DBIdMap<T> {
+export function mapToDBId<T extends Webflow.CollectionItem>(data: T[]): DBIdMap<T> {
     const res = {};
     for (const row of data) {
         res[row.fieldData.slug] = row;
@@ -12,7 +12,7 @@ export function mapToDBId<T extends WebflowMetadata>(data: T[]): DBIdMap<T> {
     return res;
 }
 
-export function diff<T extends WebflowMetadata>(logger: Logger, left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
+export function diff<T extends Webflow.CollectionItem>(logger: Logger, left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
     const leftMap = mapToDBId(left);
     const rightMap = mapToDBId(right);
 

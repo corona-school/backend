@@ -37,6 +37,7 @@ export default async function execute(): Promise<void> {
         await syncDeleteLectures(logger, itemsToDelete);
         logger.info('Finished Webflow sync');
     } catch (e) {
+        logger.info(e);
         logger.error('Failed to sync Webflow data', e);
     }
 }

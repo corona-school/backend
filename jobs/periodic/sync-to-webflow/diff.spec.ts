@@ -1,8 +1,8 @@
 import { getLogger } from '../../../common/logger/logger';
 import { diff } from './diff';
-import { WebflowMetadata } from './webflow-adapter';
+import { Webflow } from 'webflow-api';
 
-interface TestData extends WebflowMetadata {
+interface TestData extends Webflow.CollectionItem {
     fieldData: {
         hash?: string;
         slug: string;

@@ -1,13 +1,14 @@
-import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems, WebflowMetadata } from './webflow-adapter';
+import { createNewItem, deleteItems, emptyMetadata, getCollectionItems, patchItem, publishItems } from './webflow-adapter';
 import { diff } from './diff';
 import { Logger } from '../../../common/logger/logger';
 import moment from 'moment';
 import { lecture } from '@prisma/client';
 import { getWebflowSubcourses } from './queries';
+import { Webflow } from 'webflow-api';
 
 const lectureCollectionId = process.env.WEBFLOW_LECTURE_COLLECTION_ID;
 
-export interface LectureDTO extends WebflowMetadata {
+export interface LectureDTO extends Webflow.CollectionItem {
     fieldData: {
         slug?: string;
         name?: string;
@@ -40,11 +41,11 @@ function lectureToDTO(lecture: lecture): LectureDTO {
     };
 }
 
-export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: WebflowMetadata[] }> {
+export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: Webflow.CollectionItem[] }> {
     logger.addContext('CMSCollection', 'Lectures');
 
     logger.info('Start lecture sync');
-    const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
+    const webflowLectures = await getCollectionItems<Webflow.CollectionItem>(lectureCollectionId, lectureDTOFactory);
     const subCourses = await getWebflowSubcourses();
     const dbLectures = subCourses
         .map((lecture) => lecture.lecture)
@@ -74,7 +75,7 @@ export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: Web
     return { itemsToDelete: result.outdated };
 }
 
-export async function syncDeleteLectures(logger: Logger, itemsToDelete: WebflowMetadata[]): Promise<void> {
+export async function syncDeleteLectures(logger: Logger, itemsToDelete: Webflow.CollectionItem[]): Promise<void> {
     if (itemsToDelete.length === 0) {
         return;
     }
