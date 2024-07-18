@@ -559,9 +559,9 @@ model pupil {
   lastname                     String?               @db.VarChar
   active                       Boolean               @default(true)
   email                        String                @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
-  verification                 String?               @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
   // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
   //             Replaced by Secret table
+  verification                 String?               @unique(map: "IDX_90fde657ec008e61a5b07947b3") @db.VarChar
   // If set, the user email was verified:
   verifiedAt                   DateTime?             @db.Timestamp(6)
   // The account was anonymized, and all personal data was replaced with placeholders
