@@ -545,7 +545,7 @@ CREATE TABLE "screener" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-     "verification" VARCHAR,
+    "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
