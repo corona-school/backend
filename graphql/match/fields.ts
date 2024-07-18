@@ -1,7 +1,7 @@
-import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
+import { AuthorizedDeferred, hasAccess, ImpliesRoleOnResult, Role } from '../authorizations';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Pupil, Match, Student, Lecture as Appointment } from '../generated';
+import { Pupil, Match, Student, Lecture as Appointment, Learning_topic as LearningTopic } from '../generated';
 import { LimitEstimated } from '../complexity';
 import { getStudent, getPupil } from '../util';
 import { getOverlappingSubjects } from '../../common/match/util';
@@ -97,5 +97,16 @@ export class ExtendedFieldsMatchResolver {
         } catch (error) {
             return null;
         }
+    }
+
+    @FieldResolver((returns) => [LearningTopic])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    @ImpliesRoleOnResult(Role.OWNER, Role.OWNER)
+    async topics(@Root() match: Match) {
+        return await prisma.learning_topic.findMany({
+            where: {
+                matchId: match.id,
+            },
+        });
     }
 }

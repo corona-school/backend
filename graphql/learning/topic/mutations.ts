@@ -25,7 +25,6 @@ export class LearningTopicMutationsResolver {
         @Arg('name') name: string,
         @Arg('subject') subject: Subject
     ) {
-        const student = await getSessionStudent(context);
         const match = await prisma.match.findUniqueOrThrow({ where: { id: matchId } });
         await hasAccess(context, 'Match', match);
 
@@ -42,7 +41,7 @@ export class LearningTopicMutationsResolver {
             },
         });
 
-        logger.info(`Student(${student.id}) created LearningTopic(${result.id}) for Pupil(${match.pupilId})`);
+        logger.info(`User(${context.user.userID}) created LearningTopic(${result.id}) for Pupil(${match.pupilId})`);
         return result;
     }
 }
