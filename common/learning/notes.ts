@@ -53,7 +53,7 @@ async function answerQuestion(question: LearningNote) {
         const assignment = await prisma.learning_assignment.findUniqueOrThrow({ where: { id: question.assignmentId } });
         prompts.push({
             role: 'system',
-            content: `Die Aufgabe lautet: ${assignment}`,
+            content: `Die Aufgabe lautet: ${assignment.task}`,
         });
     }
 
