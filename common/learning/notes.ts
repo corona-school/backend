@@ -41,6 +41,22 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
 async function answerQuestion(question: LearningNote) {
     const prompts: Prompt = [];
 
+    if (question.topicId) {
+        const topic = await prisma.learning_topic.findUniqueOrThrow({ where: { id: question.assignmentId } });
+        prompts.push({
+            role: 'system',
+            content: `Das Thema ist ${topic.name} im Fach ${topic.subject}`,
+        });
+    }
+
+    if (question.assignmentId) {
+        const assignment = await prisma.learning_assignment.findUniqueOrThrow({ where: { id: question.assignmentId } });
+        prompts.push({
+            role: 'system',
+            content: `Die Aufgabe lautet: ${assignment}`,
+        });
+    }
+
     prompts.push({
         role: 'user',
         content: question.text,
