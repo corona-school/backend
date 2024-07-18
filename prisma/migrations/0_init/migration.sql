@@ -347,8 +347,8 @@ CREATE TABLE "mentor" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verifiedAt" TIMESTAMP(6),
     "verification" VARCHAR,
+    "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
     "notificationPreferences" JSON,
@@ -459,8 +459,8 @@ CREATE TABLE "pupil" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verifiedAt" TIMESTAMP(6),
     "verification" VARCHAR,
+    "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
     "notificationPreferences" JSON,
@@ -545,8 +545,8 @@ CREATE TABLE "screener" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
+     "verification" VARCHAR,
     "verifiedAt" TIMESTAMP(6),
-    "verification" VARCHAR,
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
     "notificationPreferences" JSON,
@@ -582,8 +582,8 @@ CREATE TABLE "student" (
     "lastname" VARCHAR,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "email" VARCHAR NOT NULL,
-    "verifiedAt" TIMESTAMP(6),
     "verification" VARCHAR,
+    "verifiedAt" TIMESTAMP(6),
     "isRedacted" BOOLEAN NOT NULL DEFAULT false,
     "lastTimeCheckedNotifications" TIMESTAMP(6) DEFAULT '1970-01-01 00:00:00'::timestamp without time zone,
     "notificationPreferences" JSON,
@@ -813,7 +813,7 @@ CREATE UNIQUE INDEX "UQ_MATCH" ON "match"("studentId", "pupilId");
 CREATE UNIQUE INDEX "IDX_e03cfa18e81812d44f5cdf9479" ON "mentor"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "IDX_704a7bf0ca9889bd5c4ea1a15b" ON "mentor"("verification"); 
+CREATE UNIQUE INDEX "IDX_704a7bf0ca9889bd5c4ea1a15b" ON "mentor"("verification");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_5c42dcf75b1abecf9860e54a12" ON "mentor"("wix_id");
@@ -865,7 +865,6 @@ CREATE UNIQUE INDEX "IDX_29a6207bc70a2b9e6731d66bcf" ON "screener"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "IDX_c9e25ecca022d0d6cd401d9e5e" ON "screener"("verification");
-
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UQ_96dc11de485d62615e78a875293" ON "screener"("oldNumberID");
@@ -1019,7 +1018,6 @@ ALTER TABLE "subcourse_instructors_student" ADD CONSTRAINT "FK_b36e4eeff8040a09c
 
 -- AddForeignKey
 ALTER TABLE "subcourse_participants_pupil" ADD CONSTRAINT "FK_47d9d98b6496554165e08ff61d9" FOREIGN KEY ("pupilId") REFERENCES "pupil"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
-
 
 -- AddForeignKey
 ALTER TABLE "subcourse_participants_pupil" ADD CONSTRAINT "FK_cde91c063947d1302d50c906dcd" FOREIGN KEY ("subcourseId") REFERENCES "subcourse"("id") ON DELETE CASCADE ON UPDATE CASCADE;
