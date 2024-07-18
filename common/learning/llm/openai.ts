@@ -4,14 +4,14 @@ import { getLogger } from '../../logger/logger';
 
 const logger = getLogger('OpenAI');
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
 export type Prompt = ChatCompletionMessageParam[];
 
 export async function prompt(messages: Prompt) {
     logger.info(`Prompting GPT`, { messages });
+
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const completion = await openai.chat.completions.create({
         messages: [
