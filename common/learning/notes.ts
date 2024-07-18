@@ -11,7 +11,7 @@ const logger = getLogger(`LearningNotes`);
 export const LoKI = Symbol();
 type LoKI = typeof LoKI;
 
-export const repliesTo = ({ assignmentId, topicId, id }: LearningNote) => ({ assignmentId, topicId, repliesTo: id });
+export const repliesTo = ({ assignmentId, topicId, id }: LearningNote) => ({ assignmentId, topicId, replyToId: id });
 
 export type LearningNoteCreate = Pick<LearningNote, 'assignmentId' | 'topicId' | 'replyToId' | 'text' | 'type'>;
 
