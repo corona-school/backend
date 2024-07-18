@@ -59,9 +59,12 @@ export class ExtendedFieldsCourseResolver {
 
     @Query((returns) => [CourseTag])
     @Authorized(Role.UNAUTHENTICATED)
-    async courseTags(@Arg('category') category: CourseCategory) {
+    async courseTags(@Ctx() context: GraphQLContext, @Arg('category') category: CourseCategory) {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+        const userFilters = !isAdmin ? { active: true } : null;
         return await prisma.course_tag.findMany({
-            where: { category },
+            where: { category, ...userFilters },
         });
     }
 

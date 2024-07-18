@@ -15,6 +15,7 @@ import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { getLastLecture } from './lectures';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -122,6 +123,7 @@ type CourseDecision =
     | 'grade-to-low'
     | 'grade-to-high'
     | 'already-started'
+    | 'already-ended'
     | 'already-participant'
     | 'already-on-waitinglist';
 
@@ -146,23 +148,41 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
+// Whether a subcourse is in principle joinable at this point in time, not considering the number of participants
+async function subcourseJoinable(subcourse: Subcourse): Promise<Decision<CourseDecision>> {
+    const firstLecture = await prisma.lecture.findMany({
+        where: { subcourseId: subcourse.id },
+        orderBy: { start: 'asc' },
+        take: 1,
+    });
+
+    if (firstLecture.length !== 1) {
+        return { allowed: false, reason: 'no-lectures' };
+    }
+
+    if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
+        return { allowed: false, reason: 'already-started' };
+    }
+
+    const lastLecture = await getLastLecture(subcourse);
+    if (lastLecture.start < new Date()) {
+        return { allowed: false, reason: 'already-ended' };
+    }
+
+    return { allowed: true };
+}
+
 // Whether the pupil could join the course if the course was not full (i.e. pupils can still join the waitinglist)
 export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<Decision<CourseDecision>> {
     if (!canJoinSubcourses(pupil).allowed) {
         return canJoinSubcourses(pupil);
     }
 
-    const firstLecture = await prisma.lecture.findMany({
-        where: { subcourseId: subcourse.id },
-        orderBy: { start: 'asc' },
-        take: 1,
-    });
-    if (firstLecture.length !== 1) {
-        return { allowed: false, reason: 'no-lectures' };
+    const joinable = await subcourseJoinable(subcourse);
+    if (!joinable.allowed) {
+        return joinable;
     }
-    if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
-        return { allowed: false, reason: 'already-started' };
-    }
+
     if (await isParticipant(subcourse, pupil)) {
         return { allowed: false, reason: 'already-participant' };
     }
@@ -178,7 +198,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
 
     if (strict && !canJoin.allowed) {
@@ -254,13 +274,15 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
     });
 
-    // Notify instructors if the subcourse is full now
-    const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-    if (participantCountAfter == subcourse.maxParticipants) {
-        const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
+    if (notifyIfFull) {
+        // Notify instructors if the subcourse is full now
+        const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCountAfter == subcourse.maxParticipants) {
+            const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
 
-        for (const instructor of await getSubcourseInstructors(subcourse)) {
-            await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+            for (const instructor of await getSubcourseInstructors(subcourse)) {
+                await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+            }
         }
     }
 }
@@ -289,6 +311,13 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     await Notification.actionTaken(userForPupil(pupil), 'participant_course_leave', {
         course,
     });
+
+    // If a pupil left a course, maybe some other pupil can join from the waiting list?
+    const joinable = await subcourseJoinable(subcourse);
+    if (joinable.allowed) {
+        // This will check if there are pupils on the waiting list, and short circuit if not
+        await fillSubcourse(subcourse);
+    }
 }
 
 export async function fillSubcourse(subcourse: Subcourse) {
@@ -309,7 +338,7 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil, true);
+            await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }

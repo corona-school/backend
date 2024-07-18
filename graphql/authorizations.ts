@@ -420,6 +420,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             _count: nobody,
             waiting_list_enrollment: nobody,
             lastLogin: adminOrOwner,
+            gradeUpdatedAt: adminOrOwner,
         }),
     },
 
@@ -624,7 +625,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         },
     },
     Course_tag: {
-        fields: withPublicFields<CourseTag, 'id' | 'name' | 'category'>({
+        fields: withPublicFields<CourseTag, 'id' | 'name' | 'category' | 'active'>({
             identifier: nobody,
             _count: nobody,
             course_tags_course_tag: nobody,
@@ -639,6 +640,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             contextID: isDev || isTest ? onlyAdmin : nobody,
             // Stack traces and error messages shall not be shown to users, we do not know what secret information they might contiain
             error: onlyAdmin,
+            notification: adminOrOwner,
         }),
     },
     Pupil_screening: {
