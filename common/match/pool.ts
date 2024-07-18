@@ -27,7 +27,7 @@ export interface MatchPool {
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
     readonly settings: Settings;
-    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<void | never>;
+    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<any | never>;
     readonly toggles: readonly Toggle[];
     // There are a few well known toggles:
     //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
