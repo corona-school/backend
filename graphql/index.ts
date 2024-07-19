@@ -40,7 +40,6 @@ import { ExtendedFieldsLectureResolver, ExtendedFieldsOrganizerResolver, Extende
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
-import { ExtendedFieldsSchoolResolver } from './school/fields';
 import { MutateStudentResolver } from './student/mutations';
 import { MutateCertificateOfConductResolver } from './certificate_of_conduct/mutations';
 import { ExtendedFieldsCertificateOfConductResolver } from './certificate_of_conduct/fields';
@@ -144,7 +143,6 @@ const schema = buildSchemaSync({
 
         /* Schools */
         FindManySchoolResolver,
-        ExtendedFieldsSchoolResolver,
 
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
