@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { Learning_assignment as LearningAssignment, Learning_note as LearningNote, Learning_topic as LearningTopic } from '../../generated';
 import { AuthorizedDeferred, ImpliesRoleOnResult, Role, hasAccess } from '../../authorizations';
 import { prisma } from '../../../common/prisma';
@@ -34,6 +34,28 @@ export class LearningTopicFieldResolver {
         return await prisma.learning_assignment.findMany({
             where: {
                 topicId: topic.id,
+            },
+        });
+    }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async openAssignmentsCount(@Root() topic: LearningTopic) {
+        return await prisma.learning_assignment.count({
+            where: {
+                topicId: topic.id,
+                status: { not: 'done' },
+            },
+        });
+    }
+
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async finishedAssignmentsCount(@Root() topic: LearningTopic) {
+        return await prisma.learning_assignment.count({
+            where: {
+                topicId: topic.id,
+                status: 'done',
             },
         });
     }
