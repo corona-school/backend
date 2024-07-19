@@ -1,17 +1,16 @@
-import { learning_note_type as LearningNoteType, learning_note as LearningNote } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { User } from '../user';
 import { PrerequisiteError } from '../util/error';
 import { Prompt, prompt } from './llm/openai';
-import { LoKI, getAssignment } from './util';
+import { LearningNote, LearningNoteType, LoKI, getAssignment } from './util';
 import { finishAssignment } from './assignment';
 
 const logger = getLogger(`LearningNotes`);
 
 export const repliesTo = ({ assignmentId, topicId, id }: LearningNote) => ({ assignmentId, topicId, replyToId: id });
 
-export type LearningNoteCreate = Pick<LearningNote, 'assignmentId' | 'topicId' | 'replyToId' | 'text' | 'type'>;
+export type LearningNoteCreate = Pick<LearningNote, 'text' | 'type'> & Partial<Pick<LearningNote, 'assignmentId' | 'topicId' | 'replyToId'>>;
 
 export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
     if (!data.topicId && !data.assignmentId) {

@@ -6,6 +6,7 @@ import { LearningNoteCreate, createNote } from '../../../common/learning/notes';
 import { GraphQLInt } from 'graphql';
 import { GraphQLContext } from '../../context';
 import { PrerequisiteError } from '../../../common/util/error';
+import { getAssignment, getTopic } from '../../../common/learning/util';
 
 @InputType()
 class LearningNoteCreateInput implements LearningNoteCreate {
@@ -27,10 +28,10 @@ export class LearningNoteMutationsResolver {
     @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async learningNoteCreate(@Ctx() context: GraphQLContext, @Arg('note') note: LearningNoteCreateInput) {
         if (note.topicId) {
-            const topic = await prisma.learning_topic.findUniqueOrThrow({ where: { id: note.topicId } });
+            const topic = await getTopic(note.topicId);
             await hasAccess(context, 'Learning_topic', topic);
         } else if (note.assignmentId) {
-            const assignment = await prisma.learning_assignment.findUniqueOrThrow({ where: { id: note.assignmentId } });
+            const assignment = await getAssignment(note.assignmentId);
             await hasAccess(context, 'Learning_assignment', assignment);
         } else throw new PrerequisiteError(`Note must be part of an assignment or topic`);
 

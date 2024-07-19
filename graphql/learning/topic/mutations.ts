@@ -12,6 +12,7 @@ import { GraphQLContext } from '../../context';
 import { getSessionStudent } from '../../authentication';
 import { getLogger } from '../../../common/logger/logger';
 import { PrerequisiteError } from '../../../common/util/error';
+import { createTopic } from '../../../common/learning/topic';
 
 const logger = getLogger('LearningTopic');
 
@@ -28,20 +29,7 @@ export class LearningTopicMutationsResolver {
         const match = await prisma.match.findUniqueOrThrow({ where: { id: matchId } });
         await hasAccess(context, 'Match', match);
 
-        if (match.dissolved) {
-            throw new PrerequisiteError(`Match was already dissolved`);
-        }
-
-        const result = await prisma.learning_topic.create({
-            data: {
-                name,
-                subject,
-                matchId: match.id,
-                pupilId: match.pupilId,
-            },
-        });
-
-        logger.info(`User(${context.user.userID}) created LearningTopic(${result.id}) for Pupil(${match.pupilId})`);
+        const result = await createTopic(context.user, match, name, subject);
         return result;
     }
 }
