@@ -1,12 +1,13 @@
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { getLogger } from '../../logger/logger';
+import { random } from 'lodash';
 
 const logger = getLogger('OpenAI');
 
 export type Prompt = ChatCompletionMessageParam[];
 
-export async function prompt(messages: Prompt) {
+export async function prompt(messages: Prompt, randomize = false) {
     logger.info(`Prompting GPT`, { messages });
 
     const openai = new OpenAI({
@@ -25,6 +26,7 @@ export async function prompt(messages: Prompt) {
         model: 'gpt-3.5-turbo',
         n: 1,
         temperature: 0.1, // less creative
+        seed: randomize ? Math.random() * 1000000 : undefined,
     });
 
     logger.info(`Received Response`, { completion });

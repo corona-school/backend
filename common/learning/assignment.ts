@@ -25,7 +25,7 @@ export async function proposeAssignment(topic: LearningTopic): Promise<string> {
         content: `Generiere eine Aufgabe für das Fach ${topic.subject} für einen Schüler der ${pupil.grade} zu dem Thema ${topic.name}. Antworte nur mit der Aufgabe an sich. Die Bearbeitung einer Aufgabe sollte für den Schüler ungefähr 10 Minuten dauern.`,
     });
 
-    const promptResult = await prompt(prompts);
+    const promptResult = await prompt(prompts, /* randomize */ true);
     logger.info(`LLM generated an assignment`, { topic, promptResult });
 
     return promptResult;
