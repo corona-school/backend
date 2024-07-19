@@ -26,7 +26,7 @@ export async function prompt(messages: Prompt, randomize = false) {
         model: 'gpt-3.5-turbo',
         n: 1,
         temperature: 0.1, // less creative
-        seed: randomize ? Math.random() * 1000000 : undefined,
+        seed: randomize ? Math.floor(Math.random() * 1000000) : undefined,
     });
 
     logger.info(`Received Response`, { completion });
