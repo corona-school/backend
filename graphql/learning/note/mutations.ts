@@ -2,11 +2,11 @@ import { Arg, Authorized, Ctx, Field, FieldResolver, InputType, Mutation, Resolv
 import { Learning_assignment as LearningAssignment, Learning_note as LearningNote, Learning_topic as LearningTopic, learning_note_type } from '../../generated';
 import { AuthorizedDeferred, Role, hasAccess } from '../../authorizations';
 import { prisma } from '../../../common/prisma';
-import { LearningNoteCreate, createNote } from '../../../common/learning/notes';
+import { LearningNoteCreate, createNote, setNoteType } from '../../../common/learning/notes';
 import { GraphQLInt } from 'graphql';
 import { GraphQLContext } from '../../context';
 import { PrerequisiteError } from '../../../common/util/error';
-import { getAssignment, getTopic } from '../../../common/learning/util';
+import { getAssignment, getNote, getTopic } from '../../../common/learning/util';
 
 @InputType()
 class LearningNoteCreateInput implements LearningNoteCreate {
@@ -40,7 +40,11 @@ export class LearningNoteMutationsResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
-    async learningNoteChangeStatus() {
-        // TODO:
+    async learningNoteChangeType(@Ctx() context: GraphQLContext, @Arg('noteId', () => GraphQLInt) noteId: number, @Arg('type') type: learning_note_type) {
+        const note = await getNote(noteId);
+        await hasAccess(context, 'Learning_note', note);
+
+        await setNoteType(context.user, note, type);
+        return true;
     }
 }

@@ -40,7 +40,7 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
     return note;
 }
 
-async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
+export async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
     await prisma.learning_note.update({
         where: { id: note.id },
         data: { type },
