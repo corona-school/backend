@@ -1,15 +1,13 @@
-import { Learning_note as LearningNote } from '../../graphql/generated';
+import { learning_note_type as LearningNoteType, learning_note as LearningNote } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { User } from '../user';
 import { PrerequisiteError } from '../util/error';
 import { Prompt, prompt } from './llm/openai';
+import { LoKI, getAssignment } from './util';
+import { finishAssignment } from './assignment';
 
 const logger = getLogger(`LearningNotes`);
-
-// Special User to represent LLM output
-export const LoKI = Symbol();
-type LoKI = typeof LoKI;
 
 export const repliesTo = ({ assignmentId, topicId, id }: LearningNote) => ({ assignmentId, topicId, replyToId: id });
 
@@ -35,27 +33,93 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
         answerQuestion(note);
     }
 
+    const byPupil = user !== LoKI && !!user.pupilId;
+    if (note.type === 'answer' && byPupil) {
+        await validateAnswer(note);
+    }
+
     return note;
 }
 
-async function answerQuestion(question: LearningNote) {
-    const prompts: Prompt = [];
+async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
+    await prisma.learning_note.update({
+        where: { id: note.id },
+        data: { type },
+    });
 
-    if (question.topicId) {
-        const topic = await prisma.learning_topic.findUniqueOrThrow({ where: { id: question.assignmentId } });
+    logger.info(`User(${user === LoKI ? 'LoKI' : user.userID}) changed LearningNote(${note.id}) type to ${LearningNoteType[type]}`);
+
+    if (type === LearningNoteType.correct_answer) {
+        if (note.assignmentId) {
+            const assignment = await getAssignment(note.assignmentId);
+            await finishAssignment(user, assignment);
+        }
+    }
+}
+
+async function contextualizeNote(note: LearningNote) {
+    const prompts: Prompt = [];
+    if (note.topicId) {
+        const topic = await prisma.learning_topic.findUniqueOrThrow({ where: { id: note.assignmentId } });
         prompts.push({
             role: 'system',
             content: `Das Thema ist ${topic.name} im Fach ${topic.subject}`,
         });
     }
 
-    if (question.assignmentId) {
-        const assignment = await prisma.learning_assignment.findUniqueOrThrow({ where: { id: question.assignmentId } });
+    if (note.assignmentId) {
+        const assignment = await prisma.learning_assignment.findUniqueOrThrow({ where: { id: note.assignmentId } });
         prompts.push({
             role: 'system',
             content: `Die Aufgabe lautet: ${assignment.task}`,
         });
     }
+
+    // TODO: Consider previous interactions?
+
+    return prompts;
+}
+
+async function validateAnswer(answer: LearningNote) {
+    const prompts = await contextualizeNote(answer);
+
+    prompts.push({
+        role: 'system',
+        content:
+            "Ist die folgende Antwort korrekt? Antworte mit 'Richtig' oder 'Falsch' und gebe einen Hinweis zur Verbesserung der Antwort. Antworte nur wenn du dir sicher bist",
+    });
+    prompts.push({ role: 'user', content: answer.text });
+
+    const promptResult = await prompt(prompts);
+
+    const isRight = promptResult.includes('Richtig');
+    const isWrong = promptResult.includes('Falsch');
+
+    if (isRight && !isWrong) {
+        logger.info(`LLM marked answer as correct`, { answer, promptResult });
+
+        await setNoteType(LoKI, answer, 'correct_answer');
+        await createNote(LoKI, {
+            ...repliesTo(answer),
+            type: 'comment',
+            text: promptResult,
+        });
+    } else if (!isRight && isWrong) {
+        logger.info(`LLM marked answer as wrong`, { answer, promptResult });
+
+        await setNoteType(LoKI, answer, 'wrong_answer');
+        await createNote(LoKI, {
+            ...repliesTo(answer),
+            type: 'comment',
+            text: promptResult,
+        });
+    } else {
+        logger.warn(`LLM could not decide whether the answer is correct `, { answer, promptResult });
+    }
+}
+
+async function answerQuestion(question: LearningNote) {
+    const prompts = await contextualizeNote(question);
 
     prompts.push({
         role: 'user',
