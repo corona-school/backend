@@ -5,8 +5,8 @@ import { prisma } from '../../../common/prisma';
 import { GraphQLInt } from 'graphql';
 import { getLogger } from '../../../common/logger/logger';
 import { GraphQLContext } from '../../context';
-import { getTopic } from '../../../common/learning/util';
-import { proposeAssignment } from '../../../common/learning/assignment';
+import { getAssignment, getTopic } from '../../../common/learning/util';
+import { finishAssignment, proposeAssignment } from '../../../common/learning/assignment';
 
 const logger = getLogger('LearningAssignment');
 
@@ -38,5 +38,15 @@ export class LearningAssignmentMutationsResolver {
 
         const proposal = await proposeAssignment(topic);
         return proposal;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async learningAssignmentFinish(@Ctx() context: GraphQLContext, @Arg('assignmentId', () => GraphQLInt) assignmentId: number) {
+        const assignment = await getAssignment(assignmentId);
+        await hasAccess(context, 'Learning_assignment', assignment);
+
+        await finishAssignment(context.user, assignment);
+        return true;
     }
 }
