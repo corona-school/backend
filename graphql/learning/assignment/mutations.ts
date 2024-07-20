@@ -6,7 +6,7 @@ import { GraphQLInt } from 'graphql';
 import { getLogger } from '../../../common/logger/logger';
 import { GraphQLContext } from '../../context';
 import { getAssignment, getTopic } from '../../../common/learning/util';
-import { finishAssignment, proposeAssignment } from '../../../common/learning/assignment';
+import { createAssignment, finishAssignment, proposeAssignment } from '../../../common/learning/assignment';
 
 const logger = getLogger('LearningAssignment');
 
@@ -18,15 +18,7 @@ export class LearningAssignmentMutationsResolver {
         const topic = await getTopic(topicId);
         await hasAccess(context, 'Learning_topic', topic);
 
-        const result = await prisma.learning_assignment.create({
-            data: {
-                status: 'pending',
-                task,
-                topicId: topicId,
-            },
-        });
-
-        logger.info(`LearningAssignment(${result.id}) created by `);
+        const result = await createAssignment(context.user, topic, task);
         return result;
     }
 

@@ -2,9 +2,26 @@ import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { User } from '../user';
 import { Prompt, prompt } from './llm/openai';
+import { startConversation } from './notes';
 import { LearningAssignment, LearningTopic, LoKI, getTopic } from './util';
 
 const logger = getLogger('LearningAssignment');
+
+export async function createAssignment(user: User, topic: LearningTopic, task: string) {
+    const result = await prisma.learning_assignment.create({
+        data: {
+            status: 'pending',
+            task,
+            topicId: topic.id,
+        },
+    });
+
+    logger.info(`LearningAssignment(${result.id}) created by User(${user.userID})`);
+
+    await startConversation(result);
+
+    return result;
+}
 
 export async function finishAssignment(user: User | LoKI, assignment: LearningAssignment) {
     await prisma.learning_assignment.update({

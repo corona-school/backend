@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { User } from '../user';
 import { PrerequisiteError } from '../util/error';
 import { Prompt, prompt } from './llm/openai';
-import { LearningNote, LearningNoteType, LoKI, getAssignment } from './util';
+import { LearningAssignment, LearningNote, LearningNoteType, LoKI, getAssignment } from './util';
 import { finishAssignment } from './assignment';
 
 const logger = getLogger(`LearningNotes`);
@@ -77,6 +77,26 @@ async function contextualizeNote(note: LearningNote) {
     // TODO: Consider previous interactions?
 
     return prompts;
+}
+
+export async function startConversation(assignment: LearningAssignment) {
+    const prompts: Prompt = [];
+
+    prompts.push({
+        role: 'system',
+        content: `
+        Erstelle eine freundliche Einführungsnachricht auf Deutsch, um eine neue Konversation zu der Aufgabe '${assignment.task}' mit einem Schüler zu beginnen.
+        Die Nachricht soll den Nutzer deutlich machen, dass er keine Angst hat Fehler zu machen. Sie sollte nicht zu überschwenglich, sondern relativ sachlich bleiben.
+        `,
+    });
+
+    const promptResult = await prompt(prompts);
+
+    await createNote(LoKI, {
+        type: 'comment',
+        assignmentId: assignment.id,
+        text: promptResult,
+    });
 }
 
 async function validateAnswer(answer: LearningNote) {
