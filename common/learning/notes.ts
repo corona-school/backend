@@ -1,6 +1,6 @@
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { User } from '../user';
+import { User, getUser } from '../user';
 import { PrerequisiteError } from '../util/error';
 import { Prompt, prompt } from './llm/openai';
 import { LearningAssignment, LearningNote, LearningNoteType, LoKI, getAssignment } from './util';
@@ -27,28 +27,36 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
 
     logger.info(`User(${user === LoKI ? 'LoKI' : user.userID}) created LearningNote(${note.id})`);
 
-    if (note.type === 'question') {
-        // fire and forget - trigger async response by LLM
-        answerQuestion(note);
-    }
-
-    const byPupil = user !== LoKI && !!user.pupilId;
-    if (note.type === 'answer' && byPupil) {
-        await validateAnswer(note);
-    }
+    // Fire and forget - async reaction by LLM
+    reactOnNote(note);
 
     return note;
 }
 
 export async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
-    await prisma.learning_note.update({
+    if (type === note.type) return;
+
+    const updated = await prisma.learning_note.update({
         where: { id: note.id },
         data: { type },
     });
 
     logger.info(`User(${user === LoKI ? 'LoKI' : user.userID}) changed LearningNote(${note.id}) type to ${LearningNoteType[type]}`);
 
-    if (type === LearningNoteType.correct_answer) {
+    await reactOnNote(updated);
+}
+
+async function reactOnNote(note: LearningNote) {
+    const user = note.authorID ? await getUser(note.authorID) : LoKI;
+    const byPupil = user !== LoKI && !!user.pupilId;
+
+    if (note.type === 'question') {
+        await answerQuestion(note);
+    } else if (note.type === 'comment') {
+        await classifyNote(note);
+    } else if (note.type === 'answer' && byPupil) {
+        await validateAnswer(note);
+    } else if (note.type === 'correct_answer') {
         if (note.assignmentId) {
             const assignment = await getAssignment(note.assignmentId);
             await finishAssignment(user, assignment);
@@ -93,9 +101,27 @@ async function contextualizeNote(note: LearningNote) {
         });
     }
 
-    // TODO: Consider previous interactions?
-
     return prompts;
+}
+
+// Use the LLM to detect and reclassify a note if possible
+async function classifyNote(note: LearningNote) {
+    const prompts: Prompt = [];
+
+    prompts.push({
+        role: 'system',
+        content: `Ist der Text '${note.text}' eine Frage oder eine Antwort. Antworte nur mit dem Wort 'Frage' oder 'Antwort' wenn du dir sicher bist. Ansonsten antworte nichts.`,
+    });
+
+    const promptResult = await prompt(prompts);
+
+    if (promptResult === 'Frage') {
+        await setNoteType(LoKI, note, 'question');
+    } else if (promptResult === 'Antwort') {
+        await setNoteType(LoKI, note, 'answer');
+    } else {
+        logger.warn(`LLM failed to classify note`, { note, promptResult });
+    }
 }
 
 export async function startConversation(assignment: LearningAssignment) {
