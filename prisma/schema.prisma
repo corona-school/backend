@@ -246,6 +246,7 @@ model course_tag {
   name                   String                   @db.VarChar
   category               String                   @db.VarChar
   course_tags_course_tag course_tags_course_tag[]
+  active                 Boolean                  @default(true)
 }
 
 model course_tags_course_tag {
@@ -623,6 +624,7 @@ model pupil {
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
+  gradeUpdatedAt                               DateTime?
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them

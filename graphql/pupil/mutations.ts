@@ -31,6 +31,8 @@ import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
+import moment from 'moment';
+import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -359,6 +361,39 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
         await invalidatePupilScreening(pupilScreeningId);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async adminIncreasePupilGrades() {
+        const grades = Array.from({ length: 12 }, (_, i) => gradeAsString(i + 1)).reverse();
+        for (const grade of grades) {
+            try {
+                const nextGrade = gradeAsString(gradeAsInt(grade) + 1);
+                const query = {
+                    grade,
+                    active: true,
+                    OR: [{ gradeUpdatedAt: { lt: moment().subtract(10, 'months').toDate() } }, { gradeUpdatedAt: { equals: null } }],
+                };
+                const pupils = await prisma.pupil.findMany({ where: query });
+                await prisma.pupil.updateMany({
+                    where: query,
+                    data: {
+                        grade: nextGrade,
+                        gradeUpdatedAt: new Date(),
+                    },
+                });
+                await Notification.bulkActionTaken(
+                    pupils.map((pupil) => userForPupil(pupil)),
+                    'pupil_grade_increased',
+                    { uniqueId: `pupil_grade_increased_${new Date().toISOString()}` }
+                );
+                logger.info(`Successfully increased the grade of ${pupils.length} pupils from ${grade} to ${nextGrade}`);
+            } catch (error) {
+                logger.info(`Attempting to increase the grade of pupils from ${grade}`, error);
+            }
+        }
         return true;
     }
 }
