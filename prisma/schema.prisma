@@ -375,6 +375,8 @@ enum learning_note_type {
 // which are shared by a pupil, their match partner and assisting tools
 model learning_note {
     id                      Int                     @id() @default(autoincrement())
+    createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+
     type                    learning_note_type
 
     authorID                String? // userID, NULL if from a tool

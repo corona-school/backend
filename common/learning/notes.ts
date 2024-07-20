@@ -74,6 +74,25 @@ async function contextualizeNote(note: LearningNote) {
         });
     }
 
+    // Add previous conversation as context
+    const previousNotes = await prisma.learning_note.findMany({
+        where: {
+            assignmentId: note.assignmentId,
+            topicId: note.topicId,
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+        take: 30, // limit context to some reasonable amount
+    });
+
+    for (const note of previousNotes.reverse()) {
+        prompts.push({
+            role: note.authorID ? 'user' : 'assistant',
+            content: note.text,
+        });
+    }
+
     // TODO: Consider previous interactions?
 
     return prompts;
