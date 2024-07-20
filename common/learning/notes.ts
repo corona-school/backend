@@ -52,7 +52,7 @@ async function reactOnNote(note: LearningNote) {
 
     if (note.type === 'question') {
         await answerQuestion(note);
-    } else if (note.type === 'comment') {
+    } else if (note.type === 'comment' && byPupil) {
         await classifyNote(note);
     } else if (note.type === 'answer' && byPupil) {
         await validateAnswer(note);
