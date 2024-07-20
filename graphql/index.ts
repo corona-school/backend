@@ -73,6 +73,7 @@ import { MutateCooperationResolver } from './cooperation/mutation';
 import { FieldsChatResolver } from './chat/fields';
 import { AchievementTemplateFieldResolver } from './achievement_template/fields';
 import { MutateAchievementTemplateResolver } from './achievement_template/mutations';
+import { ExternalSchoolResolver } from './external_school/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -192,6 +193,9 @@ const schema = buildSchemaSync({
 
         /* Admin */
         AdminMutationsResolver,
+
+        /** School Search */
+        ExternalSchoolResolver,
     ],
     authChecker,
 });
