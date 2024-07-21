@@ -12,7 +12,7 @@ class ExternalSchoolSearch implements SchoolResult {
     @Field(() => State)
     state: State;
     @Field(() => SchoolType, { nullable: true })
-    school_type?: SchoolType;
+    schooltype?: SchoolType;
     @Field(() => String, { nullable: true })
     zip: string;
     @Field(() => String, { nullable: true })

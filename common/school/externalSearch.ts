@@ -12,7 +12,7 @@ export interface ExternalSchool {
 }
 
 export interface SchoolResult extends Omit<ExternalSchool, 'school_type'> {
-    school_type?: SchoolType;
+    schooltype?: SchoolType;
     state: State;
 }
 
@@ -52,7 +52,7 @@ export const searchExternalSchools = async (params: SearchSchoolsArgs): Promise<
         const response = await fetch(`https://jedeschule.codefor.de/schools/?limit=${Math.min(options.limit, 50)}&include_raw=false&name=${filters.name}`);
         if (response.ok) {
             const schools = (await response.json()) as ExternalSchool[];
-            return schools.map((school) => ({ ...school, state: getStateFromExternalSchool(school), school_type: getSchoolTypeFromExternalSchool(school) }));
+            return schools.map((school) => ({ ...school, state: getStateFromExternalSchool(school), schooltype: getSchoolTypeFromExternalSchool(school) }));
         }
     } catch (error) {
         logger.error('Error fetching schools', error, params);
