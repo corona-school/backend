@@ -1,5 +1,7 @@
 # Lern-Fair Backend
 
+Daniel test
+
 Basics:
 
 -   [GraphQL Guidelines](graphql/README.md)
