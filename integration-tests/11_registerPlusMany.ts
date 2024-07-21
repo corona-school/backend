@@ -119,7 +119,9 @@ void test('Plus pupil batch registration', async () => {
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: bb
+                        school: {
+                            state: bw
+                        }
                     }
                 },
                 {  # invalid subject (to check if registration is rolled back properly)
@@ -130,7 +132,9 @@ void test('Plus pupil batch registration', async () => {
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     },
                     activate: {
                         languages: [Albanisch, Franz_sisch],
@@ -149,7 +153,9 @@ void test('Plus pupil batch registration', async () => {
                         lastname: "*updatedL*",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     },
                     activate: {
                         languages: [Albanisch, Franz_sisch],
@@ -181,7 +187,9 @@ void test('Plus pupil batch registration', async () => {
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     }
                 },
             ]}) {email, reason, success}
