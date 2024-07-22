@@ -54,8 +54,10 @@ export const searchExternalSchools = async (params: SearchSchoolsArgs): Promise<
             const schools = (await response.json()) as ExternalSchool[];
             return schools.map((school) => ({ ...school, state: getStateFromExternalSchool(school), schooltype: getSchoolTypeFromExternalSchool(school) }));
         }
+        const responseText = await response.text();
+        throw new Error(`Failed to fetch external schools due to ${responseText} - Status: ${response.status}`);
     } catch (error) {
-        logger.error('Error fetching schools', error, params);
+        logger.error('Error fetching external schools', error, params);
+        throw error;
     }
-    return [];
 };
