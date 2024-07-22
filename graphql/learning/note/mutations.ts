@@ -25,7 +25,7 @@ class LearningNoteCreateInput implements LearningNoteCreate {
 @Resolver((of) => LearningTopic)
 export class LearningNoteMutationsResolver {
     @Mutation((returns) => LearningNote)
-    // eslint-disable-next-line lernfair/graphql-deferred-auth
+    // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async learningNoteCreate(@Ctx() context: GraphQLContext, @Arg('note') note: LearningNoteCreateInput) {
         if (note.topicId) {
