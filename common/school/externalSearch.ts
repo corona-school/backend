@@ -20,7 +20,7 @@ const logger = getLogger('Jedeschule');
 
 const getStateFromExternalSchool = (school?: ExternalSchool) => {
     const state = school?.id.substring(0, 2).toLowerCase();
-    const isValid = Object.values(State).some((e) => e === state);
+    const isValid = Object.values(State).includes(state as State);
     if (!isValid) {
         /**
          * The state is always the first part of the school id, if for some reason the state doesn't match
