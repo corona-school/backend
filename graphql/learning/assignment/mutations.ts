@@ -7,6 +7,7 @@ import { getLogger } from '../../../common/logger/logger';
 import { GraphQLContext } from '../../context';
 import { getAssignment, getTopic } from '../../../common/learning/util';
 import { createAssignment, finishAssignment, proposeAssignment } from '../../../common/learning/assignment';
+import { startConversation } from '../../../common/learning/notes';
 
 const logger = getLogger('LearningAssignment');
 
@@ -19,6 +20,8 @@ export class LearningAssignmentMutationsResolver {
         await hasAccess(context, 'Learning_topic', topic);
 
         const result = await createAssignment(context.user, topic, task);
+        await startConversation(result);
+
         return result;
     }
 
