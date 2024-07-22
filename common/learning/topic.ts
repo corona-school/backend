@@ -6,6 +6,7 @@ import { getLogger } from '../logger/logger';
 
 const logger = getLogger('LearningTopic');
 
+// Creates a new topic as a collection of notes and assignments
 export async function createTopic(user: User, match: Match, name: string, subject: CourseSubject) {
     if (match.dissolved) {
         throw new PrerequisiteError(`Match was already dissolved`);

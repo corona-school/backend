@@ -1,11 +1,12 @@
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { User } from '../user';
-import { Prompt, prompt } from './llm/openai';
+import { Prompts, prompt } from './llm/openai';
 import { LearningAssignment, LearningTopic, LoKI, getTopic } from './util';
 
 const logger = getLogger('LearningAssignment');
 
+// Creates a new assignment in a certain topic, which a pupil can work on with the help of LoKI
 export async function createAssignment(user: User, topic: LearningTopic, task: string) {
     const result = await prisma.learning_assignment.create({
         data: {
@@ -19,6 +20,8 @@ export async function createAssignment(user: User, topic: LearningTopic, task: s
     return result;
 }
 
+// Marks an assignment as finished. This is either done manually by a helper, or automatically
+// if we detect a correct answer written in the notes
 export async function finishAssignment(user: User | LoKI, assignment: LearningAssignment) {
     await prisma.learning_assignment.update({
         where: { id: assignment.id },
@@ -28,10 +31,11 @@ export async function finishAssignment(user: User | LoKI, assignment: LearningAs
     logger.info(`User(${user === LoKI ? 'LoKI' : user.userID}) finished LearningAssignment(${assignment.id})`);
 }
 
+// Propose a new assignment task through LLM for a certain topic
 export async function proposeAssignment(topic: LearningTopic): Promise<string> {
     const pupil = await prisma.pupil.findUniqueOrThrow({ where: { id: topic.pupilId } });
 
-    const prompts: Prompt = [];
+    const prompts: Prompts = [];
 
     prompts.push({
         role: 'system',

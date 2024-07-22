@@ -2,16 +2,18 @@ import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { User, getUser } from '../user';
 import { PrerequisiteError } from '../util/error';
-import { Prompt, prompt } from './llm/openai';
+import { Prompts, prompt } from './llm/openai';
 import { LearningAssignment, LearningNote, LearningNoteType, LoKI, getAssignment } from './util';
 import { finishAssignment } from './assignment';
 
 const logger = getLogger(`LearningNotes`);
 
+// Constructs a note that is a reply to another note
 export const repliesTo = ({ assignmentId, topicId, id }: LearningNote) => ({ assignmentId, topicId, replyToId: id });
 
 export type LearningNoteCreate = Pick<LearningNote, 'text' | 'type'> & Partial<Pick<LearningNote, 'assignmentId' | 'topicId' | 'replyToId'>>;
 
+// Creates a new note on a topic or assignment, and then trigers an asynchronous reaction by the LLM
 export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
     if (!data.topicId && !data.assignmentId) {
         throw new PrerequisiteError(`Note must be related to topic or assignment`);
@@ -33,6 +35,7 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
     return note;
 }
 
+// Changes the type of the note and retriggers a reaction on the note based on the switched type
 export async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
     if (type === note.type) {
         return;
@@ -48,6 +51,12 @@ export async function setNoteType(user: User | LoKI, note: LearningNote, type: L
     await reactOnNote(updated);
 }
 
+// Triggers an automatic reaction by the LLM on a note,
+// which either means reclassifying the note to another type,
+// or replying to the note.
+//
+// ATTENTION: This is recursively called on the note created / reclassified note,
+//  so be careful to not create infinite feedback cycles
 async function reactOnNote(note: LearningNote) {
     const user = note.authorID ? await getUser(note.authorID) : LoKI;
     const byPupil = user !== LoKI && !!user.pupilId;
@@ -66,8 +75,10 @@ async function reactOnNote(note: LearningNote) {
     }
 }
 
+// Adds texts from previous notes and the assignment to the prompt,
+//  so that the LLM can answer in context
 async function contextualizeNote(note: LearningNote) {
-    const prompts: Prompt = [];
+    const prompts: Prompts = [];
     if (note.topicId) {
         const topic = await prisma.learning_topic.findUniqueOrThrow({ where: { id: note.assignmentId } });
         prompts.push({
@@ -108,7 +119,7 @@ async function contextualizeNote(note: LearningNote) {
 
 // Use the LLM to detect and reclassify a note if possible
 async function classifyNote(note: LearningNote) {
-    const prompts: Prompt = [];
+    const prompts: Prompts = [];
 
     prompts.push({
         role: 'system',
@@ -126,8 +137,9 @@ async function classifyNote(note: LearningNote) {
     }
 }
 
+// Initialize a conversation from the LLM if an assignment is created
 export async function startConversation(assignment: LearningAssignment) {
-    const prompts: Prompt = [];
+    const prompts: Prompts = [];
 
     prompts.push({
         role: 'system',
@@ -146,6 +158,7 @@ export async function startConversation(assignment: LearningAssignment) {
     });
 }
 
+// Validate an answer given by the pupil, and hint towards the right solution
 async function validateAnswer(answer: LearningNote) {
     const prompts = await contextualizeNote(answer);
 
@@ -184,6 +197,7 @@ async function validateAnswer(answer: LearningNote) {
     }
 }
 
+// Try to answer a question by the pupil by the LLM
 async function answerQuestion(question: LearningNote) {
     const prompts = await contextualizeNote(question);
 

@@ -1,14 +1,17 @@
 import OpenAI from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { getLogger } from '../../logger/logger';
-import { random } from 'lodash';
 
 const logger = getLogger('OpenAI');
 
-export type Prompt = ChatCompletionMessageParam[];
+export type Prompts = ChatCompletionMessageParam[];
 
-export async function prompt(messages: Prompt, randomize = false) {
-    logger.info(`Prompting GPT`, { messages });
+// Prompts GPT for an answer - for consecutive calls,
+// include the previous conversation in the prompts to give the LLM context of the conversation
+//
+// If randomize is set, each response will be random - otherwise the response is deterministic for the prompt
+export async function prompt(prompts: Prompts, randomize = false) {
+    logger.info(`Prompting GPT`, { prompts });
 
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
@@ -21,10 +24,10 @@ export async function prompt(messages: Prompt, randomize = false) {
                 content:
                     'Du bist die Eule LoKI, die einem Schüler beim lernen hilft. Gebe niemals die Lösung als Antwort, gebe eher kurze Antworten. Antworte ab und zu in einem Dialekt wie berlinerisch oder bayrisch und mache ab und an einen Witz.',
             },
-            ...messages,
+            ...prompts,
         ],
-        model: 'gpt-3.5-turbo',
-        n: 1,
+        model: 'gpt-3.5-turbo', // cheapest model, might be worth experimenting with newer models one day
+        n: 1, // expect one answer
         temperature: 0.1, // less creative
         seed: randomize ? Math.floor(Math.random() * 1000000) : undefined,
     });
