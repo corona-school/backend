@@ -28,13 +28,15 @@ export async function createNote(user: User | LoKI, data: LearningNoteCreate) {
     logger.info(`User(${user === LoKI ? 'LoKI' : user.userID}) created LearningNote(${note.id})`);
 
     // Fire and forget - async reaction by LLM
-    reactOnNote(note);
+    reactOnNote(note).catch((error) => logger.error(`Failed to react on Note`, error));
 
     return note;
 }
 
 export async function setNoteType(user: User | LoKI, note: LearningNote, type: LearningNoteType) {
-    if (type === note.type) return;
+    if (type === note.type) {
+        return;
+    }
 
     const updated = await prisma.learning_note.update({
         where: { id: note.id },

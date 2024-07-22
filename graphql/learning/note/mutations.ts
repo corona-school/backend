@@ -25,6 +25,7 @@ class LearningNoteCreateInput implements LearningNoteCreate {
 @Resolver((of) => LearningTopic)
 export class LearningNoteMutationsResolver {
     @Mutation((returns) => LearningNote)
+    // eslint-disable-next-line lernfair/graphql-deferred-auth
     @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async learningNoteCreate(@Ctx() context: GraphQLContext, @Arg('note') note: LearningNoteCreateInput) {
         if (note.topicId) {
@@ -33,7 +34,9 @@ export class LearningNoteMutationsResolver {
         } else if (note.assignmentId) {
             const assignment = await getAssignment(note.assignmentId);
             await hasAccess(context, 'Learning_assignment', assignment);
-        } else throw new PrerequisiteError(`Note must be part of an assignment or topic`);
+        } else {
+            throw new PrerequisiteError(`Note must be part of an assignment or topic`);
+        }
 
         return await createNote(context.user, note);
     }
