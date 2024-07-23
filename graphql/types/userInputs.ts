@@ -30,6 +30,27 @@ export class BecomeTuteeInput implements BecomeTuteeData {
 }
 
 @InputType()
+export class RegistrationSchool {
+    @Field((type) => String, { nullable: true })
+    name?: School['name'];
+
+    @Field((type) => String, { nullable: true })
+    zip?: School['zip'];
+
+    @Field((type) => String, { nullable: true })
+    city?: School['city'];
+
+    @Field((type) => String, { nullable: true })
+    email?: School['email'];
+
+    @Field((type) => State, { nullable: true })
+    state?: School['state'];
+
+    @Field((type) => SchoolType, { nullable: true })
+    schooltype?: School['schooltype'];
+}
+
+@InputType()
 export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
@@ -46,15 +67,6 @@ export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => Boolean)
     newsletter: boolean;
 
-    @Field((type) => Int, { nullable: true })
-    schoolId?: School['id'];
-
-    @Field((type) => SchoolType, { nullable: true })
-    schooltype?: SchoolType;
-
-    @Field((type) => State)
-    state: State;
-
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 
@@ -66,6 +78,9 @@ export class RegisterPupilInput implements RegisterPupilData {
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
 }
 
 @InputType()
