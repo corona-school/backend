@@ -98,10 +98,6 @@ export class MutateChatResolver {
     async prospectChatCreate(@Ctx() context: GraphQLContext, @Arg('instructorUserId') instructorUserId: string, @Arg('subcourseId') subcourseId: number) {
         const { user: prospectUser } = context;
         const instructorUser = await getUser(instructorUserId);
-        const prospect = prospectUser.pupilId;
-        if (!prospect) {
-            throw new Error('User is not a pupil');
-        }
         const conversationInfos: ConversationInfos = {
             welcomeMessages: [systemMessages.de.oneOnOne],
             custom: {
@@ -114,7 +110,9 @@ export class MutateChatResolver {
         }
 
         const conversation = await getOrCreateOneOnOneConversation([prospectUser, instructorUser], conversationInfos, ContactReason.PROSPECT, subcourseId);
-        await addSubcourseProspect(subcourseId, { pupilId: prospect, conversationId: conversation.id });
+        if (prospectUser.pupilId) {
+            await addSubcourseProspect(subcourseId, { pupilId: prospectUser.pupilId, conversationId: conversation.id });
+        }
         return conversation.id;
     }
 
