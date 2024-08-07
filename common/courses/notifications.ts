@@ -185,8 +185,47 @@ export const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attempted
 export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
     const { allowed, reason } = await canPromoteSubcourse(subcourse, promotionType);
     if (!allowed) {
-        logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
-        throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
+        if (reason == 'invalid-promotion-type') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Promotion type for Subcourse(${subcourse.id}) is not valid!`);
+        }
+
+        if (reason == 'course-cancelled') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) is cancelled!`);
+        }
+        if (reason == 'course-in-the-past') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) is in the past!`);
+        }
+        if (reason == 'course-capacity-too-high') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Capacity for Subcourse(${subcourse.id}) is higher than 75%!`);
+        }
+        if (reason == 'course-is-not-published') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) is not published!`);
+        }
+        if (reason == 'course-is-not-mature-enough') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) is published for less than 3 days!`);
+        }
+        if (reason == 'already-auto-promoted') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) is already promoted automatically!`);
+        }
+        if (reason == 'no-instructor-promotions-left') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Instructors can only promote a Subcourse once!`);
+        }
+        if (reason == 'no-admin-promotions-left') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Admins can only promote a Subcourse once!`);
+        }
+        if (reason == 'recently-promoted') {
+            logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
+            throw new Error(`Subcourse(${subcourse.id}) has already been promoted less than 3 days ago!`);
+        }
     }
 
     await prisma.subcourse_promotion.create({
