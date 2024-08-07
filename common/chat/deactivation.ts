@@ -34,6 +34,10 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
     // }
 
     const lastLecture = await getLastLecture(subcourse);
+    if (!lastLecture) {
+        return false;
+    }
+
     const lastLecturePlus30Days = moment(lastLecture.start).add(30, 'days');
     const is30DaysBeforeToday = lastLecturePlus30Days.isBefore(today);
 
