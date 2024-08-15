@@ -19,7 +19,7 @@ export const searchUnsplashImages = async ({ search, page, take = 9 }: SearchIma
     const data = await fetch(`https://api.unsplash.com/search/photos?query=${search}&page=${page}&per_page=${take}`, {
         method: 'GET',
         headers: {
-            Authorization: `Client-ID ${process.env.UNSPLASH_CLIENT_ID}`,
+            Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
         },
     });
     const response = await data.json();
