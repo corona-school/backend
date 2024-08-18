@@ -11,6 +11,7 @@ import { NotificationContext } from '../notification/types';
 import moment from 'moment';
 import { Decision } from '../util/decision';
 import { shuffleArray } from '../util/basic';
+import { NotAllowedError } from '../util/error';
 
 const logger = getLogger('Course Notification');
 
@@ -188,34 +189,26 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
         logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
         if (reason == 'invalid-promotion-type') {
             throw new Error(`Promotion type for Subcourse(${subcourse.id}) is not valid!`);
-        }
-
-        if (reason == 'course-cancelled') {
-            throw new Error(`Subcourse(${subcourse.id}) is cancelled!`);
-        }
-        if (reason == 'course-in-the-past') {
-            throw new Error(`Subcourse(${subcourse.id}) is in the past!`);
-        }
-        if (reason == 'course-capacity-too-high') {
-            throw new Error(`Capacity for Subcourse(${subcourse.id}) is higher than 75%!`);
-        }
-        if (reason == 'course-is-not-published') {
-            throw new Error(`Subcourse(${subcourse.id}) is not published!`);
-        }
-        if (reason == 'course-is-not-mature-enough') {
-            throw new Error(`Subcourse(${subcourse.id}) is published for less than 3 days!`);
-        }
-        if (reason == 'already-auto-promoted') {
-            throw new Error(`Subcourse(${subcourse.id}) is already promoted automatically!`);
-        }
-        if (reason == 'no-instructor-promotions-left') {
-            throw new Error(`Instructors can only promote a Subcourse once!`);
-        }
-        if (reason == 'no-admin-promotions-left') {
-            throw new Error(`Admins can only promote a Subcourse once!`);
-        }
-        if (reason == 'recently-promoted') {
-            throw new Error(`Subcourse(${subcourse.id}) has already been promoted less than 3 days ago!`);
+        } else if (reason == 'course-cancelled') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) is cancelled!`);
+        } else if (reason == 'course-in-the-past') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) is in the past!`);
+        } else if (reason == 'course-capacity-too-high') {
+            throw new NotAllowedError(`Capacity for Subcourse(${subcourse.id}) is higher than 75%!`);
+        } else if (reason == 'course-is-not-published') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) is not published!`);
+        } else if (reason == 'course-is-not-mature-enough') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) is published for less than 3 days!`);
+        } else if (reason == 'already-auto-promoted') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) is already promoted automatically!`);
+        } else if (reason == 'no-instructor-promotions-left') {
+            throw new NotAllowedError(`Instructors can only promote a Subcourse once!`);
+        } else if (reason == 'no-admin-promotions-left') {
+            throw new NotAllowedError(`Admins can only promote a Subcourse once!`);
+        } else if (reason == 'recently-promoted') {
+            throw new NotAllowedError(`Subcourse(${subcourse.id}) has already been promoted less than 3 days ago!`);
+        } else {
+            throw new NotAllowedError('Subcourse(${subcourse.id}) can not be promoted for a different reason: ${reason}!');
         }
     }
 
