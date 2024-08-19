@@ -188,7 +188,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
     if (!allowed) {
         logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
         if (reason == 'invalid-promotion-type') {
-            throw new Error(`Promotion type for Subcourse(${subcourse.id}) is not valid!`);
+            throw new NotAllowedError(`Promotion type for Subcourse(${subcourse.id}) is not valid!`);
         } else if (reason == 'course-cancelled') {
             throw new NotAllowedError(`Subcourse(${subcourse.id}) is cancelled!`);
         } else if (reason == 'course-in-the-past') {
