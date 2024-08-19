@@ -1,5 +1,5 @@
 import { Course, Subcourse, Course_tag as CourseTag, course_category_enum as CourseCategory } from '../generated';
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Role } from '../authorizations';
 import { accessURLForKey } from '../../common/file-bucket/s3';
@@ -9,6 +9,29 @@ import { getCourseImageURL } from '../../common/courses/util';
 import { courseSearch } from '../../common/courses/search';
 import { LimitedQuery } from '../complexity';
 import { GraphQLInt } from 'graphql';
+import { searchUnsplashImages } from '../../common/unsplash';
+
+@ObjectType()
+class CourseImage {
+    @Field((_type) => String)
+    id: string;
+    @Field((_type) => String)
+    description: string;
+    @Field((_type) => String)
+    regularImageUrl: string;
+    @Field((_type) => String)
+    smallImageUrl: string;
+}
+
+@ObjectType()
+class CourseImageSearchResponse {
+    @Field((_type) => [CourseImage])
+    results: CourseImage[];
+    @Field((_type) => Number)
+    total: number;
+    @Field((_type) => Number)
+    totalPages: number;
+}
 
 @Resolver((of) => Course)
 export class ExtendedFieldsCourseResolver {
@@ -110,5 +133,11 @@ export class ExtendedFieldsCourseResolver {
         });
 
         return courses;
+    }
+
+    @Query((returns) => CourseImageSearchResponse)
+    @Authorized(Role.INSTRUCTOR, Role.COURSE_SCREENER, Role.ADMIN)
+    async courseImages(@Ctx() context: GraphQLContext, @Arg('search') search: string, @Arg('page') page: number, @Arg('take') take?: number) {
+        return await searchUnsplashImages({ page, search, take });
     }
 }
