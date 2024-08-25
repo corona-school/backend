@@ -186,30 +186,7 @@ export const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attempted
 export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
     const { allowed, reason } = await canPromoteSubcourse(subcourse, promotionType);
     if (!allowed) {
-        logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
-        if (reason == 'invalid-promotion-type') {
-            throw new NotAllowedError(`Promotion type for Subcourse(${subcourse.id}) is not valid!`);
-        } else if (reason == 'course-cancelled') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) is cancelled!`);
-        } else if (reason == 'course-in-the-past') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) is in the past!`);
-        } else if (reason == 'course-capacity-too-high') {
-            throw new NotAllowedError(`Capacity for Subcourse(${subcourse.id}) is higher than 75%!`);
-        } else if (reason == 'course-is-not-published') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) is not published!`);
-        } else if (reason == 'course-is-not-mature-enough') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) is published for less than 3 days!`);
-        } else if (reason == 'already-auto-promoted') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) is already promoted automatically!`);
-        } else if (reason == 'no-instructor-promotions-left') {
-            throw new NotAllowedError(`Instructors can only promote a Subcourse once!`);
-        } else if (reason == 'no-admin-promotions-left') {
-            throw new NotAllowedError(`Admins can only promote a Subcourse once!`);
-        } else if (reason == 'recently-promoted') {
-            throw new NotAllowedError(`Subcourse(${subcourse.id}) has already been promoted less than 3 days ago!`);
-        } else {
-            throw new NotAllowedError('Subcourse(${subcourse.id}) can not be promoted for a different reason: ${reason}!');
-        }
+        throw new NotAllowedError(reason);
     }
 
     await prisma.subcourse_promotion.create({
