@@ -100,7 +100,7 @@ export class MutateAppointmentResolver {
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
-        await updateAppointment(context.user, appointment, appointmentToBeUpdated);
+        await updateAppointment(context.user, appointment, appointmentToBeUpdated); // <= Expects user to be a student and creates an error, if it was a screener
 
         return true;
     }
