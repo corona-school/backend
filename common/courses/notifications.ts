@@ -186,6 +186,7 @@ export const canPromoteSubcourse = async (subcourse: Prisma.subcourse, attempted
 export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, promotionType: Prisma.subcourse_promotion_type_enum) {
     const { allowed, reason } = await canPromoteSubcourse(subcourse, promotionType);
     if (!allowed) {
+        logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
         throw new NotAllowedError(reason);
     }
 
