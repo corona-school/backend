@@ -11,6 +11,7 @@ import { NotificationContext } from '../notification/types';
 import moment from 'moment';
 import { Decision } from '../util/decision';
 import { shuffleArray } from '../util/basic';
+import { NotAllowedError } from '../util/error';
 
 const logger = getLogger('Course Notification');
 
@@ -186,7 +187,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
     const { allowed, reason } = await canPromoteSubcourse(subcourse, promotionType);
     if (!allowed) {
         logger.info(`Can't promote Subcourse(${subcourse.id}). Reason: ${reason}`);
-        throw new Error(`Promotion for Subcourse(${subcourse.id}) is not valid!`);
+        throw new NotAllowedError(reason);
     }
 
     await prisma.subcourse_promotion.create({
