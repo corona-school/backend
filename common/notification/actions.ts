@@ -341,6 +341,14 @@ const _notificationActions = {
             matchDate: '...',
         },
     },
+    tutee_match_dissolved_mature: {
+        description: 'Tutee / Match was dissolved after a month',
+        sampleContext: {
+            student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
     tutor_match_requested: {
         description: 'Tutor / Match requested',
         sampleContext: {},
@@ -367,6 +375,14 @@ const _notificationActions = {
     },
     tutor_match_dissolved_quickly: {
         description: 'Tutor / Match was dissolved in less than a month',
+        sampleContext: {
+            pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutor_match_dissolved_mature: {
+        description: 'Tutor / Match was dissolved after a month',
         sampleContext: {
             pupil: sampleUser,
             matchHash: '...',
