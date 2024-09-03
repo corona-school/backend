@@ -127,7 +127,7 @@ export class UserFieldsResolver {
             },
             sessionID: 'FAKE',
         };
-        await loginAsUser(user, fakeContext);
+        await loginAsUser(user, fakeContext, undefined, true);
         return fakeContext.user.roles;
     }
 

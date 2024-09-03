@@ -10,6 +10,7 @@ import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 import { GraphQLString } from 'graphql';
+import { deleteSessionsBySecret } from '../../common/user/session';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -50,22 +51,29 @@ export class MutateSecretResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER, Role.ADMIN)
-    async tokenRevoke(@Ctx() context: GraphQLContext, @Arg('id', { nullable: true }) id?: number, @Arg('token', { nullable: true }) token?: string) {
+    async tokenRevoke(
+        @Ctx() context: GraphQLContext,
+        @Arg('invalidateSessions') invalidateSessions: boolean,
+        @Arg('id', { nullable: true }) id?: number,
+        @Arg('token', { nullable: true }) token?: string
+    ) {
+        let tokenId = id;
         if (id) {
             if (isAdmin(context)) {
                 await revokeToken(null, id);
             } else {
                 await revokeToken(getSessionUser(context), id);
             }
-            return true;
+        } else if (token) {
+            tokenId = await revokeTokenByToken(token);
+        } else {
+            throw new UserInputError(`Either the id or the token must be passed`);
+        }
+        if (invalidateSessions) {
+            await deleteSessionsBySecret(tokenId);
         }
 
-        if (token) {
-            await revokeTokenByToken(token);
-            return true;
-        }
-
-        throw new UserInputError(`Either the id or the token must be passed`);
+        return true;
     }
 
     @Mutation((returns) => Boolean)

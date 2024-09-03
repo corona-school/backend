@@ -17,4 +17,9 @@ export class FieldMeResolver {
     myRoles(@Ctx() context: GraphQLContext): string[] {
         return context.user?.roles ?? [];
     }
+
+    @FieldResolver((type) => Number, { nullable: true })
+    myCurrentSecretID(@Ctx() context: GraphQLContext): number {
+        return context.user.secretID;
+    }
 }

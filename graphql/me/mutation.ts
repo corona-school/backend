@@ -1,7 +1,7 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
@@ -87,7 +87,7 @@ export class MutateMeResolver {
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
 
         if (!byAdmin) {
-            await loginAsUser(userForStudent(student), context);
+            await loginAsUser(userForStudent(student), context, undefined);
         }
 
         return student;
@@ -116,7 +116,7 @@ export class MutateMeResolver {
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
 
         if (!byAdmin) {
-            await loginAsUser(userForPupil(pupil), context);
+            await loginAsUser(userForPupil(pupil), context, undefined);
         }
 
         return pupil;
@@ -222,7 +222,7 @@ export class MutateMeResolver {
         logger.info(`Student(${student.id}) requested to become an instructor`);
 
         // User gets the WANNABE_INSTRUCTOR role
-        await updateSessionUser(context, userForStudent(student));
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).secretID);
 
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
@@ -241,7 +241,7 @@ export class MutateMeResolver {
         await becomeTutor(student, data);
 
         // User gets the WANNABE_TUTOR role
-        await updateSessionUser(context, userForStudent(student));
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).secretID);
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 

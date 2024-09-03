@@ -26,7 +26,7 @@ export async function revokeToken(user: User | null, id: number) {
 }
 
 // One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
-export async function revokeTokenByToken(token: string) {
+export async function revokeTokenByToken(token: string): Promise<number> {
     const hash = hashToken(token);
     const secret = await prisma.secret.findFirst({
         where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
@@ -38,6 +38,7 @@ export async function revokeTokenByToken(token: string) {
     await prisma.secret.delete({ where: { id: secret.id } });
 
     logger.info(`Token Secret(${secret.id}) was revoked`);
+    return secret.id;
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
@@ -107,7 +108,7 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-export async function loginToken(token: string): Promise<User | never> {
+export async function loginToken(token: string): Promise<{ user: User; secretID: number } | never> {
     const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
@@ -157,7 +158,7 @@ export async function loginToken(token: string): Promise<User | never> {
         await verifyEmail(user);
     }
 
-    return user;
+    return { user, secretID: secret.id };
 }
 
 export async function verifyEmail(user: User) {
