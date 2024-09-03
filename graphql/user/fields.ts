@@ -34,8 +34,8 @@ import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
-import _ from 'lodash';
 import { getUserNotificationPreferences } from '../../common/notification';
+import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -117,18 +117,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = {
-            user: UNAUTHENTICATED_USER,
-            ip: '?',
-            prisma,
-            sessionToken: 'fake',
-            setCookie: () => {
-                /* ignore */
-            },
-            sessionID: 'FAKE',
-        };
-        await loginAsUser(user, fakeContext);
-        return fakeContext.user.roles;
+        return evaluateUserRoles(user);
     }
 
     // -------- Notifications ---------------------

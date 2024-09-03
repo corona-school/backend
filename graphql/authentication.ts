@@ -113,20 +113,16 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext, noSession = false) {
-    if (!noSession) {
-        ensureSession(context);
-    }
+export async function loginAsUser(user: User, context: GraphQLContext) {
+    ensureSession(context);
 
     const roles = await evaluateUserRoles(user);
 
     context.user = { ...user, roles };
 
-    if (!noSession) {
-        await userSessions.set(context.sessionToken, context.user);
-        logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
-        await updateLastLogin(user);
-    }
+    await userSessions.set(context.sessionToken, context.user);
+    logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
+    await updateLastLogin(user);
 }
 
 @Resolver((of) => UserType)
