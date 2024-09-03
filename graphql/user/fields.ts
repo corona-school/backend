@@ -12,7 +12,6 @@ import {
     notification_channel_enum as NotificationChannelEnum,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -21,7 +20,6 @@ import { queryUser, User, userForPupil, userForStudent } from '../../common/user
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
@@ -117,7 +115,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        return evaluateUserRoles(user);
+        return await evaluateUserRoles(user);
     }
 
     // -------- Notifications ---------------------
