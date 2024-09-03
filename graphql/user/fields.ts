@@ -12,7 +12,6 @@ import {
     notification_channel_enum as NotificationChannelEnum,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
@@ -21,7 +20,6 @@ import { queryUser, User, userForPupil, userForStudent } from '../../common/user
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
@@ -34,8 +32,8 @@ import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
-import _ from 'lodash';
 import { getUserNotificationPreferences } from '../../common/notification';
+import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -117,18 +115,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = {
-            user: UNAUTHENTICATED_USER,
-            ip: '?',
-            prisma,
-            sessionToken: 'fake',
-            setCookie: () => {
-                /* ignore */
-            },
-            sessionID: 'FAKE',
-        };
-        await loginAsUser(user, fakeContext);
-        return fakeContext.user.roles;
+        return await evaluateUserRoles(user);
     }
 
     // -------- Notifications ---------------------
