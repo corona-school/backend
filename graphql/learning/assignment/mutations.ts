@@ -8,6 +8,7 @@ import { GraphQLContext } from '../../context';
 import { getAssignment, getTopic } from '../../../common/learning/util';
 import { createAssignment, finishAssignment, proposeAssignment } from '../../../common/learning/assignment';
 import { startConversation } from '../../../common/learning/notes';
+import { RateLimit } from '../../rate-limit';
 
 const logger = getLogger('LearningAssignment');
 
@@ -27,6 +28,7 @@ export class LearningAssignmentMutationsResolver {
 
     @Mutation((returns) => String)
     @AuthorizedDeferred(Role.OWNER)
+    @RateLimit('Assignment Proposal', 20, /* per */ 60 * 60 * 1000 /* = 1 hour */)
     async learningAssignmentPropose(@Ctx() context: GraphQLContext, @Arg('topicId', () => GraphQLInt) topicId: number) {
         const topic = await getTopic(topicId);
         await hasAccess(context, 'Learning_topic', topic);

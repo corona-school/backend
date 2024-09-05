@@ -7,6 +7,7 @@ import { GraphQLInt } from 'graphql';
 import { GraphQLContext } from '../../context';
 import { PrerequisiteError } from '../../../common/util/error';
 import { getAssignment, getNote, getTopic } from '../../../common/learning/util';
+import { RateLimit } from '../../rate-limit';
 
 @InputType()
 class LearningNoteCreateInput implements LearningNoteCreate {
@@ -26,6 +27,7 @@ class LearningNoteCreateInput implements LearningNoteCreate {
 export class LearningNoteMutationsResolver {
     @Mutation((returns) => LearningNote)
     @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
+    @RateLimit('Learning Note Creation', 200, /* per */ 60 * 60 * 1000 /* = 1 hour */)
     // eslint-disable-next-line lernfair-lint/graphql-deferred-auth
     async learningNoteCreate(@Ctx() context: GraphQLContext, @Arg('note') note: LearningNoteCreateInput) {
         if (note.topicId) {
