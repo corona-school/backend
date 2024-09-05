@@ -128,9 +128,9 @@ async function classifyNote(note: LearningNote) {
 
     const promptResult = await prompt(prompts);
 
-    if (promptResult === 'Frage') {
+    if (promptResult.includes('Frage')) {
         await setNoteType(LoKI, note, 'question');
-    } else if (promptResult === 'Antwort') {
+    } else if (promptResult.includes('Antwort')) {
         await setNoteType(LoKI, note, 'answer');
     } else {
         logger.warn(`LLM failed to classify note`, { note, promptResult });
