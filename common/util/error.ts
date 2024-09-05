@@ -17,3 +17,4 @@ export const RedundantError = createClientError('REDUNDANT');
 export const TooLateError = createClientError('TOO_LATE');
 export const CapacityReachedError = createClientError('CAPACITY_REACHED');
 export const PrerequisiteError = createClientError('PREREQUISITE');
+export const NotAllowedError = createClientError('NOT_ALLOWED');
