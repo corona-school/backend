@@ -37,8 +37,10 @@ export async function createNewPupil() {
                 lastname: "lastname:${userRandom}"
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: true
-                state: bw
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -53,8 +55,10 @@ export async function createNewPupil() {
                 lastname: "lastname:${userRandom}"
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: true
-                state: bw
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -128,8 +132,10 @@ export const pupilTwo = test('Register Pupil', async () => {
                 lastname: "lastname:${userRandom}"
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: true
-                state: bw
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -144,8 +150,10 @@ export const pupilTwo = test('Register Pupil', async () => {
                 lastname: "lastname:${userRandom}"
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: true
-                state: bw
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }

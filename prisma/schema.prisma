@@ -751,19 +751,20 @@ model remission_request {
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5b96e9df53055059ad903ebc98c")
 }
 
-// Incomplete List of German Schools, mainly filled with past cooperations
+// Incomplete List of German Schools where our pupils come from
 model school {
-  id                Int                    @id(map: "PK_57836c3fe2f2c7734b20911755e") @default(autoincrement())
-  createdAt         DateTime               @default(now()) @db.Timestamp(6)
-  updatedAt         DateTime               @default(now()) @updatedAt @db.Timestamp(6)
-  name              String                 @db.VarChar
-  website           String?                @unique(map: "IDX_b365d0ef66facdfeb842d45683") @db.VarChar
-  // Used to associate pupils with schools through their teacher's mail address
-  emailDomain       String                 @unique(map: "IDX_f3f92f9182a7fccc2858fd63cc") @db.VarChar
-  state             school_state_enum?     @default(other)
-  schooltype        school_schooltype_enum @default(other)
-  activeCooperation Boolean                @default(false)
-  pupil             pupil[]
+  id         Int                     @id(map: "PK_57836c3fe2f2c7734b20911755e") @default(autoincrement())
+  createdAt  DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime                @default(now()) @updatedAt @db.Timestamp(6)
+  name       String                  @db.VarChar
+  zip        String?                 @db.VarChar
+  city       String?                 @db.VarChar
+  email      String?                 @db.VarChar
+  state      school_state_enum       @default(other)
+  schooltype school_schooltype_enum? @default(other)
+  pupil      pupil[]
+
+  @@unique([name, state, city])
 }
 
 // A member of the Lern-Fair team doing screenings, there is one 'Default Screener' account used by Admins

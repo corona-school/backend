@@ -58,7 +58,11 @@ void (async function setupDevDB() {
         aboutMe: "I'm Pupil1",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bb',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bb',
+        },
     });
     await verifyEmail(userForPupil(pupil1));
     await _createFixedToken(userForPupil(pupil1), `authtokenP1`);
@@ -80,7 +84,11 @@ void (async function setupDevDB() {
         aboutMe: "I'm Pupil 2",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil2));
     await _createFixedToken(userForPupil(pupil2), `authtokenP2`);
@@ -100,7 +108,11 @@ void (async function setupDevDB() {
         aboutMe: "I'm Pupil 3",
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil3));
     await _createFixedToken(userForPupil(pupil3), `authtokenP3`);
@@ -119,8 +131,12 @@ void (async function setupDevDB() {
         email: 'test+dev+p4@lern-fair.de',
         aboutMe: 'Im Pupil 4',
         newsletter: false,
-        state: 'bw',
         registrationSource: 'normal',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil4));
     await _createFixedToken(userForPupil(pupil4), `authtokenP4`);
@@ -140,7 +156,11 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil 5`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bb',
+        },
     });
     await verifyEmail(userForPupil(pupil5));
     await _createFixedToken(userForPupil(pupil5), `authtokenP5`);
@@ -160,7 +180,11 @@ void (async function setupDevDB() {
         newsletter: false,
         aboutMe: `I'm Pupil6`,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil6));
     await _createFixedToken(userForPupil(pupil6), `authtokenP6`);
@@ -179,7 +203,11 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil7`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil7));
     await _createFixedToken(userForPupil(pupil7), `authtokenP7`);
@@ -199,7 +227,11 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil 8`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil8));
     await _createFixedToken(userForPupil(pupil8), `authtokenP8`);
@@ -220,7 +252,11 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil9`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil9));
     await _createFixedToken(userForPupil(pupil9), `authtokenP9`);
@@ -242,7 +278,11 @@ void (async function setupDevDB() {
         aboutMe: `I'm Pupil 10`,
         newsletter: false,
         registrationSource: 'normal',
-        state: 'bw',
+        school: {
+            name: 'MusterSchule',
+            schooltype: 'grundschule',
+            state: 'bw',
+        },
     });
     await verifyEmail(userForPupil(pupil10));
     await _createFixedToken(userForPupil(pupil10), `authtokenP10`);

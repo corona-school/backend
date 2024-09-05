@@ -40,7 +40,6 @@ import { ExtendedFieldsLectureResolver, ExtendedFieldsOrganizerResolver, Extende
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
-import { ExtendedFieldsSchoolResolver } from './school/fields';
 import { MutateStudentResolver } from './student/mutations';
 import { MutateCertificateOfConductResolver } from './certificate_of_conduct/mutations';
 import { ExtendedFieldsCertificateOfConductResolver } from './certificate_of_conduct/fields';
@@ -80,6 +79,7 @@ import { LearningNoteFieldResolver } from './learning/note/fields';
 import { LearningTopicMutationsResolver } from './learning/topic/mutations';
 import { LearningAssignmentMutationsResolver } from './learning/assignment/mutations';
 import { LearningNoteMutationsResolver } from './learning/note/mutations';
+import { ExternalSchoolResolver } from './external_school/fields';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -150,7 +150,6 @@ const schema = buildSchemaSync({
 
         /* Schools */
         FindManySchoolResolver,
-        ExtendedFieldsSchoolResolver,
 
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
@@ -208,6 +207,9 @@ const schema = buildSchemaSync({
         LearningAssignmentMutationsResolver,
         LearningNoteFieldResolver,
         LearningNoteMutationsResolver,
+
+        /** School Search */
+        ExternalSchoolResolver,
     ],
     authChecker,
 });
