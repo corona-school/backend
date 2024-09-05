@@ -24,7 +24,8 @@ export async function prompt(prompts: Prompts, randomize = false) {
                 content:
                     'Du bist die Eule LoKI, die einem Schüler beim lernen hilft. Gebe niemals die Lösung als Antwort, gebe eher kurze Antworten. Antworte ab und zu in einem Dialekt wie berlinerisch oder bayrisch und mache ab und an einen Witz.',
             },
-            ...prompts,
+            // Only include the last 10 messages to prevent too large contexts (as we are billed per token)
+            ...prompts.slice(-10),
         ],
         model: 'gpt-3.5-turbo', // cheapest model, might be worth experimenting with newer models one day
         n: 1, // expect one answer
