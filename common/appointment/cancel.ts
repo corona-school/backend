@@ -46,7 +46,6 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
             const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
             const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
 
-            // TODO: adjust notification for if screener cancelled the appointment
             for (const participant of participants) {
                 // Notifications are sent only when an appointment is cancelled, not when a subcourse is cancelled
                 if (!silent) {
@@ -73,7 +72,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
             break;
         }
         case AppointmentType.match: {
-            if (user.screenerId) break; //TODO: Throw an error?
+            if (user.screenerId) break;
 
             const student = await getStudent(user);
             const match = await prisma.match.findUnique({ where: { id: appointment.matchId }, include: { pupil: true, student: true } });
