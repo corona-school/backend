@@ -741,6 +741,7 @@ model student {
   lastname                                  String?                  @db.VarChar
   active                                    Boolean                  @default(true)
   email                                     String                   @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
+  zipCode                                   Int?
   // DEPRECATED: Was historically used for a verification mail to verify that the user owns the email address
   //             Replaced by Secret table
   verification                              String?                  @unique(map: "IDX_34cbafcb0bcdfb2b6de9010acb") @db.VarChar
