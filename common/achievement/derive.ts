@@ -26,15 +26,15 @@ const GhostAchievements: { [key: string]: achievement_template } = {
         group: PupilNewMatchGroup,
         groupOrder: 1,
         type: AchievementType.SEQUENTIAL,
-        image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_1.png',
+        image: 'gamification/achievements/release/new_match/five_pieces/empty_state.png',
         tagline: 'Starte eine Lernpatenschaft',
         title: 'Neue Lernunterstützung',
         subtitle: null,
         description:
-            'Es war großartig, dich am {{date}} besser kennenzulernen und freuen uns, dass du gemeinsam mit uns die Bildungschancen von Schüler:innen verbessern möchtest. Um dir eine:n passende:n Lernpartner:in zuzuweisen, bitten wir dich zunächst, eine Anfrage auf unserer Plattform zu stellen. Hier kannst du die Fächer und Jahrgangsstufe angeben, die für dich passend sind. Wir freuen uns auf den Start!',
+            'Damit wir dir den:die perfekte:n Lernpartner:in zuweisen können, musst du zunächst eine Anfrage auf unserer Plattform stellen. Dort kannst du ganz einfach die Fächer angeben, die für dich wichtig sind und in denen wir dir helfen können. Wir freuen uns darauf, mit dir gemeinsam durchzustarten und die Lernreise zu beginnen!',
         footer: null,
         actionName: 'Anfrage stellen',
-        actionRedirectLink: '/matching',
+        actionRedirectLink: '/request-match',
         actionType: AchievementActionType.Action,
         condition: 'false', // This will ensure that an evaluation will always fail
         conditionDataAggregations: {},
@@ -50,7 +50,7 @@ const GhostAchievements: { [key: string]: achievement_template } = {
         group: PupilNewMatchGroup,
         groupOrder: 2,
         type: AchievementType.SEQUENTIAL,
-        image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_2.png',
+        image: 'gamification/achievements/release/new_match/five_pieces/step_1.png',
         tagline: 'Starte eine Lernpatenschaft',
         title: 'Neue Lernunterstützung',
         subtitle: null,
@@ -74,7 +74,7 @@ const GhostAchievements: { [key: string]: achievement_template } = {
         group: StudentNewMatchGroup,
         groupOrder: 1,
         type: AchievementType.SEQUENTIAL,
-        image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_1.png',
+        image: 'gamification/achievements/release/new_match/five_pieces/empty_state.png',
         tagline: 'Starte eine Lernpatenschaft',
         title: 'Neue Lernunterstützung',
         subtitle: null,
@@ -82,7 +82,7 @@ const GhostAchievements: { [key: string]: achievement_template } = {
             'Es war großartig, dich am {{date}} besser kennenzulernen und freuen uns, dass du gemeinsam mit uns die Bildungschancen von Schüler:innen verbessern möchtest. Um dir eine:n passende:n Lernpartner:in zuzuweisen, bitten wir dich zunächst, eine Anfrage auf unserer Plattform zu stellen. Hier kannst du die Fächer und Jahrgangsstufe angeben, die für dich passend sind. Wir freuen uns auf den Start!',
         footer: null,
         actionName: 'Anfrage stellen',
-        actionRedirectLink: '/matching',
+        actionRedirectLink: '/request-match',
         actionType: AchievementActionType.Action,
         condition: 'false', // This will ensure that an evaluation will always fail
         conditionDataAggregations: {},
@@ -91,30 +91,6 @@ const GhostAchievements: { [key: string]: achievement_template } = {
         achievedFooter: null,
         achievedImage: null,
         sequentialStepName: 'Anfrage stellen',
-    },
-    student_new_match_2: {
-        id: -1,
-        templateFor: AchievementTemplateFor.Match,
-        group: StudentNewMatchGroup,
-        groupOrder: 2,
-        type: AchievementType.SEQUENTIAL,
-        image: 'gamification/achievements/release/finish_onboarding/two_pieces/step_2.png',
-        tagline: 'Starte eine Lernpatenschaft',
-        title: 'Neue Lernunterstützung',
-        subtitle: null,
-        description:
-            'Fantastisch, deine Anfrage ist eingegangen! Bevor wir dir deine:n ideale:n Lernpartner:in vermitteln können, möchten wir gerne kurz per Zoom mit dir sprechen. Unser Ziel ist es, die perfekte Person für dich zu finden und genau zu verstehen, was du dir wünschst. Buche doch gleich einen Termin für unser Gespräch – wir sind schon ganz gespannt auf dich!',
-        footer: null,
-        actionName: 'Termin buchen',
-        actionRedirectLink: 'https://calendly.com',
-        actionType: AchievementActionType.Action,
-        condition: 'false',
-        conditionDataAggregations: {},
-        isActive: true,
-        achievedDescription: null,
-        achievedFooter: null,
-        achievedImage: null,
-        sequentialStepName: 'Gespräch mit Lern-Fair absolvieren',
     },
 };
 
@@ -175,6 +151,8 @@ async function generatePupilMatching(
         });
     }
 
+    console.log('iso', hasRequest, hasSuccessfulScreening, achievement);
+
     result.push({
         id: -1,
         templateId: -1,
@@ -211,6 +189,8 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
         where: { pupilId: pupil.id, status: pupil_screening_status_enum.success, invalidated: false },
         orderBy: { createdAt: 'desc' },
     });
+    const hasSuccessfulScreenings = successfulScreenings.length > 0;
+    const totalMatchCount = await prisma.match.count({ where: { pupilId: pupil.id } });
 
     const newMatchAchievements = userAchievements.filter(
         (row) => row.template.group === PupilNewMatchGroup && row.template.groupOrder === PupilNewMatchGroupOrder
@@ -222,13 +202,17 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
     if (successfulScreenings.length > 0) {
         ctx.lastScreeningDate = successfulScreenings[0].updatedAt.toISOString();
     }
-    for (let i = 0; i < pupil.openMatchRequestCount; i++) {
-        const ghosts = await generatePupilMatching(null, user, hasRequest, successfulScreenings.length > 0, ctx);
+    // This case happens when the student just registered and had a successful screening
+    if (pupil.openMatchRequestCount === 0 && totalMatchCount === 0) {
+        const ghosts = await generatePupilMatching(null, user, hasRequest, hasSuccessfulScreenings, ctx);
         result.push(...ghosts);
     }
-
+    for (let i = 0; i < pupil.openMatchRequestCount; i++) {
+        const ghosts = await generatePupilMatching(null, user, hasRequest, hasSuccessfulScreenings, ctx);
+        result.push(...ghosts);
+    }
     for (const userAchievement of newMatchAchievements) {
-        const ghosts = await generatePupilMatching(userAchievement, user, hasRequest, successfulScreenings.length > 0, ctx);
+        const ghosts = await generatePupilMatching(userAchievement, user, hasRequest, hasSuccessfulScreenings, ctx);
         result.push(...ghosts);
     }
 }
@@ -243,6 +227,7 @@ async function deriveStudentMatching(user: User, student: Student, result: achie
         where: { studentId: student.id, success: true },
         orderBy: { createdAt: 'desc' },
     });
+    const totalMatchCount = await prisma.match.count({ where: { studentId: student.id } });
 
     const newMatchAchievements = userAchievements.filter(
         (row) => row.template.group === StudentNewMatchGroup && row.template.groupOrder === StudentNewMatchGroupOrder
@@ -254,13 +239,19 @@ async function deriveStudentMatching(user: User, student: Student, result: achie
     if (successfulScreenings.length > 0) {
         ctx.lastScreeningDate = successfulScreenings[0].updatedAt.toISOString();
     }
+    // This case happens when the student just registered and had a successful screening
+    if (student.openMatchRequestCount === 0 && totalMatchCount === 0) {
+        const ghosts = await generateStudentMatching(null, user, hasRequest, ctx);
+        result.push(...ghosts);
+    }
+    // This will
     for (let i = 0; i < student.openMatchRequestCount; i++) {
-        const ghosts = await generateStudentMatching(null, user, hasRequest, successfulScreenings.length > 0, ctx);
+        const ghosts = await generateStudentMatching(null, user, hasRequest, ctx);
         result.push(...ghosts);
     }
 
     for (const userAchievement of newMatchAchievements) {
-        const ghosts = await generateStudentMatching(userAchievement, user, hasRequest, successfulScreenings.length > 0, ctx);
+        const ghosts = await generateStudentMatching(userAchievement, user, hasRequest, ctx);
         result.push(...ghosts);
     }
 }
@@ -269,7 +260,6 @@ async function generateStudentMatching(
     achievement: achievement_with_template | null,
     user: User,
     hasRequest: boolean,
-    hasSuccessfulScreening: boolean,
     ctx: StudentNewMatchGhostContext
 ): Promise<achievement_with_template[]> {
     const result: achievement_with_template[] = [];
@@ -306,16 +296,5 @@ async function generateStudentMatching(
         relation: achievement?.relation ?? randomRelation,
     });
 
-    result.push({
-        id: -1,
-        templateId: -1,
-        userId: user.userID,
-        isSeen: true,
-        template: GhostAchievements.student_new_match_2,
-        context: ctx,
-        recordValue: null,
-        achievedAt: hasSuccessfulScreening || achievement ? new Date() : null,
-        relation: achievement?.relation ?? randomRelation,
-    });
     return result;
 }

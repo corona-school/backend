@@ -29,6 +29,9 @@ const batchOfMetrics = [
     createMetric('student_onboarding_screened', ['student_screening_appointment_done', 'tutor_screening_success', 'instructor_screening_success'], () => {
         return 1;
     }),
+    createMetric('student_onboarding_tutor_screened', ['tutor_screening_success'], () => {
+        return 1;
+    }),
     createMetric('student_onboarding_coc_success', ['student_coc_updated'], () => {
         return 1;
     }),
@@ -49,6 +52,9 @@ const batchOfMetrics = [
     ),
 
     /* CONDUCTED MATCH APPOINTMENT */
+    createMetric('student_add_match_appointment', ['student_add_appointment_match_with_pupil'], () => {
+        return 1;
+    }),
     createMetric('student_conducted_match_appointment', ['student_joined_match_meeting'], () => {
         return 1;
     }),
@@ -106,7 +112,16 @@ const batchOfMetrics = [
     }),
 
     /* Matching */
+    createMetric('pupil_create_new_match_chat', ['pupil_create_new_match_chat'], () => {
+        return 1;
+    }),
+    createMetric('student_create_new_match_chat', ['student_create_new_match_chat'], () => {
+        return 1;
+    }),
     createMetric('pupil_match_create', ['tutee_matching_success'], () => {
+        return 1;
+    }),
+    createMetric('student_match_requested', ['tutor_match_requested'], () => {
         return 1;
     }),
     createMetric('student_match_create', ['tutor_matching_success'], () => {
