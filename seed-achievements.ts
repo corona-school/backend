@@ -83,6 +83,113 @@ export async function importAchievements() {
 
     await prisma.achievement_template.create({
         data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_new_match',
+            groupOrder: 2,
+            sequentialStepName: 'Schüler:in erhalten',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: 'Starte eine Lernpatenschaft',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Wir sind mit vollem Engagement dabei, den:die ideale:n Lernpartner:in für dich zu finden. Sobald wir jemanden entdeckt haben, der:die perfekt zu deinen angegebenen Fächern und Jahrgangsstufen passt, senden wir dir direkt eine E-Mail. Dieser Prozess dauert in der Regel nur ein bis zwei Wochen und hängt davon ab, wie gut deine Angaben und die Verfügbarkeit passender Lernpartner:innen übereinstimmen. Deine Anfrage wurde am {{date}} gestellt – freue dich schon jetzt auf das kommende Lernabenteuer!',
+            achievedDescription: null,
+            image: 'gamification/achievements/release/new_match/five_pieces/step_1.png',
+            achievedImage: null,
+            actionName: 'Lernpartner:in erhalten',
+            actionRedirectLink: null,
+            actionType: achievement_action_type_enum.Wait,
+            condition: 'student_match_create > 0',
+            conditionDataAggregations: JSON.parse('{"student_match_create":{"metric":"student_match_create","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_new_match',
+            groupOrder: 3,
+            sequentialStepName: 'Schüler:in kontaktieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: '{{pupil.firstname}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Hurra, wir haben eine:n Lernpartner:in für dich gefunden! 🎉 {{pupil.firstname}} besucht die {{pupil.grade}} und ist gespannt darauf, gemeinsam mit dir in {{matchSubjects}} zu lernen. Trete über den Chat in Kontakt mit {{pupil.firstname}} und schlage ein erstes Kennenlerngespräch vor. Bitte habe Verständnis, falls nicht sofort eine Rückmeldung erfolgt – manche Schüler:innen überprüfen ihre Nachrichten nicht regelmäßig. Wir führen vor der Vermittlung Gespräche mit allen Schüler:innen, um ihre Bedürfnisse zu verstehen und überprüfen. {{pupil.firstname}} freut sich definitiv darauf, dich kennenzulernen!',
+            achievedDescription: null,
+            image: 'gamification/achievements/release/new_match/five_pieces/step_2.png',
+            achievedImage: null,
+            actionName: '{{pupil.firstname}} kontaktieren',
+            actionRedirectLink: '/chat',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_create_new_match_chat > 0',
+            conditionDataAggregations: JSON.parse('{"student_create_new_match_chat":{"metric":"student_create_new_match_chat","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_new_match',
+            groupOrder: 4,
+            sequentialStepName: 'Termin erstellen',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: '{{pupil.firstname}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Starte dein Kennenlernen mit {{pupil.firstname}} auf unserer Plattform, indem du einen Termin erstellst. Unser System verknüpft deinen Termin automatisch mit einem Zoom-Meeting – Komfort pur! Zusätzlich informieren wir {{pupil.firstname}} automatisch per E-Mail über neu geplante Termine und senden eine Erinnerung kurz vor dem Start des Treffens. Nutze diese Funktion auch zukünftig, um die Verlässlichkeit von {{pupil.firstname}} weiter zu stärken.',
+            achievedDescription: null,
+            image: 'gamification/achievements/release/new_match/five_pieces/step_3.png',
+            achievedImage: null,
+            actionName: 'Termin erstellen',
+            actionRedirectLink: '/match/{{match.id}}',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'student_add_match_appointment > 0',
+            conditionDataAggregations: JSON.parse('{"student_add_match_appointment":{"metric":"student_add_match_appointment","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'student_new_match',
+            groupOrder: 5,
+            sequentialStepName: 'Erstes Gespräch absolvieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: '{{pupil.firstname}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
+            description:
+                'Wow, die Vorfreude steigt – bald startet eure gemeinsame Reise! 🚀 Wir wünschen dir viel Spaß bei deinem ersten Termin in der Lernunterstützung mit {{pupil.firstname}} und hoffen, dass ihr euch gut versteht und alles klappt. Für dein erstes Treffen haben wir einen Leitfaden zusammengestellt, der dir hilfreiche Tipps, Tricks und spannende Gesprächsthemen bietet. Nutze ihn, um dich optimal vorzubereiten und das Beste aus eurer Zusammenarbeit herauszuholen!',
+            achievedDescription:
+                'Herzlichen Glückwunsch zu deinem erfolgreichen ersten Termin in der Lernunterstützung mit {{pupil.firstname}}! Möge diese Begegnung der Beginn einer spannenden und produktiven Lernreise sein. Wir sind sicher, dass eure Zusammenarbeit von Freude und Erfolg geprägt sein wird. Auf eine inspirierende Zeit des gemeinsamen Lernens!',
+            image: 'gamification/achievements/release/new_match/five_pieces/step_4.png',
+            achievedImage: 'gamification/achievements/release/new_match/five_pieces/step_5.png',
+            actionName: 'Zum Termin',
+            actionRedirectLink: '/appointment/{{lecture.id}}',
+            actionType: achievement_action_type_enum.Appointment,
+            condition: 'student_conducted_match_appointment > 0',
+            conditionDataAggregations: JSON.parse(
+                '{"student_conducted_match_appointment":{"metric":"student_conducted_match_appointment","aggregator":"count"}}'
+            ),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
             templateFor: achievement_template_for_enum.Global_Matches,
             group: 'student_conduct_match_appointment',
             groupOrder: 1,
@@ -753,6 +860,84 @@ export async function importAchievements() {
             actionType: achievement_action_type_enum.Action,
             condition: 'pupil_screened_events > 0',
             conditionDataAggregations: JSON.parse('{"pupil_screened_events":{"metric":"pupil_onboarding_screened","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'pupil_new_match',
+            groupOrder: 3,
+            sequentialStepName: 'Lernpartner:in erhalten',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: 'Starte eine Lernpatenschaft',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Wir sind mit vollem Engagement dabei, den:die ideale:n Lernpartner:in für dich zu finden. Sobald wir jemanden entdeckt haben, der:die perfekt zu deinen angegebenen Fächern passt, senden wir dir direkt eine E-Mail. Dieser Prozess dauert in der Regel nur ein bis vier Wochen und hängt davon ab, wie viele Lernpartner:innen derzeit für deine Fächer verfügbar sind. Deine Anfrage wurde am {{date}} gestellt – freue dich schon jetzt auf das kommende Lernabenteuer!',
+            achievedDescription: null,
+            image: 'gamification/achievements/release/new_match/five_pieces/step_2.png',
+            achievedImage: null,
+            actionName: 'Lernpartner:in erhalten',
+            actionRedirectLink: null,
+            actionType: achievement_action_type_enum.Wait,
+            condition: 'pupil_match_create > 0',
+            conditionDataAggregations: JSON.parse('{"pupil_match_create":{"metric":"pupil_match_create","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'pupil_new_match',
+            groupOrder: 4,
+            sequentialStepName: 'Lernpartner:in kontaktieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: '{{student.firstname}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: null,
+            description:
+                'Hurra, wir haben eine:n Lernpartner:in für dich gefunden! 🎉 {{student.firstname}} ist super motiviert, dir in {{matchSubjects}} unter die Arme zu greifen. Um möglichst schnell mit {{student.firstname}} loszulegen, kontaktieren {{student.firstname}} über den Chat und schlage einen Termin für ein erstes Gespräch vor. {{student.firstname}} kann es kaum erwarten, dich kennenzulernen und gemeinsam mit dir durchzustarten!',
+            achievedDescription: null,
+            image: 'gamification/achievements/release/new_match/five_pieces/step_3.png',
+            achievedImage: null,
+            actionName: '{{student.firstname}} kontaktieren',
+            actionRedirectLink: '/chat',
+            actionType: achievement_action_type_enum.Action,
+            condition: 'pupil_create_new_match_chat > 0',
+            conditionDataAggregations: JSON.parse('{"pupil_create_new_match_chat":{"metric":"pupil_create_new_match_chat","aggregator":"count"}}'),
+            isActive: true,
+        },
+    });
+
+    await prisma.achievement_template.create({
+        data: {
+            templateFor: achievement_template_for_enum.Match,
+            group: 'pupil_new_match',
+            groupOrder: 5,
+            sequentialStepName: 'Erstes Gespräch absolvieren',
+            type: achievement_type_enum.SEQUENTIAL,
+            title: 'Neue Lernunterstützung',
+            tagline: '{{student.firstname}}',
+            subtitle: null,
+            footer: null,
+            achievedFooter: 'Wow! Du hast alle Schritte abgeschlossen.',
+            description: '/match/{{match.id}}',
+            achievedDescription:
+                'Herzlichen Glückwunsch zu deinem erfolgreichen ersten Termin in der Lernunterstützung mit {{name}}! Möge diese Begegnung der Beginn einer spannenden und produktiven Lernreise sein. Wir sind sicher, dass eure Zusammenarbeit von Freude und Erfolg geprägt sein wird. Auf eine inspirierende Zeit des gemeinsamen Lernens!',
+            image: 'gamification/achievements/release/new_match/five_pieces/step_4.png',
+            achievedImage: 'gamification/achievements/release/new_match/five_pieces/step_5.png',
+            actionName: 'Zum Match',
+            actionRedirectLink: '/match/{{match.id}}',
+            actionType: achievement_action_type_enum.Appointment,
+            condition: 'pupil_conducted_match_appointment > 0',
+            conditionDataAggregations: JSON.parse('{"pupil_conducted_match_appointment":{"metric":"pupil_conducted_match_appointment","aggregator":"count"}}'),
             isActive: true,
         },
     });

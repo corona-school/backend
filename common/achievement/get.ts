@@ -27,6 +27,10 @@ export async function getUserAchievementsWithTemplates(user: User, byType: Achie
         },
         include: { template: true },
     });
+
+    const derivedAchievements = await deriveAchievements(user, userAchievementsWithTemplates);
+    userAchievementsWithTemplates.push(...derivedAchievements);
+
     return userAchievementsWithTemplates;
 }
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
@@ -43,8 +47,6 @@ const getAchievementById = async (user: User, achievementId: number): Promise<Pu
 // Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
 const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]> => {
     const userAchievements = await getUserAchievementsWithTemplates(user, AchievementType.SEQUENTIAL);
-    const derivedAchievements = await deriveAchievements(user, userAchievements);
-    userAchievements.push(...derivedAchievements);
 
     const userAchievementGroups: { [groupRelation: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
@@ -111,9 +113,6 @@ const getFurtherAchievements = async (user: User): Promise<PublicAchievement[]> 
 // User achievements are already started by the user and are either active or completed.
 const getUserAchievements = async (user: User): Promise<PublicAchievement[]> => {
     const userAchievements = await getUserAchievementsWithTemplates(user);
-    const derivedAchievements = await deriveAchievements(user, userAchievements);
-    userAchievements.push(...derivedAchievements);
-
     const userAchievementGroups: { [group: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
         if (!userAchievementGroups[`${ua.template.group}/${ua.relation}`]) {

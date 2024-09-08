@@ -595,10 +595,18 @@ const _notificationActions = {
         },
     },
     student_add_appointment_match: {
-        description: 'Tutee / Tutor added Match Appointment',
+        description: 'Tutee / Tutor added Match Appointment (Pupil event)',
         sampleContext: {
             student: sampleUser,
             matchId: '1',
+        },
+    },
+    student_add_appointment_match_with_pupil: {
+        description: 'Tutee / Tutor added Match Appointment (Tutee / Tutor event)',
+        sampleContext: {
+            pupil: sampleUser,
+            match: { id: '1' },
+            lecture: {},
         },
     },
     pupil_decline_appointment_group: {
@@ -644,6 +652,20 @@ const _notificationActions = {
         sampleContext: {
             student: sampleUser,
             appointment: sampleAppointment,
+        },
+    },
+    pupil_create_new_match_chat: {
+        description: 'User has clicked on new chat with a match partner',
+        sampleContext: {
+            user: sampleUser,
+            match: { id: '1' },
+        },
+    },
+    student_create_new_match_chat: {
+        description: 'User has clicked on new chat with a match partner',
+        sampleContext: {
+            user: sampleUser,
+            match: { id: '1' },
         },
     },
     missed_one_on_one_chat_message: {

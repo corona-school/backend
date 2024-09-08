@@ -9,6 +9,8 @@ import systemMessages from './localization';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
 import { createHmac } from 'crypto';
+import { actionTaken } from '../notification';
+import { createRelation, EventRelationType } from '../achievement/relation';
 
 const logger = getLogger('Chat');
 const getOrCreateOneOnOneConversation = async (
@@ -200,6 +202,22 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
             ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
         },
     };
+
+    if (contact.match) {
+        if (meUser.studentId) {
+            await actionTaken(meUser, 'student_create_new_match_chat', {
+                user: meUser,
+                match: { id: `${contact.match.matchId}` },
+                relation: createRelation(EventRelationType.Match, contact.match.matchId),
+            });
+        } else {
+            await actionTaken(meUser, 'pupil_create_new_match_chat', {
+                user: meUser,
+                match: { id: `${contact.match.matchId}` },
+                relation: createRelation(EventRelationType.Match, contact.match.matchId),
+            });
+        }
+    }
 
     const conversation = await getOrCreateOneOnOneConversation([meUser, contactUser], conversationInfos, ContactReason.CONTACT);
     logger.info(`Contact conversation was created by ${meUser} with ${contactUser} with ID ${conversation.id} `);
