@@ -444,7 +444,49 @@ void (async function setupDevDB() {
 
     await createPupilMatchRequest(await refetchPupil(pupil1));
     await createStudentMatchRequest(await refetchStudent(student1));
-    await createMatch(await refetchPupil(pupil1), await refetchStudent(student1), TEST_POOL);
+    const match1 = await createMatch(await refetchPupil(pupil1), await refetchStudent(student1), TEST_POOL);
+
+    const topic1 = await prisma.learning_topic.create({
+        data: {
+            matchId: match1.id,
+            name: 'Nullstellenbestimmung',
+            subject: 'Mathematik',
+            pupilId: match1.pupilId,
+        },
+    });
+
+    await prisma.learning_assignment.create({
+        data: {
+            status: 'pending',
+            task: 'Bestimme die Nullstellen der Funktion f(x) = x ** 2 - 9',
+            topicId: topic1.id,
+        },
+    });
+
+    await prisma.learning_assignment.create({
+        data: {
+            status: 'pending',
+            task: 'Bestimme die Nullstellen der Funktion f(x) = x ** 2 - 6x + 9',
+            topicId: topic1.id,
+        },
+    });
+
+    const topic2 = await prisma.learning_topic.create({
+        data: {
+            matchId: match1.id,
+            name: 'Simple Past',
+            subject: 'Englisch',
+            pupilId: match1.pupilId,
+        },
+    });
+
+    await prisma.learning_assignment.create({
+        data: {
+            status: 'pending',
+            task: "Übersetze 'Ich ging gestern zur Schule' ins Englische",
+            topicId: topic2.id,
+        },
+    });
 
     await createPupilMatchRequest(await refetchPupil(pupil2));
     await createStudentMatchRequest(await refetchStudent(student1));
