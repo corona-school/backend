@@ -37,7 +37,7 @@
         "db:deploy-migrations": "prisma migrate deploy"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.369.0",
+        "@aws-sdk/client-s3": "^3.645.0",
         "@aws-sdk/s3-request-presigner": "^3.137.0",
         "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
