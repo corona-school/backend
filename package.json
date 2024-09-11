@@ -55,7 +55,7 @@
         "dotenv": "^8.2.0",
         "dotenv-cli": "^7.3.0",
         "ejs": "^3.1.10",
-        "express": "^4.19.2",
+        "express": "^4.20.0",
         "express-favicon": "^2.0.1",
         "graphql": "15.7.2",
         "graphql-fields": "^2.0.3",
