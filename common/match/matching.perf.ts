@@ -9,17 +9,18 @@ import { gradeAsInt } from '../util/gradestrings';
 /* Export from all pupils and students that were in a match till 14.09.2024
    (since we started recording match request dates)
 
-   SELECT "student"."subjects", "student"."state", "match"."studentFirstMatchRequest" FROM "student"
-      INNER JOIN "match" ON "match"."studentId" = "student"."id"
-      WHERE "match"."studentFirstMatchRequest" IS NOT NULL
-      ORDER BY "match"."studentFirstMatchRequest" ASC;
+SELECT "student"."id", "student"."subjects", "student"."state", "match"."studentFirstMatchRequest" AS "requestAt" FROM "student"
+  INNER JOIN "match" ON "match"."studentId" = "student"."id"
+  WHERE "match"."studentFirstMatchRequest" IS NOT NULL
+  ORDER BY "match"."studentFirstMatchRequest" ASC;
 
-   SELECT "pupil"."subjects", "pupil"."state", "pupil"."grade", "match"."pupilFirstMatchRequest" FROM "pupil"
-      INNER JOIN "match" ON "match"."pupilId" = "pupil"."id"
-      WHERE "match"."pupilFirstMatchRequest" IS NOT NULL
-      ORDER BY "match"."pupilFirstMatchRequest" ASC;
+SELECT "pupil"."id", "pupil"."subjects", "pupil"."state", "pupil"."grade", "match"."pupilFirstMatchRequest" AS "requestAt" FROM "pupil"
+  INNER JOIN "match" ON "match"."pupilId" = "pupil"."id"
+  WHERE "match"."pupilFirstMatchRequest" IS NOT NULL
+  ORDER BY "match"."pupilFirstMatchRequest" ASC;
 */
 interface HistoryEntry {
+    id: number;
     requestAt: string;
     subjects: string;
     state: pupil_state_enum | student_state_enum;
@@ -29,18 +30,23 @@ interface HistoryEntry {
 const pupils = JSON.parse(readFileSync(__dirname + '/matching.perf.pupil.json', { encoding: 'utf-8' })) as HistoryEntry[];
 const students = JSON.parse(readFileSync(__dirname + '/matching.perf.student.json', { encoding: 'utf-8' })) as HistoryEntry[];
 
-async function computeOldMatchings(requests: MatchRequest[], offers: MatchOffer[]) {
+async function computeOldMatchings(
+    requests: MatchRequest[],
+    offers: MatchOffer[],
+    matchesPerPupil: { [pupilId: string]: string[] },
+    matchesPerStudent: { [studentId: string]: string[] }
+) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { match } = await import('corona-school-matching');
 
     const helpees = requests.map((it, idx) => ({
         id: idx,
-        uuid: `${idx}`,
+        uuid: `${it.pupilId}`,
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
         createdAt: it.requestAt,
-        excludeMatchesWith: [],
+        excludeMatchesWith: matchesPerPupil[`${it.pupilId}`] ?? [],
         state: it.state,
         grade: it.grade,
         matchingPriority: 1,
@@ -49,11 +55,11 @@ async function computeOldMatchings(requests: MatchRequest[], offers: MatchOffer[
 
     const helpers = offers.map((it, idx) => ({
         id: idx,
-        uuid: `${idx}`,
+        uuid: `${it.studentId}`,
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
         createdAt: it.requestAt,
-        excludeMatchesWith: [],
+        excludeMatchesWith: matchesPerStudent[`${it.studentId}`] ?? [],
         state: it.state,
         // firstMatchRequest: student.firstMatchRequest
     }));
@@ -75,8 +81,6 @@ async function computeOldMatchings(requests: MatchRequest[], offers: MatchOffer[
     return matching;
 }
 
-const algos = { new: computeMatchings, old: computeOldMatchings };
-
 describe('Real World Matching Performance', () => {
     test.each([
         // New Algorithm
@@ -84,13 +88,13 @@ describe('Real World Matching Performance', () => {
             'new',
             1000,
             {
-                matchCountSum: 1045,
-                matchCountAvg: 1045,
-                matchingSubjectsSum: 2033,
-                matchingSubjectsAvg: 1.9454545454545455,
-                matchingState: 112,
-                pupilWaitingTimeAvg: 263.2308717733258,
-                studentWaitingTimeAvg: 308.0854242005476,
+                matchCountSum: 992,
+                matchCountAvg: 992,
+                matchingSubjectsSum: 1928,
+                matchingSubjectsAvg: 1.9435483870967742,
+                matchingState: 104,
+                pupilWaitingTimeAvg: 265.13938902154763,
+                studentWaitingTimeAvg: 307.9948034227647,
                 matchRuns: 1,
             },
         ],
@@ -100,11 +104,11 @@ describe('Real World Matching Performance', () => {
             {
                 matchCountSum: 1045,
                 matchCountAvg: 15.833333333333334,
-                matchingSubjectsSum: 1781,
-                matchingSubjectsAvg: 1.7043062200956938,
-                matchingState: 118,
-                pupilWaitingTimeAvg: 8.363637099337685,
-                studentWaitingTimeAvg: 54.521507174685425,
+                matchingSubjectsSum: 1782,
+                matchingSubjectsAvg: 1.7052631578947368,
+                matchingState: 111,
+                pupilWaitingTimeAvg: 8.261916506434973,
+                studentWaitingTimeAvg: 54.33950775279106,
                 matchRuns: 66,
             },
         ],
@@ -114,11 +118,11 @@ describe('Real World Matching Performance', () => {
             {
                 matchCountSum: 1045,
                 matchCountAvg: 2.4189814814814814,
-                matchingSubjectsSum: 1733,
-                matchingSubjectsAvg: 1.6583732057416267,
-                matchingState: 119,
-                pupilWaitingTimeAvg: 3.8293450684808668,
-                studentWaitingTimeAvg: 49.29864967141816,
+                matchingSubjectsSum: 1732,
+                matchingSubjectsAvg: 1.6574162679425837,
+                matchingState: 127,
+                pupilWaitingTimeAvg: 3.8739144757442903,
+                studentWaitingTimeAvg: 49.6384115727672,
                 matchRuns: 432,
             },
         ],
@@ -126,7 +130,7 @@ describe('Real World Matching Performance', () => {
         ['old', 1000, {}],
         ['old', 10, {}],
         ['old', 1, {}],
-    ])('%s algorithm - Run every %s days', (algo, runDays, expectedSummary) => {
+    ])('%s algorithm - Run every %s days', async (algo, runDays, expectedSummary) => {
         let log = '';
         let pupilIdx = 0,
             studentIdx = 0;
@@ -147,9 +151,17 @@ describe('Real World Matching Performance', () => {
         let runtime = 0;
         let matchRuns = 0;
 
-        function runMatching() {
+        // Duplicate tracking
+        const matchIds = new Set<string>();
+        const matchesPerPupil: { [pupilId: string]: string[] } = {};
+        const matchesPerStudent: { [studentId: string]: string[] } = {};
+
+        async function runMatching() {
             const start = performance.now();
-            const runMatches = algos[algo](requestPool, offerPool);
+            const runMatches =
+                algo === 'new'
+                    ? computeMatchings(requestPool, offerPool, matchIds)
+                    : await computeOldMatchings(requestPool, offerPool, matchesPerPupil, matchesPerStudent);
             const duration = performance.now() - start;
             runtime += duration;
             matchRuns += 1;
@@ -158,6 +170,13 @@ describe('Real World Matching Performance', () => {
 
             matchCount.push(runMatches.length);
             for (const match of runMatches) {
+                // --- Matches must be unique ---
+                const matchId = `${match.request.pupilId}/${match.offer.studentId}`;
+                expect(matchIds.has(matchId)).toBeFalsy();
+                matchIds.add(matchId);
+                (matchesPerPupil[`${match.request.pupilId}`] ??= []).push(`${match.offer.studentId}`);
+                (matchesPerStudent[`${match.offer.studentId}`] ??= []).push(`${match.request.pupilId}`);
+
                 // --- Track Statistics ---
                 if (match.request.state === match.offer.state) {
                     matchingState += 1;
@@ -200,6 +219,7 @@ describe('Real World Matching Performance', () => {
             if (!student || pupil.requestAt < student.requestAt) {
                 // For ISO dates string order = date order
                 requestPool.push({
+                    pupilId: pupil.id,
                     grade: gradeAsInt(pupil.grade!),
                     state: pupil.state,
                     subjects: parseSubjectString(pupil.subjects),
@@ -211,6 +231,7 @@ describe('Real World Matching Performance', () => {
             } else {
                 assert(student);
                 offerPool.push({
+                    studentId: student.id,
                     state: student.state,
                     subjects: parseSubjectString(student.subjects),
                     requestAt: new Date(student.requestAt),
@@ -226,11 +247,11 @@ describe('Real World Matching Performance', () => {
 
             // Run the matching after every N days, after a request or offer was added
             if (+currentDate > +matchRunDate + runDays * 24 * 60 * 60 * 1000) {
-                runMatching();
+                await runMatching();
             }
         }
 
-        runMatching();
+        await runMatching();
 
         const summary = {
             matchCountSum: sum(matchCount),
