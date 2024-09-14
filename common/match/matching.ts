@@ -3,6 +3,7 @@ import { maxWeightAssign } from 'munkres-algorithm';
 import { getPupilGradeAsString } from '../pupil';
 import { gradeAsInt } from '../util/gradestrings';
 import { parseSubjectString } from '../util/subjectsutils';
+import assert from 'assert';
 
 // ------- The Matching Algorithm ------------
 // For a series of match requests and match offers computes
@@ -10,6 +11,7 @@ import { parseSubjectString } from '../util/subjectsutils';
 
 export type MatchRequest = Readonly<{
     pupil?: Pupil;
+    pupilId: number;
 
     // Moved here from the pupil to decouple the matching algorithm
     // from the user representation
@@ -25,6 +27,7 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
     for (const pupil of pupils) {
         const request: MatchRequest = {
             pupil,
+            pupilId: pupil.id,
             grade: gradeAsInt(pupil.grade),
             state: pupil.state,
             subjects: parseSubjectString(pupil.subjects),
@@ -41,6 +44,7 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
 
 export type MatchOffer = Readonly<{
     student?: Student;
+    studentId: number;
 
     subjects: { name: string; grade?: { min: number; max: number } }[];
     state: student_state_enum;
@@ -53,6 +57,7 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
     for (const student of students) {
         const offer: MatchOffer = {
             student,
+            studentId: student.id,
             state: student.state,
             subjects: parseSubjectString(student.subjects),
             requestAt: student.firstMatchRequest,
@@ -114,7 +119,9 @@ export function matchScore(request: MatchRequest, offer: MatchOffer): number {
 // ----------- Matching -------------
 // Computes an optimal assignment according to the scores between
 // all requests and offers
-export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[]): Matching {
+//
+// excludeMatchings: Set of "pupilId/studentId"
+export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[], excludeMatchings: ReadonlySet<string> = new Set()): Matching {
     // Adjacency Matrix for Scores between Requests and Offers:
     //          Requests -->
     //              0     1      2      3
@@ -128,7 +135,11 @@ export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[])
     let debug = 'Input:\n';
     for (const [requestID, request] of requests.entries()) {
         for (const [offerID, offer] of offers.entries()) {
-            const score = matchScore(request, offer);
+            // Exclude pupil / student combinations that were already matched before
+            const matchId = `${request.pupilId}/${offer.studentId}`;
+            const isAllowed = !excludeMatchings.has(matchId);
+
+            const score = isAllowed ? matchScore(request, offer) : -Infinity;
             scores[offerID + offers.length * requestID] = score;
             debug += ` - request ${requestID}, offer ${offerID}: ${score}\n`;
         }
@@ -143,11 +154,26 @@ export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[])
 
     const matching: Matching = [];
 
+    const excludeDuplicateAssignments = new Set<string>();
+
     debug += '\nOutput:\n';
     for (const [requestID, offerID] of assignments.entries()) {
         if (offerID === null) {
             continue;
         }
+
+        const request = requests[requestID];
+        const offer = offers[offerID];
+        const matchId = `${request.pupilId}/${offer.studentId}`;
+
+        assert(!excludeMatchings.has(matchId));
+
+        // If a pupil has to requests and a student has two offers,
+        // prevent them from being matched twice
+        if (excludeDuplicateAssignments.has(matchId)) {
+            continue;
+        }
+        excludeDuplicateAssignments.add(matchId);
 
         debug += ` - request: ${requestID}, offer: ${offerID}\n`;
 
