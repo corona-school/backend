@@ -46,7 +46,7 @@ async function computeOldMatchings(
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
         createdAt: it.requestAt,
-        excludeMatchesWith: matchesPerPupil[`${it.pupilId}`] ?? [],
+        excludeMatchesWith: (matchesPerPupil[`${it.pupilId}`] ?? []).map((uuid) => ({ uuid })),
         state: it.state,
         grade: it.grade,
         matchingPriority: 1,
@@ -59,7 +59,7 @@ async function computeOldMatchings(
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
         createdAt: it.requestAt,
-        excludeMatchesWith: matchesPerStudent[`${it.studentId}`] ?? [],
+        excludeMatchesWith: (matchesPerStudent[`${it.studentId}`] ?? []).map((uuid) => ({ uuid })),
         state: it.state,
         // firstMatchRequest: student.firstMatchRequest
     }));
