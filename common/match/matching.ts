@@ -16,6 +16,7 @@ export type MatchRequest = Readonly<{
     grade: number;
     subjects: { name: string; mandatory?: boolean }[];
     state: pupil_state_enum;
+    requestAt: Date;
 }>;
 
 export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
@@ -27,6 +28,7 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
             grade: gradeAsInt(pupil.grade),
             state: pupil.state,
             subjects: parseSubjectString(pupil.subjects),
+            requestAt: pupil.firstMatchRequest,
         };
 
         for (let i = 0; i < pupil.openMatchRequestCount; i++) {
@@ -42,6 +44,7 @@ export type MatchOffer = Readonly<{
 
     subjects: { name: string; grade?: { min: number; max: number } }[];
     state: student_state_enum;
+    requestAt: Date;
 }>;
 
 export function studentsToOffers(students: Student[]): MatchOffer[] {
@@ -52,6 +55,7 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
             student,
             state: student.state,
             subjects: parseSubjectString(student.subjects),
+            requestAt: student.firstMatchRequest,
         };
 
         for (let i = 0; i < student.openMatchRequestCount; i++) {
@@ -153,7 +157,7 @@ export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[])
         });
     }
 
-    console.log(debug);
+    // console.log(debug);
 
     return matching;
 }
