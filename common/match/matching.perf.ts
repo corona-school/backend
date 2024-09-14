@@ -273,6 +273,8 @@ describe('Real World Matching Performance', () => {
         }
 
         await runMatching();
+        // Run this twice, just in case the algo skipped duplicate assignments
+        await runMatching();
 
         const summary = {
             matchCountSum: sum(matchCount),
