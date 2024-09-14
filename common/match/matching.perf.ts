@@ -148,9 +148,48 @@ describe('Real World Matching Performance', () => {
             },
         ],
         // Old Algorithm
-        ['old', 1000, {}],
-        ['old', 10, {}],
-        ['old', 1, {}],
+        [
+            'old',
+            1000,
+            {
+                matchCountSum: 883,
+                matchCountAvg: 441.5,
+                matchingSubjectsSum: 1824,
+                matchingSubjectsAvg: 2.0656851642129106,
+                matchingState: 472,
+                pupilWaitingTimeAvg: 283.9889498853212,
+                studentWaitingTimeAvg: 399.3507213564743,
+                matchRuns: 2,
+            },
+        ],
+        [
+            'old',
+            10,
+            {
+                matchCountSum: 1023,
+                matchCountAvg: 15.26865671641791,
+                matchingSubjectsSum: 1843,
+                matchingSubjectsAvg: 1.801564027370479,
+                matchingState: 381,
+                pupilWaitingTimeAvg: 7.3103790962831745,
+                studentWaitingTimeAvg: 63.7282721143899,
+                matchRuns: 67,
+            },
+        ],
+        [
+            'old',
+            1,
+            {
+                matchCountSum: 1023,
+                matchCountAvg: 2.3625866050808315,
+                matchingSubjectsSum: 1778,
+                matchingSubjectsAvg: 1.7380254154447703,
+                matchingState: 341,
+                pupilWaitingTimeAvg: 2.383032886243719,
+                studentWaitingTimeAvg: 52.283081214712084,
+                matchRuns: 433,
+            },
+        ],
     ])('%s algorithm - Run every %s days', async (algo, runDays, expectedSummary) => {
         let log = '';
         let pupilIdx = 0,
