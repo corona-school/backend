@@ -1,4 +1,4 @@
-import { achievement_action_type_enum, achievement_event, achievement_template, achievement_type_enum, lecture } from '@prisma/client';
+import { achievement_action_type_enum, achievement_event, achievement_type_enum, lecture } from '@prisma/client';
 import { ActionID, SpecificNotificationContext } from '../notification/actions';
 import { User } from '../user';
 import { prisma } from '../prisma';
@@ -90,7 +90,7 @@ export type ActionEvent<ID extends ActionID> = {
     context: SpecificNotificationContext<ID>;
 };
 
-type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+export type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievement_with_template = ThenArg<ReturnType<typeof getUserAchievementWithTemplate>>;
 export type AchievementToCheck = Pick<achievement_with_template, 'id' | 'userId' | 'achievedAt' | 'recordValue' | 'context' | 'template' | 'relation'>;
 
