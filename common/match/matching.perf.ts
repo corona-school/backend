@@ -73,9 +73,12 @@ async function computeOldMatchings(
         },
     });
 
+    const requestByUUID = new Map(requests.map((it) => [`${it.pupilId}`, it]));
+    const offerByUUID = new Map(offers.map((it) => [`${it.studentId}`, it]));
+
     const matching: Matching = result.matches.map((it) => ({
-        request: requests[+it.helpee.id],
-        offer: offers[+it.helper.id],
+        request: requestByUUID.get(it.helpee.uuid),
+        offer: offerByUUID.get(it.helper.uuid),
     }));
 
     return matching;
