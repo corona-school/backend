@@ -40,31 +40,52 @@ async function computeOldMatchings(
     // @ts-ignore
     const { match } = await import('corona-school-matching');
 
-    const helpees = requests.map((it, idx) => ({
-        id: idx,
-        uuid: `${it.pupilId}`,
-        matchRequestCount: 1,
-        subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: it.requestAt,
-        excludeMatchesWith: (matchesPerPupil[`${it.pupilId}`] ?? []).map((uuid) => ({ uuid })),
-        state: it.state,
-        grade: it.grade,
-        matchingPriority: 1,
-        // firstMatchRequest: student.firstMatchRequest
-    }));
+    const helperByUUID = new Map();
+    const helpeeByUUID = new Map();
+    const requestByUUID = new Map();
+    const offerByUUID = new Map();
 
-    const helpers = offers.map((it, idx) => ({
-        id: idx,
-        uuid: `${it.studentId}`,
-        matchRequestCount: 1,
-        subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: it.requestAt,
-        excludeMatchesWith: (matchesPerStudent[`${it.studentId}`] ?? []).map((uuid) => ({ uuid })),
-        state: it.state,
-        // firstMatchRequest: student.firstMatchRequest
-    }));
+    for (const request of requests) {
+        const uuid = `${request.pupilId}`;
+        if (helpeeByUUID.has(uuid)) {
+            helpeeByUUID.get(uuid).matchRequestCount += 1;
+        } else {
+            requestByUUID.set(uuid, request);
+            helpeeByUUID.set(uuid, {
+                id: request.pupilId,
+                uuid,
+                matchRequestCount: 1,
+                subjects: request.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
+                createdAt: request.requestAt,
+                excludeMatchesWith: (matchesPerPupil[uuid] ?? []).map((uuid) => ({ uuid })),
+                state: request.state,
+                grade: request.grade,
+                matchingPriority: 1,
+                // firstMatchRequest: student.firstMatchRequest
+            });
+        }
+    }
 
-    const result = match(helpers, helpees, {
+    for (const offer of offers) {
+        const uuid = `${offer.studentId}`;
+        if (helperByUUID.has(uuid)) {
+            helperByUUID.get(uuid).matchRequestCount += 1;
+        } else {
+            offerByUUID.set(uuid, offer);
+            helperByUUID.set(uuid, {
+                id: offer.studentId,
+                uuid,
+                matchRequestCount: 1,
+                subjects: offer.subjects,
+                createdAt: offer.requestAt,
+                excludeMatchesWith: (matchesPerStudent[uuid] ?? []).map((uuid) => ({ uuid })),
+                state: offer.state,
+                // firstMatchRequest: student.firstMatchRequest
+            });
+        }
+    }
+
+    const result = match([...helperByUUID.values()], [...helpeeByUUID.values()], {
         balancingCoefficients: {
             subjectMatching: 0.65,
             state: 0.05,
@@ -72,9 +93,6 @@ async function computeOldMatchings(
             matchingPriority: 0.1,
         },
     });
-
-    const requestByUUID = new Map(requests.map((it) => [`${it.pupilId}`, it]));
-    const offerByUUID = new Map(offers.map((it) => [`${it.studentId}`, it]));
 
     const matching: Matching = result.matches.map((it) => ({
         request: requestByUUID.get(it.helpee.uuid),
@@ -175,7 +193,7 @@ describe('Real World Matching Performance', () => {
             for (const match of runMatches) {
                 // --- Matches must be unique ---
                 const matchId = `${match.request.pupilId}/${match.offer.studentId}`;
-                // TODO: expect(matchIds.has(matchId)).toBeFalsy();
+                expect(matchIds.has(matchId)).toBeFalsy();
                 matchIds.add(matchId);
                 (matchesPerPupil[`${match.request.pupilId}`] ??= []).push(`${match.offer.studentId}`);
                 (matchesPerStudent[`${match.offer.studentId}`] ??= []).push(`${match.request.pupilId}`);
@@ -196,9 +214,9 @@ describe('Real World Matching Performance', () => {
                         }
                     }
 
-                    /* TODO: if (requestSubject.mandatory) {
+                    if (requestSubject.mandatory) {
                         expect(found).toBeTruthy();
-                    } */
+                    }
                 }
 
                 matchingSubjects.push(subjectCount);
