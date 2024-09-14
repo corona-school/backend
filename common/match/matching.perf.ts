@@ -34,30 +34,31 @@ async function computeOldMatchings(requests: MatchRequest[], offers: MatchOffer[
     // @ts-ignore
     const { match } = await import('corona-school-matching');
 
-    const oldRequests = requests.map((it, idx) => ({
+    const helpees = requests.map((it, idx) => ({
         id: idx,
         uuid: `${idx}`,
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: new Date(),
+        createdAt: it.requestAt,
         excludeMatchesWith: [],
         state: it.state,
         grade: it.grade,
+        matchingPriority: 1,
         // firstMatchRequest: student.firstMatchRequest
     }));
 
-    const oldOffers = offers.map((it, idx) => ({
+    const helpers = offers.map((it, idx) => ({
         id: idx,
         uuid: `${idx}`,
         matchRequestCount: 1,
         subjects: it.subjects.map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: new Date(),
+        createdAt: it.requestAt,
         excludeMatchesWith: [],
         state: it.state,
         // firstMatchRequest: student.firstMatchRequest
     }));
 
-    const result = match(oldRequests, oldOffers, {
+    const result = match(helpers, helpees, {
         balancingCoefficients: {
             subjectMatching: 0.65,
             state: 0.05,
@@ -76,6 +77,7 @@ const algos = { new: computeMatchings, old: computeOldMatchings };
 
 describe('Real World Matching Performance', () => {
     test.each([
+        // New Algorithm
         [
             'new',
             1000,
@@ -90,7 +92,6 @@ describe('Real World Matching Performance', () => {
                 matchRuns: 1,
             },
         ],
-        // ["old", 1000],
         [
             'new',
             10,
@@ -105,7 +106,6 @@ describe('Real World Matching Performance', () => {
                 matchRuns: 66,
             },
         ],
-        // ["old", 10],
         [
             'new',
             1,
@@ -120,7 +120,9 @@ describe('Real World Matching Performance', () => {
                 matchRuns: 432,
             },
         ],
-        // ["old", 1]
+        ['old', 1000, {}],
+        ['old', 10, {}],
+        ['old', 1, {}],
     ])('%s algorithm - Run every %s days', (algo, runDays, expectedSummary) => {
         let log = '';
         let pupilIdx = 0,
