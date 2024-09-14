@@ -71,6 +71,8 @@ async function computeOldMatchings(requests: MatchRequest[], offers: MatchOffer[
         request: requests[+it.helpee.uuid],
         offer: offers[+it.helper.uuid],
     }));
+
+    return matching;
 }
 
 const algos = { new: computeMatchings, old: computeOldMatchings };
@@ -120,6 +122,7 @@ describe('Real World Matching Performance', () => {
                 matchRuns: 432,
             },
         ],
+        // Old Algorithm
         ['old', 1000, {}],
         ['old', 10, {}],
         ['old', 1, {}],
@@ -155,6 +158,7 @@ describe('Real World Matching Performance', () => {
 
             matchCount.push(runMatches.length);
             for (const match of runMatches) {
+                // --- Track Statistics ---
                 if (match.request.state === match.offer.state) {
                     matchingState += 1;
                 }
@@ -179,6 +183,7 @@ describe('Real World Matching Performance', () => {
                 studentWaitingTime.push((+currentDate - +match.offer.requestAt) / 1000 / 60 / 60 / 24);
                 pupilWaitingTime.push((+currentDate - +match.request.requestAt) / 1000 / 60 / 60 / 24);
 
+                // --- Remove match participants from pools ---
                 requestPool.splice(requestPool.indexOf(match.request), 1);
                 offerPool.splice(offerPool.indexOf(match.offer), 1);
             }
@@ -190,6 +195,8 @@ describe('Real World Matching Performance', () => {
             const pupil = pupils[pupilIdx];
             const student = students[studentIdx];
 
+            // Joining the sorted pupil and student lists,
+            //  so that they are added in order to the offer and request pools
             if (!student || pupil.requestAt < student.requestAt) {
                 // For ISO dates string order = date order
                 requestPool.push({
@@ -217,6 +224,7 @@ describe('Real World Matching Performance', () => {
                 matchRunDate = currentDate;
             }
 
+            // Run the matching after every N days, after a request or offer was added
             if (+currentDate > +matchRunDate + runDays * 24 * 60 * 60 * 1000) {
                 runMatching();
             }
