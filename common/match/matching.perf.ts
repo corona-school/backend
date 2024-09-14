@@ -74,8 +74,8 @@ async function computeOldMatchings(
     });
 
     const matching: Matching = result.matches.map((it) => ({
-        request: requests[+it.helpee.uuid],
-        offer: offers[+it.helper.uuid],
+        request: requests[+it.helpee.id],
+        offer: offers[+it.helper.id],
     }));
 
     return matching;
