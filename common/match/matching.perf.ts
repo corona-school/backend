@@ -109,13 +109,13 @@ describe('Real World Matching Performance', () => {
             'new',
             1000,
             {
-                matchCountSum: 1043,
-                matchCountAvg: 521.5,
-                matchingSubjectsSum: 2005,
-                matchingSubjectsAvg: 1.922339405560882,
-                matchingState: 482,
-                pupilWaitingTimeAvg: 263.45419075374645,
-                studentWaitingTimeAvg: 297.5790036920632,
+                matchCountSum: 1041,
+                matchCountAvg: 520.5,
+                matchingSubjectsSum: 1954,
+                matchingSubjectsAvg: 1.877041306436119,
+                matchingState: 484,
+                pupilWaitingTimeAvg: 294.63748241129935,
+                studentWaitingTimeAvg: 328.5918544018619,
                 matchRuns: 2,
             },
         ],
@@ -123,13 +123,13 @@ describe('Real World Matching Performance', () => {
             'new',
             10,
             {
-                matchCountSum: 1045,
-                matchCountAvg: 15.597014925373134,
-                matchingSubjectsSum: 1750,
-                matchingSubjectsAvg: 1.674641148325359,
+                matchCountSum: 1044,
+                matchCountAvg: 15.582089552238806,
+                matchingSubjectsSum: 1793,
+                matchingSubjectsAvg: 1.7174329501915708,
                 matchingState: 332,
-                pupilWaitingTimeAvg: 8.301260696061501,
-                studentWaitingTimeAvg: 51.520582561824405,
+                pupilWaitingTimeAvg: 20.26238745497861,
+                studentWaitingTimeAvg: 61.03486072712683,
                 matchRuns: 67,
             },
         ],
@@ -137,13 +137,13 @@ describe('Real World Matching Performance', () => {
             'new',
             1,
             {
-                matchCountSum: 1045,
-                matchCountAvg: 2.4133949191685913,
-                matchingSubjectsSum: 1706,
-                matchingSubjectsAvg: 1.632535885167464,
-                matchingState: 317,
-                pupilWaitingTimeAvg: 3.8860312011563063,
-                studentWaitingTimeAvg: 48.176885992856256,
+                matchCountSum: 1044,
+                matchCountAvg: 2.4110854503464205,
+                matchingSubjectsSum: 1795,
+                matchingSubjectsAvg: 1.7193486590038314,
+                matchingState: 323,
+                pupilWaitingTimeAvg: 17.05913367225194,
+                studentWaitingTimeAvg: 57.4907587186702,
                 matchRuns: 433,
             },
         ],
@@ -222,7 +222,7 @@ describe('Real World Matching Performance', () => {
             const start = performance.now();
             const runMatches =
                 algo === 'new'
-                    ? computeMatchings(requestPool, offerPool, matchIds)
+                    ? computeMatchings(requestPool, offerPool, matchIds, currentDate)
                     : await computeOldMatchings(requestPool, offerPool, matchesPerPupil, matchesPerStudent);
             const duration = performance.now() - start;
             runtime += duration;
@@ -313,6 +313,7 @@ describe('Real World Matching Performance', () => {
             }
         }
 
+        currentDate = new Date(+currentDate + 31 * 24 * 60 * 60 * 1000);
         await runMatching();
         // Run this twice, just in case the algo skipped duplicate assignments
         await runMatching();

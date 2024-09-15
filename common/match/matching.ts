@@ -92,10 +92,14 @@ async function getMatchExclusions(requests: MatchRequest[], offers: MatchOffer[]
 // and -Infinity if it shall not be matched
 export const NO_MATCH = -Infinity;
 
-// Add a bonus to every potential match, to prioritize many matches over some perfect matches
-const MATCH_SCORE = 0;
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export function matchScore(request: MatchRequest, offer: MatchOffer): number {
+// value -> (0, 1), 0.5 if value = 0
+function sigmoid(value: number) {
+    return 1 / (1 + Math.E ** -value);
+}
+
+export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate = new Date()): number {
     // ---------- Subjects --------------
 
     let matchingSubjects = 0;
@@ -128,14 +132,25 @@ export function matchScore(request: MatchRequest, offer: MatchOffer): number {
         return NO_MATCH;
     }
 
-    let score = MATCH_SCORE;
-    score += matchingSubjects; // TODO: Maybe log(...) to prioritize many matches with
+    const subjectBonus = sigmoid((matchingSubjects - 1) * 2);
 
     // Add a small bonus if the state matches
     // As the probability of a state match is relatively high (about 1/16),
     //  just adding a small bonus is enough to achieve this for 30% of matches
-    if (offer.state === request.state) {
-        score += 0.001;
+    const stateBonus = offer.state === request.state ? 1 : 0;
+
+    // how good a match is in (0, 1)
+    const score = 0.99 * subjectBonus + 0.01 * stateBonus;
+
+    // Retention: Do not directly match not so perfect matches,
+    //  but let them wait for a few days, maybe a better match arrives
+    const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
+    const requestWaitDays = (+currentDate - +request.requestAt) / MS_PER_DAY;
+
+    // Keep them at most for 3 weeks, and linearily increase the chance of getting matched
+    const doRetention = requestWaitDays < 21;
+    if (doRetention && score < 1 - requestWaitDays / 40) {
+        return NO_MATCH;
     }
 
     return score;
@@ -146,7 +161,12 @@ export function matchScore(request: MatchRequest, offer: MatchOffer): number {
 // all requests and offers
 //
 // excludeMatchings: Set of "pupilId/studentId"
-export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[], excludeMatchings: ReadonlySet<string> = new Set()): Matching {
+export function computeMatchings(
+    requests: MatchRequest[],
+    offers: MatchOffer[],
+    excludeMatchings: ReadonlySet<string> = new Set(),
+    currentDate: Date = new Date()
+): Matching {
     // Adjacency Matrix for Scores between Requests and Offers:
     //          Requests -->
     //              0     1      2      3
@@ -164,7 +184,7 @@ export function computeMatchings(requests: MatchRequest[], offers: MatchOffer[],
             const matchId = `${request.pupilId}/${offer.studentId}`;
             const isAllowed = !excludeMatchings.has(matchId);
 
-            const score = isAllowed ? matchScore(request, offer) : -Infinity;
+            const score = isAllowed ? matchScore(request, offer, currentDate) : -Infinity;
             scores[offerID + offers.length * requestID] = score;
             debug += ` - request ${requestID}, offer ${offerID}: ${score}\n`;
         }
