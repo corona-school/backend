@@ -111,11 +111,11 @@ describe('Real World Matching Performance', () => {
             {
                 matchCountSum: 1043,
                 matchCountAvg: 521.5,
-                matchingSubjectsSum: 2010,
-                matchingSubjectsAvg: 1.9271332694151486,
-                matchingState: 110,
-                pupilWaitingTimeAvg: 263.29107416261667,
-                studentWaitingTimeAvg: 306.8982777439437,
+                matchingSubjectsSum: 2005,
+                matchingSubjectsAvg: 1.922339405560882,
+                matchingState: 482,
+                pupilWaitingTimeAvg: 263.45419075374645,
+                studentWaitingTimeAvg: 297.5790036920632,
                 matchRuns: 2,
             },
         ],
@@ -125,11 +125,11 @@ describe('Real World Matching Performance', () => {
             {
                 matchCountSum: 1045,
                 matchCountAvg: 15.597014925373134,
-                matchingSubjectsSum: 1782,
-                matchingSubjectsAvg: 1.7052631578947368,
-                matchingState: 111,
-                pupilWaitingTimeAvg: 8.261916506434973,
-                studentWaitingTimeAvg: 54.33950775279106,
+                matchingSubjectsSum: 1750,
+                matchingSubjectsAvg: 1.674641148325359,
+                matchingState: 332,
+                pupilWaitingTimeAvg: 8.301260696061501,
+                studentWaitingTimeAvg: 51.520582561824405,
                 matchRuns: 67,
             },
         ],
@@ -139,11 +139,11 @@ describe('Real World Matching Performance', () => {
             {
                 matchCountSum: 1045,
                 matchCountAvg: 2.4133949191685913,
-                matchingSubjectsSum: 1732,
-                matchingSubjectsAvg: 1.6574162679425837,
-                matchingState: 127,
-                pupilWaitingTimeAvg: 3.8739144757442903,
-                studentWaitingTimeAvg: 49.6384115727672,
+                matchingSubjectsSum: 1706,
+                matchingSubjectsAvg: 1.632535885167464,
+                matchingState: 317,
+                pupilWaitingTimeAvg: 3.8860312011563063,
+                studentWaitingTimeAvg: 48.176885992856256,
                 matchRuns: 433,
             },
         ],
@@ -255,9 +255,9 @@ describe('Real World Matching Performance', () => {
                         }
                     }
 
-                    /* TODO: if (requestSubject.mandatory) {
+                    if (requestSubject.mandatory) {
                         expect(found).toBeTruthy();
-                    } */
+                    }
                 }
 
                 matchingSubjects.push(subjectCount);
@@ -329,7 +329,7 @@ describe('Real World Matching Performance', () => {
             matchRuns,
         };
 
-        // expect(summary).toMatchObject(expectedSummary);
+        expect(summary).toMatchObject(expectedSummary);
 
         log += `\n\nSummary (every ${runDays} days):\n${JSON.stringify(summary, null, 4)}\n`;
 

@@ -92,10 +92,13 @@ async function getMatchExclusions(requests: MatchRequest[], offers: MatchOffer[]
 // and -Infinity if it shall not be matched
 export const NO_MATCH = -Infinity;
 
+// Add a bonus to every potential match, to prioritize many matches over some perfect matches
+const MATCH_SCORE = 0;
+
 export function matchScore(request: MatchRequest, offer: MatchOffer): number {
     // ---------- Subjects --------------
 
-    let subjectScore = 0;
+    let matchingSubjects = 0;
 
     for (const requestSubject of request.subjects) {
         let found = false;
@@ -110,7 +113,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer): number {
             }
 
             found = true;
-            subjectScore += 1;
+            matchingSubjects += 1;
             break;
         }
 
@@ -121,13 +124,21 @@ export function matchScore(request: MatchRequest, offer: MatchOffer): number {
     }
 
     // At least some subjects need to match
-    if (subjectScore === 0) {
+    if (matchingSubjects === 0) {
         return NO_MATCH;
     }
 
-    // TODO: State + Language + ...
+    let score = MATCH_SCORE;
+    score += matchingSubjects; // TODO: Maybe log(...) to prioritize many matches with
 
-    return subjectScore;
+    // Add a small bonus if the state matches
+    // As the probability of a state match is relatively high (about 1/16),
+    //  just adding a small bonus is enough to achieve this for 30% of matches
+    if (offer.state === request.state) {
+        score += 0.001;
+    }
+
+    return score;
 }
 
 // ----------- Matching -------------
