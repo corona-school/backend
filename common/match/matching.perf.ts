@@ -148,7 +148,9 @@ describe('Real World Matching Performance', () => {
             },
         ],
         // Old Algorithm
-        [
+        // Interestingly the old algorithm is not deterministic
+        // Also running it in the barrier does not make sense as it wont change anyways
+        /* [
             'old',
             1000,
             {
@@ -189,7 +191,7 @@ describe('Real World Matching Performance', () => {
                 studentWaitingTimeAvg: 52.283081214712084,
                 matchRuns: 433,
             },
-        ],
+        ], */
     ])('%s algorithm - Run every %s days', async (algo, runDays, expectedSummary) => {
         let log = '';
         let pupilIdx = 0,
