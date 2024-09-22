@@ -37,7 +37,7 @@
         "db:deploy-migrations": "prisma migrate deploy"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.369.0",
+        "@aws-sdk/client-s3": "^3.645.0",
         "@aws-sdk/s3-request-presigner": "^3.137.0",
         "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
@@ -55,7 +55,7 @@
         "dotenv": "^8.2.0",
         "dotenv-cli": "^7.3.0",
         "ejs": "^3.1.10",
-        "express": "^4.19.2",
+        "express": "^4.20.0",
         "express-favicon": "^2.0.1",
         "graphql": "15.7.2",
         "graphql-fields": "^2.0.3",
@@ -70,7 +70,9 @@
         "moment": "^2.29.2",
         "moment-timezone": "^0.5.35",
         "multer": "^1.4.2",
+        "munkres-algorithm": "^1.0.2",
         "object-hash": "^3.0.0",
+        "openai": "^4.52.7",
         "pg": "^8.7.3",
         "prom-client": "^15.0.0",
         "qrcode": "^1.4.4",

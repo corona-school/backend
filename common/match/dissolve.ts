@@ -72,6 +72,9 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
     if (new Date() < moment(match.createdAt).add(30, 'days').toDate()) {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_quickly', { pupil, matchHash, matchDate, uniqueId });
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_quickly', { student, matchHash, matchDate, uniqueId });
+    } else {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_mature', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_mature', { student, matchHash, matchDate, uniqueId });
     }
 
     if (dissolver && dissolver.email === student.email) {

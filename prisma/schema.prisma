@@ -320,6 +320,85 @@ model jufo_verification_transmission {
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
+// A topic a pupil is currently learning in a certain subject
+// This is used to group notes and assignments
+model learning_topic {
+    id                      Int                     @id() @default(autoincrement())
+    createdAt             DateTime                     @default(now()) @db.Timestamp(6)
+
+    pupilId                 Int
+    pupil                   pupil                   @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    name                    String
+    subject                 course_subject_enum
+
+    matchId                 Int?
+    match                   match?                  @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    assignments             learning_assignment[]
+    notes                   learning_note[]
+}
+
+enum learning_assignment_status {
+    pending
+    in_progress
+    done
+}
+
+// A certain task a pupil is supposed to do, both small "solve equation XY" or large "write an analysis for book XY"
+model learning_assignment {
+    id                      Int                     @id() @default(autoincrement())
+    createdAt             DateTime                     @default(now()) @db.Timestamp(6)
+
+    topicId                 Int
+    topic                   learning_topic          @relation(fields: [topicId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    task                    String
+    status                  learning_assignment_status
+
+    notes                   learning_note[]
+}
+
+enum learning_note_type {
+    question        // from the pupil
+
+    answer          // providing the solution to the assignment
+    correct_answer  // answer marked as correct by the helper
+    wrong_answer    // answer marked as wrong by the helper or tool
+
+    task     // Ask the pupil to do something for the assignment or topic
+
+    comment
+}
+
+// Learning notes are semi-structured collection of texts and images for an assignment or topic
+// which are shared by a pupil, their match partner and assisting tools
+model learning_note {
+    id                      Int                     @id() @default(autoincrement())
+    createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+
+    type                    learning_note_type
+
+    authorID                String? // userID, NULL if from a tool
+    authorName              String
+
+    // Linked to an assignment XOR topic
+
+    topicId                 Int?
+    topic                   learning_topic?          @relation(fields: [topicId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    assignmentId            Int?
+    assignment              learning_assignment?     @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    text                    String
+    // image, file, ...
+
+    replyToId               Int?
+    replyTo                 learning_note?          @relation(name: "reply", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    repliedBy               learning_note[]         @relation(name: "reply")
+}
+
+
 // Till Summer 2023 we only offered "Course Lectures", so a meeting for a Subcourse at a particular point in time
 // Then we evolved "Course Lectures" into "Appointments", were any group of users could meet together.
 // In the codebase we call this 'appointment' and also still 'lecture'
@@ -413,6 +492,8 @@ model match {
   pupil     pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
   student   student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
   lecture   lecture[]
+
+  learning_topics           learning_topic[]
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -625,6 +706,8 @@ model pupil {
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
   gradeUpdatedAt                               DateTime?
+
+  learning_topics                              learning_topic[]
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
