@@ -1,11 +1,6 @@
 import { prisma } from '../prisma';
 import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore The matching algorithm is optional, to allow for slim local setups
-import type { Helpee, Helper, Settings } from 'corona-school-matching';
 import { createMatch } from './create';
-import { parseSubjectString } from '../util/subjectsutils';
-import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
@@ -13,7 +8,7 @@ import { cleanupUnconfirmed, InterestConfirmationStatus, requestInterestConfirma
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
-import { formattedSubjectToSubjectWithGradeRestriction } from './util';
+import { computeMatchings, getMatchExclusions, MatchOffer, MatchRequest, pupilsToRequests, studentsToOffers } from './matching';
 
 const logger = getLogger('MatchingPool');
 
@@ -26,7 +21,6 @@ export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
-    readonly settings: Settings;
     readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<any | never>;
     readonly toggles: readonly Toggle[];
     // There are a few well known toggles:
@@ -128,44 +122,6 @@ export async function getPupilDemandCount(pool: MatchPool, toggles: Toggle[]) {
     )._sum.openMatchRequestCount;
 }
 
-async function studentToHelper(student: Student): Promise<Helper> {
-    const existingMatches = await prisma.match.findMany({
-        select: { pupil: { select: { wix_id: true } } },
-        where: { studentId: student.id },
-    });
-
-    return {
-        id: student.id,
-        uuid: student.wix_id,
-        matchRequestCount: student.openMatchRequestCount,
-        subjects: parseSubjectString(student.subjects).map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: student.createdAt,
-        excludeMatchesWith: existingMatches.map((it) => ({ uuid: it.pupil.wix_id })),
-        state: student.state,
-        // firstMatchRequest: student.firstMatchRequest
-    };
-}
-
-async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
-    const existingMatches = await prisma.match.findMany({
-        select: { student: { select: { wix_id: true } } },
-        where: { pupilId: pupil.id },
-    });
-
-    return {
-        id: pupil.id,
-        uuid: pupil.wix_id,
-        matchRequestCount: pupil.openMatchRequestCount,
-        subjects: parseSubjectString(pupil.subjects),
-        createdAt: pupil.createdAt,
-        excludeMatchesWith: existingMatches.map((it) => ({ uuid: it.student.wix_id })),
-        state: pupil.state,
-        matchingPriority: pupil.matchingPriority,
-        grade: gradeAsInt(pupil.grade),
-        // firstMatchRequest: pupil.firstMatchRequest
-    };
-}
-
 const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
 type InterestConfirmationToggle = (typeof INTEREST_CONFIRMATION_TOGGLES)[number];
 
@@ -234,13 +190,6 @@ function addPupilScreeningFilter(query: Prisma.pupilWhereInput, toggles: string[
 
 /* ---------------------- POOLS ----------------------------------- */
 
-const balancingCoefficients = {
-    subjectMatching: 0.65,
-    state: 0.05,
-    waitingTime: 0.2,
-    matchingPriority: 0.1,
-};
-
 export const TEST_POOL = {
     name: 'TEST-DO-NOT-USE',
     toggles: ['allow-unverified'],
@@ -258,7 +207,6 @@ export const TEST_POOL = {
         }
         return createMatch(pupil, student, this);
     },
-    settings: { balancingCoefficients },
 } as const;
 
 const _pools = [
@@ -306,7 +254,6 @@ const _pools = [
             registrationSource: { notIn: ['plus'] },
         }),
         createMatch,
-        settings: { balancingCoefficients },
     },
     {
         name: 'lern-fair-plus',
@@ -335,7 +282,6 @@ const _pools = [
             registrationSource: { equals: 'plus' },
         }),
         createMatch,
-        settings: { balancingCoefficients },
     },
     TEST_POOL,
 ] as const;
@@ -372,48 +318,77 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const pupils = await getPupils(pool, toggles);
     const students = await getStudents(pool, toggles);
 
-    // The matching algorithm works on it's own entities, but we need to map them back to pupils and students when receiving the result
-    const pupilsMap = new Map(pupils.map((it) => [it.wix_id, it]));
-    const studentsMap = new Map(students.map((it) => [it.wix_id, it]));
+    const offers: MatchOffer[] = studentsToOffers(students);
+    const requests: MatchRequest[] = pupilsToRequests(pupils);
 
-    const helpers: Helper[] = await Promise.all(students.map(studentToHelper));
-    const helpees: Helpee[] = await Promise.all(pupils.map(pupilToHelpee));
-    const mandatoryRequests: Map<string, number> = helpees.reduce((acc, helpee) => {
-        helpee.subjects.filter((x) => x.mandatory).forEach((x) => acc.set(x.name, (acc.get(x.name) ?? 0) + 1));
-        return acc;
-    }, new Map());
+    const subjectStats = new Map<string, { offered: number; requested: number; requestedMandatory: number; fulfilledRequests: number }>();
+
+    for (const request of requests) {
+        for (const subject of request.subjects) {
+            if (!subjectStats.has(subject.name)) {
+                subjectStats.set(subject.name, { fulfilledRequests: 0, offered: 0, requested: 0, requestedMandatory: 0 });
+            }
+
+            const subjectStat = subjectStats.get(subject.name);
+            subjectStat.requested += 1;
+            if (subject.mandatory) {
+                subjectStat.requestedMandatory += 1;
+            }
+        }
+    }
+
+    for (const offer of offers) {
+        for (const subject of offer.subjects) {
+            if (!subjectStats.has(subject.name)) {
+                subjectStats.set(subject.name, { fulfilledRequests: 0, offered: 0, requested: 0, requestedMandatory: 0 });
+            }
+
+            const subjectStat = subjectStats.get(subject.name);
+            subjectStat.offered += 1;
+        }
+    }
+
     timing.preparation = Date.now() - startPreparation;
     logger.info(`MatchingPool(${pool.name}) found ${pupils.length} pupils and ${students.length} students for matching in ${timing.preparation}ms`);
 
     const startMatching = Date.now();
 
-    // To run the matching we need the C++ Part, if it is not installed this will fail at runtime
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const { match } = await import('corona-school-matching');
+    const excludeMatchings = await getMatchExclusions(requests, offers);
+    const result = computeMatchings(requests, offers, excludeMatchings);
 
-    const result = match(helpers, helpees, pool.settings);
-
-    const matches = result.matches.map((it) => ({
-        student: assertExists(studentsMap.get(it.helper.uuid)),
-        pupil: assertExists(pupilsMap.get(it.helpee.uuid)),
+    const matches = result.map((it) => ({
+        student: assertExists(it.offer.student),
+        pupil: assertExists(it.request.pupil),
     }));
 
     timing.matching = Date.now() - startMatching;
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
-    const stats = { ...result.stats, toggles };
-    if (stats.subjectStats) {
-        stats.subjectStats = stats.subjectStats.map((subject) => ({
-            name: subject.name,
-            stats: {
-                offered: subject.stats.offered,
-                requested: subject.stats.requested,
-                requestedMandatory: mandatoryRequests.get(subject.name) ?? 0,
-                fulfilledRequests: subject.stats.fulfilledRequests,
-            },
-        }));
+    for (const matching of result) {
+        for (const offeredSubject of matching.offer.subjects) {
+            for (const requestedSubject of matching.request.subjects) {
+                if (offeredSubject.name === requestedSubject.name) {
+                    const subjectStat = assertExists(subjectStats.get(offeredSubject.name));
+                    subjectStat.fulfilledRequests += 1;
+                }
+            }
+        }
     }
+
+    const stats = {
+        helperCount: students.length,
+        helpeeCount: pupils.length,
+        matchCount: result.length,
+        // The old matching algorithm additionally reported these, removed them for now,
+        // we might want to compute them again if needed:
+        // averageWaitingDaysMatchedHelpee: 0,
+        // mostWaitingDaysUnmatchedHelpee: 0,
+        // numberOfCoveredSubjects: 0,
+        // numberOfUncoveredSubjects: 0,
+        // numberOfOfferedSubjects: 0,
+        toggles,
+        subjectStats: [...subjectStats.entries()].map(([name, stats]) => ({ name, stats })),
+    };
 
     if (apply) {
         const startCommit = Date.now();
@@ -668,18 +643,6 @@ export async function screeningInvitationsToSend(pool: MatchPool) {
         requestsToSendLimited,
     });
     return requestsToSendLimited;
-}
-
-async function offeredSubjects(pool: MatchPool): Promise<string[]> {
-    const subjects = new Set<string>();
-    const students = await getStudents(pool, [], 100);
-    for (const student of students) {
-        for (const subject of JSON.parse(student.subjects)) {
-            subjects.add(subject.name);
-        }
-    }
-
-    return [...subjects];
 }
 
 export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[], toSend: number): Promise<Pupil[]> {
