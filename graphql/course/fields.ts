@@ -21,6 +21,8 @@ class CourseImage {
     regularImageUrl: string;
     @Field((_type) => String)
     smallImageUrl: string;
+    @Field((_type) => String)
+    author: string;
 }
 
 @ObjectType()

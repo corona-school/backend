@@ -6,6 +6,7 @@ interface SearchImagesResponse {
         description: string;
         regularImageUrl: string;
         smallImageUrl: string;
+        author: string;
     }[];
 }
 
@@ -29,6 +30,7 @@ export const searchUnsplashImages = async ({ search, page, take = 9 }: SearchIma
             description: image.alt_description,
             regularImageUrl: image.urls.regular,
             smallImageUrl: image.urls.small,
+            author: image.user?.name,
         })),
         total: response.total,
         totalPages: response.total_pages,
