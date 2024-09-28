@@ -76,7 +76,7 @@ export type Matching = { request: MatchRequest; offer: MatchOffer }[];
 
 // ------------ Match Exclusions ---------
 // Find existing matches in the database which should be excluded from being matched again
-async function getMatchExclusions(requests: MatchRequest[], offers: MatchOffer[]) {
+export async function getMatchExclusions(requests: MatchRequest[], offers: MatchOffer[]) {
     const matches = await prisma.match.findMany({
         where: {
             OR: [{ pupilId: { in: requests.map((it) => it.pupilId) } }, { studentId: { in: offers.map((it) => it.studentId) } }],
