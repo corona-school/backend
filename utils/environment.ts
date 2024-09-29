@@ -25,3 +25,11 @@ export function isGamificationFeatureActive(): boolean {
 export function isWebflowSyncDryRun(): boolean {
     return JSON.parse(process.env.WEBFLOW_SYNC_DRY_RUN || 'true');
 }
+
+export function getLogLevel(defaultLevel: string): string {
+    return process.env.LOG_LEVEL || defaultLevel;
+}
+
+export function getLogFormat(): string | null {
+    return process.env.LOG_FORMAT;
+}
