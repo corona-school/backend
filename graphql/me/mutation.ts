@@ -222,7 +222,7 @@ export class MutateMeResolver {
         logger.info(`Student(${student.id}) requested to become an instructor`);
 
         // User gets the WANNABE_INSTRUCTOR role
-        await updateSessionUser(context, userForStudent(student), getSessionUser(context).secretID);
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).deviceId);
 
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
@@ -241,7 +241,7 @@ export class MutateMeResolver {
         await becomeTutor(student, data);
 
         // User gets the WANNABE_TUTOR role
-        await updateSessionUser(context, userForStudent(student), getSessionUser(context).secretID);
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).deviceId);
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 

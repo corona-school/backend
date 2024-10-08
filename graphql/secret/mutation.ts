@@ -1,6 +1,6 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, getSecretByToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
@@ -10,7 +10,8 @@ import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 import { GraphQLString } from 'graphql';
-import { deleteSessionsBySecret } from '../../common/user/session';
+import { deleteSessionsByDevice } from '../../common/user/session';
+import { prisma } from '../../common/prisma';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -18,8 +19,8 @@ const logger = getLogger('MutateSecretResolver');
 export class MutateSecretResolver {
     @Mutation((returns) => String)
     @Authorized(Role.USER)
-    async tokenCreate(@Ctx() context: GraphQLContext, @Arg('description', { nullable: true }) description: string | null) {
-        return await createToken(getSessionUser(context), /* expiresAt */ null, description);
+    async tokenCreate(@Ctx() context: GraphQLContext, @Arg('description', { nullable: true }) description: string | null, @Arg('deviceId') deviceId: string) {
+        return await createToken(getSessionUser(context), /* expiresAt */ null, description, deviceId);
     }
 
     @Mutation((returns) => String)
@@ -29,7 +30,7 @@ export class MutateSecretResolver {
         inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
-        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`);
+        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`, null);
         logger.info(`Admin/trusted screener created a login token for User(${userId})`);
         return token;
     }
@@ -58,6 +59,15 @@ export class MutateSecretResolver {
         @Arg('token', { nullable: true }) token?: string
     ) {
         let tokenId = id;
+        let deviceId = undefined;
+        if (id) {
+            deviceId = (await prisma.secret.findUnique({ where: { id: tokenId } })).deviceId;
+        } else if (token) {
+            deviceId = (await getSecretByToken(token)).deviceId;
+        } else {
+            throw new UserInputError(`Either the id or the token must be passed`);
+        }
+
         if (id) {
             if (isAdmin(context)) {
                 await revokeToken(null, id);
@@ -66,11 +76,10 @@ export class MutateSecretResolver {
             }
         } else if (token) {
             tokenId = await revokeTokenByToken(token);
-        } else {
-            throw new UserInputError(`Either the id or the token must be passed`);
         }
+
         if (invalidateSessions) {
-            await deleteSessionsBySecret(tokenId);
+            await deleteSessionsByDevice(deviceId);
         }
 
         return true;

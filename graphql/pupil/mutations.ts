@@ -193,7 +193,7 @@ export async function updatePupil(
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForPupil(res), getSessionUser(context).secretID);
+    await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;

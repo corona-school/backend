@@ -13,7 +13,7 @@ const logger = getLogger('Session');
 // As it is persisted in the session, it should only contain commonly accessed fields that are rarely changed
 export interface GraphQLUser extends User {
     roles: Role[];
-    secretID: number | undefined; // the ID of the secret that was used to create this sessionToken
+    deviceId: string | undefined;
 }
 
 export const UNAUTHENTICATED_USER = {
@@ -26,7 +26,7 @@ export const UNAUTHENTICATED_USER = {
     roles: [Role.UNAUTHENTICATED],
     lastLogin: new Date(),
     active: false,
-    secretID: undefined,
+    deviceId: undefined,
 };
 
 /* As we only have one backend, and there is probably no need to scale in the near future,
@@ -74,19 +74,19 @@ export async function updateSessionRolesOfUser(userID: string) {
 
 // O(n)
 // Currently used in session manager to log out all sessions created by a specific device token
-export async function deleteSessionsBySecret(secretID: number) {
-    if (!secretID) {
-        return; // do nothing if secretID is undefined (can happen through loginLegacy)
+export async function deleteSessionsByDevice(deviceId: string) {
+    if (!deviceId) {
+        return; // do nothing if deviceId is undefined
     }
     const sessionsToDelete = [];
     for await (const [sessionToken, user] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
-        if (user.secretID === secretID) {
+        if (user.deviceId === deviceId) {
             sessionsToDelete.push(sessionToken);
         }
     }
 
     for (const sessionToken of sessionsToDelete) {
         await userSessions.delete(sessionToken);
-        logger.info(`Deleted Session(${sessionToken}) as it was created by Secret(${secretID})`);
+        logger.info(`Deleted Session(${sessionToken}) as it was created by DeviceId(${deviceId})`);
     }
 }

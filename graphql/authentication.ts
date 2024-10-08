@@ -21,10 +21,10 @@ export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } f
 
 const logger = getLogger('GraphQL Authentication');
 
-export async function updateSessionUser(context: GraphQLContext, user: User, secretID: number) {
+export async function updateSessionUser(context: GraphQLContext, user: User, deviceId: string) {
     // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
     if (context.user.userID === user.userID) {
-        await loginAsUser(user, context, secretID);
+        await loginAsUser(user, context, deviceId);
     }
 }
 
@@ -113,12 +113,11 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext, secretID: number) {
+export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string) {
     ensureSession(context);
-
     const roles = await evaluateUserRoles(user);
 
-    context.user = { ...user, secretID, roles };
+    context.user = { ...user, deviceId, roles };
 
     await userSessions.set(context.sessionToken, context.user);
     logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
@@ -170,14 +169,14 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string, @Arg('deviceId') deviceId: string) {
         email = validateEmail(email);
 
         ensureSession(context);
 
         try {
-            const { user, secretID } = await loginPassword(email, password);
-            await loginAsUser(user, context, secretID);
+            const { user } = await loginPassword(email, password);
+            await loginAsUser(user, context, deviceId);
 
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
@@ -193,10 +192,10 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string) {
+    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId') deviceId: string) {
         try {
-            const { user, secretID } = await loginToken(token);
-            await loginAsUser(user, context, secretID);
+            const { user } = await loginToken(token, deviceId);
+            await loginAsUser(user, context, deviceId);
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
             } else if (user.pupilId) {
@@ -213,7 +212,7 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     async loginRefresh(@Ctx() context: GraphQLContext) {
         const sessionUser = getSessionUser(context);
-        await updateSessionUser(context, sessionUser, sessionUser.secretID);
+        await updateSessionUser(context, sessionUser, sessionUser.deviceId);
         return true;
     }
 
