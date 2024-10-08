@@ -113,7 +113,7 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string) {
+export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string | null) {
     ensureSession(context);
     const roles = await evaluateUserRoles(user);
 
@@ -169,7 +169,12 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string, @Arg('deviceId') deviceId: string) {
+    async loginPassword(
+        @Ctx() context: GraphQLContext,
+        @Arg('email') email: string,
+        @Arg('password') password: string,
+        @Arg('deviceId', { nullable: true }) deviceId: string | null
+    ) {
         email = validateEmail(email);
 
         ensureSession(context);
