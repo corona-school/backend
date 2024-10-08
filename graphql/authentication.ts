@@ -175,7 +175,7 @@ export class AuthenticationResolver {
         ensureSession(context);
 
         try {
-            const { user } = await loginPassword(email, password);
+            const user = await loginPassword(email, password);
             await loginAsUser(user, context, deviceId);
 
             if (user.studentId) {
@@ -194,7 +194,7 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId') deviceId: string) {
         try {
-            const { user } = await loginToken(token, deviceId);
+            const user = await loginToken(token, deviceId);
             await loginAsUser(user, context, deviceId);
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});

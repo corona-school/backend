@@ -25,7 +25,7 @@ export async function createPassword(user: User, password: string) {
     logger.info(`User(${user.userID}) created password Secret(${created.id})`);
 }
 
-export async function loginPassword(email: string, password: string): Promise<{ user: User; secretID: number } | never> {
+export async function loginPassword(email: string, password: string): Promise<User | never> {
     const user = await getUserByEmail(email, /* active */ true);
 
     const secrets = await prisma.secret.findMany({
@@ -43,7 +43,7 @@ export async function loginPassword(email: string, password: string): Promise<{ 
 
             logger.info(`User(${user.userID}) successfully logged in with password Secret(${secret.id})`);
 
-            return { user, secretID: secret.id };
+            return user;
         }
     }
 

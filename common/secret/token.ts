@@ -118,7 +118,7 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-export async function loginToken(token: string, deviceId: string): Promise<{ user: User; secretID: number } | never> {
+export async function loginToken(token: string, deviceId: string): Promise<User | never> {
     const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
@@ -168,7 +168,7 @@ export async function loginToken(token: string, deviceId: string): Promise<{ use
         await verifyEmail(user);
     }
 
-    return { user, secretID: secret.id };
+    return user;
 }
 
 export async function verifyEmail(user: User) {
