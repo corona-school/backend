@@ -28,6 +28,8 @@
         "heroku:release": "./release.sh",
         "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
         "integration-tests:debug": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests.debug",
+        "unit": "TZ=UTC jest --selectProjects unit",
+        "perf": "TZ=UTC jest --selectProjects perf",
         "test": "TZ=UTC jest",
         "db:reset": "prisma migrate reset --skip-generate",
         "db:reset-hard": "prisma migrate reset -f --skip-generate",
@@ -37,7 +39,7 @@
         "db:deploy-migrations": "prisma migrate deploy"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.369.0",
+        "@aws-sdk/client-s3": "^3.645.0",
         "@aws-sdk/s3-request-presigner": "^3.137.0",
         "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
@@ -47,7 +49,7 @@
         "bcrypt": "^5.0.0",
         "body-parser": "^1.19.0",
         "class-validator": "^0.14.0",
-        "cookie-parser": "^1.4.6",
+        "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "cron": "^1.8.2",
         "date-holidays": "^1.5.3",
@@ -55,7 +57,7 @@
         "dotenv": "^8.2.0",
         "dotenv-cli": "^7.3.0",
         "ejs": "^3.1.10",
-        "express": "^4.19.2",
+        "express": "^4.21.1",
         "express-favicon": "^2.0.1",
         "graphql": "15.7.2",
         "graphql-fields": "^2.0.3",
@@ -70,7 +72,9 @@
         "moment": "^2.29.2",
         "moment-timezone": "^0.5.35",
         "multer": "^1.4.2",
+        "munkres-algorithm": "^1.0.2",
         "object-hash": "^3.0.0",
+        "openai": "^4.52.7",
         "pg": "^8.7.3",
         "prom-client": "^15.0.0",
         "qrcode": "^1.4.4",
@@ -125,7 +129,6 @@
         "typescript": "^4.3.5"
     },
     "optionalDependencies": {
-        "corona-school-matching": "1.3.0",
         "html-pppdf": "^1.0.1"
     },
     "repository": {
@@ -142,36 +145,58 @@
         "lint-staged"
     ],
     "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "ts"
-        ],
-        "preset": "ts-jest/presets/default-esm",
-        "extensionsToTreatAsEsm": [
-            ".ts"
-        ],
-        "testRegex": ".*\\.spec\\.ts$",
-        "moduleNameMapper": {
-            "^(\\.{1,2}/.*)\\.js$": "$1"
-        },
-        "transform": {
-            "^.+\\.[tj]sx?$": [
-                "ts-jest",
-                {
-                    "useESM": true
-                }
-            ]
-        },
-        "collectCoverageFrom": [
-            "**/*.(t|j)s"
-        ],
-        "coverageDirectory": "../coverage",
-        "testEnvironment": "node",
-        "verbose": true,
-        "clearMocks": true,
-        "setupFilesAfterEnv": [
-            "<rootDir>/jest/singletons.ts"
+        "projects": [
+            {
+                "displayName": "unit",
+                "testRegex": [".*\\.spec\\.ts$"],
+                "moduleFileExtensions": [
+                    "js",
+                    "json",
+                    "ts"
+                ],
+                "preset": "ts-jest/presets/default-esm",
+                "extensionsToTreatAsEsm": [
+                    ".ts"
+                ],
+                "moduleNameMapper": {
+                    "^(\\.{1,2}/.*)\\.js$": "$1"
+                },
+                "transform": {
+                    "^.+\\.[tj]sx?$": [
+                        "ts-jest",
+                        {
+                            "useESM": true
+                        }
+                    ]
+                },
+                "testEnvironment": "node",
+                "clearMocks": true,
+                "setupFilesAfterEnv": [
+                    "<rootDir>/jest/singletons.ts"
+                ]
+            },
+            {
+                "displayName": "perf",
+                "testRegex": [".*\\.perf\\.ts$"],
+                "moduleFileExtensions": [
+                    "js",
+                    "json",
+                    "ts"
+                ],
+                "preset": "ts-jest/presets/default-esm",
+                "extensionsToTreatAsEsm": [
+                    ".ts"
+                ],
+                "transform": {
+                    "^.+\\.[tj]sx?$": [
+                        "ts-jest",
+                        {
+                            "useESM": true
+                        }
+                    ]
+                },
+                "testEnvironment": "node"
+            }
         ]
     },
     "nodemonConfig": {

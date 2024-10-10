@@ -25,16 +25,17 @@ export async function updateAppointment(
         throw new Error(`Cannot update past appointment.`);
     }
 
-    const updatedAppointment = await prisma.lecture.update({
-        where: { id: id },
-        data: { ...appointmentUpdate },
-    });
-
-    logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
-
     const sameStart = !newStart || start.toISOString() === newStart.toISOString();
     const sameDuration = !newDuration || duration === newDuration;
     const sameDate = sameStart && sameDuration;
+    const matchAppointmentDateChanged = appointmentType === 'match' && !sameDate;
+
+    const updatedAppointment = await prisma.lecture.update({
+        where: { id: id },
+        data: matchAppointmentDateChanged ? { ...appointmentUpdate, declinedBy: [] } : appointmentUpdate,
+    });
+
+    logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
 
     if (sameDate) {
         return;

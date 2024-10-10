@@ -92,4 +92,6 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await Notification.actionTaken(userForPupil(pupil), 'tutee_matching_success', tuteeContext);
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
+
+    return match;
 }

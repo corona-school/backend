@@ -346,6 +346,9 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     User_achievement: allAdmin,
     Achievement_event: allAdmin,
     Job_run: { _all: nobody },
+    Learning_assignment: allAdmin,
+    Learning_note: allAdmin,
+    Learning_topic: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -421,6 +424,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             waiting_list_enrollment: nobody,
             lastLogin: adminOrOwner,
             gradeUpdatedAt: adminOrOwner,
+            learning_topics: adminOrOwner,
         }),
     },
 

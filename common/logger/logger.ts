@@ -1,9 +1,8 @@
 import tracer from './tracing';
 import formats from 'dd-trace/ext/formats';
-import { isCommandArg } from '../util/basic';
 import { configure, addLayout, getLogger as getlog4jsLogger, Logger as Log4jsLogger } from 'log4js';
 import { getCurrentTransaction } from '../session';
-import { getServiceName, getHostname } from '../../utils/environment';
+import { getServiceName, getHostname, getLogLevel, getLogFormat } from '../../utils/environment';
 
 addLayout('json', function () {
     return function (logEvent) {
@@ -25,12 +24,13 @@ addLayout('json', function () {
     };
 });
 
+const logFormat = getLogFormat();
 let appenders = ['out'];
-if (process.env.LOG_FORMAT === 'json') {
+if (logFormat === 'json') {
     appenders = ['outJson'];
-} else if (process.env.LOG_FORMAT === 'brief') {
+} else if (logFormat === 'brief') {
     appenders = ['outBrief'];
-} else if (process.env.LOG_FORMAT === 'verbose') {
+} else if (logFormat === 'verbose') {
     appenders = ['outBrief', 'fileVerbose'];
 }
 
@@ -83,7 +83,7 @@ configure({
     categories: {
         default: {
             appenders,
-            level: isCommandArg('--debug') ? 'debug' : 'info',
+            level: getLogLevel('info'),
         },
     },
 

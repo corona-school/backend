@@ -39,4 +39,13 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
     Concrete_notification: (user, concreteNotification) => concreteNotification.userId === user.userID,
     Participation_certificate: (user, certificate) => user.pupilId === certificate.pupilId || user.studentId === certificate.studentId,
     User_achievement: (user, achievement) => user.userID === achievement.userId,
+    Learning_topic: async (user, topic) =>
+        topic.pupilId === user.pupilId || (await isOwnedBy['Match'](user, await prisma.match.findUniqueOrThrow({ where: { id: topic.matchId } }))),
+    Learning_assignment: async (user, assignment) =>
+        await isOwnedBy['Learning_topic'](user, await prisma.learning_topic.findUniqueOrThrow({ where: { id: assignment.topicId } })),
+    Learning_note: async (user, note) =>
+        note.authorID === user.userID ||
+        (note.assignmentId &&
+            (await isOwnedBy['Learning_assignment'](user, await prisma.learning_assignment.findUniqueOrThrow({ where: { id: note.assignmentId } })))) ||
+        (note.topicId && (await isOwnedBy['Learning_topic'](user, await prisma.learning_topic.findUniqueOrThrow({ where: { id: note.topicId } })))),
 };
