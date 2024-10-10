@@ -158,6 +158,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     university?: string;
+
+    @Field((type) => Number, { nullable: true })
+    zipCode?: number;
 }
 
 const logger = getLogger('Student Mutations');
@@ -181,6 +184,7 @@ export async function updateStudent(
         lastTimeCheckedNotifications,
         notificationPreferences,
         university,
+        zipCode,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -216,6 +220,7 @@ export async function updateStudent(
             notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
+            zipCode: ensureNoNull(zipCode),
         },
         where: { id: student.id },
     });
