@@ -64,7 +64,6 @@ export class MutateSecretResolver {
             deviceId = (await prisma.secret.findUnique({ where: { id: tokenId } })).lastUsedDeviceId;
         } else if (token) {
             deviceId = (await getSecretByToken(token)).lastUsedDeviceId;
-            console.log('hi');
         } else {
             throw new UserInputError(`Either the id or the token must be passed`);
         }
