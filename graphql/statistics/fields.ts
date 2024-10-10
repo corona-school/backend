@@ -680,7 +680,19 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
-    async knowsCoronaSchoolFrom(@Root() statistics: Statistics) {
+    async knowsCoronaSchoolFrom(@Root() statistics: Statistics, @Arg('type') type: 'pupil' | 'student') {
+        if (type === 'pupil') {
+            return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                                             date_part('year', "createdAt"::date)  AS year,
+                                             date_part('month', "createdAt"::date) AS month,
+                                             "knowsCoronaSchoolFrom"               AS group
+                                      FROM "pupil_screening"
+                                      WHERE
+                                        "createdAt" > ${statistics.from}::timestamp
+                                        AND "createdAt" < ${statistics.to}::timestamp
+                                      GROUP BY "year", "month", "knowsCoronaSchoolFrom"
+                                      ORDER BY "year" ASC, "month" ASC, "knowsCoronaSchoolFrom" ASC;`;
+        }
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month,
