@@ -97,6 +97,13 @@ The following configuration can be done via ENV variables:
 
 | Name       | Value   | Description                                                               |
 | ---------- | ------- | ------------------------------------------------------------------------- |
+| LOG_LEVEL  | all     | Log levels are used to categorize log events by severity and control the  |
+|            | trace   | verbosity of the logs. Using levels, you can filter out less important    |
+|            | debug   | logs and focus on the most critical ones.                                 |
+|            | info    |                                                                           |
+|            | warn    |                                                                           |
+|            | error   |                                                                           |
+| ---------- | ------- | ------------------------------------------------------------------------- |
 | LOG_FORMAT | (unset) | Every log prefixed by session and transaction id, also log HTTP requests  |
 |            | json    | Log as JSON, used in deployed environments to pass rich info to Datadog   |
 |            | brief   | Only log category and message (omitting session prefix and HTTP requests) |
@@ -105,9 +112,9 @@ The following configuration can be done via ENV variables:
 
 The following command line arguments are available (i.e. run `npm run web -- --debug`):
 
-| Argument | Description                                                      |
-| -------- | ---------------------------------------------------------------- |
-| \--debug | Sets the log level to debug which prints out tons of information |
+| Argument | Description                          |
+| -------- | ------------------------------------ |
+| None     | There are no cli arguments right now |
 
 ### Changes to the Data-Model
 

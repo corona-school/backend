@@ -7,83 +7,112 @@ function testScore(name: string, request: MatchRequest, offer: MatchOffer, expec
     });
 }
 
-function test(name: string, requests: MatchRequest[], offers: MatchOffer[], expected: Matching) {
+function test(name: string, requests: MatchRequest[], offers: MatchOffer[], expected: Matching, excludeMatchings: Set<string> = new Set()) {
     it(name, () => {
-        const actual = computeMatchings(requests, offers);
+        const actual = computeMatchings(requests, offers, excludeMatchings, new Date(100000000000));
         expect(actual).toEqual(expected);
     });
 }
 
 const requestOne = {
     grade: 10,
+    pupilId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', mandatory: false }],
+    requestAt: new Date(0),
 };
 
 const requestTwo = {
     grade: 10,
+    pupilId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', mandatory: false }],
+    requestAt: new Date(0),
 };
 
 const requestThree = {
     grade: 10,
+    pupilId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', mandatory: false }],
+    requestAt: new Date(0),
 };
 
 const requestFour = {
     grade: 10,
+    pupilId: 4,
     state: 'at' as const,
     subjects: [
         { name: 'Mathematik', mandatory: false },
         { name: 'Deutsch', mandatory: false },
     ],
+    requestAt: new Date(0),
 };
 
 const requestFive = {
     grade: 10,
+    pupilId: 5,
     state: 'at' as const,
     subjects: [
         { name: 'Mathematik', mandatory: true },
         { name: 'Deutsch', mandatory: false },
     ],
+    requestAt: new Date(0),
 };
 
 const offerOne = {
+    studentId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', grade: { min: 1, max: 10 } }],
+    requestAt: new Date(0),
 };
 
 const offerTwo = {
+    studentId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', grade: { min: 1, max: 10 } }],
+    requestAt: new Date(0),
 };
 
 const offerThree = {
+    studentId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', grade: { min: 1, max: 10 } }],
+    requestAt: new Date(0),
 };
 
 const offerFour = {
+    studentId: 4,
     state: 'at' as const,
     subjects: [
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
+    requestAt: new Date(0),
+};
+
+const offerFive = {
+    studentId: 4,
+    state: 'bw' as const,
+    subjects: [
+        { name: 'Deutsch', grade: { min: 1, max: 10 } },
+        { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+    ],
+    requestAt: new Date(0),
 };
 
 describe('Matching Score Basics', () => {
     testScore('no subject', requestOne, offerTwo, NO_MATCH);
-    testScore('one subject', requestOne, offerOne, 1);
-    testScore('two subjects', requestFour, offerFour, 2);
-    testScore('two requested one offered', requestFour, offerOne, 1);
-    testScore('one requested two offered', requestOne, offerFour, 1);
+    testScore('one subject', requestOne, offerOne, 0.505);
+    testScore('two subjects', requestFour, offerFour, 0.8819891071981035);
+    testScore('two requested one offered', requestFour, offerOne, 0.505);
+    testScore('one requested two offered', requestOne, offerFour, 0.505);
+    testScore('one requested two offered - different state', requestOne, offerFive, 0.495);
 });
 
 describe('Matching Score Mandatory', () => {
     testScore('mandatory not offered', requestFive, offerOne, NO_MATCH);
-    testScore('mandatory offered', requestFive, offerTwo, 1);
+    testScore('mandatory offered', requestFive, offerTwo, 0.505);
 });
 
 describe('Matching Basics', () => {
@@ -114,4 +143,10 @@ describe('Matching Basics', () => {
     test('two subjects win over one - one request', [requestFour], [offerOne, offerFour], [{ request: requestFour, offer: offerFour }]);
 
     test('two subjects win over one - one offer', [requestOne, requestFour], [offerFour], [{ request: requestFour, offer: offerFour }]);
+});
+
+describe('Exclude duplicate matchings', () => {
+    test('two offers, two requests only matched once', [requestOne, requestOne], [offerOne, offerOne], [{ request: requestOne, offer: offerOne }]);
+    test('Matching excluded', [requestOne], [offerOne], [], new Set(['1/1']));
+    test('Matching not excluded', [requestOne], [offerOne], [{ request: requestOne, offer: offerOne }], new Set(['1/2', '2/1']));
 });
