@@ -216,3 +216,37 @@ void test('Change Email', async () => {
     pupil.email = newEmail;
     (pupil.pupil as any).email = pupil.email;
 });
+
+void test('Invalidate Sessions', async () => {
+    const { client, pupil } = await pupilOne;
+    const deviceId = 'test-device-id';
+    const otherDeviceId = 'test-other-device-id';
+    await client.request(`mutation LoginPassword { loginPassword(email: "${pupil.email}", password: "test123", deviceId: "${deviceId}")}`);
+    const { tokenCreate: token } = await client.request(`mutation CreateDeviceToken { tokenCreate(deviceId: "${deviceId}") }`);
+    const {
+        me: { secrets: secrets },
+    } = await client.request(`query RetrieveSecrets { me { secrets { id lastUsedDeviceId } } }`);
+    const secret = secrets.sort((a, b) => a.id - b.id).pop(); // get the last secret
+    console.log('token', token);
+    assert.strictEqual(secret.lastUsedDeviceId, deviceId);
+    const otherDeviceClient = createUserClient();
+    await otherDeviceClient.request(`mutation LoginWithToken { loginToken(token: "${token}", deviceId: "${otherDeviceId}")}`);
+    const {
+        me: { secrets: secrets2 },
+    } = await otherDeviceClient.request(`query MeInfo { me { secrets { lastUsedDeviceId } } }`);
+    const secret2 = secrets2.sort((a, b) => a.id - b.id).pop();
+    assert.strictEqual(secret2.lastUsedDeviceId, otherDeviceId); // lastUsedDeviceId should be updated
+    await client.request(`mutation RevokeToken { tokenRevoke(id: ${secret.id}, invalidateSessions: true)}`);
+    await otherDeviceClient.requestShallFail(`query MeInfoFails { me { secrets { lastUsedDeviceId } } }`); // session should be invalidated
+    await otherDeviceClient.requestShallFail(`mutation LoginWithTokenFails { loginToken(token: "${token}", deviceId: "${otherDeviceId}")}`); // token should be revoked
+});
+
+void test("Don't invalidate other people's sessions", async () => {
+    const { client: client1, pupil: pupil1 } = await pupilOne;
+    const { client: client2, pupil: pupil2 } = await pupilOne;
+    const deviceId = 'test-device-id';
+    await client1.request(`mutation LoginPassword { loginPassword(email: "${pupil1.email}", password: "test123", deviceId: "${deviceId}")}`);
+    const { tokenCreate: token } = await client1.request(`mutation CreateDeviceToken { tokenCreate(deviceId: "${deviceId}") }`);
+    await client2.request(`mutation LoginPassword { loginPassword(email: "${pupil2.email}", password: "test123", deviceId: "${deviceId}")}`);
+    await client2.requestShallFail(`mutation RevokeToken { tokenRevoke(id: ${token.id}, invalidateSessions: true)}`);
+});
