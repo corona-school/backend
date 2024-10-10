@@ -63,7 +63,7 @@ export async function createToken(
             expiresAt,
             lastUsed: null,
             description,
-            deviceId,
+            lastUsedDeviceId: deviceId,
         },
     });
 
@@ -140,10 +140,10 @@ export async function loginToken(token: string, deviceId: string): Promise<User 
             //  but only expire it soon to not reduce the possibility that eavesdroppers use the token
             const inOneHour = new Date();
             inOneHour.setHours(inOneHour.getHours() + 1);
-            await prisma.secret.update({ where: { id: secret.id }, data: { expiresAt: inOneHour, lastUsed: new Date(), deviceId } });
+            await prisma.secret.update({ where: { id: secret.id }, data: { expiresAt: inOneHour, lastUsed: new Date(), lastUsedDeviceId: deviceId } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}), token will be revoked in one hour`);
         } else {
-            await prisma.secret.update({ data: { lastUsed: new Date(), deviceId }, where: { id: secret.id } });
+            await prisma.secret.update({ data: { lastUsed: new Date(), lastUsedDeviceId: deviceId }, where: { id: secret.id } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
         }
 
@@ -160,7 +160,7 @@ export async function loginToken(token: string, deviceId: string): Promise<User 
             logger.info(`User(${user.userID}) changed their email to ${newEmail} via email token login`);
         }
     } else {
-        await prisma.secret.update({ data: { lastUsed: new Date(), deviceId }, where: { id: secret.id } });
+        await prisma.secret.update({ data: { lastUsed: new Date(), lastUsedDeviceId: deviceId }, where: { id: secret.id } });
         logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);
     }
 
