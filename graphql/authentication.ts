@@ -21,7 +21,7 @@ export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } f
 
 const logger = getLogger('GraphQL Authentication');
 
-export async function updateSessionUser(context: GraphQLContext, user: User, deviceId: string) {
+export async function updateSessionUser(context: GraphQLContext, user: User, deviceId: string | null) {
     // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
     if (context.user.userID === user.userID) {
         await loginAsUser(user, context, deviceId);
@@ -197,7 +197,7 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId') deviceId: string) {
+    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId', { nullable: true }) deviceId: string | null) {
         try {
             const user = await loginToken(token, deviceId);
             await loginAsUser(user, context, deviceId);

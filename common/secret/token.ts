@@ -118,7 +118,7 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-export async function loginToken(token: string, deviceId: string): Promise<User | never> {
+export async function loginToken(token: string, deviceId: string | null): Promise<User | never> {
     const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
