@@ -28,7 +28,9 @@ void test('Token Login', async () => {
 
     // Token can be revoked
 
-    await client.request(`mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets.filter((it) => it.type === 'TOKEN')[0].id})}`);
+    await client.request(
+        `mutation RevokeToken { tokenRevoke(id: ${secretsUsed.me.secrets.filter((it) => it.type === 'TOKEN')[0].id}, invalidateSessions: false)}`
+    );
 
     const { tokenCreate: token2 } = await client.request(`mutation CreateTokenTwo { tokenCreate }`);
 
