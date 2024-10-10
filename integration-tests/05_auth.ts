@@ -227,7 +227,6 @@ void test('Invalidate Sessions', async () => {
         me: { secrets: secrets },
     } = await client.request(`query RetrieveSecrets { me { secrets { id lastUsedDeviceId } } }`);
     const secret = secrets.sort((a, b) => a.id - b.id).pop(); // get the last secret
-    console.log('token', token);
     assert.strictEqual(secret.lastUsedDeviceId, deviceId);
     const otherDeviceClient = createUserClient();
     await otherDeviceClient.request(`mutation LoginWithToken { loginToken(token: "${token}", deviceId: "${otherDeviceId}")}`);
