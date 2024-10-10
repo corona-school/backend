@@ -929,7 +929,7 @@ model secret {
   // For EMAIL_TOKENs, contains the email the token is sent to. Can be used to confirm additional email addresses
   // (i.e. during email address change)
   description String?          @db.VarChar
-  deviceId    String?          @db.VarChar  // the permanent device identifier this secret was last used on
+  lastUsedDeviceId    String?          @db.VarChar  // the permanent device identifier this secret was last used on
 }
 
 // DEPRECATED: Used by our old ORM to track migrations, to be removed once Prisma Migrations work reliably

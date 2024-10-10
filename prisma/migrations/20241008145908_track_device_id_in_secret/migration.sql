@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "secret" ADD COLUMN     "deviceId" VARCHAR;
+ALTER TABLE "secret" ADD COLUMN     "lastUsedDeviceId" VARCHAR;
