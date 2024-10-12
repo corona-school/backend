@@ -140,7 +140,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     const stateBonus = offer.state === request.state ? 1 : 0;
 
     const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
-    const offerWaitingBonus = offerWaitDays > 20 ? 1 : 0;
+    const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
 
     // how good a match is in (0, 1)
     const score = 0.97 * subjectBonus + 0.02 * stateBonus + 0.01 * offerWaitingBonus;
