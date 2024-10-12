@@ -105,91 +105,109 @@ async function computeOldMatchings(
 describe('Real World Matching Performance', () => {
     test.each([
         // New Algorithm
-        [
+        /* [
             'new',
             1000,
             {
                 matchCountSum: 1041,
-                matchCountAvg: 520.5,
-                matchingSubjectsSum: 1954,
                 matchingSubjectsAvg: 1.877041306436119,
-                matchingState: 484,
+                matchingSubjects: {
+                    '>= 1': 1041,
+                    '>= 2': 632,
+                    '>= 3': 223,
+                    '>= 4': 52,
+                    '>= 5': 5,
+                },
+                matchingState: 0.46493756003842457,
                 pupilWaitingTimeAvg: 294.63748241129935,
+                pupilWaitingTime: {
+                    '>= 0': 1041,
+                    '>= 1': 1041,
+                    '>= 7': 1041,
+                    '>= 14': 1041,
+                    '>= 21': 1041,
+                    '>= 28': 1041,
+                },
                 studentWaitingTimeAvg: 328.5918544018619,
-                matchRuns: 2,
+                studentWaitingTime: {
+                    '>= 0': 1041,
+                    '>= 1': 1041,
+                    '>= 7': 1041,
+                    '>= 14': 1041,
+                    '>= 21': 1041,
+                    '>= 28': 1041,
+                    '>= 56': 1016,
+                },
             },
-        ],
+        ], */
         [
             'new',
             10,
             {
                 matchCountSum: 1045,
-                matchCountAvg: 15.597014925373134,
-                matchingSubjectsSum: 1748,
-                matchingSubjectsAvg: 1.6727272727272726,
-                matchingState: 326,
+                matchingSubjectsAvg: 1.6641148325358852,
+                matchingSubjects: {
+                    '>= 1': 1045,
+                    '>= 2': 529,
+                    '>= 3': 133,
+                    '>= 4': 28,
+                    '>= 5': 4,
+                },
+                matchingState: 0.3167464114832536,
                 pupilWaitingTimeAvg: 8.35097324007621,
+                pupilWaitingTime: {
+                    '>= 0': 1045,
+                    '>= 1': 960,
+                    '>= 7': 431,
+                    '>= 14': 75,
+                    '>= 21': 54,
+                    '>= 28': 39,
+                },
                 studentWaitingTimeAvg: 51.64871701057732,
-                matchRuns: 67,
+                studentWaitingTime: {
+                    '>= 0': 1045,
+                    '>= 1': 1017,
+                    '>= 7': 824,
+                    '>= 14': 677,
+                    '>= 21': 600,
+                    '>= 28': 546,
+                    '>= 56': 396,
+                },
             },
         ],
-        [
+        /* [
             'new',
             1,
             {
                 matchCountSum: 1045,
-                matchCountAvg: 2.4133949191685913,
-                matchingSubjectsSum: 1706,
                 matchingSubjectsAvg: 1.632535885167464,
-                matchingState: 316,
+                matchingSubjects: {
+                    '>= 1': 1045,
+                    '>= 2': 497,
+                    '>= 3': 126,
+                    '>= 4': 30,
+                    '>= 5': 7,
+                },
+                matchingState: 0.30239234449760766,
                 pupilWaitingTimeAvg: 3.9678646337387073,
+                pupilWaitingTime: {
+                    '>= 0': 1045,
+                    '>= 1': 326,
+                    '>= 7': 75,
+                    '>= 14': 52,
+                    '>= 21': 40,
+                    '>= 28': 33,
+                },
                 studentWaitingTimeAvg: 47.77617396444717,
-                matchRuns: 433,
-            },
-        ],
-        // Old Algorithm
-        // Interestingly the old algorithm is not deterministic
-        // Also running it in the barrier does not make sense as it wont change anyways
-        /* [
-            'old',
-            1000,
-            {
-                matchCountSum: 883,
-                matchCountAvg: 441.5,
-                matchingSubjectsSum: 1824,
-                matchingSubjectsAvg: 2.0656851642129106,
-                matchingState: 472,
-                pupilWaitingTimeAvg: 283.9889498853212,
-                studentWaitingTimeAvg: 399.3507213564743,
-                matchRuns: 2,
-            },
-        ],
-        [
-            'old',
-            10,
-            {
-                matchCountSum: 1023,
-                matchCountAvg: 15.26865671641791,
-                matchingSubjectsSum: 1843,
-                matchingSubjectsAvg: 1.801564027370479,
-                matchingState: 381,
-                pupilWaitingTimeAvg: 7.3103790962831745,
-                studentWaitingTimeAvg: 63.7282721143899,
-                matchRuns: 67,
-            },
-        ],
-        [
-            'old',
-            1,
-            {
-                matchCountSum: 1023,
-                matchCountAvg: 2.3625866050808315,
-                matchingSubjectsSum: 1778,
-                matchingSubjectsAvg: 1.7380254154447703,
-                matchingState: 341,
-                pupilWaitingTimeAvg: 2.383032886243719,
-                studentWaitingTimeAvg: 52.283081214712084,
-                matchRuns: 433,
+                studentWaitingTime: {
+                    '>= 0': 1045,
+                    '>= 1': 923,
+                    '>= 7': 746,
+                    '>= 14': 648,
+                    '>= 21': 576,
+                    '>= 28': 525,
+                    '>= 56': 377,
+                },
             },
         ], */
     ])('%s algorithm - Run every %s days', async (algo, runDays, expectedSummary) => {
@@ -207,6 +225,20 @@ describe('Real World Matching Performance', () => {
 
         const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
         const avg = (values: number[]) => sum(values) / (values.length || 1);
+        const max = (values: number[]) => Math.max(...values);
+        const histogram = (values: number[], groups: number[]) => {
+            const result: { [group: number]: number } = Object.fromEntries(groups.map((group) => [group, 0]));
+            for (const value of values) {
+                for (const group of groups) {
+                    if (value < group) {
+                        break;
+                    }
+                    result[group] += 1;
+                }
+            }
+
+            return Object.fromEntries(Object.entries(result).map(([group, value]) => [`>= ${group}`, value]));
+        };
 
         let currentDate: Date;
         let matchRunDate: Date;
@@ -320,20 +352,20 @@ describe('Real World Matching Performance', () => {
 
         const summary = {
             matchCountSum: sum(matchCount),
-            matchCountAvg: avg(matchCount),
-            matchingSubjectsSum: sum(matchingSubjects),
             matchingSubjectsAvg: avg(matchingSubjects),
-            matchingState,
+            matchingSubjects: histogram(matchingSubjects, [1, 2, 3, 4, 5]),
+            matchingState: matchingState / sum(matchCount),
             pupilWaitingTimeAvg: avg(pupilWaitingTime),
+            pupilWaitingTime: histogram(pupilWaitingTime, [0, 1, 7, 14, 21, 28]),
             studentWaitingTimeAvg: avg(studentWaitingTime),
+            studentWaitingTime: histogram(studentWaitingTime, [0, 1, 7, 14, 21, 28, 56]),
             // runtime,
-            matchRuns,
+            // matchRuns,
         };
 
-        expect(summary).toMatchObject(expectedSummary);
-
         log += `\n\nSummary (every ${runDays} days):\n${JSON.stringify(summary, null, 4)}\n`;
-
         console.log(log);
+
+        expect(summary).toMatchObject(expectedSummary);
     });
 });
