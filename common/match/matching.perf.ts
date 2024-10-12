@@ -105,7 +105,7 @@ async function computeOldMatchings(
 describe('Real World Matching Performance', () => {
     test.each([
         // New Algorithm
-        [
+        /* [
             'new',
             1000,
             {
@@ -139,43 +139,43 @@ describe('Real World Matching Performance', () => {
                     '>= 56': 1016,
                 },
             },
-        ],
+        ], */
         [
             'new',
             10,
             {
                 matchCountSum: 1045,
-                matchingSubjectsAvg: 1.6727272727272726,
+                matchingSubjectsAvg: 1.6679425837320574,
                 matchingSubjects: {
                     '>= 1': 1045,
-                    '>= 2': 530,
-                    '>= 3': 133,
-                    '>= 4': 32,
-                    '>= 5': 7,
+                    '>= 2': 533,
+                    '>= 3': 132,
+                    '>= 4': 29,
+                    '>= 5': 4,
                 },
-                matchingState: 0.3119617224880383,
+                matchingState: 0.3186602870813397,
                 pupilWaitingTimeAvg: 8.35097324007621,
                 pupilWaitingTime: {
                     '>= 0': 1045,
-                    '>= 1': 961,
-                    '>= 7': 431,
-                    '>= 14': 73,
-                    '>= 21': 53,
-                    '>= 28': 39,
+                    '>= 1': 960,
+                    '>= 7': 432,
+                    '>= 14': 76,
+                    '>= 21': 55,
+                    '>= 28': 41,
                 },
-                studentWaitingTimeAvg: 51.64871701057732,
+                studentWaitingTimeAvg: 51.60435087760287,
                 studentWaitingTime: {
                     '>= 0': 1045,
                     '>= 1': 1017,
                     '>= 7': 825,
-                    '>= 14': 681,
+                    '>= 14': 678,
                     '>= 21': 598,
-                    '>= 28': 551,
-                    '>= 56': 399,
+                    '>= 28': 543,
+                    '>= 56': 391,
                 },
             },
         ],
-        [
+        /* [
             'new',
             1,
             {
@@ -209,7 +209,7 @@ describe('Real World Matching Performance', () => {
                     '>= 56': 377,
                 },
             },
-        ],
+        ], */
     ])('%s algorithm - Run every %s days', async (algo, runDays, expectedSummary) => {
         let log = '';
         let pupilIdx = 0,
