@@ -8,7 +8,7 @@ import { isDev, isTest, USER_APP_DOMAIN } from '../util/environment';
 import { validateEmail } from '../../graphql/validators';
 import { Email } from '../notification/types';
 import { isEmailAvailable } from '../user/email';
-import { secret_type_enum as SecretType } from '@prisma/client';
+import { secret, secret_type_enum as SecretType } from '@prisma/client';
 import { createSecretEmailToken } from './emailToken';
 import moment from 'moment';
 import { updateUser } from '../user/update';
@@ -25,12 +25,16 @@ export async function revokeToken(user: User | null, id: number) {
     logger.info(`User(${user?.userID}) revoked token Secret(${id})`);
 }
 
-// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
-export async function revokeTokenByToken(token: string) {
+export async function getSecretByToken(token: string): Promise<secret> {
     const hash = hashToken(token);
-    const secret = await prisma.secret.findFirst({
+    return await prisma.secret.findFirst({
         where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
     });
+}
+
+// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
+export async function revokeTokenByToken(token: string): Promise<number> {
+    const secret = await getSecretByToken(token);
     if (!secret) {
         throw new Error(`Secret not found`);
     }
@@ -38,10 +42,16 @@ export async function revokeTokenByToken(token: string) {
     await prisma.secret.delete({ where: { id: secret.id } });
 
     logger.info(`Token Secret(${secret.id}) was revoked`);
+    return secret.id;
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
-export async function createToken(user: User, expiresAt: Date | null = null, description: string | null = null): Promise<string> {
+export async function createToken(
+    user: User,
+    expiresAt: Date | null = null,
+    description: string | null = null,
+    deviceId: string | null = null
+): Promise<string> {
     const token = uuid();
     const hash = hashToken(token);
 
@@ -53,6 +63,7 @@ export async function createToken(user: User, expiresAt: Date | null = null, des
             expiresAt,
             lastUsed: null,
             description,
+            lastUsedDeviceId: deviceId,
         },
     });
 
@@ -107,7 +118,7 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-export async function loginToken(token: string): Promise<User | never> {
+export async function loginToken(token: string, deviceId: string | null): Promise<User | never> {
     const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
@@ -129,10 +140,10 @@ export async function loginToken(token: string): Promise<User | never> {
             //  but only expire it soon to not reduce the possibility that eavesdroppers use the token
             const inOneHour = new Date();
             inOneHour.setHours(inOneHour.getHours() + 1);
-            await prisma.secret.update({ where: { id: secret.id }, data: { expiresAt: inOneHour, lastUsed: new Date() } });
+            await prisma.secret.update({ where: { id: secret.id }, data: { expiresAt: inOneHour, lastUsed: new Date(), lastUsedDeviceId: deviceId } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}), token will be revoked in one hour`);
         } else {
-            await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
+            await prisma.secret.update({ data: { lastUsed: new Date(), lastUsedDeviceId: deviceId }, where: { id: secret.id } });
             logger.info(`User(${user.userID}) logged in with email token Secret(${secret.id}) it will expire at ${secret.expiresAt.toISOString()}`);
         }
 
@@ -149,7 +160,7 @@ export async function loginToken(token: string): Promise<User | never> {
             logger.info(`User(${user.userID}) changed their email to ${newEmail} via email token login`);
         }
     } else {
-        await prisma.secret.update({ data: { lastUsed: new Date() }, where: { id: secret.id } });
+        await prisma.secret.update({ data: { lastUsed: new Date(), lastUsedDeviceId: deviceId }, where: { id: secret.id } });
         logger.info(`User(${user.userID}) logged in with persistent token Secret(${secret.id})`);
     }
 

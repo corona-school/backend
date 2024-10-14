@@ -76,6 +76,7 @@ export default async function injectContext({ req, res }: { req: Request; res: R
             roles: [Role.ADMIN, Role.UNAUTHENTICATED],
             lastLogin: new Date(),
             active: true,
+            deviceId: undefined,
         };
         context.sessionID = 'ADMIN';
 

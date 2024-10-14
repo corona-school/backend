@@ -6,7 +6,7 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -193,7 +193,7 @@ export async function updatePupil(
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForPupil(res));
+    await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
