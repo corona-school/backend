@@ -17,8 +17,12 @@ const logger = getLogger('MutateSecretResolver');
 export class MutateSecretResolver {
     @Mutation((returns) => String)
     @Authorized(Role.USER)
-    async tokenCreate(@Ctx() context: GraphQLContext, @Arg('description', { nullable: true }) description: string | null) {
-        return await createToken(getSessionUser(context), /* expiresAt */ null, description);
+    async tokenCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('expiresAt', { nullable: true }) expiresAt: Date | null,
+        @Arg('description', { nullable: true }) description: string | null
+    ) {
+        return await createToken(getSessionUser(context), expiresAt, description);
     }
 
     @Mutation((returns) => String)
