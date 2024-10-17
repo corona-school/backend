@@ -205,7 +205,7 @@ export async function sendPupilCoursePromotion(subcourse: Prisma.subcourse, prom
     const pupils = await prisma.pupil.findMany({
         where: {
             active: true,
-            verification: null,
+            verifiedAt: { not: null },
             isParticipant: true,
             OR: [
                 {

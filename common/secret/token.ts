@@ -162,13 +162,13 @@ export async function loginToken(token: string): Promise<User | never> {
 
 export async function verifyEmail(user: User) {
     if (user.studentId) {
-        const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
+        const { verifiedAt } = await prisma.student.findUniqueOrThrow({
             where: { id: user.studentId },
-            select: { verifiedAt: true, verification: true },
+            select: { verifiedAt: true },
         });
-        if (!verifiedAt || verification) {
+        if (!verifiedAt) {
             await prisma.student.update({
-                data: { verifiedAt: new Date(), verification: null },
+                data: { verifiedAt: new Date() },
                 where: { id: user.studentId },
             });
             await Notification.actionTaken(user, 'student_registration_verified_email', {
@@ -181,13 +181,13 @@ export async function verifyEmail(user: User) {
     }
 
     if (user.pupilId) {
-        const { verifiedAt, verification } = await prisma.pupil.findUniqueOrThrow({
+        const { verifiedAt } = await prisma.pupil.findUniqueOrThrow({
             where: { id: user.pupilId },
-            select: { verifiedAt: true, verification: true },
+            select: { verifiedAt: true },
         });
-        if (!verifiedAt || verification) {
+        if (!verifiedAt) {
             await prisma.pupil.update({
-                data: { verifiedAt: new Date(), verification: null },
+                data: { verifiedAt: new Date() },
                 where: { id: user.pupilId },
             });
             await Notification.actionTaken(user, 'pupil_registration_verified_email', {
