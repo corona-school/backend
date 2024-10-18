@@ -3,34 +3,39 @@ import { getFile, FileID } from '../../graphql/files';
 import { ChatOpenAI } from '@langchain/openai';
 import { z } from 'zod';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import { course_subject_enum } from '@prisma/client';
 
 const logger = getLogger('LessonPlan Generator');
 
 const plan = z.object({
-    title: z.string().describe('The title of the lesson'),
-    materials: z.string().describe('Used learning Materials'),
-    lesson_plan: z.string().describe('The lesson plan with timeline and learning content'),
+    title: z.string().describe('A concise, descriptive title for the lesson'),
+    basicKnowledge: z.string().describe('Prerequisite knowledge or skills students should have before the lesson'),
+    learningGoal: z.string().describe('Clear, measurable objectives for what students should learn or be able to do by the end of the lesson'),
+    agendaExercises: z.string().describe('A detailed timeline of activities and exercises, broken down into segments'),
+    assessment: z.string().describe('Methods to evaluate student understanding and achievement of learning goals'),
+    homework: z.string().describe('Any assignments or activities for students to complete outside of class'),
+    resources: z.string().describe('Materials, equipment, or references needed for the lesson'),
 });
 
-const LESSON_PLAN_PROMPT = `Begin by enclosing all thoughts within <thinking> tags, exploring multiple angles and approaches.
-Break down the solution into clear steps within <step> tags. Start with a 20-step budget, requesting more for complex problems if needed.
-Use <count> tags after each step to show the remaining budget. Stop when reaching 0.
-Continuously adjust your reasoning based on intermediate results and reflections, adapting your strategy as you progress.
-Regularly evaluate progress using <reflection> tags. Be critical and honest about your reasoning process.
-Assign a quality score between 0.0 and 1.0 using <reward> tags after each reflection. Use this to guide your approach:
+const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structure and requirements:
 
-0.8+: Continue current approach
-0.5-0.7: Consider minor adjustments
-Below 0.5: Seriously consider backtracking and trying a different approach
+1. Title: {title}
+2. Basic Knowledge: {basicKnowledge}
+3. Learning Goal: {learningGoal}
+4. Agenda and Exercises: {agendaExercises}
+5. Assessment: {assessment}
+6. Homework: {homework}
+7. Resources: {resources}
 
-If unsure or if reward score is low, backtrack and try a different approach, explaining your decision within <thinking> tags.
-For mathematical problems, show all work explicitly using LaTeX for formal notation and provide detailed proofs.
-Explore multiple solutions individually if possible, comparing approaches in reflections.
-Use thoughts as a scratchpad, writing out all calculations and reasoning explicitly.
-Synthesize the final answer within <answer> tags, providing a clear, concise summary.
-Conclude with a final reflection on the overall solution, discussing effectiveness, challenges, and solutions. Assign a final reward score.`;
+Use the provided materials and requirements to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, and duration specified.`;
 
-export async function generateLessonPlan(fileUuids: FileID[], subject: string, grade: number, duration: number, outputRequirements: string[]): Promise<string> {
+export async function generateLessonPlan(
+    fileUuids: FileID[],
+    subject: course_subject_enum,
+    grade: number,
+    duration: number,
+    prompt: string
+): Promise<z.infer<typeof plan> & { subject: course_subject_enum; grade: string; duration: number }> {
     logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes`);
 
     // Fetch file contents for each UUID
@@ -65,7 +70,7 @@ export async function generateLessonPlan(fileUuids: FileID[], subject: string, g
 
     // Initialize the ChatOpenAI model
     const model = new ChatOpenAI({
-        modelName: 'gpt-4o',
+        modelName: 'gpt-4o-mini',
         temperature: 0,
     });
 
@@ -73,16 +78,16 @@ export async function generateLessonPlan(fileUuids: FileID[], subject: string, g
 
     try {
         logger.info('Generating lesson plan...');
-        const reasoning = await model.invoke(
-            `${LESSON_PLAN_PROMPT}\nCreate a lesson plan for ${subject} students in grade ${grade} about the topic ${outputRequirements.join(
-                ', '
-            )}. The lesson should last ${duration} minutes. Include some of the contents from the provided materials: \n${combinedContent}`
+        const result = await structuredLlm.invoke(
+            `${LESSON_PLAN_PROMPT}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`
         );
 
-        logger.info('Extracting structured lesson plan...');
-        const answer = await structuredLlm.invoke(`${reasoning.content}\n Based on the previous answer and reasoning process extract the lesson plan.`);
-
-        return JSON.stringify(answer, null, 2);
+        return {
+            ...result,
+            subject,
+            grade: grade.toString(),
+            duration,
+        };
     } catch (error) {
         logger.error(`Error generating lesson plan: ${error.message}`);
         throw new Error('Failed to generate lesson plan');
