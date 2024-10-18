@@ -1,8 +1,10 @@
 import { getLogger } from '../logger/logger';
-import { getFile, FileID } from '../../graphql/files';
+import { getFile, FileID, File } from '../../graphql/files';
 import { ChatOpenAI } from '@langchain/openai';
 import { z } from 'zod';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
+import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
 import { course_subject_enum } from '@prisma/client';
 
 const logger = getLogger('LessonPlan Generator');
@@ -42,18 +44,37 @@ export async function generateLessonPlan(
     const files = await Promise.all(
         fileUuids.map(async (uuid) => {
             try {
-                const file = getFile(uuid);
-                const blob = new Blob([file.buffer], { type: 'application/pdf' });
-                const loader = new PDFLoader(blob);
-                const docs = await loader.load();
+                const file: File = getFile(uuid);
+                const blob = new Blob([file.buffer], { type: file.mimetype });
+                let loader;
+                let docs;
+
+                if (file.mimetype === 'application/pdf') {
+                    loader = new PDFLoader(blob, { splitPages: true });
+                    docs = await loader.load();
+                } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    loader = new DocxLoader(blob);
+                    docs = await loader.load();
+                } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                    loader = new PPTXLoader(blob);
+                    docs = await loader.load();
+                } else {
+                    throw new Error(`Unsupported file type: ${file.mimetype}`);
+                }
+
+                // Add filename and page numbers (only for PDFs) to the content
+                const content =
+                    `Filename: ${file.originalname}\n\n` +
+                    docs.map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent)).join('\n\n');
+
                 return {
                     name: file.originalname,
-                    content: docs.map((doc) => doc.pageContent).join('\n\n'),
+                    content: content,
                     type: file.mimetype,
                 };
             } catch (error) {
                 logger.error(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
-                return null;
+                throw new Error('Failed to process one or more files');
             }
         })
     );
@@ -78,9 +99,9 @@ export async function generateLessonPlan(
 
     try {
         logger.info('Generating lesson plan...');
-        const result = await structuredLlm.invoke(
-            `${LESSON_PLAN_PROMPT}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`
-        );
+        const finalPrompt = `${LESSON_PLAN_PROMPT}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`;
+        logger.debug(`Prompt: ${finalPrompt}`);
+        const result = await structuredLlm.invoke(finalPrompt);
 
         return {
             ...result,
