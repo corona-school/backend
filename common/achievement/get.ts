@@ -1,20 +1,25 @@
 import { prisma } from '../prisma';
 import { Prisma } from '@prisma/client';
 import { User } from '../user';
-import { AchievementState, AchievementType, PublicAchievement, PublicStep } from './types';
+import { AchievementState, AchievementType, PublicAchievement, PublicStep, ThenArg } from './types';
 import { getAchievementState, renderAchievementWithContext, transformPrismaJson } from './util';
 import { getAchievementImageURL } from './util';
 import { isDefined } from './util';
 import { isAchievementConditionMet } from './evaluate';
 import { getLogger } from '../logger/logger';
+import { deriveAchievements, deriveAchievementTemplates } from './derive';
 
 const logger = getLogger('Achievement');
 
-export async function getUserAchievementsWithTemplates(user: User) {
+export async function getUserAchievementsWithTemplates(user: User, byType: AchievementType | null = null) {
+    const templateSearch = { isActive: true };
+    if (byType !== null) {
+        templateSearch['type'] = byType;
+    }
     const userAchievementsWithTemplates = await prisma.user_achievement.findMany({
         where: {
             userId: user.userID,
-            template: { isActive: true },
+            template: templateSearch,
             // This will ensure that we only get achievements that are either not streaks or have a recordValue of at least 1
             // Otherwise, we would get all streaks that have not been started yet.
             // This can happen if an event related to a streak was emitted, but does not match any bucket, like "join on time".
@@ -22,9 +27,12 @@ export async function getUserAchievementsWithTemplates(user: User) {
         },
         include: { template: true },
     });
+
+    const derivedAchievements = await deriveAchievements(user, userAchievementsWithTemplates);
+    userAchievementsWithTemplates.push(...derivedAchievements);
+
     return userAchievementsWithTemplates;
 }
-type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 export type achievements_with_template = ThenArg<ReturnType<typeof getUserAchievementsWithTemplates>>;
 
 const getAchievementById = async (user: User, achievementId: number): Promise<PublicAchievement> => {
@@ -38,10 +46,8 @@ const getAchievementById = async (user: User, achievementId: number): Promise<Pu
 
 // Next step achievements are sequential achievements that are currently active and not yet completed. They get displayed in the next step card section.
 const getNextStepAchievements = async (user: User): Promise<PublicAchievement[]> => {
-    const userAchievements = await prisma.user_achievement.findMany({
-        where: { userId: user.userID, template: { type: AchievementType.SEQUENTIAL } },
-        include: { template: true },
-    });
+    const userAchievements = await getUserAchievementsWithTemplates(user, AchievementType.SEQUENTIAL);
+
     const userAchievementGroups: { [groupRelation: string]: achievements_with_template } = {};
     userAchievements.forEach((ua) => {
         const key = ua.relation ? `${ua.template.group}/${ua.relation}` : ua.template.group;
@@ -156,6 +162,9 @@ const assembleAchievementData = async (userAchievements: achievements_with_templ
         where: { group: userAchievements[currentAchievementIndex].template.group, isActive: true },
         orderBy: { groupOrder: 'asc' },
     });
+    const derivedTemplates = deriveAchievementTemplates(userAchievements[currentAchievementIndex].template.group);
+    achievementTemplates.push(...derivedTemplates);
+    achievementTemplates.sort((left, right) => left.groupOrder - right.groupOrder);
 
     let maxValue: number = achievementTemplates.length;
     let currentValue: number = currentAchievementIndex;
