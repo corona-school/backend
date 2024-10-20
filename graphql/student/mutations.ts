@@ -159,8 +159,8 @@ export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     university?: string;
 
-    @Field((type) => Number, { nullable: true })
-    zipCode?: number;
+    @Field((type) => String, { nullable: true })
+    zipCode?: string;
 }
 
 const logger = getLogger('Student Mutations');
