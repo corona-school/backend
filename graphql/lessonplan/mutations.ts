@@ -1,4 +1,5 @@
 import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field, Int, ObjectType, registerEnumType } from 'type-graphql';
+import { MaxLength, ArrayMaxSize, validateOrReject } from 'class-validator';
 import { Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
@@ -7,6 +8,12 @@ import { course_subject_enum } from '@prisma/client';
 import { ApolloError, UserInputError } from 'apollo-server-express';
 
 const logger = getLogger(`LessonPlan Mutations`);
+
+// Maximum prompt length (in characters)
+const MAX_PROMPT_LENGTH = 10000;
+
+// Maximum number of files
+const MAX_FILES = 10;
 
 // Register the course_subject_enum as a GraphQL enum
 registerEnumType(course_subject_enum, {
@@ -33,6 +40,7 @@ registerEnumType(LessonPlanField, {
 @InputType()
 class GenerateLessonPlanInput {
     @Field(() => [String], { nullable: true })
+    @ArrayMaxSize(MAX_FILES, { message: `Number of files must not exceed ${MAX_FILES}` })
     fileUuids?: string[];
 
     @Field(() => course_subject_enum)
@@ -45,6 +53,7 @@ class GenerateLessonPlanInput {
     duration: number;
 
     @Field(() => String)
+    @MaxLength(MAX_PROMPT_LENGTH, { message: `Prompt must not exceed ${MAX_PROMPT_LENGTH} characters` })
     prompt: string;
 
     @Field(() => [LessonPlanField], { nullable: true })
@@ -94,6 +103,13 @@ export class MutateLessonPlanResolver {
     @Mutation(() => LessonPlanOutput)
     @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async generateLessonPlan(@Ctx() context: GraphQLContext, @Arg('data') data: GenerateLessonPlanInput): Promise<LessonPlanOutput> {
+        // Explicitly validate the input
+        try {
+            await validateOrReject(data);
+        } catch (errors) {
+            throw new UserInputError('Invalid input', { errors });
+        }
+
         const { fileUuids, subject, grade, duration, prompt, expectedOutputs } = data;
 
         try {
