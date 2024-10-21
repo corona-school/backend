@@ -46,7 +46,7 @@ export class ExtendFieldsStudentResolver {
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
-            verification: null,
+            verifiedAt: { not: null },
             instructor_screening: { is: { success: { equals: true } } },
             id: { not: { equals: context.user.studentId } },
         };
