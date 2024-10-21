@@ -11,7 +11,6 @@ const logger = getLogger('LessonPlan Generator');
 
 const plan = z.object({
     title: z.string().describe('A concise, descriptive title for the lesson'),
-    basicKnowledge: z.string().describe('Prerequisite knowledge or skills students should have before the lesson'),
     learningGoal: z.string().describe('Clear, measurable objectives for what students should learn or be able to do by the end of the lesson'),
     agendaExercises: z.string().describe('A detailed timeline of activities and exercises, broken down into segments'),
     assessment: z.string().describe('Methods to evaluate student understanding and achievement of learning goals'),
@@ -21,23 +20,27 @@ const plan = z.object({
 
 const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structure and requirements:
 
-1. Title: {title}
-2. Basic Knowledge: {basicKnowledge}
-3. Learning Goal: {learningGoal}
-4. Agenda and Exercises: {agendaExercises}
-5. Assessment: {assessment}
-6. Homework: {homework}
-7. Resources: {resources}
+{requestedFields}
 
 Use the provided materials and requirements to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, and duration specified.`;
 
-export async function generateLessonPlan(
-    fileUuids: FileID[],
-    subject: course_subject_enum,
-    grade: number,
-    duration: number,
-    prompt: string
-): Promise<z.infer<typeof plan> & { subject: course_subject_enum; grade: string; duration: number }> {
+interface GenerateLessonPlanInput {
+    fileUuids: FileID[];
+    subject: course_subject_enum;
+    grade: number;
+    duration: number;
+    prompt: string;
+    expectedOutputs?: string[];
+}
+
+export async function generateLessonPlan({
+    fileUuids,
+    subject,
+    grade,
+    duration,
+    prompt,
+    expectedOutputs,
+}: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
     logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes`);
 
     // Fetch file contents for each UUID
@@ -95,11 +98,24 @@ export async function generateLessonPlan(
         temperature: 0,
     });
 
-    const structuredLlm = model.withStructuredOutput(plan);
+    // Create a new plan schema based on expected outputs
+    const dynamicPlan = z.object(Object.fromEntries(Object.entries(plan.shape).filter(([key]) => !expectedOutputs || expectedOutputs.includes(key))));
+
+    const structuredLlm = model.withStructuredOutput(dynamicPlan);
 
     try {
         logger.info('Generating lesson plan...');
-        const finalPrompt = `${LESSON_PLAN_PROMPT}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`;
+        const requestedFields =
+            expectedOutputs && expectedOutputs.length > 0
+                ? expectedOutputs.map((field) => `${field}: {${field}}`).join('\n')
+                : Object.keys(plan.shape)
+                      .map((field) => `${field}: {${field}}`)
+                      .join('\n');
+
+        const finalPrompt = `${LESSON_PLAN_PROMPT.replace(
+            '{requestedFields}',
+            requestedFields
+        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`;
         logger.debug(`Prompt: ${finalPrompt}`);
         const result = await structuredLlm.invoke(finalPrompt);
 

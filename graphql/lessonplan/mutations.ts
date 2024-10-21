@@ -4,6 +4,7 @@ import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
 import { course_subject_enum } from '@prisma/client';
+import { ApolloError, UserInputError } from 'apollo-server-express';
 
 const logger = getLogger(`LessonPlan Mutations`);
 
@@ -11,6 +12,22 @@ const logger = getLogger(`LessonPlan Mutations`);
 registerEnumType(course_subject_enum, {
     name: 'CourseSubjectEnum',
     description: 'The subject of the course',
+});
+
+// Create a new enum for expected output fields
+enum LessonPlanField {
+    TITLE = 'title',
+    LEARNING_GOAL = 'learningGoal',
+    AGENDA_EXERCISES = 'agendaExercises',
+    ASSESSMENT = 'assessment',
+    HOMEWORK = 'homework',
+    RESOURCES = 'resources',
+}
+
+// Register the LessonPlanField enum
+registerEnumType(LessonPlanField, {
+    name: 'LessonPlanField',
+    description: 'Fields that can be generated for a lesson plan',
 });
 
 @InputType()
@@ -29,54 +46,47 @@ class GenerateLessonPlanInput {
 
     @Field(() => String)
     prompt: string;
+
+    @Field(() => [LessonPlanField], { nullable: true })
+    expectedOutputs?: LessonPlanField[];
 }
 
 @ObjectType()
 class LessonPlanOutput {
-    @Field(() => Int)
-    id?: number;
-
-    @Field(() => Date)
-    createdAt?: Date;
-
-    @Field(() => Date)
-    updatedAt?: Date;
-
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     title?: string;
 
     @Field(() => course_subject_enum)
-    subject?: course_subject_enum;
+    subject: course_subject_enum;
 
     @Field(() => String)
-    grade?: string;
+    grade: string;
 
     @Field(() => Int)
-    duration?: number;
+    duration: number;
 
-    @Field(() => String)
-    basicKnowledge?: string;
-
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     learningGoal?: string;
 
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     agendaExercises?: string;
 
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     assessment?: string;
 
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     homework?: string;
 
-    @Field(() => String)
+    @Field(() => String, { nullable: true })
     resources?: string;
+}
 
-    @Field(() => Date)
-    startDate?: Date;
+class LessonPlanGenerationError extends ApolloError {
+    constructor(message: string) {
+        super(message, 'LESSON_PLAN_GENERATION_ERROR');
 
-    @Field(() => Date)
-    endDate?: Date;
+        Object.defineProperty(this, 'name', { value: 'LessonPlanGenerationError' });
+    }
 }
 
 @Resolver()
@@ -84,37 +94,53 @@ export class MutateLessonPlanResolver {
     @Mutation(() => LessonPlanOutput)
     @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async generateLessonPlan(@Ctx() context: GraphQLContext, @Arg('data') data: GenerateLessonPlanInput): Promise<LessonPlanOutput> {
-        const { fileUuids, subject, grade, duration, prompt } = data;
+        const { fileUuids, subject, grade, duration, prompt, expectedOutputs } = data;
 
         try {
-            const generatedLessonPlan = await generateLessonPlan(fileUuids, subject, grade, duration, prompt);
+            const generatedLessonPlan = await generateLessonPlan({
+                fileUuids,
+                subject,
+                grade,
+                duration,
+                prompt,
+                expectedOutputs: expectedOutputs?.map((field) => field.toString()),
+            });
             logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}`);
 
-            // TODO: Implement the actual creation of the lesson plan in the database
-            // For now, we'll use a mock ID and dates
-            const now = new Date();
+            // Create the lesson plan output based on the expected outputs
             const lessonPlan: LessonPlanOutput = {
-                id: 1, // This should be replaced with an actual database-generated ID
-                createdAt: now,
-                updatedAt: now,
-                startDate: now,
-                endDate: new Date(now.getTime() + duration * 60000), // Set end date based on duration
-                title: generatedLessonPlan.title || 'Untitled Lesson Plan',
-                subject: subject,
-                grade: grade.toString(),
-                duration: duration,
-                basicKnowledge: generatedLessonPlan.basicKnowledge || '',
-                learningGoal: generatedLessonPlan.learningGoal || '',
-                agendaExercises: generatedLessonPlan.agendaExercises || '',
-                assessment: generatedLessonPlan.assessment || '',
-                homework: generatedLessonPlan.homework || '',
-                resources: generatedLessonPlan.resources || '',
+                subject: generatedLessonPlan.subject,
+                grade: generatedLessonPlan.grade,
+                duration: generatedLessonPlan.duration,
             };
+
+            // Only include the fields that were requested or generated
+            if (expectedOutputs) {
+                for (const field of expectedOutputs) {
+                    if (field in generatedLessonPlan) {
+                        lessonPlan[field] = generatedLessonPlan[field];
+                    }
+                }
+            } else {
+                // If no expected outputs were specified, include all generated fields
+                Object.assign(lessonPlan, generatedLessonPlan);
+            }
 
             return lessonPlan;
         } catch (error) {
             logger.error(`Error generating lesson plan: ${error.message}`);
-            throw new Error('Failed to generate lesson plan: ' + error.message);
+
+            if (error.message.includes('Invalid fileID')) {
+                throw new UserInputError('Invalid file UUID provided', {
+                    invalidFileUUID: error.message.match(/Invalid fileID\((.*?)\)/)[1],
+                });
+            } else if (error.message.includes('Failed to process one or more files')) {
+                throw new LessonPlanGenerationError('Failed to process one or more files. Please check the provided file UUIDs and try again.');
+            } else if (error.message.includes('OpenAI API key is not set')) {
+                throw new LessonPlanGenerationError('Internal server error: OpenAI API key is not configured.');
+            } else {
+                throw new LessonPlanGenerationError('An unexpected error occurred while generating the lesson plan. Please try again later.');
+            }
         }
     }
 }
