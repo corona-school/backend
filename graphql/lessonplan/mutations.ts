@@ -32,8 +32,8 @@ registerEnumType(LessonPlanField, {
 
 @InputType()
 class GenerateLessonPlanInput {
-    @Field(() => [String])
-    fileUuids: string[];
+    @Field(() => [String], { nullable: true })
+    fileUuids?: string[];
 
     @Field(() => course_subject_enum)
     subject: course_subject_enum;
@@ -98,7 +98,7 @@ export class MutateLessonPlanResolver {
 
         try {
             const generatedLessonPlan = await generateLessonPlan({
-                fileUuids,
+                fileUuids: fileUuids || [],
                 subject,
                 grade,
                 duration,
@@ -138,6 +138,8 @@ export class MutateLessonPlanResolver {
                 throw new LessonPlanGenerationError('Failed to process one or more files. Please check the provided file UUIDs and try again.');
             } else if (error.message.includes('OpenAI API key is not set')) {
                 throw new LessonPlanGenerationError('Internal server error: OpenAI API key is not configured.');
+            } else if (error.message.includes('The following files are empty or their content could not be processed:')) {
+                throw new LessonPlanGenerationError(error.message);
             } else {
                 throw new LessonPlanGenerationError('An unexpected error occurred while generating the lesson plan. Please try again later.');
             }

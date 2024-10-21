@@ -87,6 +87,7 @@
         "reflect-metadata": "^0.1.13",
         "source-map-support": "^0.5.21",
         "talkjs": "^0.15.9",
+        "tiktoken": "^1.0.17",
         "type-graphql": "^1.1.1",
         "uuid": "^7.0.3",
         "web-push": "^3.6.7",

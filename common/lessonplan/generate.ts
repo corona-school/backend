@@ -6,8 +6,12 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
 import { course_subject_enum } from '@prisma/client';
+import { encoding_for_model, TiktokenModel } from 'tiktoken';
 
 const logger = getLogger('LessonPlan Generator');
+
+const MODEL_NAME = 'gpt-4o-mini' as TiktokenModel;
+const MAX_TOKENS = 128000;
 
 const plan = z.object({
     title: z.string().describe('A concise, descriptive title for the lesson'),
@@ -33,6 +37,28 @@ interface GenerateLessonPlanInput {
     expectedOutputs?: string[];
 }
 
+// Function to count tokens
+function countTokens(text: string, model: TiktokenModel): number {
+    const enc = encoding_for_model(model);
+    const tokens = enc.encode(text);
+    enc.free();
+    return tokens.length;
+}
+
+// Function to truncate text to fit within token limit
+function truncateText(text: string, model: TiktokenModel, maxTokens: number): string {
+    const enc = encoding_for_model(model);
+    const tokens = enc.encode(text);
+    if (tokens.length <= maxTokens) {
+        enc.free();
+        return text;
+    }
+    const truncatedTokens = tokens.slice(0, maxTokens);
+    const truncatedText = new TextDecoder().decode(enc.decode(truncatedTokens));
+    enc.free();
+    return truncatedText;
+}
+
 export async function generateLessonPlan({
     fileUuids,
     subject,
@@ -43,49 +69,70 @@ export async function generateLessonPlan({
 }: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
     logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes`);
 
-    // Fetch file contents for each UUID
-    const files = await Promise.all(
-        fileUuids.map(async (uuid) => {
-            try {
-                const file: File = getFile(uuid);
-                const blob = new Blob([file.buffer], { type: file.mimetype });
-                let loader;
-                let docs;
+    const emptyFiles: string[] = [];
+    let combinedContent = '';
 
-                if (file.mimetype === 'application/pdf') {
-                    loader = new PDFLoader(blob, { splitPages: true });
-                    docs = await loader.load();
-                } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                    loader = new DocxLoader(blob);
-                    docs = await loader.load();
-                } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-                    loader = new PPTXLoader(blob);
-                    docs = await loader.load();
-                } else {
-                    throw new Error(`Unsupported file type: ${file.mimetype}`);
+    if (fileUuids.length > 0) {
+        // Fetch file contents for each UUID
+        const files = await Promise.all(
+            fileUuids.map(async (uuid) => {
+                try {
+                    const file: File = getFile(uuid);
+                    const blob = new Blob([file.buffer], { type: file.mimetype });
+                    let loader;
+                    let docs;
+
+                    if (file.mimetype === 'application/pdf') {
+                        loader = new PDFLoader(blob, { splitPages: true });
+                        docs = await loader.load();
+                    } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                        loader = new DocxLoader(blob);
+                        docs = await loader.load();
+                    } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                        loader = new PPTXLoader(blob);
+                        docs = await loader.load();
+                    } else {
+                        throw new Error(`Unsupported file type: ${file.mimetype}`);
+                    }
+
+                    // Add filename and page numbers (only for PDFs) to the content
+                    const content =
+                        `Filename: ${file.originalname}\n\n` +
+                        docs
+                            .map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent))
+                            .join('\n\n');
+
+                    // Check if the content is empty (excluding filename and page numbers)
+                    const contentWithoutMetadata = content
+                        .replace(`Filename: ${file.originalname}\n\n`, '')
+                        .replace(/Page \d+:\n/g, '')
+                        .trim();
+                    if (contentWithoutMetadata.length === 0) {
+                        emptyFiles.push(file.originalname);
+                        return null;
+                    }
+
+                    return {
+                        name: file.originalname,
+                        content: content,
+                        type: file.mimetype,
+                    };
+                } catch (error) {
+                    logger.error(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
+                    throw error;
                 }
+            })
+        );
 
-                // Add filename and page numbers (only for PDFs) to the content
-                const content =
-                    `Filename: ${file.originalname}\n\n` +
-                    docs.map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent)).join('\n\n');
+        const validFiles = files.filter((file): file is NonNullable<typeof file> => file !== null);
 
-                return {
-                    name: file.originalname,
-                    content: content,
-                    type: file.mimetype,
-                };
-            } catch (error) {
-                logger.error(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
-                throw new Error('Failed to process one or more files');
-            }
-        })
-    );
+        if (emptyFiles.length > 0) {
+            throw new Error(`The following files are empty or their content could not be processed: ${emptyFiles.join(', ')}`);
+        }
 
-    const validFiles = files.filter((file): file is NonNullable<typeof file> => file !== null);
-
-    // Combine all file contents
-    const combinedContent = validFiles.map((file) => file.content).join('\n\n');
+        // Combine all file contents
+        combinedContent = validFiles.map((file) => file.content).join('\n\n');
+    }
 
     // Check for OpenAI API key
     if (!process.env.OPENAI_API_KEY) {
@@ -94,7 +141,7 @@ export async function generateLessonPlan({
 
     // Initialize the ChatOpenAI model
     const model = new ChatOpenAI({
-        modelName: 'gpt-4o-mini',
+        modelName: MODEL_NAME,
         temperature: 0,
     });
 
@@ -112,11 +159,31 @@ export async function generateLessonPlan({
                       .map((field) => `${field}: {${field}}`)
                       .join('\n');
 
-        const finalPrompt = `${LESSON_PLAN_PROMPT.replace(
+        let finalPrompt = `${LESSON_PLAN_PROMPT.replace(
             '{requestedFields}',
             requestedFields
-        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. Include relevant content from the provided materials and follow these additional instructions: ${prompt}\n\nProvided materials:\n${combinedContent}`;
-        logger.debug(`Prompt: ${finalPrompt}`);
+        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. ${prompt}`;
+
+        if (combinedContent) {
+            finalPrompt += `\n\nInclude relevant content from the provided materials:\n${combinedContent}`;
+        }
+
+        // Only count tokens if the character count exceeds MAX_TOKENS
+        if (finalPrompt.length > MAX_TOKENS) {
+            const tokenCount = countTokens(finalPrompt, MODEL_NAME);
+            if (tokenCount > MAX_TOKENS) {
+                logger.warn(`Prompt exceeds token limit. Prompt has ${tokenCount} tokens but the maximum allowed is ${MAX_TOKENS} tokens. Truncating...`);
+                const truncatedContent = truncateText(
+                    combinedContent,
+                    MODEL_NAME,
+                    MAX_TOKENS - countTokens(finalPrompt.replace(combinedContent, ''), MODEL_NAME)
+                );
+                finalPrompt = finalPrompt.replace(combinedContent, truncatedContent);
+            }
+            logger.debug(`Prompt token count: ${countTokens(finalPrompt, MODEL_NAME)}`);
+        }
+
+        logger.debug(`Final prompt: ${finalPrompt}`);
         const result = await structuredLlm.invoke(finalPrompt);
 
         return {
@@ -127,6 +194,6 @@ export async function generateLessonPlan({
         };
     } catch (error) {
         logger.error(`Error generating lesson plan: ${error.message}`);
-        throw new Error('Failed to generate lesson plan');
+        throw error;
     }
 }
