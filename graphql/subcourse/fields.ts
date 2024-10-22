@@ -1,4 +1,4 @@
-import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
+import { course_coursestate_enum as CourseState, Prisma, subcourse } from '@prisma/client';
 import { canCancel, canDeleteSubcourse, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
@@ -59,16 +59,6 @@ class OtherParticipant {
     gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
-}
-
-@ObjectType()
-class PupilIdName {
-    @Field(() => Int)
-    id: number;
-    @Field(() => String)
-    firstname: string;
-    @Field(() => String)
-    lastname: string;
 }
 
 export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
@@ -442,12 +432,11 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [PupilIdName])
+    @FieldResolver(() => [Pupil])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse): Promise<PupilIdName[]> {
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<Pupil[]> {
         const chats = getSubcourseProspects(subcourse);
-        const pupils = await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
-        return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
+        return await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
     }
 
     @FieldResolver((returns) => Boolean)
