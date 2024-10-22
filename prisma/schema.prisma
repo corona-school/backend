@@ -1532,25 +1532,3 @@ enum dissolve_reason {
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
 }
-
-model lesson_plan {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  title       String   @db.VarChar
-  subject     course_subject_enum
-  grade       String   @db.VarChar
-  duration    Int // in minutes
-
-  basicKnowledge String   @db.VarChar
-  learningGoal String   @db.VarChar
-  agendaExercises String   @db.VarChar
-  assessment String   @db.VarChar
-  homework String   @db.VarChar
-  resources String   @db.VarChar
-  
-  // Timeline
-  startDate   DateTime @db.Date
-  endDate     DateTime @db.Date
-  
-}
