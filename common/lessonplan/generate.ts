@@ -33,6 +33,7 @@ interface GenerateLessonPlanInput {
     subject: course_subject_enum;
     grade: number;
     duration: number;
+    state: string;
     prompt: string;
     expectedOutputs?: string[];
 }
@@ -64,6 +65,7 @@ export async function generateLessonPlan({
     subject,
     grade,
     duration,
+    state,
     prompt,
     expectedOutputs,
 }: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
@@ -162,7 +164,7 @@ export async function generateLessonPlan({
         let finalPrompt = `${LESSON_PLAN_PROMPT.replace(
             '{requestedFields}',
             requestedFields
-        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade}. The lesson should last ${duration} minutes. ${prompt}`;
+        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}. The lesson should last ${duration} minutes. ${prompt}`;
 
         if (combinedContent) {
             finalPrompt += `\n\nInclude relevant content from the provided materials:\n${combinedContent}`;

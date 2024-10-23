@@ -4,7 +4,7 @@ import { Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
-import { course_subject_enum } from '@prisma/client';
+import { course_subject_enum, pupil_state_enum } from '@prisma/client';
 import { ApolloError, UserInputError } from 'apollo-server-express';
 
 const logger = getLogger(`LessonPlan Mutations`);
@@ -52,6 +52,9 @@ class GenerateLessonPlanInput {
     @Field(() => Int)
     duration: number;
 
+    @Field(() => pupil_state_enum)
+    state: pupil_state_enum;
+
     @Field(() => String)
     @MaxLength(MAX_PROMPT_LENGTH, { message: `Prompt must not exceed ${MAX_PROMPT_LENGTH} characters` })
     prompt: string;
@@ -98,6 +101,41 @@ class LessonPlanGenerationError extends ApolloError {
     }
 }
 
+// Define a type for the state codes based on the enum
+type StateCode = keyof typeof pupil_state_enum;
+
+// Create a mapping object for state codes to full names
+const stateMap: Record<StateCode, string> = {
+    bw: 'Baden-Württemberg',
+    by: 'Bayern',
+    be: 'Berlin',
+    bb: 'Brandenburg',
+    hb: 'Bremen',
+    hh: 'Hamburg',
+    he: 'Hessen',
+    mv: 'Mecklenburg-Vorpommern',
+    ni: 'Niedersachsen',
+    nw: 'Nordrhein-Westfalen',
+    rp: 'Rheinland-Pfalz',
+    sl: 'Saarland',
+    sn: 'Sachsen',
+    st: 'Sachsen-Anhalt',
+    sh: 'Schleswig-Holstein',
+    th: 'Thüringen',
+    at: 'Austria',
+    ch: 'Switzerland',
+    other: 'Other',
+};
+
+/**
+ * Gets the full name of a state from its code.
+ * @param stateCode - The state code.
+ * @returns The full name of the state.
+ */
+export function getStateFullName(stateCode: StateCode): string {
+    return stateMap[stateCode] || 'Unknown';
+}
+
 @Resolver()
 export class MutateLessonPlanResolver {
     @Mutation(() => LessonPlanOutput)
@@ -110,7 +148,9 @@ export class MutateLessonPlanResolver {
             throw new UserInputError('Invalid input', { errors });
         }
 
-        const { fileUuids, subject, grade, duration, prompt, expectedOutputs } = data;
+        const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs } = data;
+
+        const fullStateName: string = getStateFullName(state);
 
         try {
             const generatedLessonPlan = await generateLessonPlan({
@@ -118,6 +158,7 @@ export class MutateLessonPlanResolver {
                 subject,
                 grade,
                 duration,
+                state: fullStateName,
                 prompt,
                 expectedOutputs: expectedOutputs?.map((field) => field.toString()),
             });
