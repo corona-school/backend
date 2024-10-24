@@ -27,6 +27,7 @@ import { GraphQLInt } from 'graphql';
 import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
+import { getParticipants } from '../../common/pupil';
 
 @ObjectType()
 class Participant {
@@ -383,27 +384,17 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     @LimitEstimated(100)
     async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
-        const pupils = await prisma.pupil.findMany({
-            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
-            where: {
-                waiting_list_enrollment: {
-                    some: {
-                        subcourseId: subcourse.id,
-                    },
-                },
-            },
+        const participants = await getParticipants({
+            waiting_list_enrollment: { some: { subcourseId: subcourse.id } },
         });
 
-        pupils.sort(
+        participants.sort(
             (a, b) =>
                 +a.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt -
                 +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
         );
 
-        return pupils.map((e) => ({
-            ...e,
-            gradeAsInt: gradeAsInt(e.grade),
-        }));
+        return participants;
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
@@ -435,16 +426,12 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.OWNER)
     async prospectParticipants(@Root() subcourse: Subcourse): Promise<Participant[]> {
         const chats = getSubcourseProspects(subcourse);
-        const pupils = await prisma.pupil.findMany({
-            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
-            where: {
-                id: { in: chats.map((it) => it.pupilId) },
+
+        return await getParticipants({
+            id: {
+                in: chats.map((it) => it.pupilId),
             },
         });
-        return pupils.map((e) => ({
-            ...e,
-            gradeAsInt: gradeAsInt(e.grade),
-        }));
     }
 
     @FieldResolver((returns) => Boolean)
