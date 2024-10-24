@@ -26,7 +26,6 @@ import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
 import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
-import { getPupilsFromList } from '../../common/user';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
 
 @ObjectType()
@@ -432,11 +431,20 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [Pupil])
+    @FieldResolver(() => [Participant])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse): Promise<Pupil[]> {
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<Participant[]> {
         const chats = getSubcourseProspects(subcourse);
-        return await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
+        const pupils = await prisma.pupil.findMany({
+            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
+            where: {
+                id: { in: chats.map((it) => it.pupilId) },
+            },
+        });
+        return pupils.map((e) => ({
+            ...e,
+            gradeAsInt: gradeAsInt(e.grade),
+        }));
     }
 
     @FieldResolver((returns) => Boolean)
