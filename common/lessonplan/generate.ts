@@ -8,6 +8,7 @@ import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
 import { course_subject_enum, school_schooltype_enum } from '@prisma/client';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
+import sharp from 'sharp';
 
 const logger = getLogger('LessonPlan Generator');
 
@@ -62,6 +63,13 @@ function truncateText(text: string, model: TiktokenModel, maxTokens: number): st
     return truncatedText;
 }
 
+// Function to resize image to 512x512px
+async function resizeImage(buffer: Buffer): Promise<Buffer> {
+    return sharp(buffer)
+        .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .toBuffer();
+}
+
 export async function generateLessonPlan({
     fileUuids,
     subject,
@@ -88,13 +96,15 @@ export async function generateLessonPlan({
 
                     if (file.mimetype.startsWith('image/')) {
                         // Handle image files
-                        const base64 = Buffer.from(file.buffer).toString('base64');
+                        const resizedBuffer = await resizeImage(file.buffer);
+                        const base64 = resizedBuffer.toString('base64');
                         imageContents.push({
                             type: 'image_url',
                             image_url: {
                                 url: `data:${file.mimetype};base64,${base64}`,
                             },
                         });
+                        logger.debug(`Image: ${base64}`);
                         return null;
                     }
 
@@ -217,7 +227,6 @@ export async function generateLessonPlan({
 
         // Invoke the model
         const result = await structuredLlm.invoke([message]);
-
         return {
             ...result,
             subject,
