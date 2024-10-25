@@ -9,6 +9,9 @@ import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
 import { course_subject_enum, school_schooltype_enum } from '@prisma/client';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import sharp from 'sharp';
+// import { promises as fs } from 'fs';
+// import * as path from 'path';
+// import { v4 as uuidv4 } from 'uuid';
 
 const logger = getLogger('LessonPlan Generator');
 
@@ -63,11 +66,47 @@ function truncateText(text: string, model: TiktokenModel, maxTokens: number): st
     return truncatedText;
 }
 
-// Function to resize image to 512x512px
+// Function to resize image based on aspect ratio
 async function resizeImage(buffer: Buffer): Promise<Buffer> {
-    return sharp(buffer)
-        .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
-        .toBuffer();
+    const image = sharp(buffer);
+    const metadata = await image.metadata();
+    const { width, height } = metadata;
+
+    if (!width || !height) {
+        throw new Error('Unable to determine image dimensions');
+    }
+
+    logger.debug(`Original image dimensions: ${width}x${height}`);
+
+    const tileSize = 512;
+    const aspectRatio = width / height;
+
+    logger.debug(`Image aspect ratio: ${aspectRatio}`);
+
+    let tilesX, tilesY;
+    if (aspectRatio > 1.1) {
+        // Landscape image
+        tilesX = 2;
+        tilesY = 1;
+        logger.debug(`Landscape image. Tiles: ${tilesX}x${tilesY}`);
+    } else if (aspectRatio < 0.9) {
+        // Portrait image
+        tilesX = 1;
+        tilesY = 2;
+        logger.debug(`Portrait image. Tiles: ${tilesX}x${tilesY}`);
+    } else {
+        // Square image
+        tilesX = tilesY = 1;
+        logger.debug(`Square image. Tiles: ${tilesX}x${tilesY}`);
+    }
+
+    const newWidth = tilesX * tileSize;
+    const newHeight = tilesY * tileSize;
+
+    logger.debug(`New image dimensions: ${newWidth}x${newHeight}`);
+    logger.debug(`Total tiles used: ${tilesX * tilesY}`);
+
+    return image.resize(newWidth, newHeight, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } }).toBuffer();
 }
 
 export async function generateLessonPlan({
@@ -96,15 +135,25 @@ export async function generateLessonPlan({
 
                     if (file.mimetype.startsWith('image/')) {
                         // Handle image files
+                        logger.debug(`Processing image file: ${file.originalname}`);
                         const resizedBuffer = await resizeImage(file.buffer);
                         const base64 = resizedBuffer.toString('base64');
+                        const dataUrl = `data:${file.mimetype};base64,${base64}`;
                         imageContents.push({
                             type: 'image_url',
                             image_url: {
-                                url: `data:${file.mimetype};base64,${base64}`,
+                                url: dataUrl,
                             },
                         });
-                        logger.debug(`Image: ${base64}`);
+
+                        // // Generate a unique filename
+                        // const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
+                        // const savePath = path.join('./', uniqueFilename);
+
+                        // // Write the resized image to a file
+                        // await fs.writeFile(savePath, resizedBuffer);
+
+                        logger.debug(`Image processed and converted to base64`);
                         return null;
                     }
 
