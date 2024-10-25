@@ -1,6 +1,7 @@
 import { getLogger } from '../logger/logger';
 import { getFile, FileID, File } from '../../graphql/files';
 import { ChatOpenAI } from '@langchain/openai';
+import { HumanMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
@@ -26,7 +27,7 @@ const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structur
 
 {requestedFields}
 
-Use the provided materials and requirements to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.`;
+Use the provided materials, requirements, and images (if any) to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.`;
 
 interface GenerateLessonPlanInput {
     fileUuids: FileID[];
@@ -75,14 +76,28 @@ export async function generateLessonPlan({
 
     const emptyFiles: string[] = [];
     let combinedContent = '';
+    let imageContents: { type: 'image_url'; image_url: { url: string } }[] = [];
 
     if (fileUuids.length > 0) {
         // Fetch file contents for each UUID
-        const files = await Promise.all(
+        const allFiles = await Promise.all(
             fileUuids.map(async (uuid) => {
                 try {
                     const file: File = getFile(uuid);
                     const blob = new Blob([file.buffer], { type: file.mimetype });
+
+                    if (file.mimetype.startsWith('image/')) {
+                        // Handle image files
+                        const base64 = Buffer.from(file.buffer).toString('base64');
+                        imageContents.push({
+                            type: 'image_url',
+                            image_url: {
+                                url: `data:${file.mimetype};base64,${base64}`,
+                            },
+                        });
+                        return null;
+                    }
+
                     let loader;
                     let docs;
 
@@ -128,7 +143,7 @@ export async function generateLessonPlan({
             })
         );
 
-        const validFiles = files.filter((file): file is NonNullable<typeof file> => file !== null);
+        const validFiles = allFiles.filter((file): file is NonNullable<typeof file> => file !== null);
 
         if (emptyFiles.length > 0) {
             throw new Error(`The following files are empty or their content could not be processed: ${emptyFiles.join(', ')}`);
@@ -188,7 +203,20 @@ export async function generateLessonPlan({
         }
 
         logger.debug(`Final prompt: ${finalPrompt}`);
-        const result = await structuredLlm.invoke(finalPrompt);
+
+        // Prepare the message content
+        const messageContent: ({ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } })[] = [
+            { type: 'text', text: finalPrompt },
+            ...imageContents,
+        ];
+
+        // Create the human message
+        const message = new HumanMessage({
+            content: messageContent,
+        });
+
+        // Invoke the model
+        const result = await structuredLlm.invoke([message]);
 
         return {
             ...result,
