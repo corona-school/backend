@@ -4,7 +4,7 @@ import { Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
-import { course_subject_enum, pupil_state_enum } from '@prisma/client';
+import { course_subject_enum, pupil_state_enum, school_schooltype_enum } from '@prisma/client';
 import { ApolloError, UserInputError } from 'apollo-server-express';
 
 const logger = getLogger(`LessonPlan Mutations`);
@@ -19,6 +19,12 @@ const MAX_FILES = 10;
 registerEnumType(course_subject_enum, {
     name: 'CourseSubjectEnum',
     description: 'The subject of the course',
+});
+
+// Register the school_schooltype_enum as a GraphQL enum
+registerEnumType(school_schooltype_enum, {
+    name: 'SchoolSchoolTypeEnum',
+    description: 'The type of school',
 });
 
 // Create a new enum for expected output fields
@@ -61,6 +67,9 @@ class GenerateLessonPlanInput {
 
     @Field(() => [LessonPlanField], { nullable: true })
     expectedOutputs?: LessonPlanField[];
+
+    @Field(() => school_schooltype_enum)
+    schoolType: school_schooltype_enum;
 }
 
 @ObjectType()
@@ -148,7 +157,7 @@ export class MutateLessonPlanResolver {
             throw new UserInputError('Invalid input', { errors });
         }
 
-        const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs } = data;
+        const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs, schoolType } = data;
 
         const fullStateName: string = getStateFullName(state);
 
@@ -161,8 +170,9 @@ export class MutateLessonPlanResolver {
                 state: fullStateName,
                 prompt,
                 expectedOutputs: expectedOutputs?.map((field) => field.toString()),
+                schoolType,
             });
-            logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}`);
+            logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}, school type: ${schoolType}`);
 
             // Create the lesson plan output based on the expected outputs
             const lessonPlan: LessonPlanOutput = {

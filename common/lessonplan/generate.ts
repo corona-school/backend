@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
-import { course_subject_enum } from '@prisma/client';
+import { course_subject_enum, school_schooltype_enum } from '@prisma/client';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
 
 const logger = getLogger('LessonPlan Generator');
@@ -26,7 +26,7 @@ const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structur
 
 {requestedFields}
 
-Use the provided materials and requirements to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, and duration specified.`;
+Use the provided materials and requirements to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.`;
 
 interface GenerateLessonPlanInput {
     fileUuids: FileID[];
@@ -36,6 +36,7 @@ interface GenerateLessonPlanInput {
     state: string;
     prompt: string;
     expectedOutputs?: string[];
+    schoolType: school_schooltype_enum;
 }
 
 // Function to count tokens
@@ -68,8 +69,9 @@ export async function generateLessonPlan({
     state,
     prompt,
     expectedOutputs,
+    schoolType,
 }: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
-    logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes`);
+    logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes, school type: ${schoolType}`);
 
     const emptyFiles: string[] = [];
     let combinedContent = '';
@@ -164,7 +166,7 @@ export async function generateLessonPlan({
         let finalPrompt = `${LESSON_PLAN_PROMPT.replace(
             '{requestedFields}',
             requestedFields
-        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}. The lesson should last ${duration} minutes. ${prompt}`;
+        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}, for a ${schoolType} school. The lesson should last ${duration} minutes. ${prompt}`;
 
         if (combinedContent) {
             finalPrompt += `\n\nInclude relevant content from the provided materials:\n${combinedContent}`;
