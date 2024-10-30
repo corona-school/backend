@@ -70,6 +70,9 @@ class GenerateLessonPlanInput {
 
     @Field(() => school_schooltype_enum)
     schoolType: school_schooltype_enum;
+
+    @Field(() => String, { nullable: true, defaultValue: 'German' })
+    language?: string;
 }
 
 @ObjectType()
@@ -157,7 +160,7 @@ export class MutateLessonPlanResolver {
             throw new UserInputError('Invalid input', { errors });
         }
 
-        const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs, schoolType } = data;
+        const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs, schoolType, language } = data;
 
         const fullStateName: string = getStateFullName(state);
 
@@ -171,8 +174,9 @@ export class MutateLessonPlanResolver {
                 prompt,
                 expectedOutputs: expectedOutputs?.map((field) => field.toString()),
                 schoolType,
+                language,
             });
-            logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}, school type: ${schoolType}`);
+            logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}, school type: ${schoolType}, language: ${language || 'German'}`);
 
             // Create the lesson plan output based on the expected outputs
             const lessonPlan: LessonPlanOutput = {

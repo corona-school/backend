@@ -31,7 +31,9 @@ const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structur
 
 {requestedFields}
 
-Use the provided materials, requirements, and images (if any) to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.`;
+Use the provided materials, requirements, and images (if any) to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.
+
+IMPORTANT: Respond in {language}. All content of the lesson plan should be in {language}.`;
 
 interface GenerateLessonPlanInput {
     fileUuids: FileID[];
@@ -42,6 +44,7 @@ interface GenerateLessonPlanInput {
     prompt: string;
     expectedOutputs?: string[];
     schoolType: school_schooltype_enum;
+    language?: string;
 }
 
 // Function to count tokens
@@ -118,6 +121,7 @@ export async function generateLessonPlan({
     prompt,
     expectedOutputs,
     schoolType,
+    language = 'German', // Default language is German
 }: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
     logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes, school type: ${schoolType}`);
 
@@ -237,9 +241,9 @@ export async function generateLessonPlan({
                       .map((field) => `${field}: {${field}}`)
                       .join('\n');
 
-        let finalPrompt = `${LESSON_PLAN_PROMPT.replace(
-            '{requestedFields}',
-            requestedFields
+        let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields).replace(
+            '{language}',
+            language
         )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}, for a ${schoolType} school. The lesson should last ${duration} minutes. ${prompt}`;
 
         if (combinedContent) {
