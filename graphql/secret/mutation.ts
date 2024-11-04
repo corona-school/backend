@@ -21,10 +21,11 @@ export class MutateSecretResolver {
     @Authorized(Role.USER)
     async tokenCreate(
         @Ctx() context: GraphQLContext,
+        @Arg('expiresAt', { nullable: true }) expiresAt: Date | null,
         @Arg('description', { nullable: true }) description: string | null,
         @Arg('deviceId', { nullable: true }) deviceId: string | null
     ) {
-        return await createToken(getSessionUser(context), /* expiresAt */ null, description, deviceId);
+        return await createToken(getSessionUser(context), expiresAt, description, deviceId);
     }
 
     @Mutation((returns) => String)
