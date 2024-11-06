@@ -16,11 +16,16 @@ const logger = getLogger('Match');
 export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool) {
     const uuid = generateUUID();
 
-    if (pupil.openMatchRequestCount < 1) {
+    // Refetch match request count to reduce the likelihood of race conditions
+    // (does not prevent it though, we would actually need a SELECT FOR UPDATE)
+    const freshPupil = await prisma.pupil.findUniqueOrThrow({ where: { id: pupil.id }, select: { openMatchRequestCount: true } });
+    const freshStudent = await prisma.student.findUniqueOrThrow({ where: { id: student.id }, select: { openMatchRequestCount: true } });
+
+    if (freshPupil.openMatchRequestCount < 1) {
         throw new PrerequisiteError(`Cannot create Match for Pupil without open match requests`);
     }
 
-    if (student.openMatchRequestCount < 1) {
+    if (freshStudent.openMatchRequestCount < 1) {
         throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
     }
 
