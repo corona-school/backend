@@ -279,6 +279,15 @@ const _notificationActions = {
             },
         },
     },
+    instructor_completed_first_appointment: {
+        description: 'Instructor / Completed first appointment',
+        sampleContext: {
+            course: {
+                name: 'Hallo Welt',
+                description: 'Ein Kurs',
+            },
+        },
+    },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
         sampleContext: sampleCourse,
@@ -423,6 +432,26 @@ const _notificationActions = {
 
     tutor_matching_success: {
         description: 'Tutor / Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
+    tutor_daz_matching_success: {
+        description: 'Tutor / DaZ Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
+    tutor_standard_matching_success: {
+        description: 'Tutor / Standard Match success',
         sampleContext: {
             pupil: sampleUser,
             pupilGrade: '3. Klasse',
