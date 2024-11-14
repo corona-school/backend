@@ -279,13 +279,12 @@ const _notificationActions = {
             },
         },
     },
-    instructor_completed_first_appointment: {
+    instructor_first_appointment_completed: {
         description: 'Instructor / Completed first appointment',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            ...sampleCourse,
         },
     },
     instructor_course_ended: {
