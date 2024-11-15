@@ -23,9 +23,10 @@ registerStudentHook('cancel-remission-request', 'Cancels the remission request(s
 
 registerStudentHook(
     'attempt-invite-instructor-to-reflection-meeting',
-    'Instructors are invited to participate in a reflection meeting after their very first group appointment',
+    'Instructors (without matches) are invited to participate in a reflection meeting after their very first group appointment',
     async (student, context) => {
-        if (student.isStudent) {
+        const activeMatches = await prisma.match.count({ where: { studentId: student.id, dissolved: false } });
+        if (activeMatches > 0) {
             return;
         }
         const user = userForStudent(student);
