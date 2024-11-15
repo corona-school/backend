@@ -10,6 +10,7 @@ import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
+import { DAZ } from '../util/subjectsutils';
 
 const logger = getLogger('Match');
 
@@ -58,9 +59,9 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await removeInterest(pupil);
 
     const callURL = getJitsiTutoringLink(match);
-    const matchSubjects = getOverlappingSubjects(pupil, student)
-        .map((it) => it.name)
-        .join('/');
+    const subjects = getOverlappingSubjects(pupil, student).map((it) => it.name);
+
+    const matchSubjects = subjects.join('/');
 
     const tutorFirstMatch = (await prisma.match.count({ where: { studentId: student.id } })) === 1;
     const tuteeFirstMatch = (await prisma.match.count({ where: { pupilId: pupil.id } })) === 1;
@@ -81,6 +82,13 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     };
 
     await Notification.actionTaken(userForStudent(student), `tutor_matching_success`, tutorContext);
+
+    await Notification.actionTaken(
+        userForStudent(student),
+        subjects.includes(DAZ) ? 'tutor_daz_matching_success' : 'tutor_standard_matching_success',
+        tutorContext
+    );
+
     await Notification.actionTaken(userForStudent(student), `tutor_matching_${pool.name}`, tutorContext);
 
     const tuteeContext = {
