@@ -43,8 +43,10 @@
         "@aws-sdk/s3-request-presigner": "^3.137.0",
         "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
+        "@types/axios": "^0.14.4",
         "apollo-server-express": "3.4.0",
         "apollo-server-plugin-response-cache": "3.4.0",
+        "axios": "^1.7.7",
         "basic-auth": "^2.0.1",
         "bcrypt": "^5.0.0",
         "body-parser": "^1.19.0",
@@ -148,7 +150,9 @@
         "projects": [
             {
                 "displayName": "unit",
-                "testRegex": [".*\\.spec\\.ts$"],
+                "testRegex": [
+                    ".*\\.spec\\.ts$"
+                ],
                 "moduleFileExtensions": [
                     "js",
                     "json",
@@ -177,7 +181,9 @@
             },
             {
                 "displayName": "perf",
-                "testRegex": [".*\\.perf\\.ts$"],
+                "testRegex": [
+                    ".*\\.perf\\.ts$"
+                ],
                 "moduleFileExtensions": [
                     "js",
                     "json",

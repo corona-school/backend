@@ -1533,3 +1533,10 @@ enum dissolve_reason {
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
 }
+
+// LinkedIn integration for posting images
+model linkedInToken {
+  userId      String    @id
+  accessToken String
+  expiresAt   DateTime
+}

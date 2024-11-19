@@ -349,6 +349,9 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_assignment: allAdmin,
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
+    LinkedInToken: {
+        _all: adminOrOwner,
+    },
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
