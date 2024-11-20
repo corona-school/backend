@@ -296,7 +296,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.STUDENT, Role.ADMIN)
+    @Authorized(Role.STUDENT, Role.ADMIN, Role.STUDENT_SCREENER)
     async studentUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: StudentUpdateInput, @Arg('studentId', { nullable: true }) studentId?: number) {
         const student = await getSessionStudent(context, studentId);
         await updateStudent(context, student, data);
