@@ -493,4 +493,13 @@ export class MutateStudentResolver {
         logger.info(`Admin deleted the Zoom User of Student(${student.id})`);
         return true;
     }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER)
+    async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+
+        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
+        return true;
+    }
 }
