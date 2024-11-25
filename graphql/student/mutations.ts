@@ -23,6 +23,7 @@ import {
     student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    gender_enum as Gender,
     PrismaClient,
     Prisma,
 } from '@prisma/client';
@@ -161,6 +162,12 @@ export class StudentUpdateInput {
 
     @Field((type) => Boolean, { nullable: true })
     hasDoneEthicsOnboarding?: boolean;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialExperience?: boolean;
+
+    @Field((type) => Gender, { nullable: true })
+    gender?: Gender;
 }
 
 const logger = getLogger('Student Mutations');
@@ -185,6 +192,8 @@ export async function updateStudent(
         notificationPreferences,
         university,
         hasDoneEthicsOnboarding,
+        hasSpecialExperience,
+        gender,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -221,6 +230,8 @@ export async function updateStudent(
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
             hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
+            hasSpecialExperience: ensureNoNull(hasSpecialExperience),
+            gender: ensureNoNull(gender),
         },
         where: { id: student.id },
     });

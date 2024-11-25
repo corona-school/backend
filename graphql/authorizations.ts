@@ -425,6 +425,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lastLogin: adminOrOwner,
             gradeUpdatedAt: adminOrOwner,
             learning_topics: adminOrOwner,
+            descriptionForMatch: onlyAdminOrScreener,
+            descriptionForScreening: onlyAdminOrScreener,
+            hasSpecialNeeds: onlyAdminOrScreener,
+            onlyMatchWithWomen: onlyAdminOrScreener,
         }),
     },
 
@@ -509,6 +513,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             cooperation: everyone,
             cooperationID: nobody,
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
+            descriptionForMatch: onlyAdminOrScreener,
+            hasSpecialExperience: onlyAdminOrScreener,
+            gender: onlyAdminOrScreener,
         }),
     },
 
