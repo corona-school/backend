@@ -158,6 +158,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     university?: string;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasDoneEthicsOnboarding?: boolean;
 }
 
 const logger = getLogger('Student Mutations');
@@ -181,6 +184,7 @@ export async function updateStudent(
         lastTimeCheckedNotifications,
         notificationPreferences,
         university,
+        hasDoneEthicsOnboarding,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -216,6 +220,7 @@ export async function updateStudent(
             notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
+            hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
         },
         where: { id: student.id },
     });
@@ -486,6 +491,15 @@ export class MutateStudentResolver {
 
         await deleteZoomUser(student);
         logger.info(`Admin deleted the Zoom User of Student(${student.id})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER)
+    async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+
+        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
         return true;
     }
 }
