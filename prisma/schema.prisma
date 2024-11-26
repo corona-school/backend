@@ -706,9 +706,14 @@ model pupil {
   waiting_list_enrollment                      waiting_list_enrollment[]
   gradeUpdatedAt                               DateTime?
   learning_topics                              learning_topic[]
-  onlyMatchWithWomen                           Boolean                                        @default(false)
+  // There are cases where pupils prefer to be matched with a specific gender (e.g only with women)
+  onlyMatchWith                                gender_enum?
+  // Used to match pupils that have learning difficulties with students that have experience with these cases
   hasSpecialNeeds                              Boolean                                        @default(false)
+  // Used as an "AboutMe" only for screening purposes. This field should not contain any sensitive information
+  // about the pupil
   descriptionForScreening                      String                                         @default("") @db.VarChar
+  // Screeners provide future matches tips or information about the pupil to help improve the collaboration
   descriptionForMatch                          String                                         @default("") @db.VarChar
 }
 
@@ -911,8 +916,11 @@ model student {
 
   cooperationID        Int?
   cooperation          cooperation? @relation(fields: [cooperationID], references: [id])
+  // Used to match students that have have experience supporting pupils with learning difficulties
   hasSpecialExperience Boolean      @default(false)
+  // Screeners provide future matches tips or information about the student to help improve the collaboration
   descriptionForMatch  String       @default("") @db.VarChar
+  // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender               gender_enum?
 }
 

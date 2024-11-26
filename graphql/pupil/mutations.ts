@@ -18,6 +18,7 @@ import {
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
+    gender_enum as Gender,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -83,8 +84,8 @@ export class PupilUpdateInput {
     @MaxLength(500)
     matchReason?: string;
 
-    @Field((type) => Boolean, { nullable: true })
-    onlyMatchWithWomen?: boolean;
+    @Field((type) => Gender, { nullable: true })
+    onlyMatchWith?: Gender;
 
     @Field((type) => Boolean, { nullable: true })
     hasSpecialNeeds?: boolean;
@@ -165,7 +166,7 @@ export async function updatePupil(
         matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
-        onlyMatchWithWomen,
+        onlyMatchWith,
         hasSpecialNeeds,
         descriptionForMatch,
         descriptionForScreening,
@@ -200,7 +201,7 @@ export async function updatePupil(
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
-            onlyMatchWithWomen,
+            onlyMatchWith,
             hasSpecialNeeds,
             descriptionForMatch,
             descriptionForScreening,
