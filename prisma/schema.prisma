@@ -904,6 +904,8 @@ model student {
   remission_request                    remission_request?
   screening                            screening?
   subcourse_instructors_student        subcourse_instructors_student[]
+  // Should stay null for users who where registered before the onboarding got added
+  hasDoneEthicsOnboarding              Boolean?
 
   cooperationID Int?
   cooperation   cooperation? @relation(fields: [cooperationID], references: [id])
@@ -1000,18 +1002,19 @@ model match_pool_run {
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
 model secret {
-  id          Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
-  createdAt   DateTime         @default(now()) @db.Timestamp(6)
-  userId      String           @db.VarChar
-  type        secret_type_enum
-  secret      String           @db.VarChar
-  expiresAt   DateTime?        @db.Timestamp(6)
-  lastUsed    DateTime?        @db.Timestamp(6)
+  id               Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
+  createdAt        DateTime         @default(now()) @db.Timestamp(6)
+  userId           String           @db.VarChar
+  type             secret_type_enum
+  secret           String           @db.VarChar
+  expiresAt        DateTime?        @db.Timestamp(6)
+  lastUsed         DateTime?        @db.Timestamp(6)
   // For Tokens created on a device, this contains the User-Agent of the Device
   // Might also be 'Support' if someone from Support logs in on behalf of the user
   // For EMAIL_TOKENs, contains the email the token is sent to. Can be used to confirm additional email addresses
   // (i.e. during email address change)
-  description String?          @db.VarChar
+  description      String?          @db.VarChar
+  lastUsedDeviceId String?          @db.VarChar // the permanent device identifier this secret was last used on
 }
 
 // DEPRECATED: Used by our old ORM to track migrations, to be removed once Prisma Migrations work reliably

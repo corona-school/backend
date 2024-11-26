@@ -508,6 +508,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lastLogin: adminOrOwner,
             cooperation: everyone,
             cooperationID: nobody,
+            hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
         }),
     },
 

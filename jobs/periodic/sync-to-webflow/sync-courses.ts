@@ -196,6 +196,9 @@ export default async function syncCourses(logger: Logger): Promise<void> {
     logger.info('Start course sync');
     const webflowCourses = await getCollectionItems<CourseDTO>(collectionId, courseDTOFactory);
     const webflowLectures = await getCollectionItems<LectureDTO>(lectureCollectionId, lectureDTOFactory);
+    logger.info(`Total courses retrieved from Webflow: ${webflowCourses.length}`);
+    logger.info(`Total lectures retrieved from Webflow: ${webflowLectures.length}`);
+
     const lectureDBIdMap = mapToDBId<LectureDTO>(webflowLectures);
 
     const subCourses = await getWebflowSubcourses();
@@ -207,8 +210,12 @@ export default async function syncCourses(logger: Logger): Promise<void> {
 
     const newIds: string[] = [];
     for (const row of result.new) {
-        const newId = await createNewItem(collectionId, row);
-        newIds.push(newId);
+        try {
+            const newId = await createNewItem(collectionId, row);
+            newIds.push(newId);
+        } catch (error) {
+            logger.error('Could not create course in Webflow', error, { row });
+        }
     }
     logger.info('created new items', { itemIds: newIds });
 
