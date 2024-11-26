@@ -10,17 +10,23 @@ import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
+import { DAZ } from '../util/subjectsutils';
 
 const logger = getLogger('Match');
 
 export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool) {
     const uuid = generateUUID();
 
-    if (pupil.openMatchRequestCount < 1) {
+    // Refetch match request count to reduce the likelihood of race conditions
+    // (does not prevent it though, we would actually need a SELECT FOR UPDATE)
+    const freshPupil = await prisma.pupil.findUniqueOrThrow({ where: { id: pupil.id }, select: { openMatchRequestCount: true } });
+    const freshStudent = await prisma.student.findUniqueOrThrow({ where: { id: student.id }, select: { openMatchRequestCount: true } });
+
+    if (freshPupil.openMatchRequestCount < 1) {
         throw new PrerequisiteError(`Cannot create Match for Pupil without open match requests`);
     }
 
-    if (student.openMatchRequestCount < 1) {
+    if (freshStudent.openMatchRequestCount < 1) {
         throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
     }
 
@@ -53,9 +59,9 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await removeInterest(pupil);
 
     const callURL = getJitsiTutoringLink(match);
-    const matchSubjects = getOverlappingSubjects(pupil, student)
-        .map((it) => it.name)
-        .join('/');
+    const subjects = getOverlappingSubjects(pupil, student).map((it) => it.name);
+
+    const matchSubjects = subjects.join('/');
 
     const tutorFirstMatch = (await prisma.match.count({ where: { studentId: student.id } })) === 1;
     const tuteeFirstMatch = (await prisma.match.count({ where: { pupilId: pupil.id } })) === 1;
@@ -76,6 +82,13 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     };
 
     await Notification.actionTaken(userForStudent(student), `tutor_matching_success`, tutorContext);
+
+    await Notification.actionTaken(
+        userForStudent(student),
+        subjects.includes(DAZ) ? 'tutor_daz_matching_success' : 'tutor_standard_matching_success',
+        tutorContext
+    );
+
     await Notification.actionTaken(userForStudent(student), `tutor_matching_${pool.name}`, tutorContext);
 
     const tuteeContext = {

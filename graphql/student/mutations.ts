@@ -3,7 +3,7 @@ import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
-import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
+import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -158,6 +158,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     university?: string;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasDoneEthicsOnboarding?: boolean;
 }
 
 const logger = getLogger('Student Mutations');
@@ -181,6 +184,7 @@ export async function updateStudent(
         lastTimeCheckedNotifications,
         notificationPreferences,
         university,
+        hasDoneEthicsOnboarding,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -216,12 +220,13 @@ export async function updateStudent(
             notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
+            hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
         },
         where: { id: student.id },
     });
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForStudent(res));
+    await updateSessionUser(context, userForStudent(res), getSessionUser(context).deviceId);
 
     logger.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
@@ -296,7 +301,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.STUDENT, Role.ADMIN)
+    @Authorized(Role.STUDENT, Role.ADMIN, Role.STUDENT_SCREENER)
     async studentUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: StudentUpdateInput, @Arg('studentId', { nullable: true }) studentId?: number) {
         const student = await getSessionStudent(context, studentId);
         await updateStudent(context, student, data);
@@ -486,6 +491,15 @@ export class MutateStudentResolver {
 
         await deleteZoomUser(student);
         logger.info(`Admin deleted the Zoom User of Student(${student.id})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER)
+    async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+
+        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
         return true;
     }
 }

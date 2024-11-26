@@ -139,19 +139,24 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     //  just adding a small bonus is enough to achieve this for 30% of matches
     const stateBonus = offer.state === request.state ? 1 : 0;
 
+    const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
+    const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
+
     // how good a match is in (0, 1)
-    const score = 0.99 * subjectBonus + 0.01 * stateBonus;
+    const score = 0.97 * subjectBonus + 0.02 * stateBonus + 0.01 * offerWaitingBonus;
+
+    // TODO: Fix retention for matches with only few subjects (e.g. both helper and helpee only have math as subject)
+    // in that case the score is not so high, and thus they are retained for a long time, although the match is perfect
 
     // Retention: Do not directly match not so perfect matches,
     //  but let them wait for a few days, maybe a better match arrives
-    const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
-    const requestWaitDays = (+currentDate - +request.requestAt) / MS_PER_DAY;
+    /* const requestWaitDays = (+currentDate - +request.requestAt) / MS_PER_DAY;
 
     // Keep them at most for 3 weeks, and linearily increase the chance of getting matched
     const doRetention = requestWaitDays < 21;
     if (doRetention && score < 1 - requestWaitDays / 40) {
         return NO_MATCH;
-    }
+    } */
 
     return score;
 }
