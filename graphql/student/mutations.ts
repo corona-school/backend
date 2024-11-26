@@ -168,6 +168,9 @@ export class StudentUpdateInput {
 
     @Field((type) => Gender, { nullable: true })
     gender?: Gender;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
 }
 
 const logger = getLogger('Student Mutations');
@@ -194,6 +197,7 @@ export async function updateStudent(
         hasDoneEthicsOnboarding,
         hasSpecialExperience,
         gender,
+        descriptionForMatch,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -232,6 +236,7 @@ export async function updateStudent(
             hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
             hasSpecialExperience: ensureNoNull(hasSpecialExperience),
             gender: ensureNoNull(gender),
+            descriptionForMatch,
         },
         where: { id: student.id },
     });
