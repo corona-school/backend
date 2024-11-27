@@ -216,6 +216,22 @@ export async function updateStudent(
         throw new PrerequisiteError(`Only Admins may change the name without verification`);
     }
 
+    if (hasDoneEthicsOnboarding !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasDoneEthicsOnboarding may only be changed by elevated users');
+    }
+
+    if (hasSpecialExperience !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
+    }
+
+    if (gender !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('gender may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
     if (projectFields) {
         await setProjectFields(student, projectFields);
     }
