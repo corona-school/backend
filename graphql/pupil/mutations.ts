@@ -18,6 +18,7 @@ import {
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
+    gender_enum as Gender,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -82,6 +83,18 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
+
+    @Field((type) => Gender, { nullable: true })
+    onlyMatchWith?: Gender;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialNeeds?: boolean;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
 }
 
 @InputType()
@@ -153,6 +166,10 @@ export async function updatePupil(
         matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        onlyMatchWith,
+        hasSpecialNeeds,
+        descriptionForMatch,
+        descriptionForScreening,
     } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
@@ -184,6 +201,10 @@ export async function updatePupil(
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
+            onlyMatchWith,
+            hasSpecialNeeds,
+            descriptionForMatch,
+            descriptionForScreening,
         },
         where: { id: pupil.id },
     });
@@ -247,7 +268,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN, Role.PUPIL_SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);
