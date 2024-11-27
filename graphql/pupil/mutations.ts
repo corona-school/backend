@@ -190,19 +190,19 @@ export async function updatePupil(
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
-    if (hasSpecialNeeds !== pupil.hasSpecialNeeds && !isElevated(context)) {
+    if (hasSpecialNeeds != undefined && !isElevated(context)) {
         throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
     }
 
-    if (onlyMatchWith !== pupil.onlyMatchWith && !isElevated(context)) {
+    if (onlyMatchWith !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
     }
 
-    if (descriptionForMatch !== pupil.descriptionForMatch && !isElevated(context)) {
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
     }
 
-    if (descriptionForScreening !== pupil.descriptionForScreening && !isElevated(context)) {
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
