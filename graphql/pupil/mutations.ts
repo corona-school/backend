@@ -190,6 +190,22 @@ export async function updatePupil(
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
+    if (hasSpecialNeeds !== pupil.hasSpecialNeeds && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
+    }
+
+    if (onlyMatchWith !== pupil.onlyMatchWith && !isElevated(context)) {
+        throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== pupil.descriptionForMatch && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== pupil.descriptionForScreening && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
     let dbSchool: School | undefined;
     try {
         dbSchool = await findOrCreateSchool(school);
