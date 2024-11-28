@@ -151,7 +151,7 @@ export function getStateFullName(stateCode: StateCode): string {
 @Resolver()
 export class MutateLessonPlanResolver {
     @Mutation(() => LessonPlanOutput)
-    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN, Role.STUDENT)
     async generateLessonPlan(@Ctx() context: GraphQLContext, @Arg('data') data: GenerateLessonPlanInput): Promise<LessonPlanOutput> {
         // Explicitly validate the input
         try {
