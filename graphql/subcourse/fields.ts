@@ -48,6 +48,13 @@ class Participant {
 }
 
 @ObjectType()
+// Inherits from Participant but additionally has a conversationId
+class ProspectParticipant extends Participant {
+    @Field((_type) => String)
+    conversationId: string;
+}
+
+@ObjectType()
 class OtherParticipant {
     @Field((_type) => Int)
     id: number;
@@ -422,16 +429,20 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [Participant])
+    @FieldResolver(() => [ProspectParticipant])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse): Promise<Participant[]> {
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<ProspectParticipant[]> {
         const chats = getSubcourseProspects(subcourse);
-
-        return await getParticipants({
+        const participants = await getParticipants({
             id: {
                 in: chats.map((it) => it.pupilId),
             },
         });
+
+        return participants.map((p) => ({
+            ...p,
+            conversationId: chats.find((it) => it.pupilId === p.id).conversationId,
+        }));
     }
 
     @FieldResolver((returns) => Boolean)
