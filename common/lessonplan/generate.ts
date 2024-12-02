@@ -33,7 +33,12 @@ const LESSON_PLAN_PROMPT = `Create a lesson plan based on the following structur
 
 Use the provided materials, requirements, and images (if any) to create a cohesive and engaging lesson plan. Ensure that all components are aligned with the subject, grade level, duration specified, and school type.
 
-IMPORTANT: Respond in {language}. All content of the lesson plan should be in {language}.`;
+IMPORTANT: 
+- Respond in {language}. 
+- All content of the lesson plan should be in {language}.
+- Format each section with clear line breaks (\n) between key points.
+- Use a structured format with line breaks to improve readability.
+- Ensure each section is clearly separated and easy to read.`;
 
 interface GenerateLessonPlanInput {
     fileUuids: FileID[];
