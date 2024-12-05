@@ -19,10 +19,18 @@ interface ScreeningInput {
 const logger = getLogger('Student Screening');
 
 export const requireStudentOnboarding = async (studentId: number) => {
-    await prisma.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+    const student = await prisma.student.findFirst({ where: { id: studentId }, include: { instructor_screening: true, screening: true } });
+    const hadSuccessfulScreening = student.screening?.success || student.instructor_screening?.success;
+    if (!hadSuccessfulScreening) {
+        await prisma.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+    }
 };
 
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id);
+    }
+
     await prisma.instructor_screening.create({
         data: {
             ...screening,
@@ -41,7 +49,6 @@ export async function addInstructorScreening(screener: Screener, student: Studen
 
         const asUser = userForStudent(student);
         await Notification.actionTaken(asUser, 'instructor_screening_success', {});
-        await requireStudentOnboarding(student.id);
         await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
@@ -57,6 +64,10 @@ export async function addTutorScreening(
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
     batchMode = false
 ) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id);
+    }
+
     await prismaInstance.screening.create({
         data: {
             ...screening,
@@ -71,7 +82,6 @@ export async function addTutorScreening(
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
-            await requireStudentOnboarding(student.id);
         } else {
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }
