@@ -18,6 +18,10 @@ interface ScreeningInput {
 
 const logger = getLogger('Student Screening');
 
+export const requireStudentOnboarding = async (studentId: number) => {
+    await prisma.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+};
+
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
     await prisma.instructor_screening.create({
         data: {
@@ -37,6 +41,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
 
         const asUser = userForStudent(student);
         await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        await requireStudentOnboarding(student.id);
         await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
@@ -66,6 +71,7 @@ export async function addTutorScreening(
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
+            await requireStudentOnboarding(student.id);
         } else {
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }

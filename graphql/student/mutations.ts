@@ -11,6 +11,7 @@ import {
     addInstructorScreening,
     addTutorScreening,
     cancelCoCReminders,
+    requireStudentOnboarding,
     scheduleCoCReminders,
     updateInstructorScreening,
     updateTutorScreening,
@@ -514,8 +515,7 @@ export class MutateStudentResolver {
     @Authorized(Role.STUDENT_SCREENER)
     async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
-
-        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
+        await requireStudentOnboarding(student.id);
         return true;
     }
 }
