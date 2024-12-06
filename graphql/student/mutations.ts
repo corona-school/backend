@@ -217,10 +217,6 @@ export async function updateStudent(
         throw new PrerequisiteError(`Only Admins may change the name without verification`);
     }
 
-    if (hasDoneEthicsOnboarding !== undefined && !isElevated(context)) {
-        throw new PrerequisiteError('hasDoneEthicsOnboarding may only be changed by elevated users');
-    }
-
     if (hasSpecialExperience !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
     }
