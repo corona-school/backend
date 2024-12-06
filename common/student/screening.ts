@@ -18,11 +18,11 @@ interface ScreeningInput {
 
 const logger = getLogger('Student Screening');
 
-export const requireStudentOnboarding = async (studentId: number) => {
+export const requireStudentOnboarding = async (studentId: number, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) => {
     const student = await prisma.student.findFirst({ where: { id: studentId }, include: { instructor_screening: true, screening: true } });
     const hadSuccessfulScreening = student.screening?.success || student.instructor_screening?.success;
     if (!hadSuccessfulScreening) {
-        await prisma.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+        await prismaInstance.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
     }
 };
 
@@ -65,7 +65,7 @@ export async function addTutorScreening(
     batchMode = false
 ) {
     if (screening.success) {
-        await requireStudentOnboarding(student.id);
+        await requireStudentOnboarding(student.id, prismaInstance);
     }
 
     await prismaInstance.screening.create({
