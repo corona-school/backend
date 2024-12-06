@@ -170,6 +170,9 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((returns) => School, { nullable: true })
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
     async school(@Root() pupil: Required<Pupil>) {
+        if (!pupil.schoolId) {
+            return;
+        }
         return await prisma.school.findFirst({
             where: { id: pupil.schoolId },
         });
