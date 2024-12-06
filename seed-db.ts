@@ -92,6 +92,7 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
         subjects: data.subjects,
     });
     await addTutorScreening(screener, student, { success: true });
+    await prisma.student.update({ where: { id: student.id }, data: { hasDoneEthicsOnboarding: true } });
     if (isInstructor) {
         await becomeInstructor(student, {});
         await addInstructorScreening(
@@ -571,6 +572,9 @@ void (async function setupDevDB() {
     const yourFuture = await createCourseTag(null, 'Deine Zukunft', CourseCategory.focus);
     const digitalWorld = await createCourseTag(null, 'Digitale Welt', CourseCategory.focus);
     await createCourseTag(null, 'Für Eltern', CourseCategory.focus);
+    const a1 = await createCourseTag(null, 'A1', CourseCategory.language);
+    const a2 = await createCourseTag(null, 'A2', CourseCategory.language);
+    await createCourseTag(null, 'B1', CourseCategory.language);
 
     const [course1, subcourse1] = await createCourse({
         name: 'Deutsch Grammatik für Anfänger 📚',
@@ -580,6 +584,7 @@ void (async function setupDevDB() {
         category: CourseCategory.language,
         state: CourseState.allowed,
         subject: 'Deutsch_als_Zweitsprache',
+        course_tags_course_tag: { create: { courseTagId: a1.id } },
         maxParticipants: 10,
         instructors: [student1],
         participants: [pupil4, pupil5, pupil8, pupil10],
@@ -593,6 +598,7 @@ void (async function setupDevDB() {
             'In diesem Kurs üben wir das freie Sprechen auf Deutsch. 🎙️ Du lernst, dich in alltäglichen Situationen sicher auszudrücken und verstehst, wie man höflich und freundlich Gespräche führt. Ideal, um Selbstbewusstsein beim Sprechen zu gewinnen und neue Freunde zu finden! 🤗',
         category: CourseCategory.language,
         subject: CourseSubject.Deutsch_als_Zweitsprache,
+        course_tags_course_tag: { create: { courseTagId: a2.id } },
         state: CourseState.allowed,
         maxParticipants: 5,
         instructors: [student1, student2],
@@ -607,6 +613,7 @@ void (async function setupDevDB() {
             'Wir machen gemeinsam die ersten Schritte in der deutschen Sprache! 📖 Von den wichtigsten Grammatikregeln bis hin zu ersten kurzen Texten lernst du hier alles, was du für den Anfang brauchst. Mit vielen praktischen Übungen wirst du schnell Fortschritte machen und deine ersten Sätze stolz vortragen können! 💪',
         category: CourseCategory.language,
         subject: 'Deutsch_als_Zweitsprache',
+        course_tags_course_tag: { create: { courseTagId: a1.id } },
         state: CourseState.submitted,
         allowContact: false,
         published: false,
