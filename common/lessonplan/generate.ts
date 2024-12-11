@@ -132,7 +132,7 @@ export async function generateLessonPlan({
 
     const emptyFiles: string[] = [];
     let combinedContent = '';
-    let imageContents: { type: 'image_url'; image_url: { url: string } }[] = [];
+    const imageContents: { type: 'image_url'; image_url: { url: string } }[] = [];
 
     if (fileUuids.length > 0) {
         // Fetch file contents for each UUID
