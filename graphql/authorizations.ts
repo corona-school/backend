@@ -516,6 +516,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
             gender: onlyAdminOrScreener,
+            descriptionForScreening: onlyAdminOrScreener,
         }),
     },
 
