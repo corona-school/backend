@@ -172,6 +172,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
 }
 
 const logger = getLogger('Student Mutations');
@@ -199,6 +202,7 @@ export async function updateStudent(
         hasSpecialExperience,
         gender,
         descriptionForMatch,
+        descriptionForScreening,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -229,6 +233,10 @@ export async function updateStudent(
         throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
     }
 
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
     if (projectFields) {
         await setProjectFields(student, projectFields);
     }
@@ -250,6 +258,7 @@ export async function updateStudent(
             hasSpecialExperience: ensureNoNull(hasSpecialExperience),
             gender: ensureNoNull(gender),
             descriptionForMatch,
+            descriptionForScreening,
         },
         where: { id: student.id },
     });
