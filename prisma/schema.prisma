@@ -406,7 +406,7 @@ model lecture {
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
   start                 DateTime                     @db.Timestamp(6)
-  duration              Int // in seconds
+  duration              Int // in minutes
   title                 String?
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
