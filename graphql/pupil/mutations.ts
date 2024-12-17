@@ -19,6 +19,7 @@ import {
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
     gender_enum as Gender,
+    school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -31,9 +32,10 @@ import { addPupilScreening, updatePupilScreening } from '../../common/pupil/scre
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
+import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../types/userInputs';
 import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
+import { findOrCreateSchool } from '../../common/school/create';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -95,6 +97,9 @@ export class PupilUpdateInput {
 
     @Field((type) => String, { nullable: true })
     descriptionForScreening?: string;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
 }
 
 @InputType()
@@ -170,6 +175,7 @@ export async function updatePupil(
         hasSpecialNeeds,
         descriptionForMatch,
         descriptionForScreening,
+        school,
     } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
@@ -184,6 +190,30 @@ export async function updatePupil(
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
+    if (hasSpecialNeeds != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
+    }
+
+    if (onlyMatchWith !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    let dbSchool: School | undefined;
+    try {
+        dbSchool = await findOrCreateSchool(school);
+    } catch (error) {
+        logger.error('School could not be created', error);
+        throw new PrerequisiteError('School could not be created');
+    }
+
     const res = await prismaInstance.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
@@ -194,8 +224,8 @@ export async function updatePupil(
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
             projectFields: ensureNoNull(projectFields),
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
-            schooltype: ensureNoNull(schooltype),
+            state: ensureNoNull(dbSchool?.state ?? state),
+            schooltype: ensureNoNull(dbSchool?.schooltype ?? schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
@@ -205,6 +235,7 @@ export async function updatePupil(
             hasSpecialNeeds,
             descriptionForMatch,
             descriptionForScreening,
+            schoolId: dbSchool?.id,
         },
         where: { id: pupil.id },
     });

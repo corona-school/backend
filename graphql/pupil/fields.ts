@@ -7,6 +7,7 @@ import {
     Participation_certificate as ParticipationCertificate,
     Match,
     Pupil_screening as PupilScreening,
+    School,
 } from '../generated';
 import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -163,6 +164,17 @@ export class ExtendFieldsPupilResolver {
                 active: true,
                 pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
             },
+        });
+    }
+
+    @FieldResolver((returns) => School, { nullable: true })
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
+    async school(@Root() pupil: Required<Pupil>) {
+        if (!pupil.schoolId) {
+            return;
+        }
+        return await prisma.school.findFirst({
+            where: { id: pupil.schoolId },
         });
     }
 }
