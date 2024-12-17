@@ -29,7 +29,11 @@ import assert from 'assert';
 import { isSessionStudent } from '../authentication';
 import { subcourseSearch } from '../../common/courses/search';
 import * as CertificateOfConductCommon from '../../common/certificate-of-conduct/certificateOfConduct';
+import { addFile, getFileURL } from '../files';
+import { createInstantCertificate } from '../../common/certificate';
+import { getLogger } from '../../common/logger/logger';
 
+const logger = getLogger();
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
     @Query((returns) => [Instructor])
@@ -71,6 +75,23 @@ export class ExtendFieldsStudentResolver {
         return await prisma.participation_certificate.findMany({
             where: { studentId: student.id },
         });
+    }
+
+    @FieldResolver((type) => String)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async instantCertificate(@Root() student: Required<Student>, @Arg('lang') lang: string) {
+        if (lang !== 'de' && lang !== 'en') {
+            throw new Error('Unsupported language');
+        }
+        const pdf = await createInstantCertificate(student, lang);
+        logger.info(`Instant certificate created for Student(${student.id})`);
+        const file = addFile({
+            buffer: pdf,
+            mimetype: 'application/pdf',
+            originalname: 'Zertifikat.pdf',
+            size: pdf.length,
+        });
+        return getFileURL(file);
     }
 
     @FieldResolver((type) => [Match])

@@ -78,6 +78,54 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     return pdf;
 }
 
+export interface InstantCertificate {
+    student: { firstname: string; lastname: string };
+    startDate: string;
+    ongoing: boolean;
+    endDate: string;
+    matchesCount: number;
+    matchAppointmentsCount: number;
+    courseParticipantsCount: number;
+    courseAppointmentsCount: number;
+    totalAppointmentsDuration: number;
+}
+
+export async function createInstantCertificate(requester: Student, lang: Language): Promise<Buffer> {
+    const matchesCount = await prisma.match.count({ where: { studentId: requester.id } });
+    const matchAppointmentsCount = await prisma.lecture.count({ where: { match: { studentId: requester.id } } });
+    const uniqueCourseParticipants = await prisma.subcourse_participants_pupil.groupBy({
+        by: ['pupilId'],
+        where: { subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } } },
+    });
+    const courseParticipantsCount = uniqueCourseParticipants.length;
+    const courseAppointmentsCount = await prisma.lecture.count({
+        where: { subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } } },
+    });
+    const totalAppointmentsDuration = await prisma.lecture.aggregate({
+        where: {
+            OR: [
+                {
+                    subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } },
+                },
+                { match: { studentId: requester.id } },
+            ],
+        },
+        _sum: { duration: true },
+    });
+    const certificate: InstantCertificate = {
+        student: requester,
+        startDate: moment(requester.createdAt).format('D.M.YYYY'),
+        ongoing: true,
+        endDate: undefined, // TODO
+        matchesCount,
+        matchAppointmentsCount,
+        courseParticipantsCount,
+        courseAppointmentsCount,
+        totalAppointmentsDuration: totalAppointmentsDuration._sum.duration / 60,
+    };
+    return await createInstantPDFBinary(certificate, lang);
+}
+
 export interface ICertificateCreationParams {
     startDate?: Date;
     endDate: Date;
@@ -349,6 +397,28 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         QR_CODE: await QRCode.toDataURL(link),
     });
 
+    return await generatePDFFromHTML(result, {
+        includePaths: [path.resolve(ASSETS)],
+    });
+}
+
+async function createInstantPDFBinary(certificate: InstantCertificate, lang: Language): Promise<Buffer> {
+    const template = loadTemplate('instantCertificateTemplate', lang);
+    let name = certificate.student.firstname + ' ' + certificate.student.lastname;
+    if (process.env.ENV == 'dev') {
+        name = `[TEST] ${name}`;
+    }
+    const result = template({
+        NAMESTUDENT: name,
+        STARTDATE: certificate.startDate,
+        ONGOING: certificate.ongoing,
+        ENDDATE: certificate.endDate,
+        MATCHES_COUNT: certificate.matchesCount,
+        MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
+        COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
+        COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
+        TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+    });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
     });
