@@ -429,6 +429,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForScreening: onlyAdminOrScreener,
             hasSpecialNeeds: onlyAdminOrScreener,
             onlyMatchWith: onlyAdminOrScreener,
+            referredById: adminOrOwner,
         }),
     },
 
@@ -516,6 +517,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
             gender: onlyAdminOrScreener,
+            referredById: adminOrOwner,
         }),
     },
 
