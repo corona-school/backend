@@ -1550,7 +1550,6 @@ enum dissolve_reason {
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
 }
-
 enum gender_enum {
   male
   female
