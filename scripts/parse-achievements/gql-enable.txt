@@ -10,138 +10,159 @@ student_onboarding_2:achievementTemplateActivate(achievementTemplateId:2)
 student_onboarding_3:achievementTemplateActivate(achievementTemplateId:3) 
       
 
-student_conduct_match_appointment_1:achievementTemplateActivate(achievementTemplateId:4) 
+student_new_match_2:achievementTemplateActivate(achievementTemplateId:4) 
       
 
-student_conduct_match_appointment_2:achievementTemplateActivate(achievementTemplateId:5) 
+student_new_match_3:achievementTemplateActivate(achievementTemplateId:5) 
       
 
-student_conduct_match_appointment_3:achievementTemplateActivate(achievementTemplateId:6) 
+student_new_match_4:achievementTemplateActivate(achievementTemplateId:6) 
       
 
-student_conduct_match_appointment_4:achievementTemplateActivate(achievementTemplateId:7) 
+student_new_match_5:achievementTemplateActivate(achievementTemplateId:7) 
       
 
-student_conduct_match_appointment_5:achievementTemplateActivate(achievementTemplateId:8) 
+student_conduct_match_appointment_1:achievementTemplateActivate(achievementTemplateId:8) 
       
 
-student_conduct_match_appointment_6:achievementTemplateActivate(achievementTemplateId:9) 
+student_conduct_match_appointment_2:achievementTemplateActivate(achievementTemplateId:9) 
       
 
-student_conduct_match_appointment_7:achievementTemplateActivate(achievementTemplateId:10) 
+student_conduct_match_appointment_3:achievementTemplateActivate(achievementTemplateId:10) 
       
 
-student_conduct_course_appointment_1:achievementTemplateActivate(achievementTemplateId:11) 
+student_conduct_match_appointment_4:achievementTemplateActivate(achievementTemplateId:11) 
       
 
-student_conduct_course_appointment_2:achievementTemplateActivate(achievementTemplateId:12) 
+student_conduct_match_appointment_5:achievementTemplateActivate(achievementTemplateId:12) 
       
 
-student_conduct_course_appointment_3:achievementTemplateActivate(achievementTemplateId:13) 
+student_conduct_match_appointment_6:achievementTemplateActivate(achievementTemplateId:13) 
       
 
-student_conduct_course_appointment_4:achievementTemplateActivate(achievementTemplateId:14) 
+student_conduct_match_appointment_7:achievementTemplateActivate(achievementTemplateId:14) 
       
 
-student_conduct_course_appointment_5:achievementTemplateActivate(achievementTemplateId:15) 
+student_conduct_course_appointment_1:achievementTemplateActivate(achievementTemplateId:15) 
       
 
-student_conduct_course_appointment_6:achievementTemplateActivate(achievementTemplateId:16) 
+student_conduct_course_appointment_2:achievementTemplateActivate(achievementTemplateId:16) 
       
 
-student_conduct_course_appointment_7:achievementTemplateActivate(achievementTemplateId:17) 
+student_conduct_course_appointment_3:achievementTemplateActivate(achievementTemplateId:17) 
       
 
-student_offer_course_1:achievementTemplateActivate(achievementTemplateId:18) 
+student_conduct_course_appointment_4:achievementTemplateActivate(achievementTemplateId:18) 
       
 
-student_offer_course_2:achievementTemplateActivate(achievementTemplateId:19) 
+student_conduct_course_appointment_5:achievementTemplateActivate(achievementTemplateId:19) 
       
 
-student_offer_course_3:achievementTemplateActivate(achievementTemplateId:20) 
+student_conduct_course_appointment_6:achievementTemplateActivate(achievementTemplateId:20) 
       
 
-student_course_participation_1:achievementTemplateActivate(achievementTemplateId:21) 
+student_conduct_course_appointment_7:achievementTemplateActivate(achievementTemplateId:21) 
       
 
-student_course_participation_2:achievementTemplateActivate(achievementTemplateId:22) 
+student_offer_course_1:achievementTemplateActivate(achievementTemplateId:22) 
       
 
-student_match_regular_learning_1:achievementTemplateActivate(achievementTemplateId:23) 
+student_offer_course_2:achievementTemplateActivate(achievementTemplateId:23) 
       
 
-student_appointment_reliability_1:achievementTemplateActivate(achievementTemplateId:24) 
+student_offer_course_3:achievementTemplateActivate(achievementTemplateId:24) 
       
 
-student_regular_learning_1:achievementTemplateActivate(achievementTemplateId:25) 
+student_course_participation_1:achievementTemplateActivate(achievementTemplateId:25) 
       
 
-pupil_onboarding_1:achievementTemplateActivate(achievementTemplateId:26) 
+student_course_participation_2:achievementTemplateActivate(achievementTemplateId:26) 
       
 
-pupil_onboarding_2:achievementTemplateActivate(achievementTemplateId:27) 
+student_match_regular_learning_1:achievementTemplateActivate(achievementTemplateId:27) 
       
 
-pupil_conduct_match_appointment_1:achievementTemplateActivate(achievementTemplateId:28) 
+student_appointment_reliability_1:achievementTemplateActivate(achievementTemplateId:28) 
       
 
-pupil_conduct_match_appointment_2:achievementTemplateActivate(achievementTemplateId:29) 
+student_regular_learning_1:achievementTemplateActivate(achievementTemplateId:29) 
       
 
-pupil_conduct_match_appointment_3:achievementTemplateActivate(achievementTemplateId:30) 
+pupil_onboarding_1:achievementTemplateActivate(achievementTemplateId:30) 
       
 
-pupil_conduct_match_appointment_4:achievementTemplateActivate(achievementTemplateId:31) 
+pupil_onboarding_2:achievementTemplateActivate(achievementTemplateId:31) 
       
 
-pupil_conduct_match_appointment_5:achievementTemplateActivate(achievementTemplateId:32) 
+pupil_new_match_3:achievementTemplateActivate(achievementTemplateId:32) 
       
 
-pupil_conduct_match_appointment_6:achievementTemplateActivate(achievementTemplateId:33) 
+pupil_new_match_4:achievementTemplateActivate(achievementTemplateId:33) 
       
 
-pupil_conduct_match_appointment_7:achievementTemplateActivate(achievementTemplateId:34) 
+pupil_new_match_5:achievementTemplateActivate(achievementTemplateId:34) 
       
 
-pupil_conduct_course_appointment_1:achievementTemplateActivate(achievementTemplateId:35) 
+pupil_conduct_match_appointment_1:achievementTemplateActivate(achievementTemplateId:35) 
       
 
-pupil_conduct_course_appointment_2:achievementTemplateActivate(achievementTemplateId:36) 
+pupil_conduct_match_appointment_2:achievementTemplateActivate(achievementTemplateId:36) 
       
 
-pupil_conduct_course_appointment_3:achievementTemplateActivate(achievementTemplateId:37) 
+pupil_conduct_match_appointment_3:achievementTemplateActivate(achievementTemplateId:37) 
       
 
-pupil_conduct_course_appointment_4:achievementTemplateActivate(achievementTemplateId:38) 
+pupil_conduct_match_appointment_4:achievementTemplateActivate(achievementTemplateId:38) 
       
 
-pupil_conduct_course_appointment_5:achievementTemplateActivate(achievementTemplateId:39) 
+pupil_conduct_match_appointment_5:achievementTemplateActivate(achievementTemplateId:39) 
       
 
-pupil_conduct_course_appointment_6:achievementTemplateActivate(achievementTemplateId:40) 
+pupil_conduct_match_appointment_6:achievementTemplateActivate(achievementTemplateId:40) 
       
 
-pupil_conduct_course_appointment_7:achievementTemplateActivate(achievementTemplateId:41) 
+pupil_conduct_match_appointment_7:achievementTemplateActivate(achievementTemplateId:41) 
       
 
-pupil_course_participation_1:achievementTemplateActivate(achievementTemplateId:42) 
+pupil_conduct_course_appointment_1:achievementTemplateActivate(achievementTemplateId:42) 
       
 
-pupil_course_participation_2:achievementTemplateActivate(achievementTemplateId:43) 
+pupil_conduct_course_appointment_2:achievementTemplateActivate(achievementTemplateId:43) 
       
 
-pupil_match_regular_learning_1:achievementTemplateActivate(achievementTemplateId:44) 
+pupil_conduct_course_appointment_3:achievementTemplateActivate(achievementTemplateId:44) 
       
 
-pupil_appointment_reliability_1:achievementTemplateActivate(achievementTemplateId:45) 
+pupil_conduct_course_appointment_4:achievementTemplateActivate(achievementTemplateId:45) 
       
 
-pupil_regular_learning_1:achievementTemplateActivate(achievementTemplateId:46) 
+pupil_conduct_course_appointment_5:achievementTemplateActivate(achievementTemplateId:46) 
       
 
-user_original_corona_school_1:achievementTemplateActivate(achievementTemplateId:47) 
+pupil_conduct_course_appointment_6:achievementTemplateActivate(achievementTemplateId:47) 
       
 
-user_original_lern_fair_1:achievementTemplateActivate(achievementTemplateId:48) 
+pupil_conduct_course_appointment_7:achievementTemplateActivate(achievementTemplateId:48) 
+      
+
+pupil_course_participation_1:achievementTemplateActivate(achievementTemplateId:49) 
+      
+
+pupil_course_participation_2:achievementTemplateActivate(achievementTemplateId:50) 
+      
+
+pupil_match_regular_learning_1:achievementTemplateActivate(achievementTemplateId:51) 
+      
+
+pupil_appointment_reliability_1:achievementTemplateActivate(achievementTemplateId:52) 
+      
+
+pupil_regular_learning_1:achievementTemplateActivate(achievementTemplateId:53) 
+      
+
+user_original_corona_school_1:achievementTemplateActivate(achievementTemplateId:54) 
+      
+
+user_original_lern_fair_1:achievementTemplateActivate(achievementTemplateId:55) 
       
 }

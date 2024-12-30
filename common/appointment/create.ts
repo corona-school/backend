@@ -14,6 +14,7 @@ import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
+import { createRelation, EventRelationType } from '../achievement/relation';
 
 const logger = getLogger();
 
@@ -96,6 +97,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
 
     if (!silent) {
         await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
+            relation: createRelation(EventRelationType.Match, matchId),
             student,
             matchId: matchId.toString(),
         });
@@ -109,6 +111,12 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_starts', {
                 ...(await getContextForMatchAppointmentReminder(appointment)),
                 pupil,
+            });
+            await Notification.actionTaken(userForStudent(student), 'student_add_appointment_match_with_pupil', {
+                relation: createRelation(EventRelationType.Match, matchId),
+                pupil,
+                match: { id: matchId.toString() },
+                lecture: appointment,
             });
         }
     }

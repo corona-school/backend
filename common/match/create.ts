@@ -11,6 +11,7 @@ import type { ConcreteMatchPool } from './pool';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
 import { DAZ } from '../util/subjectsutils';
+import { createRelation, EventRelationType } from '../achievement/relation';
 
 const logger = getLogger('Match');
 
@@ -79,6 +80,7 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         firstMatch: tutorFirstMatch,
         matchHash,
         matchDate,
+        relation: createRelation(EventRelationType.Match, match.id),
     };
 
     await Notification.actionTaken(userForStudent(student), `tutor_matching_success`, tutorContext);
@@ -99,6 +101,7 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         firstMatch: tuteeFirstMatch,
         matchHash,
         matchDate,
+        relation: createRelation(EventRelationType.Match, match.id),
     };
 
     await Notification.actionTaken(userForPupil(pupil), `tutee_matching_${pool.name}`, tuteeContext);
