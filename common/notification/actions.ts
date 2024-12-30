@@ -655,14 +655,14 @@ const _notificationActions = {
         },
     },
     pupil_create_new_match_chat: {
-        description: 'User has clicked on new chat with a match partner',
+        description: 'Tutee / Created a new chat with a match partner',
         sampleContext: {
             user: sampleUser,
             match: { id: '1' },
         },
     },
     student_create_new_match_chat: {
-        description: 'User has clicked on new chat with a match partner',
+        description: 'Tutor / Created a new chat with a match partner',
         sampleContext: {
             user: sampleUser,
             match: { id: '1' },

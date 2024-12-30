@@ -151,8 +151,6 @@ async function generatePupilMatching(
         });
     }
 
-    console.log('iso', hasRequest, hasSuccessfulScreening, achievement);
-
     result.push({
         id: -1,
         templateId: -1,
@@ -202,7 +200,7 @@ async function derivePupilMatching(user: User, pupil: Pupil, result: achievement
     if (successfulScreenings.length > 0) {
         ctx.lastScreeningDate = successfulScreenings[0].updatedAt.toISOString();
     }
-    // This case happens when the student just registered and had a successful screening
+    // This case happens when the pupil just registered and had a successful screening
     if (pupil.openMatchRequestCount === 0 && totalMatchCount === 0) {
         const ghosts = await generatePupilMatching(null, user, hasRequest, hasSuccessfulScreenings, ctx);
         result.push(...ghosts);
@@ -263,7 +261,7 @@ async function generateStudentMatching(
     ctx: StudentNewMatchGhostContext
 ): Promise<achievement_with_template[]> {
     const result: achievement_with_template[] = [];
-    // Generating a ramdom relation to be able to show multiple sequences of this kind in parallel
+    // Generating a random relation to be able to show multiple sequences of this kind in parallel
     const randomRelation = createRelation(EventRelationType.Match, Math.random()) + '-tmp';
     if (!achievement) {
         const groups = await getAchievementTemplates(TemplateSelectEnum.BY_GROUP);
