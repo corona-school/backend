@@ -60,6 +60,15 @@ const requestFive = {
     requestAt: new Date(0),
 };
 
+const requestSix = {
+    grade: 10,
+    pupilId: 5,
+    state: 'at' as const,
+    subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+    requestAt: new Date(0),
+    onlyMatchWith: 'female' as const,
+};
+
 const offerOne = {
     studentId: 1,
     state: 'at' as const,
@@ -89,6 +98,7 @@ const offerFour = {
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
     requestAt: new Date(0),
+    gender: 'male' as const,
 };
 
 const offerFive = {
@@ -99,6 +109,7 @@ const offerFive = {
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
     requestAt: new Date(0),
+    gender: 'female' as const,
 };
 
 describe('Matching Score Basics', () => {
@@ -149,4 +160,13 @@ describe('Exclude duplicate matchings', () => {
     test('two offers, two requests only matched once', [requestOne, requestOne], [offerOne, offerOne], [{ request: requestOne, offer: offerOne }]);
     test('Matching excluded', [requestOne], [offerOne], [], new Set(['1/1']));
     test('Matching not excluded', [requestOne], [offerOne], [{ request: requestOne, offer: offerOne }], new Set(['1/2', '2/1']));
+});
+
+describe('Gender Constraint', () => {
+    // Unknown offer Gender -> No Match
+    test('', [requestSix], [offerOne], []);
+    // Gender Mismatch -> No Match
+    test('', [requestSix], [offerFour], []);
+    // Matching Gender -> Match
+    test('', [requestSix], [offerFive], [{ request: requestSix, offer: offerFive }]);
 });
