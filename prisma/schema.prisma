@@ -491,6 +491,10 @@ model match {
 
   learning_topics learning_topic[]
 
+  // For "automatic matches", stores the Match Run that created this match (since 01/2025)
+  matchPoolRunId Int?
+  matchPoolRun match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
@@ -1010,6 +1014,8 @@ model match_pool_run {
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
+
+  matches        match[]
 }
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password

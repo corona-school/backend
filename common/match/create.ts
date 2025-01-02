@@ -1,4 +1,4 @@
-import { student as Student, pupil as Pupil } from '@prisma/client';
+import { student as Student, pupil as Pupil, match as Match } from '@prisma/client';
 import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
 import { getPupilGradeAsString } from '../pupil';
@@ -14,7 +14,7 @@ import { DAZ } from '../util/subjectsutils';
 
 const logger = getLogger('Match');
 
-export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool) {
+export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool): Promise<Match> {
     const uuid = generateUUID();
 
     // Refetch match request count to reduce the likelihood of race conditions
