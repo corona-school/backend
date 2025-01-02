@@ -4,7 +4,13 @@ import moment from 'moment';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import * as Notification from '../notification';
-import { pupil as Pupil, student as Student, match as Match, participation_certificate as ParticipationCertificate } from '@prisma/client';
+import {
+    pupil as Pupil,
+    student as Student,
+    participation_certificate as ParticipationCertificate,
+    instant_certificate as InstantCertificate,
+    student,
+} from '@prisma/client';
 import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
 import { User, userForPupil, userForStudent } from '../user';
@@ -14,6 +20,7 @@ import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 import QRCode from 'qrcode';
+import type { CertificateType } from '../../web/controllers/certificateController';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
@@ -78,52 +85,62 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     return pdf;
 }
 
-export interface InstantCertificate {
-    student: { firstname: string; lastname: string };
-    startDate: string;
-    ongoing: boolean;
-    endDate: string;
-    matchesCount: number;
-    matchAppointmentsCount: number;
-    courseParticipantsCount: number;
-    courseAppointmentsCount: number;
-    totalAppointmentsDuration: number;
-}
-
-export async function createInstantCertificate(requester: Student, lang: Language): Promise<Buffer> {
+export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
     const matchesCount = await prisma.match.count({ where: { studentId: requester.id } });
     const matchAppointmentsCount = await prisma.lecture.count({ where: { match: { studentId: requester.id } } });
     const uniqueCourseParticipants = await prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
-        where: { subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } } },
+        where: {
+            subcourse: {
+                cancelled: false,
+                subcourse_instructors_student: { some: { studentId: requester.id } },
+            },
+        },
     });
     const courseParticipantsCount = uniqueCourseParticipants.length;
     const courseAppointmentsCount = await prisma.lecture.count({
-        where: { subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } } },
+        where: {
+            isCanceled: false,
+            subcourse: {
+                cancelled: false,
+                subcourse_instructors_student: { some: { studentId: requester.id } },
+            },
+        },
     });
     const totalAppointmentsDuration = await prisma.lecture.aggregate({
         where: {
             OR: [
                 {
-                    subcourse: { subcourse_instructors_student: { some: { studentId: requester.id } } },
+                    subcourse: {
+                        cancelled: false,
+                        subcourse_instructors_student: { some: { studentId: requester.id } },
+                    },
                 },
                 { match: { studentId: requester.id } },
             ],
         },
         _sum: { duration: true },
     });
-    const certificate: InstantCertificate = {
-        student: requester,
-        startDate: moment(requester.createdAt).format('D.M.YYYY'),
-        ongoing: true,
-        endDate: undefined, // TODO
-        matchesCount,
-        matchAppointmentsCount,
-        courseParticipantsCount,
-        courseAppointmentsCount,
-        totalAppointmentsDuration: totalAppointmentsDuration._sum.duration / 60,
+
+    const certificate = await prisma.instant_certificate.create({
+        data: {
+            studentId: requester.id,
+            uuid: randomBytes(6).toString('hex').toUpperCase(),
+            startDate: requester.createdAt,
+            ongoing: true,
+            matchesCount,
+            matchAppointmentsCount,
+            courseParticipantsCount,
+            courseAppointmentsCount,
+            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration / 60,
+        },
+        include: { student: true },
+    });
+
+    return {
+        pdf: await createInstantPDFBinary(certificate, getCertificateLink(certificate, lang, 'instant'), lang),
+        certificate,
     };
-    return await createInstantPDFBinary(certificate, lang);
 }
 
 export interface ICertificateCreationParams {
@@ -189,32 +206,55 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 /* Everybody who sees a certificate can verify it's authenticity through a public endpoint, which shows the confirmation page */
-export async function getConfirmationPage(certificateId: string, lang: Language) {
-    const certificate = await prisma.participation_certificate.findFirst({
-        where: { uuid: certificateId.toUpperCase() },
-        include: { pupil: true, student: true },
-    });
+export async function getConfirmationPage(certificateId: string, lang: Language, ctype: 'participation' | 'instant'): Promise<string> {
+    if (ctype === 'participation') {
+        const certificate = await prisma.participation_certificate.findFirst({
+            where: { uuid: certificateId.toUpperCase() },
+            include: { pupil: true, student: true },
+        });
 
-    if (!certificate) {
-        throw new CertificateError(`Certificate not found`);
+        if (!certificate) {
+            throw new CertificateError(`Certificate not found`);
+        }
+
+        const verificationTemplate = loadTemplate('verifiedCertificatePage', lang);
+
+        return verificationTemplate({
+            NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
+            NAMESCHUELER: certificate.pupil?.firstname + ' ' + certificate.pupil?.lastname,
+            DATUMHEUTE: moment(certificate.certificateDate).format('D.M.YYYY'),
+            SCHUELERSTART: moment(certificate.startDate).format('D.M.YYYY'),
+            SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
+            SCHUELERFAECHER: certificate.subjects.split(','),
+            SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
+            SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
+            SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
+            MEDIUM: certificate.medium,
+            SCREENINGDATUM: moment(certificate.student.createdAt).format('D.M.YYYY'),
+            ONGOING: certificate.ongoingLessons,
+        });
+    } else {
+        const certificate = await prisma.instant_certificate.findFirst({
+            where: { uuid: certificateId.toUpperCase() },
+            include: { student: true },
+        });
+
+        if (!certificate) {
+            throw new CertificateError(`Certificate not found`);
+        }
+        const verificationTemplate = loadTemplate('verifiedInstantCertificatePage', lang);
+        return verificationTemplate({
+            NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
+            STARTDATE: certificate.startDate,
+            ONGOING: certificate.ongoing,
+            ENDDATE: certificate.endDate,
+            MATCHES_COUNT: certificate.matchesCount,
+            MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
+            COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
+            COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
+            TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+        });
     }
-
-    const verificationTemplate = loadTemplate('verifiedCertificatePage', lang);
-
-    return verificationTemplate({
-        NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
-        NAMESCHUELER: certificate.pupil?.firstname + ' ' + certificate.pupil?.lastname,
-        DATUMHEUTE: moment(certificate.certificateDate).format('D.M.YYYY'),
-        SCHUELERSTART: moment(certificate.startDate).format('D.M.YYYY'),
-        SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
-        SCHUELERFAECHER: certificate.subjects.split(','),
-        SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
-        SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
-        MEDIUM: certificate.medium,
-        SCREENINGDATUM: moment(certificate.student.createdAt).format('D.M.YYYY'),
-        ONGOING: certificate.ongoingLessons,
-    });
 }
 
 /* Pupils can sign certificates for their students through a webinterface */
@@ -350,8 +390,8 @@ function exposeCertificate(
     };
 }
 
-function getCertificateLink(certificate: ParticipationCertificate, lang: Language) {
-    return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang;
+function getCertificateLink(certificate: ParticipationCertificate | InstantCertificate, lang: Language, ctype?: CertificateType) {
+    return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang + (ctype ? '&ctype=' + ctype : '');
 }
 
 export function convertCertificateLinkToApiLink(req: Request) {
@@ -401,8 +441,7 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         includePaths: [path.resolve(ASSETS)],
     });
 }
-
-async function createInstantPDFBinary(certificate: InstantCertificate, lang: Language): Promise<Buffer> {
+async function createInstantPDFBinary(certificate: InstantCertificate & { student: student }, link: string, lang: Language): Promise<Buffer> {
     const template = loadTemplate('instantCertificateTemplate', lang);
     let name = certificate.student.firstname + ' ' + certificate.student.lastname;
     if (process.env.ENV == 'dev') {
@@ -418,6 +457,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate, lang: Lan
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
         TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+        QR_CODE: await QRCode.toDataURL(link),
     });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],

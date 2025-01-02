@@ -77,23 +77,6 @@ export class ExtendFieldsStudentResolver {
         });
     }
 
-    @FieldResolver((type) => String)
-    @Authorized(Role.ADMIN, Role.OWNER)
-    async instantCertificate(@Root() student: Required<Student>, @Arg('lang') lang: string) {
-        if (lang !== 'de' && lang !== 'en') {
-            throw new Error('Unsupported language');
-        }
-        const pdf = await createInstantCertificate(student, lang);
-        logger.info(`Instant certificate created for Student(${student.id})`);
-        const file = addFile({
-            buffer: pdf,
-            mimetype: 'application/pdf',
-            originalname: 'Zertifikat.pdf',
-            size: pdf.length,
-        });
-        return getFileURL(file);
-    }
-
     @FieldResolver((type) => [Match])
     @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
