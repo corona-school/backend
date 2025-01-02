@@ -265,7 +265,6 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         feedbackToStudentMail: false,
         followUpToPupilMail: false,
         followUpToStudentMail: false,
-        source: 'imported',
         studentFirstMatchRequest: null,
         pupilFirstMatchRequest: null,
         matchPool: null,

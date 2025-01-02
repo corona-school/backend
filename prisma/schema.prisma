@@ -473,9 +473,6 @@ model match {
   followUpToPupilMail   Boolean            @default(false)
   followUpToStudentMail Boolean            @default(false)
 
-  // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
-  source match_source_enum @default(matchedinternal)
-
   // FirstMatchRequest - createdAt gives a rough estimate how long a student / pupil had to wait for a match
   // As a user can create multiple match requests, and we do not know which match request lead to which match,
   // we store the time of the first match request. So this can be seen as an upper boundary, but the average user
@@ -1175,13 +1172,6 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
   skippedCoC
-}
-
-// DEPRECATED
-enum match_source_enum {
-  imported
-  matchedexternal
-  matchedinternal
 }
 
 // DEPRECATED
