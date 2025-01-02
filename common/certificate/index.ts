@@ -1,14 +1,14 @@
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import moment from 'moment';
 import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import * as Notification from '../notification';
 import {
+    instant_certificate as InstantCertificate,
+    participation_certificate as ParticipationCertificate,
     pupil as Pupil,
     student as Student,
-    participation_certificate as ParticipationCertificate,
-    instant_certificate as InstantCertificate,
     student,
 } from '@prisma/client';
 import assert from 'assert';
@@ -20,7 +20,6 @@ import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 import QRCode from 'qrcode';
-import type { CertificateType } from '../../web/controllers/certificateController';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
@@ -349,6 +348,9 @@ function loadTemplate(name, lang: Language, fallback = true): EJS.ClientFunction
         return loadTemplate(name, DefaultLanguage, /*fallback:*/ false);
     }
 }
+
+export const CERTIFICATETYPES = ['participation', 'remission', 'instant'] as const;
+export type CertificateType = (typeof CERTIFICATETYPES)[number];
 
 type CertWithUsers = ParticipationCertificate & { student: Student; pupil: Pupil };
 
