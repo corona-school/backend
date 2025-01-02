@@ -38,6 +38,7 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
             pupilFirstMatchRequest: pupil.firstMatchRequest,
             studentFirstMatchRequest: student.firstMatchRequest,
             matchPool: pool.name,
+            matchPoolRunId: null,
         },
     });
 
