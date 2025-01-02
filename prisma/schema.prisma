@@ -1128,6 +1128,7 @@ enum course_category_enum {
   revision
   club
   coaching
+  homework_help
 }
 
 enum course_coursestate_enum {
