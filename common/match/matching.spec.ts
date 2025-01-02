@@ -69,6 +69,15 @@ const requestSix = {
     onlyMatchWith: 'female' as const,
 };
 
+const requestSeven = {
+    grade: 10,
+    pupilId: 5,
+    state: 'at' as const,
+    subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+    requestAt: new Date(0),
+    hasSpecialNeeds: true,
+};
+
 const offerOne = {
     studentId: 1,
     state: 'at' as const,
@@ -99,6 +108,7 @@ const offerFour = {
     ],
     requestAt: new Date(0),
     gender: 'male' as const,
+    hasSpecialExperience: false,
 };
 
 const offerFive = {
@@ -110,6 +120,7 @@ const offerFive = {
     ],
     requestAt: new Date(0),
     gender: 'female' as const,
+    hasSpecialExperience: true,
 };
 
 describe('Matching Score Basics', () => {
@@ -169,4 +180,13 @@ describe('Gender Constraint', () => {
     test('', [requestSix], [offerFour], []);
     // Matching Gender -> Match
     test('', [requestSix], [offerFive], [{ request: requestSix, offer: offerFive }]);
+});
+
+describe('Special Needs Constraint', () => {
+    // Unknown offer experience -> No Match
+    test('', [requestSeven], [offerOne], []);
+    // No offer experience -> No Match
+    test('', [requestSeven], [offerFour], []);
+    // Offer experience -> Match
+    test('', [requestSeven], [offerFive], [{ request: requestSeven, offer: offerFive }]);
 });
