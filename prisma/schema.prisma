@@ -473,9 +473,6 @@ model match {
   followUpToPupilMail   Boolean            @default(false)
   followUpToStudentMail Boolean            @default(false)
 
-  // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
-  source match_source_enum @default(matchedinternal)
-
   // FirstMatchRequest - createdAt gives a rough estimate how long a student / pupil had to wait for a match
   // As a user can create multiple match requests, and we do not know which match request lead to which match,
   // we store the time of the first match request. So this can be seen as an upper boundary, but the average user
@@ -493,6 +490,10 @@ model match {
   lecture   lecture[]
 
   learning_topics learning_topic[]
+
+  // For "automatic matches", stores the Match Run that created this match (since 01/2025)
+  matchPoolRunId Int?
+  matchPoolRun match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -1013,6 +1014,8 @@ model match_pool_run {
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
+
+  matches        match[]
 }
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
@@ -1175,13 +1178,6 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
   skippedCoC
-}
-
-// DEPRECATED
-enum match_source_enum {
-  imported
-  matchedexternal
-  matchedinternal
 }
 
 // DEPRECATED
