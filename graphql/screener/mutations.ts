@@ -43,7 +43,10 @@ export class MutateScreenerResolver {
             },
         });
 
-        const token = await createToken(userForScreener(screener));
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+
+        const token = await createToken(userForScreener(screener), expiresAt);
 
         log.info(`Admin created Screener(${screener.id}) and retrieved a login token`, data);
 
