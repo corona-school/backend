@@ -33,7 +33,7 @@ import { addFile, getFileURL } from '../files';
 import { createInstantCertificate } from '../../common/certificate';
 import { getLogger } from '../../common/logger/logger';
 
-const logger = getLogger();
+const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
     @Query((returns) => [Instructor])
