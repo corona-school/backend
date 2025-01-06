@@ -204,7 +204,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 /* Everybody who sees a certificate can verify it's authenticity through a public endpoint, which shows the confirmation page */
-export async function getConfirmationPage(certificateId: string, lang: Language, ctype: 'participation' | 'instant'): Promise<string> {
+export async function getConfirmationPage(certificateId: string, lang: Language, ctype: CertificateType): Promise<string> {
     if (ctype === 'participation') {
         const certificate = await prisma.participation_certificate.findFirst({
             where: { uuid: certificateId.toUpperCase() },
