@@ -3,15 +3,19 @@ import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Res
 import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import { Deprecated, getMatch, getSubcourse } from '../util';
+import { Deprecated, getLecture, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
-import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
+import { deleteZoomMeeting, getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
 import { getZoomUrl } from '../../common/zoom/user';
 import { getLogger } from '../../common/logger/logger';
+import moment from 'moment';
+import { getAppointmentEnd } from '../../common/appointment/util';
+import { ZoomError } from '../../common/util/error';
+import { createZoomMeetingForAppointment } from '../../common/appointment/create';
 
 const logger = getLogger('Appointment Fields');
 
@@ -181,6 +185,34 @@ export class ExtendedFieldsLectureResolver {
         if (!appointment.zoomMeetingId) {
             logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
             return null;
+        }
+
+        const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
+        const isAppointmentCanceled = appointment.isCanceled;
+        // Hasn't ended yet - This includes the duration of the meeting
+        const isAppointmentInTheFuture = moment().isSameOrBefore(getAppointmentEnd(appointment));
+        const isOrganizerOrAdmin = isAppointmentOrganizer || isAdmin;
+
+        // If any of these we just use the previous logic
+        if (!isOrganizerOrAdmin || !isAppointmentInTheFuture || isAppointmentCanceled) {
+            return await getZoomUrl(user, appointment);
+        }
+
+        try {
+            // Asking Zoom for the meeting details is the only way to verify if Zoom recognizes the meetingId we have
+            await getZoomMeeting(appointment);
+        } catch (error) {
+            const zoomError = error as ZoomError;
+            // If for some reason this meeting is now expired/deleted according to zoom (which shouldn't be the case)
+            // We just try to recreate it.
+            if (zoomError?.status === 404 && zoomError?.code === 3001) {
+                logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+                await deleteZoomMeeting(appointment);
+                await createZoomMeetingForAppointment(await getLecture(appointment.id));
+                if (isAppointmentOrganizer) {
+                    return await getZoomUrl(user, await getLecture(appointment.id));
+                }
+            }
         }
 
         if (isAdmin) {
