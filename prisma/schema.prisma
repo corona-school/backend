@@ -595,8 +595,6 @@ model instant_certificate {
   studentId                 Int
   student                   student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   startDate                 DateTime
-  ongoing                   Boolean
-  endDate                   DateTime?
   matchesCount              Int
   matchAppointmentsCount    Int
   courseParticipantsCount   Int
