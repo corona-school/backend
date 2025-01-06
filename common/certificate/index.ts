@@ -120,18 +120,14 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         _sum: { duration: true },
     });
 
-    const promises = await Promise.all([
+    const [matchesCount, matchAppointmentsCount, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration] = await Promise.all([
         matchesCountPromise,
         matchAppointmentsCountPromise,
         uniqueCourseParticipantsPromise,
         courseAppointmentsCountPromise,
         totalAppointmentsDurationPromise,
     ]);
-    const matchesCount = promises[0];
-    const matchAppointmentsCount = promises[1];
-    const courseParticipantsCount = promises[2].length;
-    const courseAppointmentsCount = promises[3];
-    const totalAppointmentsDuration = promises[4];
+    const courseParticipantsCount = courseParticipants.length;
 
     const certificate = await prisma.instant_certificate.create({
         data: {
