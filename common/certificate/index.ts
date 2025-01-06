@@ -85,9 +85,9 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 }
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
-    const matchesCount = await prisma.match.count({ where: { studentId: requester.id } });
-    const matchAppointmentsCount = await prisma.lecture.count({ where: { match: { studentId: requester.id } } });
-    const uniqueCourseParticipants = await prisma.subcourse_participants_pupil.groupBy({
+    const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
+    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { match: { studentId: requester.id } } });
+    const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
         where: {
             subcourse: {
@@ -96,8 +96,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             },
         },
     });
-    const courseParticipantsCount = uniqueCourseParticipants.length;
-    const courseAppointmentsCount = await prisma.lecture.count({
+    const courseAppointmentsCountPromise = prisma.lecture.count({
         where: {
             isCanceled: false,
             subcourse: {
@@ -106,7 +105,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             },
         },
     });
-    const totalAppointmentsDuration = await prisma.lecture.aggregate({
+    const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
         where: {
             OR: [
                 {
@@ -120,6 +119,19 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         },
         _sum: { duration: true },
     });
+
+    const promises = await Promise.all([
+        matchesCountPromise,
+        matchAppointmentsCountPromise,
+        uniqueCourseParticipantsPromise,
+        courseAppointmentsCountPromise,
+        totalAppointmentsDurationPromise,
+    ]);
+    const matchesCount = promises[0];
+    const matchAppointmentsCount = promises[1];
+    const courseParticipantsCount = promises[2].length;
+    const courseAppointmentsCount = promises[3];
+    const totalAppointmentsDuration = promises[4];
 
     const certificate = await prisma.instant_certificate.create({
         data: {
