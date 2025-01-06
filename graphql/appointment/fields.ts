@@ -209,9 +209,6 @@ export class ExtendedFieldsLectureResolver {
                 logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
                 await deleteZoomMeeting(appointment);
                 await createZoomMeetingForAppointment(await getLecture(appointment.id));
-                if (isAppointmentOrganizer) {
-                    return await getZoomUrl(user, await getLecture(appointment.id));
-                }
             }
         }
 
@@ -220,7 +217,7 @@ export class ExtendedFieldsLectureResolver {
             logger.info(`Admin requested zoom meeting url`);
             return zoomMeeting.join_url;
         }
-        return await getZoomUrl(user, appointment);
+        return await getZoomUrl(user, await getLecture(appointment.id));
     }
 
     @FieldResolver((returns) => Match, { nullable: true })
