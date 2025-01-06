@@ -16,13 +16,16 @@ import { prisma } from '../../common/prisma';
 import { LectureWhereInput } from '../generated';
 import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
-import { deleteZoomMeeting } from '../../common/zoom/scheduled-meeting';
+import { deleteZoomMeeting, getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
-import { PrerequisiteError, RedundantError } from '../../common/util/error';
+import { PrerequisiteError, RedundantError, ZoomError } from '../../common/util/error';
 import { GraphQLInt } from 'graphql';
 import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracking';
+import moment from 'moment';
+import { getAppointmentEnd } from '../../common/appointment/util';
+import { getZoomUrl } from '../../common/zoom/user';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -177,5 +180,51 @@ export class MutateAppointmentResolver {
         await trackUserJoinAppointmentMeeting(context.user, appointment);
 
         return true;
+    }
+
+    @Mutation(() => String)
+    @AuthorizedDeferred(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)
+    async appointmentZoomLinkGet(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+        const appointment = await getLecture(appointmentId);
+        await hasAccess(context, 'Lecture', appointment);
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+
+        if (!appointment.zoomMeetingId) {
+            logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
+            return null;
+        }
+
+        const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
+        const isAppointmentCanceled = appointment.isCanceled;
+        // Hasn't ended yet - This includes the duration of the meeting
+        const isAppointmentInTheFuture = moment().isSameOrBefore(getAppointmentEnd(appointment));
+        const isOrganizerOrAdmin = isAppointmentOrganizer || isAdmin;
+
+        // If any of these we just use the previous logic
+        if (!isOrganizerOrAdmin || !isAppointmentInTheFuture || isAppointmentCanceled) {
+            return await getZoomUrl(user, appointment);
+        }
+
+        try {
+            // Asking Zoom for the meeting details is the only way to verify if Zoom recognizes the meetingId we have
+            await getZoomMeeting(appointment);
+        } catch (error) {
+            const zoomError = error as ZoomError;
+            // If for some reason this meeting is now expired/deleted according to zoom (which shouldn't be the case)
+            // We just try to recreate it.
+            if (zoomError?.status === 404 && zoomError?.code === 3001) {
+                logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+                await deleteZoomMeeting(appointment);
+                await createZoomMeetingForAppointment(await getLecture(appointment.id));
+            }
+        }
+
+        if (isAdmin) {
+            const zoomMeeting = await getZoomMeeting(appointment);
+            logger.info(`Admin requested zoom meeting url`);
+            return zoomMeeting.join_url;
+        }
+        return await getZoomUrl(user, await getLecture(appointment.id));
     }
 }
