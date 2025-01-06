@@ -7,7 +7,7 @@ import { getSessionStudent } from '../authentication';
 import { addFile, getFileURL } from '../files';
 import { getLogger } from '../../common/logger/logger';
 
-const logger = getLogger();
+const logger = getLogger('MutateInstantCertificateResolver');
 @Resolver((of) => GraphQLModel.Instant_certificate)
 export class MutateInstantCertificateResolver {
     @Mutation((returns) => String)
