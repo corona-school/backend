@@ -217,6 +217,8 @@ export class MutateAppointmentResolver {
                 logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
                 await deleteZoomMeeting(appointment);
                 await createZoomMeetingForAppointment(await getLecture(appointment.id));
+            } else {
+                throw error;
             }
         }
 
