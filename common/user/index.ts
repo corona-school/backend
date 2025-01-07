@@ -62,6 +62,18 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     throw new Error(`Unknown User(${userID})`);
 }
 
+export async function getReferredByIDCount(userId: string): Promise<number> {
+    const amountofReferredPupils = await prisma.student.count({
+        where: { referredById: userId },
+    });
+
+    const amountofReferredStudents = await prisma.pupil.count({
+        where: { referredById: userId },
+    });
+
+    return amountofReferredPupils + amountofReferredStudents;
+}
+
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
     const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
@@ -124,7 +136,6 @@ export async function getStudent(user: User): Promise<Student | never> {
     if (!user.studentId) {
         throw new Error(`Expected User(${user.userID}) to be student`);
     }
-
     return await prisma.student.findUnique({ where: { id: user.studentId } });
 }
 

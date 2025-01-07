@@ -16,7 +16,7 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getReferredByIDCount, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
@@ -116,6 +116,13 @@ export class UserFieldsResolver {
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
         return await evaluateUserRoles(user);
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Number of referrals made by the user' })
+    @Authorized(Role.OWNER, Role.ADMIN, Role.USER)
+    async referralCount(@Root() user: User): Promise<number> {
+        const count = await getReferredByIDCount(user.userID);
+        return count;
     }
 
     // -------- Notifications ---------------------
