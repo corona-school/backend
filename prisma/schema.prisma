@@ -493,7 +493,7 @@ model match {
 
   // For "automatic matches", stores the Match Run that created this match (since 01/2025)
   matchPoolRunId Int?
-  matchPoolRun match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  matchPoolRun   match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -716,6 +716,9 @@ model pupil {
   descriptionForScreening                      String                                         @default("") @db.VarChar
   // Screeners provide future matches tips or information about the pupil to help improve the collaboration
   descriptionForMatch                          String                                         @default("") @db.VarChar
+  // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
+  // Here we specify who is the owner of this email
+  emailOwner                                   pupil_email_owner_enum                         @default(unknown)
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -1015,7 +1018,7 @@ model match_pool_run {
   matchesCreated Int
   stats          Json     @db.Json
 
-  matches        match[]
+  matches match[]
 }
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
@@ -1551,4 +1554,11 @@ enum gender_enum {
   male
   female
   other
+}
+
+enum pupil_email_owner_enum {
+  pupil
+  parent
+  supportPerson
+  unknown
 }
