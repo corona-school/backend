@@ -22,6 +22,9 @@ export type User = {
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
+
+    referralCount?: number;
+    supportedHours?: number;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
@@ -72,6 +75,58 @@ export async function getReferredByIDCount(userId: string): Promise<number> {
     });
 
     return amountofReferredPupils + amountofReferredStudents;
+}
+
+export async function getReferredStudentsAndPupils(userId: string): Promise<{ students: string[]; pupils: string[] }> {
+    const referredStudents = await prisma.student.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const referredPupils = await prisma.pupil.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const students = referredStudents.map((student) => 'student/${student.id}');
+    const pupils = referredPupils.map((pupil) => 'pupil/${pupil.id}');
+
+    return { students, pupils };
+}
+
+export async function getTotalSupportedHours(userId: string): Promise<number> {
+    const { students, pupils } = await getReferredStudentsAndPupils(userId);
+
+    const studentLecturesDuration = await prisma.lecture.aggregate({
+        _sum: { duration: true },
+        where: {
+            organizerIds: {
+                hasSome: students,
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+    });
+
+    const pupilLecturesDuration = await prisma.lecture.aggregate({
+        _sum: { duration: true },
+        where: {
+            participantIds: {
+                hasSome: pupils,
+            },
+            NOT: {
+                declinedBy: {
+                    hasSome: pupils,
+                },
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+    });
+
+    const totalDurationInSeconds = (studentLecturesDuration._sum.duration || 0) + (pupilLecturesDuration._sum.duration || 0);
+
+    return Math.round(totalDurationInSeconds / 3600);
 }
 
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {

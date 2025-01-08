@@ -16,7 +16,7 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { getReferredByIDCount, queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
@@ -123,6 +123,13 @@ export class UserFieldsResolver {
     async referralCount(@Root() user: User): Promise<number> {
         const count = await getReferredByIDCount(user.userID);
         return count;
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils' })
+    @Authorized(Role.OWNER, Role.ADMIN, Role.USER)
+    async supportedHours(@Root() user: User): Promise<number> {
+        const totalHours = await getTotalSupportedHours(user.userID);
+        return totalHours;
     }
 
     // -------- Notifications ---------------------
