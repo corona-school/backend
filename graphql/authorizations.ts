@@ -429,6 +429,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForScreening: onlyAdminOrScreener,
             hasSpecialNeeds: onlyAdminOrScreener,
             onlyMatchWith: onlyAdminOrScreener,
+            emailOwner: adminOrOwnerOrScreener,
         }),
     },
 

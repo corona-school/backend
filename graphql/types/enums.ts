@@ -15,8 +15,13 @@ import {
     course_category_enum as CourseCategory,
     pupil_screening_status_enum as PupilScreeningStatus,
     gender_enum as Gender,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
+
+registerEnumType(PupilEmailOwner, {
+    name: 'PupilEmailOwner',
+});
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
