@@ -115,6 +115,7 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p1@lern-fair.de",
                     register: {
                         email: "test+differentEmail@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
@@ -128,6 +129,7 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p2@lern-fair.de",
                     register: {
                         email: "test+${runId}+p2@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
@@ -149,6 +151,7 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p2@lern-fair.de ",
                     register: {
                         email: "test+${runId}+p2@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "*updatedF*",
                         lastname: "*updatedL*",
                         newsletter: false,
@@ -183,6 +186,7 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p?@@lern-fair.de",
                     register: {
                         email: "test+${runId}+p?@@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
