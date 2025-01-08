@@ -35,6 +35,7 @@ export async function createNewPupil() {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: true
                 registrationSource: normal
@@ -53,6 +54,7 @@ export async function createNewPupil() {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: true
                 registrationSource: normal
@@ -130,6 +132,7 @@ export const pupilTwo = test('Register Pupil', async () => {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: true
                 registrationSource: normal
@@ -148,6 +151,7 @@ export const pupilTwo = test('Register Pupil', async () => {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: true
                 registrationSource: normal
