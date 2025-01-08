@@ -473,9 +473,6 @@ model match {
   followUpToPupilMail   Boolean            @default(false)
   followUpToStudentMail Boolean            @default(false)
 
-  // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
-  source match_source_enum @default(matchedinternal)
-
   // FirstMatchRequest - createdAt gives a rough estimate how long a student / pupil had to wait for a match
   // As a user can create multiple match requests, and we do not know which match request lead to which match,
   // we store the time of the first match request. So this can be seen as an upper boundary, but the average user
@@ -493,6 +490,10 @@ model match {
   lecture   lecture[]
 
   learning_topics learning_topic[]
+
+  // For "automatic matches", stores the Match Run that created this match (since 01/2025)
+  matchPoolRunId Int?
+  matchPoolRun match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -917,17 +918,19 @@ model student {
   // Should stay null for users who where registered before the onboarding got added
   hasDoneEthicsOnboarding              Boolean?
 
-  cooperationID        Int?
-  cooperation          cooperation? @relation(fields: [cooperationID], references: [id])
+  cooperationID           Int?
+  cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
   // Used to match students that have have experience supporting pupils with learning difficulties
-  hasSpecialExperience Boolean      @default(false)
+  hasSpecialExperience    Boolean      @default(false)
+  // Used as an "AboutMe" for screening or for other type of Meetings between Lern-Fair and the student
+  descriptionForScreening String       @default("") @db.VarChar
   // Screeners provide future matches tips or information about the student to help improve the collaboration
-  descriptionForMatch  String       @default("") @db.VarChar
+  descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender               gender_enum?
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
-  referredById         String?                         @db.VarChar 
+  referredById         String?                         @db.VarChar
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1017,6 +1020,8 @@ model match_pool_run {
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
+
+  matches        match[]
 }
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
@@ -1179,13 +1184,6 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
   skippedCoC
-}
-
-// DEPRECATED
-enum match_source_enum {
-  imported
-  matchedexternal
-  matchedinternal
 }
 
 // DEPRECATED
