@@ -1559,6 +1559,6 @@ enum gender_enum {
 enum pupil_email_owner_enum {
   pupil
   parent
-  supportPerson
+  other
   unknown
 }
