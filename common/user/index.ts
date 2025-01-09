@@ -88,8 +88,8 @@ export async function getReferredStudentsAndPupils(userId: string): Promise<{ st
         select: { id: true },
     });
 
-    const students = referredStudents.map((student) => 'student/${student.id}');
-    const pupils = referredPupils.map((pupil) => 'pupil/${pupil.id}');
+    const students = referredStudents.map((student) => `student/${student.id}`);
+    const pupils = referredPupils.map((pupil) => `pupil/${pupil.id}`);
 
     return { students, pupils };
 }
@@ -97,8 +97,7 @@ export async function getReferredStudentsAndPupils(userId: string): Promise<{ st
 export async function getTotalSupportedHours(userId: string): Promise<number> {
     const { students, pupils } = await getReferredStudentsAndPupils(userId);
 
-    const studentLecturesDuration = await prisma.lecture.aggregate({
-        _sum: { duration: true },
+    const studentLectures = await prisma.lecture.findMany({
         where: {
             organizerIds: {
                 hasSome: students,
@@ -106,10 +105,13 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
             isCanceled: false,
             start: { lt: new Date() },
         },
+        select: {
+            duration: true,
+            organizerIds: true,
+        },
     });
 
-    const pupilLecturesDuration = await prisma.lecture.aggregate({
-        _sum: { duration: true },
+    const pupilLectures = await prisma.lecture.findMany({
         where: {
             participantIds: {
                 hasSome: pupils,
@@ -122,9 +124,23 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
             isCanceled: false,
             start: { lt: new Date() },
         },
+        select: {
+            duration: true,
+            participantIds: true,
+        },
     });
 
-    const totalDurationInSeconds = (studentLecturesDuration._sum.duration || 0) + (pupilLecturesDuration._sum.duration || 0);
+    const totalStudentDuration = studentLectures.reduce((acc, lecture) => {
+        const participantCount = lecture.organizerIds.filter((id) => students.includes(id)).length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
+        const participantCount = lecture.participantIds.filter((id) => pupils.includes(id)).length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalDurationInSeconds = totalStudentDuration + totalPupilDuration;
 
     return Math.round(totalDurationInSeconds / 3600);
 }
