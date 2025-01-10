@@ -13,6 +13,7 @@ import {
     pupil_schooltype_enum as SchoolType,
     Prisma,
     PrismaClient,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
@@ -25,6 +26,7 @@ import { getLogger } from '../logger/logger';
 export interface RegisterPupilData {
     firstname: string;
     lastname: string;
+    emailOwner: PupilEmailOwner;
     email: string;
     newsletter: boolean;
     school?: CreateSchoolArgs;
@@ -66,6 +68,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
 
     const pupil = await prismaInstance.pupil.create({
         data: {
+            emailOwner: data.emailOwner,
             email: data.email.toLowerCase(),
             firstname: data.firstname,
             lastname: data.lastname,
