@@ -14,7 +14,7 @@ import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
-import { Decision } from '../util/decision';
+import { assertAllowed, Decision } from '../util/decision';
 
 const logger = getLogger();
 
@@ -134,10 +134,8 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
     const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
-    const { allowed, reason } = canCreateGroupAppointment(subcourse, instructors.length > 0);
-    if (!allowed) {
-        throw new Error(`Cannot create group appointment for Subcourse(${subcourse.id}) reason: ${reason}`);
-    }
+    const decision = canCreateGroupAppointment(subcourse, instructors.length > 0);
+    assertAllowed(decision);
 
     // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
     let hosts: ZoomUser[] | null = null;
