@@ -15,7 +15,6 @@ import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 import { Decision } from '../util/decision';
-import { hasIn } from 'lodash';
 
 const logger = getLogger();
 
