@@ -29,6 +29,12 @@ export function excludePastSubcourses(): Prisma.subcourseWhereInput {
     };
 }
 
+export function excludeCancelledSubcourses(): Prisma.subcourseWhereInput {
+    return {
+        cancelled: false,
+    };
+}
+
 export function onlyPastSubcourses(): Prisma.subcourseWhereInput {
     const prevDay = new Date();
     prevDay.setDate(prevDay.getDate() - 1);
