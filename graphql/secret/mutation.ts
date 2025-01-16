@@ -63,21 +63,19 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
-        let secretId = id;
         let secret = undefined;
 
-        if (secretId) {
-            secret = await prisma.secret.findUnique({ where: { id: secretId } });
+        if (id) {
+            secret = await prisma.secret.findUnique({ where: { id } });
         } else if (token) {
             secret = await getSecretByToken(token);
         } else {
             throw new UserInputError(`Either the id or the token must be passed`);
         }
         if (!secret) {
-            throw new UserInputError(`Secret(${secretId ?? '<token>'}) not found`);
+            throw new UserInputError(`Secret(${id ?? '<token>'}) not found`);
         }
-        secretId = secret.id;
-        const deviceId = secret.lastUsedDeviceId;
+        const { id: secretId, lastUsedDeviceId: deviceId } = secret;
 
         if (isAdmin(context)) {
             await revokeSecret(null, secretId);

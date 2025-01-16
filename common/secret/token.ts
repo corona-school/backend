@@ -22,7 +22,7 @@ export async function revokeSecret(user: User | null, id: number) {
         throw new Error(`Failed to revoke secret, does not exist`);
     }
 
-    logger.info(`User(${user?.userID}) revoked secret Secret(${id})`);
+    logger.info(`User(${user?.userID}) revoked Secret(${id})`);
 }
 
 export async function getSecretByToken(token: string): Promise<secret | null> {
