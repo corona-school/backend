@@ -29,7 +29,11 @@ import assert from 'assert';
 import { isSessionStudent } from '../authentication';
 import { subcourseSearch } from '../../common/courses/search';
 import * as CertificateOfConductCommon from '../../common/certificate-of-conduct/certificateOfConduct';
+import { addFile, getFileURL } from '../files';
+import { createInstantCertificate } from '../../common/certificate';
+import { getLogger } from '../../common/logger/logger';
 
+const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
     @Query((returns) => [Instructor])
