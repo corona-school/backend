@@ -78,6 +78,10 @@ export class MutateCourseResolver {
         @Arg('course') course: PublicCourseCreateInput,
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Course> {
+        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
+        if (!mayCreateHomeworkHelp && course.category === 'homework_help') {
+            throw new ForbiddenError('Only authorized users can create homework help courses');
+        }
         const student = await getSessionStudent(context, studentId);
         const result = await prisma.course.create({ data: { ...course, courseState: 'created' } });
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
