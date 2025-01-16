@@ -1,6 +1,6 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, getSecretByToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, getSecretByToken, requestToken, revokeSecret } from '../../common/secret';
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
@@ -63,24 +63,27 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
-        let tokenId = id;
+        let secretId = id;
         let deviceId = undefined;
-        if (id) {
-            deviceId = (await prisma.secret.findUnique({ where: { id: tokenId } })).lastUsedDeviceId;
+        if (secretId) {
+            deviceId = (await prisma.secret.findUnique({ where: { id: secretId } })).lastUsedDeviceId;
         } else if (token) {
-            deviceId = (await getSecretByToken(token)).lastUsedDeviceId;
+            const secret = await getSecretByToken(token);
+            if (!secret) {
+                throw new UserInputError(`Token not found`);
+            }
+            secretId = secret.id;
+            deviceId = secret.lastUsedDeviceId;
         } else {
             throw new UserInputError(`Either the id or the token must be passed`);
         }
 
-        if (id) {
+        if (secretId) {
             if (isAdmin(context)) {
-                await revokeToken(null, id);
+                await revokeSecret(null, secretId);
             } else {
-                await revokeToken(getSessionUser(context), id);
+                await revokeSecret(getSessionUser(context), secretId);
             }
-        } else if (token) {
-            tokenId = await revokeTokenByToken(token);
         }
 
         if (invalidateSessions) {

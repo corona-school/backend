@@ -16,33 +16,20 @@ import { PrerequisiteError } from '../util/error';
 
 const logger = getLogger('Token');
 
-export async function revokeToken(user: User | null, id: number) {
+export async function revokeSecret(user: User | null, id: number) {
     const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
     if (result.count !== 1) {
-        throw new Error(`Failed to revoke token, does not exist`);
+        throw new Error(`Failed to revoke secret, does not exist`);
     }
 
-    logger.info(`User(${user?.userID}) revoked token Secret(${id})`);
+    logger.info(`User(${user?.userID}) revoked secret Secret(${id})`);
 }
 
-export async function getSecretByToken(token: string): Promise<secret> {
+export async function getSecretByToken(token: string): Promise<secret | null> {
     const hash = hashToken(token);
     return await prisma.secret.findFirst({
         where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
     });
-}
-
-// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
-export async function revokeTokenByToken(token: string): Promise<number> {
-    const secret = await getSecretByToken(token);
-    if (!secret) {
-        throw new Error(`Secret not found`);
-    }
-
-    await prisma.secret.delete({ where: { id: secret.id } });
-
-    logger.info(`Token Secret(${secret.id}) was revoked`);
-    return secret.id;
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
