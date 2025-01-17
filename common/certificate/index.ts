@@ -457,7 +457,6 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
     if (process.env.ENV == 'dev') {
         name = `[TEST] ${name}`;
     }
-    console.log(`VERIFICATION ${link}`);
     const result = template({
         NAMESTUDENT: name,
         STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
