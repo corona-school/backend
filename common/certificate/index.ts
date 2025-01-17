@@ -457,7 +457,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
     }
     const result = template({
         NAMESTUDENT: name,
-        STARTDATE: certificate.startDate,
+        STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
         MATCHES_COUNT: certificate.matchesCount,
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
