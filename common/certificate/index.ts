@@ -251,7 +251,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
         const verificationTemplate = loadTemplate('verifiedInstantCertificatePage', lang);
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
-            STARTDATE: certificate.startDate,
+            STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
             MATCHES_COUNT: certificate.matchesCount,
             MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
