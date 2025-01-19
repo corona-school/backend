@@ -86,7 +86,7 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
     const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
-    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { match: { studentId: requester.id } } });
+    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { match: { studentId: requester.id }, start: { lt: new Date() } } });
     const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
         where: {
@@ -103,10 +103,12 @@ export async function createInstantCertificate(requester: Student, lang: Languag
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
             },
+            start: { lt: new Date() },
         },
     });
     const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
         where: {
+            start: { lt: new Date() },
             OR: [
                 {
                     subcourse: {
@@ -251,12 +253,13 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
         const verificationTemplate = loadTemplate('verifiedInstantCertificatePage', lang);
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
-            STARTDATE: certificate.startDate,
+            STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
             MATCHES_COUNT: certificate.matchesCount,
             MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
             COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
             TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+            DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
         });
     }
 }
@@ -456,12 +459,13 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
     }
     const result = template({
         NAMESTUDENT: name,
-        STARTDATE: certificate.startDate,
+        STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
         MATCHES_COUNT: certificate.matchesCount,
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
         TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+        DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
     });
     return await generatePDFFromHTML(result, {
