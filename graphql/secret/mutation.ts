@@ -77,7 +77,7 @@ export class MutateSecretResolver {
             throw new UserInputError(`Either the id or the token must be passed`);
         }
         if (!secret) {
-            throw new UserInputError(`Secret(${id ?? '<token>'}) not found`);
+            throw new UserInputError(`Secret(${id ?? '<token>'}) not found/not accessible for user`);
         }
         const { id: secretId, lastUsedDeviceId: deviceId } = secret;
 
