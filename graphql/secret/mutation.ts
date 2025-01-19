@@ -4,7 +4,7 @@ import { createPassword, createToken, getSecretByToken, requestToken, revokeSecr
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
-import { getUser, getUserByEmail } from '../../common/user';
+import { getUser, getUserByEmail, User } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
@@ -63,14 +63,14 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
-        let userId: string | undefined = undefined;
+        let user: User | undefined = undefined;
         if (!isAdmin(context)) {
             // if user is not admin, only allow to revoke own secrets
-            userId = getSessionUser(context).userID;
+            user = getSessionUser(context);
         }
         let secret = undefined;
         if (id) {
-            secret = await prisma.secret.findFirst({ where: { id, userId } });
+            secret = await prisma.secret.findFirst({ where: { id, userId: user?.userID } });
         } else if (token) {
             secret = await getSecretByToken(token);
         } else {
@@ -81,10 +81,10 @@ export class MutateSecretResolver {
         }
         const { id: secretId, lastUsedDeviceId: deviceId } = secret;
 
-        await revokeSecret(userId, secretId);
+        await revokeSecret(user, secretId);
 
         if (invalidateSessions) {
-            await deleteSessionsByDevice(deviceId, userId);
+            await deleteSessionsByDevice(deviceId, user);
         }
 
         return true;
