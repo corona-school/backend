@@ -63,7 +63,7 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
-        let userId = undefined;
+        let userId: string | undefined = undefined;
         if (!isAdmin(context)) {
             // if user is not admin, only allow to revoke own secrets
             userId = getSessionUser(context).userID;

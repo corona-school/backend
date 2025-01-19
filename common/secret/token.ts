@@ -16,13 +16,13 @@ import { PrerequisiteError } from '../util/error';
 
 const logger = getLogger('Token');
 
-export async function revokeSecret(user: User | null, id: number) {
-    const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
+export async function revokeSecret(userId: string | undefined, id: number) {
+    const result = await prisma.secret.deleteMany({ where: { id, userId } });
     if (result.count !== 1) {
         throw new Error(`Failed to revoke secret, does not exist`);
     }
 
-    logger.info(`User(${user?.userID}) revoked Secret(${id})`);
+    logger.info(`User(${userId}) revoked Secret(${id})`);
 }
 
 export async function getSecretByToken(token: string): Promise<secret | null> {
