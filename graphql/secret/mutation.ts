@@ -63,10 +63,14 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
+        let userId = undefined;
+        if (!isAdmin(context)) {
+            // if user is not admin, only allow to revoke own secrets
+            userId = getSessionUser(context).userID;
+        }
         let secret = undefined;
-
         if (id) {
-            secret = await prisma.secret.findUnique({ where: { id } });
+            secret = await prisma.secret.findFirst({ where: { id, userId } });
         } else if (token) {
             secret = await getSecretByToken(token);
         } else {
@@ -77,14 +81,10 @@ export class MutateSecretResolver {
         }
         const { id: secretId, lastUsedDeviceId: deviceId } = secret;
 
-        if (isAdmin(context)) {
-            await revokeSecret(null, secretId);
-        } else {
-            await revokeSecret(getSessionUser(context), secretId);
-        }
+        await revokeSecret(userId, secretId);
 
         if (invalidateSessions) {
-            await deleteSessionsByDevice(deviceId, getSessionUser(context).userID);
+            await deleteSessionsByDevice(deviceId, userId);
         }
 
         return true;
