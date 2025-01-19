@@ -83,7 +83,7 @@ export class MutateSecretResolver {
 
         await revokeSecret(user, secretId);
 
-        if (invalidateSessions) {
+        if (invalidateSessions && deviceId) {
             await deleteSessionsByDevice(deviceId, user);
         }
 
