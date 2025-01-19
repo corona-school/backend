@@ -17,7 +17,7 @@ import { PrerequisiteError } from '../util/error';
 const logger = getLogger('Token');
 
 export async function revokeSecret(user: User | undefined, id: number) {
-    const result = await prisma.secret.deleteMany({ where: { id, userId: user.userID } });
+    const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
     if (result.count !== 1) {
         throw new Error(`Failed to revoke secret, does not exist`);
     }

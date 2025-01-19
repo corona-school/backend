@@ -74,13 +74,13 @@ export async function updateSessionRolesOfUser(userID: string) {
 
 // O(n)
 // Currently used in session manager to log out all sessions created by a specific device token
-export async function deleteSessionsByDevice(deviceId: string | null, user: User) {
+export async function deleteSessionsByDevice(deviceId: string | null, user: User | undefined) {
     if (!deviceId) {
         return; // do nothing if deviceId is undefined
     }
     const sessionsToDelete = [];
     for await (const [sessionToken, sessionUser] of userSessions.iterator() as AsyncIterable<[string, GraphQLUser]>) {
-        if (sessionUser.deviceId === deviceId && sessionUser.userID === user.userID) {
+        if (sessionUser.deviceId === deviceId && sessionUser.userID === user?.userID) {
             sessionsToDelete.push(sessionToken);
         }
     }
