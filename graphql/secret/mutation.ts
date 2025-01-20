@@ -1,10 +1,10 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, getSecretByToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, getSecretByToken, requestToken, revokeSecret } from '../../common/secret';
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
-import { getUser, getUserByEmail } from '../../common/user';
+import { getUser, getUserByEmail, User } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
@@ -63,28 +63,28 @@ export class MutateSecretResolver {
         @Arg('id', { nullable: true }) id?: number,
         @Arg('token', { nullable: true }) token?: string
     ) {
-        let tokenId = id;
-        let deviceId = undefined;
+        let user: User | undefined = undefined;
+        if (!isAdmin(context)) {
+            // if user is not admin, only allow to revoke own secrets
+            user = getSessionUser(context);
+        }
+        let secret = undefined;
         if (id) {
-            deviceId = (await prisma.secret.findUnique({ where: { id: tokenId } })).lastUsedDeviceId;
+            secret = await prisma.secret.findFirst({ where: { id, userId: user?.userID } });
         } else if (token) {
-            deviceId = (await getSecretByToken(token)).lastUsedDeviceId;
+            secret = await getSecretByToken(token);
         } else {
             throw new UserInputError(`Either the id or the token must be passed`);
         }
-
-        if (id) {
-            if (isAdmin(context)) {
-                await revokeToken(null, id);
-            } else {
-                await revokeToken(getSessionUser(context), id);
-            }
-        } else if (token) {
-            tokenId = await revokeTokenByToken(token);
+        if (!secret) {
+            throw new UserInputError(`Secret(${id ?? '<token>'}) not found/not accessible for user`);
         }
+        const { id: secretId, lastUsedDeviceId: deviceId } = secret;
 
-        if (invalidateSessions) {
-            await deleteSessionsByDevice(deviceId, getSessionUser(context).userID);
+        await revokeSecret(user, secretId);
+
+        if (invalidateSessions && deviceId) {
+            await deleteSessionsByDevice(deviceId, user);
         }
 
         return true;
