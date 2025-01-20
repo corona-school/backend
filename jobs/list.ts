@@ -11,7 +11,7 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
-import migrateDissolveReasonEnum from './migrate-dissolve-reason-enum';
+
 export const allJobs = {
     cleanupSecrets,
     dropOldNotificationContexts,
@@ -25,7 +25,6 @@ export const allJobs = {
     flagInactiveConversationsAsReadonly,
     notificationsEndedYesterday,
     checkReminders,
-    migrateDissolveReasonEnum,
 
     assignOriginalAchievement,
 
