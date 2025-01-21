@@ -140,7 +140,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             matchAppointmentsCount,
             courseParticipantsCount,
             courseAppointmentsCount,
-            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration / 60,
+            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration,
         },
         include: { student: true },
     });
@@ -258,7 +258,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
             COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-            TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+            TOTAL_APPOINTMENTS_DURATION: (certificate.totalAppointmentsDuration / 60).toFixed(2),
             DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
         });
     }
@@ -464,7 +464,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-        TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration,
+        TOTAL_APPOINTMENTS_DURATION: (certificate.totalAppointmentsDuration / 60).toFixed(2),
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
     });

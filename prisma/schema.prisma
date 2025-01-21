@@ -600,7 +600,7 @@ model instant_certificate {
   matchAppointmentsCount    Int
   courseParticipantsCount   Int
   courseAppointmentsCount   Int
-  totalAppointmentsDuration Int
+  totalAppointmentsDuration Int // in minutes
 }
 
 // DEPRECATED: We once had a project were students helped pupils with their Jugend-Forscht Project, and had a separate screening for that
