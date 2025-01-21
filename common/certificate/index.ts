@@ -7,6 +7,7 @@ import * as Notification from '../notification';
 import {
     instant_certificate as InstantCertificate,
     participation_certificate as ParticipationCertificate,
+    Prisma,
     pupil as Pupil,
     student as Student,
     student,
@@ -213,6 +214,10 @@ export async function createCertificate(requestor: Student, matchId: string, par
     return certificate;
 }
 
+function formatFloat(value: number | Prisma.Decimal, language: 'de' | 'en') {
+    return language === 'de' ? value.toFixed(2).replace('.', ',') : value.toFixed(2);
+}
+
 /* Everybody who sees a certificate can verify it's authenticity through a public endpoint, which shows the confirmation page */
 export async function getConfirmationPage(certificateId: string, lang: Language, ctype: CertificateType): Promise<string> {
     if (ctype === 'participation') {
@@ -235,8 +240,8 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
             SCHUELERFAECHER: certificate.subjects.split(','),
             SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-            SCHUELERPROWOCHE: certificate.hoursPerWeek?.toFixed(2) ?? '?',
-            SCHUELERGESAMT: certificate.hoursTotal?.toFixed(2) ?? '?',
+            SCHUELERPROWOCHE: certificate.hoursPerWeek ? formatFloat(certificate.hoursPerWeek, lang) : '?',
+            SCHUELERGESAMT: certificate.hoursTotal ? formatFloat(certificate.hoursTotal, lang) : '?',
             MEDIUM: certificate.medium,
             SCREENINGDATUM: moment(certificate.student.createdAt).format('D.M.YYYY'),
             ONGOING: certificate.ongoingLessons,
@@ -258,7 +263,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
             COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-            TOTAL_APPOINTMENTS_DURATION: (certificate.totalAppointmentsDuration / 60).toFixed(1),
+            TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
             DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
         });
     }
@@ -434,8 +439,8 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         SCHUELERENDE: moment(certificate.endDate, 'X').format('D.M.YYYY'),
         SCHUELERFAECHER: certificate.subjects.split(','),
         SCHUELERFREITEXT: certificate.categories.split(/(?:\r\n|\r|\n)/g),
-        SCHUELERPROWOCHE: certificate.hoursPerWeek,
-        SCHUELERGESAMT: certificate.hoursTotal,
+        SCHUELERPROWOCHE: formatFloat(certificate.hoursPerWeek, lang),
+        SCHUELERGESAMT: formatFloat(certificate.hoursTotal, lang),
         MEDIUM: certificate.medium,
         CERTLINK: link,
         CERTLINKTEXT: link,
@@ -464,7 +469,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-        TOTAL_APPOINTMENTS_DURATION: (certificate.totalAppointmentsDuration / 60).toFixed(1),
+        TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
     });
