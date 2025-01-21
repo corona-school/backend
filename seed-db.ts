@@ -29,6 +29,7 @@ import {
     student as Student,
     course_subject_enum,
     learning_assignment_status,
+    pupil_email_owner_enum,
 } from '@prisma/client';
 import { importAchievements } from './seed-achievements';
 
@@ -51,6 +52,7 @@ const createPupil = async ({ includePassword = true, ...data }: CreatePupilArgs)
             schooltype: 'gymnasium',
             state: 'be',
         },
+        emailOwner: pupil_email_owner_enum.pupil,
     });
     await _createFixedToken(userForPupil(pupil), `authtokenP${pupil.id}`);
     if (includePassword) {

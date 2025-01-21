@@ -10,6 +10,7 @@ import {
     pupil_state_enum as State,
     student_module_enum as TeacherModule,
     school as School,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { ValidateEmail } from '../validators';
 import { BecomeTutorData, RegisterStudentData } from '../../common/student/registration';
@@ -59,6 +60,9 @@ export class RegisterPupilInput implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
     lastname: string;
+
+    @Field((type) => PupilEmailOwner)
+    emailOwner: PupilEmailOwner;
 
     @Field((type) => String)
     @ValidateEmail()
