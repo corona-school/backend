@@ -460,6 +460,7 @@ model match {
   dissolveReason        Int?
   dissolveReasonEnum    dissolve_reason?
   dissolveReasons       dissolve_reason[]  @default([])
+  otherDissolveReason   String?            @db.VarChar  // user can enter detailed explanation when selected dissolve reason is "other"
   didHaveMeeting        Boolean            @default(false) // whether the match partners did actually have an initial meeting
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
