@@ -8,12 +8,13 @@ import { prisma } from '../prisma';
 import { userForStudent } from '../user';
 import * as Notification from '../../common/notification';
 import { SpecificNotificationContext } from './actions';
+import { dissolve_reason } from '@prisma/client';
 
 registerStudentHook(
     'deactivate-student',
     'Account gets deactivated, matches are dissolved, courses are cancelled',
     async (student) => {
-        await deactivateStudent(student, true, true, 'missing coc');
+        await deactivateStudent(student, true, 'missing coc', [dissolve_reason.accountDeactivatedNoCoC]);
     } // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 

@@ -23,7 +23,7 @@ export async function deactivateInactiveAccounts() {
     }
 
     for (const student of persons.students) {
-        await deactivateStudent(student, true, false, DEACTIVATION_MESSAGE);
+        await deactivateStudent(student, true, DEACTIVATION_MESSAGE);
     }
 
     logger.info('End deactivating inactive accounts');
