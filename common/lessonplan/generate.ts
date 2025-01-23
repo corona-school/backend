@@ -248,17 +248,32 @@ export async function generateLessonPlan({
 
         // Only count tokens if the character count exceeds MAX_TOKENS
         if (finalPrompt.length > MAX_TOKENS) {
-            const tokenCount = countTokens(finalPrompt, MODEL_NAME);
-            if (tokenCount > MAX_TOKENS) {
-                logger.warn(`Prompt exceeds token limit. Prompt has ${tokenCount} tokens but the maximum allowed is ${MAX_TOKENS} tokens. Truncating...`);
-                const truncatedContent = truncateText(
-                    combinedContent,
-                    MODEL_NAME,
-                    MAX_TOKENS - countTokens(finalPrompt.replace(combinedContent, ''), MODEL_NAME)
+            const staticTokenCount = countTokens(finalPrompt.replace(combinedContent, ''), MODEL_NAME);
+
+            // Check if the static portion of the prompt exceeds the token limit
+            if (staticTokenCount >= MAX_TOKENS) {
+                throw new Error(
+                    `The static portion of the prompt (${staticTokenCount} tokens) exceeds the maximum token limit (${MAX_TOKENS}). Truncation is not possible.`
                 );
+            }
+
+            const maxContentTokens = MAX_TOKENS - staticTokenCount;
+
+            // Log token details
+            logger.debug(
+                `Token counts - Static: ${staticTokenCount}, Dynamic: ${countTokens(combinedContent, MODEL_NAME)}, ` +
+                    `Max Allowed: ${MAX_TOKENS}, Remaining: ${maxContentTokens}`
+            );
+
+            if (countTokens(combinedContent, MODEL_NAME) > maxContentTokens) {
+                logger.warn(`Dynamic content exceeds remaining token limit (${maxContentTokens} tokens).. Truncating...`);
+
+                // Calculate the maximum tokens available for combinedContent
+
+                const truncatedContent = truncateText(combinedContent, MODEL_NAME, maxContentTokens);
                 finalPrompt = finalPrompt.replace(combinedContent, truncatedContent);
             }
-            logger.debug(`Prompt token count: ${countTokens(finalPrompt, MODEL_NAME)}`);
+            logger.debug(`Content truncated to fit within the token limit. Final prompt token count: ${countTokens(finalPrompt, MODEL_NAME)}`);
         }
 
         logger.debug(`Final prompt: ${finalPrompt}`);
