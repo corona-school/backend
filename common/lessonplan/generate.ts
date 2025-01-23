@@ -190,14 +190,8 @@ export async function generateLessonPlan({
                             .map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent))
                             .join('\n\n');
 
-                    // Check if the content is empty (excluding filename and page numbers)
-                    const contentWithoutMetadata = content
-                        .replace(`Filename: ${file.originalname}\n\n`, '')
-                        .replace(/Page \d+:\n/g, '')
-                        .trim();
-                    if (contentWithoutMetadata.length === 0) {
-                        emptyFiles.push(file.originalname);
-                        return null;
+                    if (!docs.some((doc) => doc.pageContent && doc.pageContent.trim().length > 0)) {
+                        throw new PrerequisiteError(`The file ${file.originalname} is empty or its content could not be processed.`);
                     }
 
                     return {
@@ -238,13 +232,10 @@ export async function generateLessonPlan({
     const structuredLlm = model.withStructuredOutput(dynamicPlan);
 
     try {
-        logger.info('Generating lesson plan...');
-        const requestedFields =
-            expectedOutputs && expectedOutputs.length > 0
-                ? expectedOutputs.map((field) => `${field}: {${field}}`).join('\n')
-                : Object.keys(plan.shape)
-                      .map((field) => `${field}: {${field}}`)
-                      .join('\n');
+        logger.info('Generating lesson plan...', { dynamicPlan, prompt, subject, grade, duration, state, schoolType });
+        const requestedFields = Object.keys(dynamicPlan.shape)
+            .map((field) => `${field}: {${field}}`)
+            .join('\n');
 
         let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields).replace(
             '{language}',
