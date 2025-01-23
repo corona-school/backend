@@ -1,11 +1,12 @@
 import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field, Int, ObjectType, registerEnumType } from 'type-graphql';
-import { MaxLength, ArrayMaxSize, validateOrReject } from 'class-validator';
+import { MaxLength, ArrayMaxSize } from 'class-validator';
 import { Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
 import { course_subject_enum, pupil_state_enum, school_schooltype_enum } from '@prisma/client';
-import { ApolloError, UserInputError } from 'apollo-server-express';
+import { ApolloError } from 'apollo-server-express';
+import { PrerequisiteError, ClientError } from '../../common/util/error';
 
 const logger = getLogger(`LessonPlan Mutations`);
 
@@ -151,15 +152,8 @@ export function getStateFullName(stateCode: StateCode): string {
 @Resolver()
 export class MutateLessonPlanResolver {
     @Mutation(() => LessonPlanOutput)
-    @Authorized(Role.INSTRUCTOR, Role.ADMIN, Role.STUDENT)
+    @Authorized(Role.INSTRUCTOR, Role.ADMIN)
     async generateLessonPlan(@Ctx() context: GraphQLContext, @Arg('data') data: GenerateLessonPlanInput): Promise<LessonPlanOutput> {
-        // Explicitly validate the input
-        try {
-            await validateOrReject(data);
-        } catch (errors) {
-            throw new UserInputError('Invalid input', { errors });
-        }
-
         const { fileUuids, subject, grade, duration, state, prompt, expectedOutputs, schoolType, language } = data;
 
         const fullStateName: string = getStateFullName(state);
@@ -199,21 +193,11 @@ export class MutateLessonPlanResolver {
 
             return lessonPlan;
         } catch (error) {
-            logger.error(`Error generating lesson plan: ${error.message}`);
-
-            if (error.message.includes('Invalid fileID')) {
-                throw new UserInputError('Invalid file UUID provided', {
-                    invalidFileUUID: error.message.match(/Invalid fileID\((.*?)\)/)[1],
-                });
-            } else if (error.message.includes('Failed to process one or more files')) {
-                throw new LessonPlanGenerationError('Failed to process one or more files. Please check the provided file UUIDs and try again.');
-            } else if (error.message.includes('OpenAI API key is not set')) {
-                throw new LessonPlanGenerationError('Internal server error: OpenAI API key is not configured.');
-            } else if (error.message.includes('The following files are empty or their content could not be processed:')) {
-                throw new LessonPlanGenerationError(error.message);
-            } else {
-                throw new LessonPlanGenerationError('An unexpected error occurred while generating the lesson plan. Please try again later.');
+            if (error instanceof ClientError) {
+                throw error;
             }
+            logger.error(`Unexpected error while generating lesson plan: ${error.message}`);
+            throw new PrerequisiteError('An unexpected error occurred while generating the lesson plan. Please try again later.');
         }
     }
 }

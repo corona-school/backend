@@ -9,6 +9,7 @@ import { PPTXLoader } from '@langchain/community/document_loaders/fs/pptx';
 import { course_subject_enum, school_schooltype_enum } from '@prisma/client';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import sharp from 'sharp';
+import { PrerequisiteError } from '../util/error';
 // import { promises as fs } from 'fs';
 // import * as path from 'path';
 // import { v4 as uuidv4 } from 'uuid';
@@ -179,7 +180,7 @@ export async function generateLessonPlan({
                         loader = new PPTXLoader(blob);
                         docs = await loader.load();
                     } else {
-                        throw new Error(`Unsupported file type: ${file.mimetype}`);
+                        throw new PrerequisiteError(`Unsupported file type: ${file.mimetype}`);
                     }
 
                     // Add filename and page numbers (only for PDFs) to the content
@@ -205,8 +206,7 @@ export async function generateLessonPlan({
                         type: file.mimetype,
                     };
                 } catch (error) {
-                    logger.error(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
-                    throw error;
+                    throw new PrerequisiteError(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
                 }
             })
         );
@@ -214,7 +214,7 @@ export async function generateLessonPlan({
         const validFiles = allFiles.filter((file): file is NonNullable<typeof file> => file !== null);
 
         if (emptyFiles.length > 0) {
-            throw new Error(`The following files are empty or their content could not be processed: ${emptyFiles.join(', ')}`);
+            throw new PrerequisiteError(`The following files are empty or their content could not be processed: ${emptyFiles.join(', ')}`);
         }
 
         // Combine all file contents
@@ -223,7 +223,7 @@ export async function generateLessonPlan({
 
     // Check for OpenAI API key
     if (!process.env.OPENAI_API_KEY) {
-        throw new Error('OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.');
+        throw new PrerequisiteError('OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.');
     }
 
     // Initialize the ChatOpenAI model
@@ -293,6 +293,6 @@ export async function generateLessonPlan({
         };
     } catch (error) {
         logger.error(`Error generating lesson plan: ${error.message}`);
-        throw error;
+        throw new Error(`Unexpected error while generating lesson plan: ${error.message}`);
     }
 }
