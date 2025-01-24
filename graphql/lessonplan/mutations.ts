@@ -124,17 +124,8 @@ export class MutateLessonPlanResolver {
                 duration: generatedLessonPlan.duration,
             };
 
-            // Only include the fields that were requested or generated
-            if (expectedOutputs) {
-                for (const field of expectedOutputs) {
-                    if (field in generatedLessonPlan) {
-                        lessonPlan[field] = generatedLessonPlan[field];
-                    }
-                }
-            } else {
-                // If no expected outputs were specified, include all generated fields
-                Object.assign(lessonPlan, generatedLessonPlan);
-            }
+            // If no expected outputs were specified, include all generated fields
+            Object.assign(lessonPlan, generatedLessonPlan);
 
             return lessonPlan;
         } catch (error) {
