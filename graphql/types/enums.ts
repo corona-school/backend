@@ -15,6 +15,8 @@ import {
     course_category_enum as CourseCategory,
     pupil_screening_status_enum as PupilScreeningStatus,
     gender_enum as Gender,
+    course_subject_enum,
+    school_schooltype_enum,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 
@@ -75,3 +77,13 @@ registerEnumType(Gender, {
 registerEnumType(LoginOption, { name: 'LoginOption' });
 
 registerEnumType(PupilScreeningStatus, { name: 'PupilScreeningStatus' });
+
+registerEnumType(course_subject_enum, {
+    name: 'CourseSubjectEnum',
+    description: 'The subject of the course',
+});
+
+registerEnumType(school_schooltype_enum, {
+    name: 'SchoolSchoolTypeEnum',
+    description: 'The type of school',
+});

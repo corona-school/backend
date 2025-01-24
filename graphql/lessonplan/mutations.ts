@@ -5,8 +5,8 @@ import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
 import { course_subject_enum, pupil_state_enum, school_schooltype_enum } from '@prisma/client';
-import { ApolloError } from 'apollo-server-express';
 import { PrerequisiteError, ClientError } from '../../common/util/error';
+import { getStateFullName } from '../../common/util/stateMappings';
 
 const logger = getLogger(`LessonPlan Mutations`);
 
@@ -15,18 +15,6 @@ const MAX_PROMPT_LENGTH = 10000;
 
 // Maximum number of files
 const MAX_FILES = 10;
-
-// Register the course_subject_enum as a GraphQL enum
-registerEnumType(course_subject_enum, {
-    name: 'CourseSubjectEnum',
-    description: 'The subject of the course',
-});
-
-// Register the school_schooltype_enum as a GraphQL enum
-registerEnumType(school_schooltype_enum, {
-    name: 'SchoolSchoolTypeEnum',
-    description: 'The type of school',
-});
 
 // Create a new enum for expected output fields
 enum LessonPlanField {
@@ -104,49 +92,6 @@ class LessonPlanOutput {
 
     @Field(() => String, { nullable: true })
     resources?: string;
-}
-
-class LessonPlanGenerationError extends ApolloError {
-    constructor(message: string) {
-        super(message, 'LESSON_PLAN_GENERATION_ERROR');
-
-        Object.defineProperty(this, 'name', { value: 'LessonPlanGenerationError' });
-    }
-}
-
-// Define a type for the state codes based on the enum
-type StateCode = keyof typeof pupil_state_enum;
-
-// Create a mapping object for state codes to full names
-const stateMap: Record<StateCode, string> = {
-    bw: 'Baden-Württemberg',
-    by: 'Bayern',
-    be: 'Berlin',
-    bb: 'Brandenburg',
-    hb: 'Bremen',
-    hh: 'Hamburg',
-    he: 'Hessen',
-    mv: 'Mecklenburg-Vorpommern',
-    ni: 'Niedersachsen',
-    nw: 'Nordrhein-Westfalen',
-    rp: 'Rheinland-Pfalz',
-    sl: 'Saarland',
-    sn: 'Sachsen',
-    st: 'Sachsen-Anhalt',
-    sh: 'Schleswig-Holstein',
-    th: 'Thüringen',
-    at: 'Austria',
-    ch: 'Switzerland',
-    other: 'Other',
-};
-
-/**
- * Gets the full name of a state from its code.
- * @param stateCode - The state code.
- * @returns The full name of the state.
- */
-export function getStateFullName(stateCode: StateCode): string {
-    return stateMap[stateCode] || 'Unknown';
 }
 
 @Resolver()
