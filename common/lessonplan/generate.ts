@@ -137,73 +137,7 @@ export async function generateLessonPlan({
 
     if (fileUuids.length > 0) {
         // Fetch file contents for each UUID
-        const allFiles = await Promise.all(
-            fileUuids.map(async (uuid) => {
-                try {
-                    const file: File = getFile(uuid);
-                    const blob = new Blob([file.buffer], { type: file.mimetype });
-
-                    if (file.mimetype.startsWith('image/')) {
-                        // Handle image files
-                        logger.debug(`Processing image file: ${file.originalname}`);
-                        const resizedBuffer = await resizeImage(file.buffer);
-                        const base64 = resizedBuffer.toString('base64');
-                        const dataUrl = `data:${file.mimetype};base64,${base64}`;
-                        imageContents.push({
-                            type: 'image_url',
-                            image_url: {
-                                url: dataUrl,
-                            },
-                        });
-
-                        // // Generate a unique filename
-                        // const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-                        // const savePath = path.join('./', uniqueFilename);
-
-                        // // Write the resized image to a file
-                        // await fs.writeFile(savePath, resizedBuffer);
-
-                        logger.debug(`Image processed and converted to base64`);
-                        return null;
-                    }
-
-                    let loader;
-                    let docs;
-
-                    if (file.mimetype === 'application/pdf') {
-                        loader = new PDFLoader(blob, { splitPages: true });
-                        docs = await loader.load();
-                    } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                        loader = new DocxLoader(blob);
-                        docs = await loader.load();
-                    } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-                        loader = new PPTXLoader(blob);
-                        docs = await loader.load();
-                    } else {
-                        throw new PrerequisiteError(`Unsupported file type: ${file.mimetype}`);
-                    }
-
-                    // Add filename and page numbers (only for PDFs) to the content
-                    const content =
-                        `Filename: ${file.originalname}\n\n` +
-                        docs
-                            .map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent))
-                            .join('\n\n');
-
-                    if (!docs.some((doc) => doc.pageContent && doc.pageContent.trim().length > 0)) {
-                        throw new PrerequisiteError(`The file ${file.originalname} is empty or its content could not be processed.`);
-                    }
-
-                    return {
-                        name: file.originalname,
-                        content: content,
-                        type: file.mimetype,
-                    };
-                } catch (error) {
-                    throw new PrerequisiteError(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
-                }
-            })
-        );
+        const allFiles = await Promise.all(fileUuids.map((uuid) => readFileContent(uuid)));
 
         const validFiles = allFiles.filter((file): file is NonNullable<typeof file> => file !== null);
 
@@ -237,7 +171,7 @@ export async function generateLessonPlan({
             .map((field) => `${field}: {${field}}`)
             .join('\n');
 
-        let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields).replace(
+        let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields).replaceAll(
             '{language}',
             language
         )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}, for a ${schoolType} school. The lesson should last ${duration} minutes. ${prompt}`;
@@ -300,5 +234,69 @@ export async function generateLessonPlan({
     } catch (error) {
         logger.error(`Error generating lesson plan: ${error.message}`);
         throw new Error(`Unexpected error while generating lesson plan: ${error.message}`);
+    }
+
+    async function readFileContent(uuid: string): Promise<{ name: string; content: string; type: string } | null> {
+        try {
+            const file: File = getFile(uuid);
+            const blob = new Blob([file.buffer], { type: file.mimetype });
+
+            if (file.mimetype.startsWith('image/')) {
+                // Handle image files
+                logger.debug(`Processing image file: ${file.originalname}`);
+                const resizedBuffer = await resizeImage(file.buffer);
+                const base64 = resizedBuffer.toString('base64');
+                const dataUrl = `data:${file.mimetype};base64,${base64}`;
+                imageContents.push({
+                    type: 'image_url',
+                    image_url: {
+                        url: dataUrl,
+                    },
+                });
+
+                // // Generate a unique filename
+                // const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
+                // const savePath = path.join('./', uniqueFilename);
+
+                // // Write the resized image to a file
+                // await fs.writeFile(savePath, resizedBuffer);
+
+                logger.debug(`Image processed and converted to base64`);
+                return null;
+            }
+
+            let loader;
+            let docs;
+
+            if (file.mimetype === 'application/pdf') {
+                loader = new PDFLoader(blob, { splitPages: true });
+                docs = await loader.load();
+            } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                loader = new DocxLoader(blob);
+                docs = await loader.load();
+            } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+                loader = new PPTXLoader(blob);
+                docs = await loader.load();
+            } else {
+                throw new PrerequisiteError(`Unsupported file type: ${file.mimetype}`);
+            }
+
+            // Add filename and page numbers (only for PDFs) to the content
+            const content =
+                `Filename: ${file.originalname}\n\n` +
+                docs.map((doc, index) => (file.mimetype === 'application/pdf' ? `Page ${index + 1}:\n${doc.pageContent}` : doc.pageContent)).join('\n\n');
+
+            if (!docs.some((doc) => doc.pageContent && doc.pageContent.trim().length > 0)) {
+                throw new PrerequisiteError(`The file ${file.originalname} is empty or its content could not be processed.`);
+            }
+
+            return {
+                name: file.originalname,
+                content: content,
+                type: file.mimetype,
+            };
+        } catch (error) {
+            throw new PrerequisiteError(`Error fetching or parsing file with UUID ${uuid}: ${error.message}`);
+        }
     }
 }
