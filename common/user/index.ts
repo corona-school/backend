@@ -66,11 +66,11 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
 }
 
 export async function getReferredByIDCount(userId: string): Promise<number> {
-    const amountofReferredPupils = await prisma.student.count({
+    const amountofReferredStudents = await prisma.student.count({
         where: { referredById: userId },
     });
 
-    const amountofReferredStudents = await prisma.pupil.count({
+    const amountofReferredPupils = await prisma.pupil.count({
         where: { referredById: userId },
     });
 
@@ -108,6 +108,7 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
         select: {
             duration: true,
             organizerIds: true,
+            declinedBy: true,
         },
     });
 
@@ -127,7 +128,8 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
     });
 
     const totalStudentDuration = studentLectures.reduce((acc, lecture) => {
-        const participantCount = lecture.organizerIds.filter((id) => students.includes(id)).length;
+        const actualParticipants = lecture.organizerIds.filter((id) => students.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
         return acc + lecture.duration * participantCount;
     }, 0);
 
