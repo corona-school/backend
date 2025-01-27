@@ -116,17 +116,13 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
             participantIds: {
                 hasSome: pupils,
             },
-            NOT: {
-                declinedBy: {
-                    hasSome: pupils,
-                },
-            },
             isCanceled: false,
             start: { lt: new Date() },
         },
         select: {
             duration: true,
             participantIds: true,
+            declinedBy: true,
         },
     });
 
@@ -136,13 +132,14 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
     }, 0);
 
     const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
-        const participantCount = lecture.participantIds.filter((id) => pupils.includes(id)).length;
+        const actualParticipants = lecture.participantIds.filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
         return acc + lecture.duration * participantCount;
     }, 0);
 
-    const totalDurationInSeconds = totalStudentDuration + totalPupilDuration;
+    const totalDurationInMinutes = totalStudentDuration + totalPupilDuration;
 
-    return Math.round(totalDurationInSeconds / 3600);
+    return Math.round(totalDurationInMinutes / 60);
 }
 
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
