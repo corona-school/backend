@@ -25,10 +25,4 @@ export class UserType implements User {
     student?: Student;
     @Field({ nullable: true })
     screener?: Screener;
-
-    @Field(() => Int, { nullable: true })
-    referralCount?: number;
-
-    @Field(() => Int, { nullable: true })
-    supportedHours?: number;
 }

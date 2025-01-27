@@ -118,17 +118,17 @@ export class UserFieldsResolver {
         return await evaluateUserRoles(user);
     }
 
-    @Query((returns) => Int, { description: 'Number of referrals made by the user' })
-    @Authorized(Role.OWNER, Role.ADMIN, Role.USER)
-    async referralCount(@Arg('userId') userId: string): Promise<number> {
-        const count = await getReferredByIDCount(userId);
+    @FieldResolver((returns) => Int, { description: 'Number of referrals made by the user' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async referralCount(@Root() user: User): Promise<number> {
+        const count = await getReferredByIDCount(user.userID);
         return count;
     }
 
-    @Query((returns) => Int, { description: 'Total hours supported by referred students/pupils' })
-    @Authorized(Role.OWNER, Role.ADMIN, Role.USER)
-    async supportedHours(@Arg('userId') userId: string): Promise<number> {
-        const totalHours = await getTotalSupportedHours(userId);
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async supportedHours(@Root() user: User): Promise<number> {
+        const totalHours = await getTotalSupportedHours(user.userID);
         return totalHours;
     }
 
