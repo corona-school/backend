@@ -30,6 +30,7 @@ export interface RegisterStudentData {
     redirectTo?: string;
     // Associates the student with a cooperation
     cooperationTag?: string;
+    referredById?: string;
 }
 
 export interface BecomeInstructorData {
@@ -80,6 +81,8 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
 
             // the authToken is used to verify the e-mail instead
             verification: uuidv4(),
+
+            referredById: data.referredById,
 
             openMatchRequestCount: 0,
             notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,
