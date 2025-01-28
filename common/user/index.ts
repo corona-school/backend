@@ -22,9 +22,6 @@ export type User = {
     pupilId?: number;
     studentId?: number;
     screenerId?: number;
-
-    referralCount?: number;
-    supportedHours?: number;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
