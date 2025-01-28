@@ -85,6 +85,9 @@ export class RegisterPupilInput implements RegisterPupilData {
 
     @Field((type) => RegistrationSchool, { nullable: true })
     school?: RegistrationSchool;
+
+    @Field((type) => String, { nullable: true })
+    referredById?: string;
 }
 
 @InputType()
@@ -118,6 +121,9 @@ export class RegisterStudentInput implements RegisterStudentData {
 
     @Field((type) => String, { nullable: true })
     cooperationTag?: string;
+
+    @Field((type) => String, { nullable: true })
+    referredById?: string;
 }
 
 @InputType()

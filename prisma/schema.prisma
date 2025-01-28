@@ -732,6 +732,9 @@ model pupil {
   descriptionForScreening                      String                                         @default("") @db.VarChar
   // Screeners provide future matches tips or information about the pupil to help improve the collaboration
   descriptionForMatch                          String                                         @default("") @db.VarChar
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById                                 String?                                         @db.VarChar 
+
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
   emailOwner                                   pupil_email_owner_enum                         @default(unknown)
@@ -944,7 +947,10 @@ model student {
   // Screeners provide future matches tips or information about the student to help improve the collaboration
   descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
-  gender                  gender_enum?
+  gender               gender_enum?
+
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById         String?                         @db.VarChar
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
