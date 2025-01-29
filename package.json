@@ -46,7 +46,6 @@
         "@langchain/openai": "^0.3.8",
         "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
-        "@types/sharp": "^0.32.0",
         "apollo-server-express": "3.4.0",
         "apollo-server-plugin-response-cache": "3.4.0",
         "basic-auth": "^2.0.1",

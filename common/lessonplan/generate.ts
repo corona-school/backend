@@ -171,10 +171,11 @@ export async function generateLessonPlan({
             .map((field) => `${field}: {${field}}`)
             .join('\n');
 
-        let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields).replaceAll(
-            '{language}',
-            language
-        )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}, for a ${schoolType} school. The lesson should last ${duration} minutes. ${prompt}`;
+        let finalPrompt = `${LESSON_PLAN_PROMPT.replace('{requestedFields}', requestedFields)
+            .split('{language}')
+            .join(
+                language
+            )}\n\nCreate a lesson plan for ${subject} students in grade ${grade} in the state ${state}, for a ${schoolType} school. The lesson should last ${duration} minutes. ${prompt}`;
 
         if (combinedContent) {
             finalPrompt += `\n\nInclude relevant content from the provided materials:\n${combinedContent}`;
