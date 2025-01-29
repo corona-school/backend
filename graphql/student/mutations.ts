@@ -11,6 +11,7 @@ import {
     addInstructorScreening,
     addTutorScreening,
     cancelCoCReminders,
+    requireStudentOnboarding,
     scheduleCoCReminders,
     updateInstructorScreening,
     updateTutorScreening,
@@ -171,6 +172,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
 }
 
 const logger = getLogger('Student Mutations');
@@ -198,6 +202,7 @@ export async function updateStudent(
         hasSpecialExperience,
         gender,
         descriptionForMatch,
+        descriptionForScreening,
     } = update;
 
     if (projectFields && !student.isProjectCoach) {
@@ -214,6 +219,22 @@ export async function updateStudent(
 
     if ((firstname != undefined || lastname != undefined) && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the name without verification`);
+    }
+
+    if (hasSpecialExperience !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
+    }
+
+    if (gender !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('gender may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
     if (projectFields) {
@@ -237,6 +258,7 @@ export async function updateStudent(
             hasSpecialExperience: ensureNoNull(hasSpecialExperience),
             gender: ensureNoNull(gender),
             descriptionForMatch,
+            descriptionForScreening,
         },
         where: { id: student.id },
     });
@@ -514,8 +536,7 @@ export class MutateStudentResolver {
     @Authorized(Role.STUDENT_SCREENER)
     async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
-
-        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
+        await requireStudentOnboarding(student.id);
         return true;
     }
 }

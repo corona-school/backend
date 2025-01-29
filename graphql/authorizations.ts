@@ -295,6 +295,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Jufo_verification_transmission: allAdmin,
     Mentor: allAdmin,
     Participation_certificate: allAdmin,
+    Instant_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
     Remission_request: allAdmin,
@@ -429,6 +430,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForScreening: onlyAdminOrScreener,
             hasSpecialNeeds: onlyAdminOrScreener,
             onlyMatchWith: onlyAdminOrScreener,
+            referredById: adminOrOwner,
+            emailOwner: adminOrOwnerOrScreener,
         }),
     },
 
@@ -495,6 +498,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             match: nobody,
             participation_certificate: nobody,
+            instant_certificate: nobody,
             project_coaching_screening: nobody,
             project_field_with_grade_restriction: nobody,
             project_match: nobody,
@@ -516,6 +520,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
             gender: onlyAdminOrScreener,
+            referredById: adminOrOwner,
+            descriptionForScreening: onlyAdminOrScreener,
         }),
     },
 

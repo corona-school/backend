@@ -81,6 +81,7 @@ import { LearningAssignmentMutationsResolver } from './learning/assignment/mutat
 import { LearningNoteMutationsResolver } from './learning/note/mutations';
 import { ExternalSchoolResolver } from './external_school/fields';
 import { MutateLessonPlanResolver } from './lessonplan/mutations';
+import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -148,6 +149,9 @@ const schema = buildSchemaSync({
         /* ParticipationCertificate */
         ExtendedFieldsParticipationCertificateResolver,
         MutateParticipationCertificateResolver,
+
+        /* InstantCertificate */
+        MutateInstantCertificateResolver,
 
         /* Schools */
         FindManySchoolResolver,

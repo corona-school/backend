@@ -17,8 +17,13 @@ import {
     gender_enum as Gender,
     course_subject_enum,
     school_schooltype_enum,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
+
+registerEnumType(PupilEmailOwner, {
+    name: 'PupilEmailOwner',
+});
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
