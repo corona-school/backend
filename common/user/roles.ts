@@ -49,4 +49,6 @@ export enum Role {
     SUBCOURSE_PARTICIPANT = 'SUBCOURSE_PARTICIPANT',
     /* User is a pupil and participant of a specific appointment */
     APPOINTMENT_PARTICIPANT = 'APPOINTMENT_PARTICIPANT',
+    /** User tried to authenticate with SSO but doesn't have an account yet. They'll need to complete a part of the registration process to continue */
+    SSO_REGISTERING_USER = 'SSO_REGISTERING_USER',
 }
