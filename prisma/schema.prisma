@@ -1130,6 +1130,13 @@ model job_run {
   @@id([job_name, startedAt])
 }
 
+model user_idp_login {
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  userId String
+  clientId String
+  @@id([userId, clientId])
+}
+
 enum notification_channel_enum {
   email
   inapp
