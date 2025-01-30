@@ -14,6 +14,7 @@ const logger = getLogger('Session');
 export interface GraphQLUser extends User {
     roles: Role[];
     deviceId: string | undefined;
+    idpClientId?: string;
 }
 
 export const UNAUTHENTICATED_USER = {
@@ -27,6 +28,7 @@ export const UNAUTHENTICATED_USER = {
     lastLogin: new Date(),
     active: false,
     deviceId: undefined,
+    idpClientId: undefined,
 };
 
 /* As we only have one backend, and there is probably no need to scale in the near future,

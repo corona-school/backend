@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, registerEnumType, Resolver } from 'type-graphql';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
 import type { GraphQLContext, GraphQLContextPupil, GraphQLContextScreener, GraphQLContextStudent } from './context';
 import { assert } from 'console';
@@ -7,7 +7,7 @@ import { prisma } from '../common/prisma';
 import { verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
-import { getUser, updateLastLogin, User, userForScreener } from '../common/user';
+import { getUser, getUserByEmail, updateLastLogin, User, userForScreener } from '../common/user';
 import { loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
@@ -16,6 +16,7 @@ import { defaultScreener } from '../common/util/screening';
 import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
+import { authenticate } from '../common/idp/clients/google';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -116,13 +117,22 @@ function ensureSession(context: GraphQLContext) {
 export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string | null) {
     ensureSession(context);
     const roles = await evaluateUserRoles(user);
-
     context.user = { ...user, deviceId, roles };
 
     await userSessions.set(context.sessionToken, context.user);
     logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     await updateLastLogin(user);
 }
+
+enum SSOAuthStatus {
+    success,
+    register,
+    error,
+}
+
+registerEnumType(SSOAuthStatus, {
+    name: 'SSOAuthStatus',
+});
 
 @Resolver((of) => UserType)
 export class AuthenticationResolver {
@@ -245,5 +255,32 @@ export class AuthenticationResolver {
         logger.info(`Successfully logged out`);
 
         return true;
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => SSOAuthStatus)
+    async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string) {
+        const { email, firstname, lastname, clientId } = await authenticate(code);
+        if (!email || !firstname) {
+            throw new Error('Invalid token payload: Missing required fields (email/name)');
+        }
+        let user: User;
+        try {
+            user = await getUserByEmail(email, true);
+        } catch (error) {
+            // User is not registered
+            const newRoles = new Set(context.user.roles.concat(Role.SSO_REGISTERING_USER));
+            await userSessions.set(context.sessionToken, {
+                ...context.user,
+                roles: Array.from(newRoles),
+                email,
+                firstname,
+                lastname,
+                idpClientId: clientId,
+            });
+            return SSOAuthStatus.register;
+        }
+        await loginAsUser(user, context, getSessionUser(context).deviceId);
+        return SSOAuthStatus.success;
     }
 }
