@@ -1,7 +1,16 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
+import {
+    getSessionPupil,
+    getSessionStudent,
+    getSessionUser,
+    getUserForSession,
+    isSessionPupil,
+    isSessionStudent,
+    loginAsUser,
+    updateSessionUser,
+} from '../authentication';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
@@ -21,8 +30,10 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
-import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
+import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput, SSORegisterStudentInput } from '../types/userInputs';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
+import { createIDPLogin } from '../../common/idp';
+import { verifyEmail } from '../../common/secret';
 
 @InputType()
 class MeUpdateInput {
@@ -96,6 +107,26 @@ export class MutateMeResolver {
            This session now also has the STUDENT role.
            With this role, they can use the meBecomeTutor, meBecomeInstructor or meBecomeProjectCoach to enhance their user account.
            With the STUDENT Role alone they can't do much (but at least deactivate their account and change their settings) */
+    }
+
+    @Authorized(Role.SSO_REGISTERING_USER)
+    @Mutation((returns) => Student)
+    @RateLimit('SSORegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    async meSSORegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: SSORegisterStudentInput) {
+        const sessionUser = await getUserForSession(context.sessionToken);
+        if (!sessionUser.idpClientId) {
+            throw new Error(`Cannot complete request without an IDP ClientID`);
+        }
+        const student = await registerStudent(
+            { ...data, aboutMe: '', email: sessionUser.email, firstname: sessionUser.firstname, lastname: sessionUser.lastname },
+            true
+        );
+        const user = userForStudent(student);
+        await verifyEmail(user);
+        await createIDPLogin({ userId: user.userID, clientId: sessionUser.idpClientId });
+        logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
+        await loginAsUser(userForStudent(student), context, undefined);
+        return student;
     }
 
     @Mutation((returns) => Pupil)

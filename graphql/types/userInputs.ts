@@ -52,7 +52,19 @@ export class RegistrationSchool {
 }
 
 @InputType()
-export class RegisterPupilInput implements RegisterPupilData {
+class RegisterPupilInputShared {
+    @Field((type) => Boolean)
+    newsletter: boolean;
+
+    @Field((type) => RegistrationSource)
+    registrationSource: RegistrationSource;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
+}
+
+@InputType()
+export class RegisterPupilInput extends RegisterPupilInputShared implements RegisterPupilData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -68,12 +80,6 @@ export class RegisterPupilInput implements RegisterPupilData {
     @ValidateEmail()
     email: string;
 
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
     @Field((type) => String, { defaultValue: '' })
     @MaxLength(500)
     aboutMe: string;
@@ -82,13 +88,25 @@ export class RegisterPupilInput implements RegisterPupilData {
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
-
-    @Field((type) => RegistrationSchool, { nullable: true })
-    school?: RegistrationSchool;
 }
 
 @InputType()
-export class RegisterStudentInput implements RegisterStudentData {
+export class SSORegisterPupilInput extends RegisterPupilInputShared {}
+
+@InputType()
+class RegisterStudentInputShared {
+    @Field((type) => Boolean)
+    newsletter: boolean;
+
+    @Field((type) => RegistrationSource)
+    registrationSource: RegistrationSource;
+
+    @Field((type) => String, { nullable: true })
+    cooperationTag?: string;
+}
+
+@InputType()
+export class RegisterStudentInput extends RegisterStudentInputShared implements RegisterStudentData {
     @Field((type) => String)
     @MaxLength(100)
     firstname: string;
@@ -101,12 +119,6 @@ export class RegisterStudentInput implements RegisterStudentData {
     @ValidateEmail()
     email: string;
 
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
     @Field((type) => String, { defaultValue: '' })
     @MaxLength(500)
     aboutMe: string;
@@ -115,10 +127,10 @@ export class RegisterStudentInput implements RegisterStudentData {
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
-
-    @Field((type) => String, { nullable: true })
-    cooperationTag?: string;
 }
+
+@InputType()
+export class SSORegisterStudentInput extends RegisterStudentInputShared {}
 
 @InputType()
 export class BecomeTutorInput implements BecomeTutorData {
