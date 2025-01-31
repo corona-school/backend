@@ -5,7 +5,7 @@ import { addOrganizerToZoomMeeting, removeOrganizerFromZoomMeeting } from '../zo
 import { student as Student, lecture as Appointment } from '@prisma/client';
 import { getOrCreateZoomUser } from '../zoom/user';
 import * as Notification from '../notification';
-import { getAppointmentForNotification, getContextForGroupAppointmentReminder } from './util';
+import { getAppointmentEnd, getAppointmentForNotification, getContextForGroupAppointmentReminder } from './util';
 
 const logger = getLogger('Appointment Participants');
 
@@ -27,9 +27,13 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
     const user = await getUser(userId);
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
-    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } })) {
+    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(userId)) {
             logger.info(`User(${userId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+            continue;
+        }
+
+        if (getAppointmentEnd(lecture) < new Date()) {
             continue;
         }
 
@@ -50,11 +54,14 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
 }
 
 export async function removeGroupAppointmentsParticipant(subcourseId: number, userId: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { hasSome: userId }, start: { gte: new Date() } } });
+    const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { hasSome: userId } } });
     const user = await getUser(userId);
 
     await Promise.all(
         appointments.map(async (a) => {
+            if (getAppointmentEnd(a) < new Date()) {
+                return;
+            }
             const participants = a.participantIds;
             const newParticipants = participants.filter((pId) => pId !== userId);
             await prisma.lecture.update({
@@ -76,7 +83,7 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
     const organizerId = userForStudent(organizer).userID;
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
-    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } })) {
+    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
         if (lecture.participantIds.includes(organizerId)) {
             throw new Error(
                 `User(${organizerId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId}), cannot add as organizer`
@@ -85,6 +92,10 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 
         if (lecture.organizerIds.includes(organizerId)) {
             logger.info(`User(${organizerId}) is already an organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+            continue;
+        }
+
+        if (getAppointmentEnd(lecture) < new Date()) {
             continue;
         }
 
@@ -105,9 +116,12 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 }
 
 export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail?: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } });
+    const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
     await Promise.all(
         appointments.map(async (a) => {
+            if (getAppointmentEnd(a) < new Date()) {
+                return;
+            }
             const organizers = a.organizerIds;
             const newOrganizers = organizers.filter((oId) => oId !== organizerId);
             await prisma.lecture.update({
