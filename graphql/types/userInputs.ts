@@ -61,6 +61,9 @@ class RegisterPupilInputShared {
 
     @Field((type) => RegistrationSchool, { nullable: true })
     school?: RegistrationSchool;
+
+    @Field((type) => PupilEmailOwner)
+    emailOwner: PupilEmailOwner;
 }
 
 @InputType()
@@ -72,9 +75,6 @@ export class RegisterPupilInput extends RegisterPupilInputShared implements Regi
     @Field((type) => String)
     @MaxLength(100)
     lastname: string;
-
-    @Field((type) => PupilEmailOwner)
-    emailOwner: PupilEmailOwner;
 
     @Field((type) => String)
     @ValidateEmail()

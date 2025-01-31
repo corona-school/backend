@@ -30,7 +30,14 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
-import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput, SSORegisterStudentInput } from '../types/userInputs';
+import {
+    BecomeTuteeInput,
+    BecomeTutorInput,
+    RegisterPupilInput,
+    RegisterStudentInput,
+    SSORegisterPupilInput,
+    SSORegisterStudentInput,
+} from '../types/userInputs';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
 import { createIDPLogin } from '../../common/idp';
 import { verifyEmail } from '../../common/secret';
@@ -155,6 +162,32 @@ export class MutateMeResolver {
         /* The pupil can now use the authToken passed to them via E-Mail to re authenticate the session.
            This will mark them as verified, and grant them the PUPIL role.
            With this role, they can use the meBecomeStatePupil, meBecomeTutee or meBecomeProjectCoachee to enhance their user account */
+    }
+
+    @Authorized(Role.SSO_REGISTERING_USER)
+    @Mutation((returns) => Pupil)
+    @RateLimit('SSORegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    async meSSORegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: SSORegisterPupilInput) {
+        const sessionUser = await getUserForSession(context.sessionToken);
+        if (!sessionUser.idpClientId) {
+            throw new Error(`Cannot complete request without an IDP ClientID`);
+        }
+        const pupil = await registerPupil(
+            {
+                ...data,
+                aboutMe: '',
+                email: sessionUser.email,
+                firstname: sessionUser.firstname,
+                lastname: sessionUser.lastname,
+            },
+            true
+        );
+        const user = userForPupil(pupil);
+        await verifyEmail(user);
+        await createIDPLogin({ userId: user.userID, clientId: sessionUser.idpClientId });
+        logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
+        await loginAsUser(userForPupil(pupil), context, undefined);
+        return pupil;
     }
 
     @Mutation((returns) => Boolean)
