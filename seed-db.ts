@@ -178,21 +178,24 @@ interface CreateLecturesArgs {
     amount: number;
     intervalInDays: number;
     startOffsetInDays: number;
+    participantsIds?: string[];
+    organizerIds?: string[];
     subcourseId: number;
 }
 
-const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId }: CreateLecturesArgs) => {
+const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId, organizerIds, participantsIds }: CreateLecturesArgs) => {
     let currentLecture = Date.now() + startOffsetInDays * 24 * 60 * 60 * 1000;
     const interval = intervalInDays * 24 * 60 * 60 * 1000;
 
     for (let i = 0; i < amount; i++) {
+        const start = new Date(currentLecture);
         await prisma.lecture.create({
             data: {
                 subcourseId: subcourseId,
                 duration: 60,
-                start: new Date(currentLecture),
-                organizerIds: [],
-                participantIds: [],
+                start,
+                organizerIds: start <= new Date() ? organizerIds : [],
+                participantIds: start <= new Date() ? participantsIds : [],
                 appointmentType: 'group',
             },
         });
@@ -225,7 +228,12 @@ const createCourse = async (data: CreateCourseArgs) => {
         },
     });
 
-    await createLectures({ subcourseId: subcourse.id, ...data.lectures });
+    await createLectures({
+        subcourseId: subcourse.id,
+        ...data.lectures,
+        participantsIds: data.participants.map((e) => `pupil/${e.id}`),
+        organizerIds: [...data.instructors.map((e) => `student/${e.id}`)],
+    });
 
     // Add Instructors and Participants after adding Lectures, so that they are also added to the lectures:
     await addCourseInstructor(null, course, data.instructors[0]);
