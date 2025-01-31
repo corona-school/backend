@@ -27,7 +27,7 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
     const user = await getUser(userId);
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
-    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
+    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } })) {
         if (lecture.participantIds.includes(userId)) {
             logger.info(`User(${userId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
             continue;
@@ -76,7 +76,7 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
     const organizerId = userForStudent(organizer).userID;
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
-    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
+    for (const lecture of await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } })) {
         if (lecture.participantIds.includes(organizerId)) {
             throw new Error(
                 `User(${organizerId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId}), cannot add as organizer`
@@ -105,7 +105,7 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 }
 
 export async function removeGroupAppointmentsOrganizer(subcourseId: number, organizerId: string, organizerEmail?: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId } });
+    const appointments = await prisma.lecture.findMany({ where: { subcourseId, start: { gte: new Date() } } });
     await Promise.all(
         appointments.map(async (a) => {
             const organizers = a.organizerIds;
