@@ -62,6 +62,85 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     throw new Error(`Unknown User(${userID})`);
 }
 
+export async function getReferredByIDCount(userId: string): Promise<number> {
+    const amountofReferredStudents = await prisma.student.count({
+        where: { referredById: userId },
+    });
+
+    const amountofReferredPupils = await prisma.pupil.count({
+        where: { referredById: userId },
+    });
+
+    return amountofReferredPupils + amountofReferredStudents;
+}
+
+export async function getReferredStudentsAndPupils(userId: string): Promise<{ students: string[]; pupils: string[] }> {
+    const referredStudents = await prisma.student.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const referredPupils = await prisma.pupil.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const students = referredStudents.map((student) => `student/${student.id}`);
+    const pupils = referredPupils.map((pupil) => `pupil/${pupil.id}`);
+
+    return { students, pupils };
+}
+
+export async function getTotalSupportedHours(userId: string): Promise<number> {
+    const { students, pupils } = await getReferredStudentsAndPupils(userId);
+
+    const studentLectures = await prisma.lecture.findMany({
+        where: {
+            organizerIds: {
+                hasSome: students,
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+        select: {
+            duration: true,
+            organizerIds: true,
+            declinedBy: true,
+        },
+    });
+
+    const pupilLectures = await prisma.lecture.findMany({
+        where: {
+            participantIds: {
+                hasSome: pupils,
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+        select: {
+            duration: true,
+            participantIds: true,
+            declinedBy: true,
+        },
+    });
+
+    const totalStudentDuration = studentLectures.reduce((acc, lecture) => {
+        const actualParticipants = lecture.organizerIds.filter((id) => students.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
+        const actualParticipants = lecture.participantIds.filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalDurationInMinutes = totalStudentDuration + totalPupilDuration;
+
+    return Math.round(totalDurationInMinutes / 60);
+}
+
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
     const student = await prisma.student.findFirst({ where: { email, active }, select: userSelection });
     if (student) {
@@ -124,7 +203,6 @@ export async function getStudent(user: User): Promise<Student | never> {
     if (!user.studentId) {
         throw new Error(`Expected User(${user.userID}) to be student`);
     }
-
     return await prisma.student.findUnique({ where: { id: user.studentId } });
 }
 

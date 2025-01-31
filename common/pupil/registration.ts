@@ -36,6 +36,7 @@ export interface RegisterPupilData {
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
+    referredById?: string;
 }
 
 export interface BecomeTuteeData {
@@ -91,6 +92,9 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
 
             // the authToken is used to verify the e-mail instead
             verification,
+
+            // the ID of the referrer (type + id)
+            referredById: data.referredById,
 
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,

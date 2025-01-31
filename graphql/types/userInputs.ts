@@ -88,6 +88,9 @@ export class RegisterPupilInput extends RegisterPupilInputShared implements Regi
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
+
+    @Field((type) => String, { nullable: true })
+    referredById?: string;
 }
 
 @InputType()
@@ -127,6 +130,9 @@ export class RegisterStudentInput extends RegisterStudentInputShared implements 
    The user is redirected to this URL afterwards to continue with whatever they're registering for */
     @Field((type) => String, { nullable: true })
     redirectTo?: string;
+
+    @Field((type) => String, { nullable: true })
+    referredById?: string;
 }
 
 @InputType()
