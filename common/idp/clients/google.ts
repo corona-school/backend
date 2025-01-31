@@ -1,7 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import { USER_APP_DOMAIN } from '../../util/environment';
 
-const oAuth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_KEY, `https://${USER_APP_DOMAIN}/login-with`);
+const oAuth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_KEY, `http://${USER_APP_DOMAIN}/login-with`);
 
 interface AuthenticateResponse {
     email: string;

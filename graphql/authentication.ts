@@ -17,6 +17,7 @@ import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
 import { authenticate } from '../common/idp/clients/google';
+import { createIDPLogin, userHasIDPLogin } from '../common/idp';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -279,6 +280,10 @@ export class AuthenticationResolver {
                 idpClientId: clientId,
             });
             return SSOAuthStatus.register;
+        }
+        const hasIDPLogin = await userHasIDPLogin(user.userID, clientId);
+        if (!hasIDPLogin) {
+            await createIDPLogin(user.userID, clientId);
         }
         await loginAsUser(user, context, getSessionUser(context).deviceId);
         return SSOAuthStatus.success;

@@ -130,7 +130,7 @@ export class MutateMeResolver {
         );
         const user = userForStudent(student);
         await verifyEmail(user);
-        await createIDPLogin({ userId: user.userID, clientId: sessionUser.idpClientId });
+        await createIDPLogin(user.userID, sessionUser.idpClientId);
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
         await loginAsUser(userForStudent(student), context, undefined);
         return student;
@@ -184,7 +184,7 @@ export class MutateMeResolver {
         );
         const user = userForPupil(pupil);
         await verifyEmail(user);
-        await createIDPLogin({ userId: user.userID, clientId: sessionUser.idpClientId });
+        await createIDPLogin(user.userID, sessionUser.idpClientId);
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
         await loginAsUser(userForPupil(pupil), context, undefined);
         return pupil;

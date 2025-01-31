@@ -3,12 +3,7 @@ import { prisma } from '../prisma';
 
 const logger = getLogger('IDP');
 
-interface CreateIDPLoginArgs {
-    userId: string;
-    clientId: string;
-}
-
-export const createIDPLogin = async ({ userId, clientId }: CreateIDPLoginArgs) => {
+export const createIDPLogin = async (userId: string, clientId: string) => {
     const result = await prisma.user_idp_login.create({
         data: {
             userId,
@@ -19,4 +14,9 @@ export const createIDPLogin = async ({ userId, clientId }: CreateIDPLoginArgs) =
     logger.info(`User(${userId}) created IDPLogin`);
 
     return result;
+};
+
+export const userHasIDPLogin = async (userId: string, clientId: string) => {
+    const result = await prisma.user_idp_login.count({ where: { userId, clientId } });
+    return result > 0;
 };
