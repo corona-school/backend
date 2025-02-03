@@ -141,10 +141,6 @@ export async function generateLessonPlan({
 
         const validFiles = allFiles.filter((file): file is NonNullable<typeof file> => file !== null);
 
-        if (emptyFiles.length > 0) {
-            throw new PrerequisiteError(`The following files are empty or their content could not be processed: ${emptyFiles.join(', ')}`);
-        }
-
         // Combine all file contents
         combinedContent = validFiles.map((file) => file.content).join('\n\n');
     }
