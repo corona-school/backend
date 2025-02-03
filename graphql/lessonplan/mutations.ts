@@ -5,7 +5,6 @@ import { GraphQLContext } from '../context';
 import { getLogger } from '../../common/logger/logger';
 import { generateLessonPlan } from '../../common/lessonplan/generate';
 import { course_subject_enum, pupil_state_enum, school_schooltype_enum } from '@prisma/client';
-import { PrerequisiteError, ClientError } from '../../common/util/error';
 import { getStateFullName } from '../../common/util/stateMappings';
 
 const logger = getLogger(`LessonPlan Mutations`);
@@ -103,37 +102,19 @@ export class MutateLessonPlanResolver {
 
         const fullStateName: string = getStateFullName(state);
 
-        try {
-            const generatedLessonPlan = await generateLessonPlan({
-                fileUuids: fileUuids || [],
-                subject,
-                grade,
-                duration,
-                state: fullStateName,
-                prompt,
-                expectedOutputs: expectedOutputs?.map((field) => field.toString()),
-                schoolType,
-                language,
-            });
-            logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}, school type: ${schoolType}, language: ${language || 'German'}`);
+        const generatedLessonPlan = await generateLessonPlan({
+            fileUuids: fileUuids || [],
+            subject,
+            grade,
+            duration,
+            state: fullStateName,
+            prompt,
+            expectedOutputs: expectedOutputs?.map((field) => field.toString()),
+            schoolType,
+            language,
+        });
+        logger.info(`Generated lesson plan for subject: ${subject}, grade: ${grade}, school type: ${schoolType}, language: ${language || 'German'}`);
 
-            // Create the lesson plan output based on the expected outputs
-            const lessonPlan: LessonPlanOutput = {
-                subject: generatedLessonPlan.subject,
-                grade: generatedLessonPlan.grade,
-                duration: generatedLessonPlan.duration,
-            };
-
-            // If no expected outputs were specified, include all generated fields
-            Object.assign(lessonPlan, generatedLessonPlan);
-
-            return lessonPlan;
-        } catch (error) {
-            if (error instanceof ClientError) {
-                throw error;
-            }
-            logger.error(`Unexpected error while generating lesson plan: ${error.message}`);
-            throw new PrerequisiteError('An unexpected error occurred while generating the lesson plan. Please try again later.');
-        }
+        return generatedLessonPlan;
     }
 }
