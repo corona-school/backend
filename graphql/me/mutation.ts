@@ -88,8 +88,9 @@ export class MutateMeResolver {
         @Arg('data') data: RegisterStudentInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
-        const sessionUser = await getUserForSession(context.sessionToken);
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
+        // User registered after trying to log in via IDP, pick up the IDP user info
         const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
@@ -104,6 +105,7 @@ export class MutateMeResolver {
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
         if (isSSO) {
             const user = userForStudent(student);
+            // We assume here that the IDP already validated the email
             await verifyEmail(user);
             await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
         }
@@ -128,7 +130,7 @@ export class MutateMeResolver {
         @Arg('data') data: RegisterPupilInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
-        const sessionUser = await getUserForSession(context.sessionToken);
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
         const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
@@ -144,6 +146,7 @@ export class MutateMeResolver {
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
         if (isSSO) {
             const user = userForPupil(pupil);
+            // We assume here that the IDP already validated the email
             await verifyEmail(user);
             await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
         }
