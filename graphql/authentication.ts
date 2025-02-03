@@ -16,7 +16,7 @@ import { defaultScreener } from '../common/util/screening';
 import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
-import { authenticate } from '../common/idp/clients/google';
+import { authenticateWithIDP } from '../common/idp';
 import { createIDPLogin, getUserIdFromIDPLogin, userHasIDPLogin } from '../common/secret/idp';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
@@ -260,8 +260,8 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => SSOAuthStatus)
-    async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string) {
-        const { email, firstname, lastname, clientId, sub } = await authenticate(code);
+    async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string, @Arg('referrer') referrer: string) {
+        const { email, firstname, lastname, clientId, sub } = await authenticateWithIDP({ code, referrer });
         if (!email || !firstname) {
             throw new Error('Invalid token payload: Missing required fields (email/name)');
         }
