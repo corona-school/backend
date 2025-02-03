@@ -17,7 +17,7 @@ import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
 import { authenticate } from '../common/idp/clients/google';
-import { createIDPLogin, userHasIDPLogin } from '../common/idp';
+import { createIDPLogin, getUserIdFromIDPLogin, userHasIDPLogin } from '../common/secret/idp';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -261,13 +261,15 @@ export class AuthenticationResolver {
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => SSOAuthStatus)
     async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string) {
-        const { email, firstname, lastname, clientId } = await authenticate(code);
+        const { email, firstname, lastname, clientId, sub } = await authenticate(code);
         if (!email || !firstname) {
             throw new Error('Invalid token payload: Missing required fields (email/name)');
         }
+
         let user: User;
         try {
-            user = await getUserByEmail(email, true);
+            const userId = await getUserIdFromIDPLogin(sub, clientId);
+            user = await getUser(userId, true);
         } catch (error) {
             // User is not registered
             const newRoles = new Set(context.user.roles.concat(Role.SSO_REGISTERING_USER));
@@ -278,12 +280,13 @@ export class AuthenticationResolver {
                 firstname,
                 lastname,
                 idpClientId: clientId,
+                idpSub: sub,
             });
             return SSOAuthStatus.register;
         }
-        const hasIDPLogin = await userHasIDPLogin(user.userID, clientId);
+        const hasIDPLogin = await userHasIDPLogin(user.userID, sub, clientId);
         if (!hasIDPLogin) {
-            await createIDPLogin(user.userID, clientId);
+            await createIDPLogin(user.userID, sub, clientId);
         }
         await loginAsUser(user, context, getSessionUser(context).deviceId);
         return SSOAuthStatus.success;

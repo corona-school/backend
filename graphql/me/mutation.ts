@@ -39,8 +39,8 @@ import {
     SSORegisterStudentInput,
 } from '../types/userInputs';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
-import { createIDPLogin } from '../../common/idp';
 import { verifyEmail } from '../../common/secret';
+import { createIDPLogin } from '../../common/secret/idp';
 
 @InputType()
 class MeUpdateInput {
@@ -121,8 +121,8 @@ export class MutateMeResolver {
     @RateLimit('SSORegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meSSORegisterStudent(@Ctx() context: GraphQLContext, @Arg('data') data: SSORegisterStudentInput) {
         const sessionUser = await getUserForSession(context.sessionToken);
-        if (!sessionUser.idpClientId) {
-            throw new Error(`Cannot complete request without an IDP ClientID`);
+        if (!sessionUser.idpClientId || !sessionUser.idpSub) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
         }
         const student = await registerStudent(
             { ...data, aboutMe: '', email: sessionUser.email, firstname: sessionUser.firstname, lastname: sessionUser.lastname },
@@ -130,7 +130,7 @@ export class MutateMeResolver {
         );
         const user = userForStudent(student);
         await verifyEmail(user);
-        await createIDPLogin(user.userID, sessionUser.idpClientId);
+        await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
         await loginAsUser(userForStudent(student), context, undefined);
         return student;
@@ -169,8 +169,8 @@ export class MutateMeResolver {
     @RateLimit('SSORegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meSSORegisterPupil(@Ctx() context: GraphQLContext, @Arg('data') data: SSORegisterPupilInput) {
         const sessionUser = await getUserForSession(context.sessionToken);
-        if (!sessionUser.idpClientId) {
-            throw new Error(`Cannot complete request without an IDP ClientID`);
+        if (!sessionUser.idpClientId || !sessionUser.idpSub) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
         }
         const pupil = await registerPupil(
             {
@@ -184,7 +184,7 @@ export class MutateMeResolver {
         );
         const user = userForPupil(pupil);
         await verifyEmail(user);
-        await createIDPLogin(user.userID, sessionUser.idpClientId);
+        await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
         await loginAsUser(userForPupil(pupil), context, undefined);
         return pupil;

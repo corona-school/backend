@@ -6,8 +6,9 @@ const oAuth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.
 interface AuthenticateResponse {
     email: string;
     firstname: string;
-    clientId: string;
     lastname?: string;
+    clientId: string;
+    sub: string;
 }
 
 export const authenticate = async (code: string): Promise<AuthenticateResponse> => {
@@ -22,5 +23,6 @@ export const authenticate = async (code: string): Promise<AuthenticateResponse> 
         firstname: payload.given_name,
         clientId: oAuth2Client._clientId,
         lastname: payload.family_name,
+        sub: payload.sub,
     };
 };
