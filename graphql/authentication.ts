@@ -18,6 +18,7 @@ import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
 import { authenticateWithIDP } from '../common/idp';
 import { createIDPLogin, getUserIdFromIDPLogin, userHasIDPLogin } from '../common/secret/idp';
+import { isEmailAvailable } from '../common/user/email';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -129,6 +130,7 @@ enum SSOAuthStatus {
     success,
     register,
     error,
+    link,
 }
 
 registerEnumType(SSOAuthStatus, {
@@ -266,12 +268,23 @@ export class AuthenticationResolver {
             throw new Error('Invalid token payload: Missing required fields (email/name)');
         }
 
+        let userId: string;
+        try {
+            // Get our userId using IDP sub/clientId
+            userId = await getUserIdFromIDPLogin(sub, clientId);
+        } catch (error) {
+            // If there is no credentials for that, check if the email is already taken.
+            if (!(await isEmailAvailable(email))) {
+                // If so, we'll try to link that email with the given sub/clientId
+                return SSOAuthStatus.link;
+            }
+        }
+
         let user: User;
         try {
-            const userId = await getUserIdFromIDPLogin(sub, clientId);
             user = await getUser(userId, true);
         } catch (error) {
-            // User is not registered
+            // User is not registered. They'll have to complete the registration flow
             const newRoles = new Set(context.user.roles.concat(Role.SSO_REGISTERING_USER));
             await userSessions.set(context.sessionToken, {
                 ...context.user,
@@ -284,10 +297,8 @@ export class AuthenticationResolver {
             });
             return SSOAuthStatus.register;
         }
-        const hasIDPLogin = await userHasIDPLogin(user.userID, sub, clientId);
-        if (!hasIDPLogin) {
-            await createIDPLogin(user.userID, sub, clientId);
-        }
+
+        // A user with the given IDP sub/clientId was found
         await loginAsUser(user, context, getSessionUser(context).deviceId);
         return SSOAuthStatus.success;
     }
