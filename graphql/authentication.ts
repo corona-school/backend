@@ -180,7 +180,7 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.UNAUTHENTICATED)
+    @Authorized(Role.UNAUTHENTICATED, Role.SSO_REGISTERING_USER)
     @Mutation((returns) => Boolean)
     async loginPassword(
         @Ctx() context: GraphQLContext,
@@ -188,9 +188,17 @@ export class AuthenticationResolver {
         @Arg('password') password: string,
         @Arg('deviceId', { nullable: true }) deviceId: string | null
     ) {
+        const sessionUser = context.user;
         email = validateEmail(email);
 
         ensureSession(context);
+
+        /** User is trying to link their Lern-Fair account with an IDP */
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
+
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
 
         try {
             const user = await loginPassword(email, password);
@@ -200,6 +208,11 @@ export class AuthenticationResolver {
                 await actionTaken(user, 'student_login', {});
             } else if (user.pupilId) {
                 await actionTaken(user, 'pupil_login', {});
+            }
+
+            // Now that the user confirmed their identity, we can complete linking process
+            if (isSSO) {
+                await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
             }
 
             return true;
@@ -268,23 +281,7 @@ export class AuthenticationResolver {
             throw new Error('Invalid token payload: Missing required fields (email/name)');
         }
 
-        let userId: string;
-        try {
-            // Get our userId using IDP sub/clientId
-            userId = await getUserIdFromIDPLogin(sub, clientId);
-        } catch (error) {
-            // If there is no credentials for that, check if the email is already taken.
-            if (!(await isEmailAvailable(email))) {
-                // If so, we'll try to link that email with the given sub/clientId
-                return SSOAuthStatus.link;
-            }
-        }
-
-        let user: User;
-        try {
-            user = await getUser(userId, true);
-        } catch (error) {
-            // User is not registered. They'll have to complete the registration flow
+        const setSSORegisteringUser = async () => {
             const newRoles = new Set(context.user.roles.concat(Role.SSO_REGISTERING_USER));
             await userSessions.set(context.sessionToken, {
                 ...context.user,
@@ -295,6 +292,27 @@ export class AuthenticationResolver {
                 idpClientId: clientId,
                 idpSub: sub,
             });
+        };
+
+        let userId: string;
+        try {
+            // Get our userId using IDP sub/clientId
+            userId = await getUserIdFromIDPLogin(sub, clientId);
+        } catch (error) {
+            // If there is no credentials for that, check if the email is already taken.
+            if (!(await isEmailAvailable(email))) {
+                // If so, we'll try to link that email with the given sub/clientId
+                await setSSORegisteringUser();
+                return SSOAuthStatus.link;
+            }
+        }
+
+        let user: User;
+        try {
+            user = await getUser(userId, true);
+        } catch (error) {
+            // User is not registered. They'll have to complete the registration flow
+            await setSSORegisteringUser();
             return SSOAuthStatus.register;
         }
 
