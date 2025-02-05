@@ -8,7 +8,7 @@ import { verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
 import { getUser, getUserByEmail, updateLastLogin, User, userForScreener } from '../common/user';
-import { loginPassword, loginToken, verifyEmail } from '../common/secret';
+import { determinePreferredLoginOption, LoginOption, loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
@@ -19,6 +19,7 @@ import { actionTaken } from '../common/notification';
 import { authenticateWithIDP } from '../common/idp';
 import { createIDPLogin, getUserIdFromIDPLogin, userHasIDPLogin } from '../common/secret/idp';
 import { isEmailAvailable } from '../common/user/email';
+import { PrerequisiteError } from '../common/util/error';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
@@ -294,12 +295,10 @@ export class AuthenticationResolver {
             });
         };
 
-        let userId: string;
-        let user: User;
         try {
             // Get our userId using IDP sub/clientId
-            userId = await getUserIdFromIDPLogin(sub, clientId);
-            user = await getUser(userId, true);
+            const userId = await getUserIdFromIDPLogin(sub, clientId);
+            const user = await getUser(userId, true);
             // A user with the given IDP sub/clientId was found
             await loginAsUser(user, context, getSessionUser(context).deviceId);
             return SSOAuthStatus.success;
@@ -312,8 +311,15 @@ export class AuthenticationResolver {
             }
 
             // If email is already taken, we'll try to link it with the given sub/clientId
-            await setSSORegisteringUser();
-            return SSOAuthStatus.link;
+            const user = await getUserByEmail(email);
+            const preferredLoginOption = await determinePreferredLoginOption(user);
+
+            if (preferredLoginOption === LoginOption.password) {
+                await setSSORegisteringUser();
+                return SSOAuthStatus.link;
+            }
+            // For now we don't allow IDP linking for this type of authentication (magic link)
+            throw new PrerequisiteError('Account linking with an Identity Provider requires a password. Please set a password first');
         }
     }
 }
