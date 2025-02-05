@@ -131,7 +131,6 @@ export async function generateLessonPlan({
 }: GenerateLessonPlanInput): Promise<Partial<z.infer<typeof plan>> & { subject: course_subject_enum; grade: string; duration: number }> {
     logger.info(`Generating lesson plan for subject: ${subject}, grade: ${grade}, duration: ${duration} minutes, school type: ${schoolType}`);
 
-    const emptyFiles: string[] = [];
     let combinedContent = '';
     const imageContents: { type: 'image_url'; image_url: { url: string } }[] = [];
 
