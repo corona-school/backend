@@ -295,29 +295,25 @@ export class AuthenticationResolver {
         };
 
         let userId: string;
+        let user: User;
         try {
             // Get our userId using IDP sub/clientId
             userId = await getUserIdFromIDPLogin(sub, clientId);
-        } catch (error) {
-            // If there is no credentials for that, check if the email is already taken.
-            if (!(await isEmailAvailable(email))) {
-                // If so, we'll try to link that email with the given sub/clientId
-                await setSSORegisteringUser();
-                return SSOAuthStatus.link;
-            }
-        }
-
-        let user: User;
-        try {
             user = await getUser(userId, true);
+            // A user with the given IDP sub/clientId was found
+            await loginAsUser(user, context, getSessionUser(context).deviceId);
+            return SSOAuthStatus.success;
         } catch (error) {
-            // User is not registered. They'll have to complete the registration flow
-            await setSSORegisteringUser();
-            return SSOAuthStatus.register;
-        }
+            // No credentials with the given sub/clientId, check if the email is available
+            if (await isEmailAvailable(email)) {
+                // User is not registered. They'll have to complete the registration flow
+                await setSSORegisteringUser();
+                return SSOAuthStatus.register;
+            }
 
-        // A user with the given IDP sub/clientId was found
-        await loginAsUser(user, context, getSessionUser(context).deviceId);
-        return SSOAuthStatus.success;
+            // If email is already taken, we'll try to link it with the given sub/clientId
+            await setSSORegisteringUser();
+            return SSOAuthStatus.link;
+        }
     }
 }
