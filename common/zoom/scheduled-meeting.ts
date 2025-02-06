@@ -7,6 +7,7 @@ import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
 import assert from 'assert';
+import { ZoomError } from '../util/error';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -119,7 +120,8 @@ async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - failed to get meeting with ${response.status} ${await response.text()}`);
+        const error = await response.json();
+        throw new ZoomError(`Zoom - failed to get meeting with ${response.status} ${error.message}`, response.status, error.code);
     }
 
     const meeting = (await response.json()) as ZoomMeeting;

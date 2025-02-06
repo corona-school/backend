@@ -18,3 +18,11 @@ export const TooLateError = createClientError('TOO_LATE');
 export const CapacityReachedError = createClientError('CAPACITY_REACHED');
 export const PrerequisiteError = createClientError('PREREQUISITE');
 export const NotAllowedError = createClientError('NOT_ALLOWED');
+
+export class ZoomError extends Error {
+    constructor(public readonly message: string, public readonly status: number, public readonly code?: number) {
+        super(message);
+        this.status = status;
+        this.code = code;
+    }
+}

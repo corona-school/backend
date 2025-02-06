@@ -115,3 +115,5 @@ export function parseSubjectString(subjects: string): Subject[] {
         };
     });
 }
+
+export const DAZ = 'Deutsch als Zweitsprache';

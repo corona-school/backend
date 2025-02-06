@@ -14,7 +14,13 @@ import moment from 'moment';
 
 const logger = getLogger('Match');
 
-export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reason[], dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
+export async function dissolveMatch(
+    match: Match,
+    dissolveReasons: dissolve_reason[],
+    dissolver: Pupil | Student | null,
+    dissolvedBy: dissolved_by_enum,
+    otherReason?: string
+) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
@@ -28,6 +34,7 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
         data: {
             dissolved: true,
             dissolveReasons: dissolveReasons,
+            otherDissolveReason: otherReason,
             dissolvedAt: new Date(),
             dissolvedBy,
         },

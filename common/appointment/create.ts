@@ -1,7 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import assert from 'assert';
-import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
+import { Lecture, lecture_appointmenttype_enum, Subcourse } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
@@ -14,6 +14,7 @@ import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
+import { assertAllowed, Decision } from '../util/decision';
 
 const logger = getLogger();
 
@@ -116,13 +117,25 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     return createdMatchAppointments;
 };
 
+export function canCreateGroupAppointment(subcourse: Subcourse, hasInstructors: boolean): Decision {
+    if (subcourse.cancelled) {
+        return { allowed: false, reason: 'course-cancelled' };
+    }
+
+    if (!hasInstructors) {
+        return { allowed: false, reason: 'no-instructors' };
+    }
+
+    return { allowed: true };
+}
+
 export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
     const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
-
-    assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
+    const decision = canCreateGroupAppointment(subcourse, instructors.length > 0);
+    assertAllowed(decision);
 
     // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
     let hosts: ZoomUser[] | null = null;

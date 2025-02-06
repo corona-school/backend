@@ -23,13 +23,17 @@ import { strictUserSearch, userSearch } from '../../common/user/search';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
-import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { excludeCancelledSubcourses, excludePastSubcourses, instructedBy } from '../../common/courses/filters';
 import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { isSessionStudent } from '../authentication';
 import { subcourseSearch } from '../../common/courses/search';
 import * as CertificateOfConductCommon from '../../common/certificate-of-conduct/certificateOfConduct';
+import { addFile, getFileURL } from '../files';
+import { createInstantCertificate } from '../../common/certificate';
+import { getLogger } from '../../common/logger/logger';
 
+const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
     @Query((returns) => [Instructor])
@@ -158,12 +162,17 @@ export class ExtendFieldsStudentResolver {
     async subcoursesInstructing(
         @Root() student: Required<Student>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('excludeCancelled', { nullable: true }) excludeCancelled?: boolean,
         @Arg('search', { nullable: true }) search?: string
     ) {
         const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
         if (excludePast) {
             filters.push(excludePastSubcourses());
+        }
+
+        if (excludeCancelled) {
+            filters.push(excludeCancelledSubcourses());
         }
 
         if (search) {

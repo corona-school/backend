@@ -257,6 +257,7 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         dissolveReason: null,
         dissolveReasons: [],
         dissolveReasonEnum: null,
+        otherDissolveReason: null,
         didHaveMeeting: true,
         proposedTime: null,
         createdAt: new Date(),
@@ -265,12 +266,12 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         feedbackToStudentMail: false,
         followUpToPupilMail: false,
         followUpToStudentMail: false,
-        source: 'imported',
         studentFirstMatchRequest: null,
         pupilFirstMatchRequest: null,
         matchPool: null,
         studentId: null,
         pupilId: null,
+        matchPoolRunId: null,
     };
 }
 

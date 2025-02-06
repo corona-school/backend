@@ -45,6 +45,7 @@ export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: Web
 
     logger.info('Start lecture sync');
     const webflowLectures = await getCollectionItems<WebflowMetadata>(lectureCollectionId, lectureDTOFactory);
+    logger.info(`Total lectures retrieved from Webflow: ${webflowLectures.length}`);
     const subCourses = await getWebflowSubcourses();
     const dbLectures = subCourses
         .map((lecture) => lecture.lecture)
@@ -56,8 +57,12 @@ export async function syncLectures(logger: Logger): Promise<{ itemsToDelete: Web
 
     const newIds: string[] = [];
     for (const row of result.new) {
-        const newId = await createNewItem(lectureCollectionId, row);
-        newIds.push(newId);
+        try {
+            const newId = await createNewItem(lectureCollectionId, row);
+            newIds.push(newId);
+        } catch (error) {
+            logger.error('Could not create lecture in Webflow', error, { row });
+        }
     }
     logger.info('created new items', { itemIds: newIds });
 

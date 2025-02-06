@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Mutation, registerEnumType, Resolver } from 'type-graphql';
 import { student as Student, pupil as Pupil, screener as Screener } from '@prisma/client';
 import type { GraphQLContext, GraphQLContextPupil, GraphQLContextScreener, GraphQLContextStudent } from './context';
 import { assert } from 'console';
@@ -7,8 +7,8 @@ import { prisma } from '../common/prisma';
 import { verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
-import { getUser, updateLastLogin, User, userForScreener } from '../common/user';
-import { loginPassword, loginToken, verifyEmail } from '../common/secret';
+import { getUser, getUserByEmail, updateLastLogin, User, userForScreener } from '../common/user';
+import { determinePreferredLoginOption, LoginOption, loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
@@ -16,15 +16,19 @@ import { defaultScreener } from '../common/util/screening';
 import { evaluateUserRoles } from '../common/user/evaluate_roles';
 import { Role } from '../common/user/roles';
 import { actionTaken } from '../common/notification';
+import { authenticateWithIDP } from '../common/idp';
+import { createIDPLogin, getUserIdFromIDPLogin, userHasIDPLogin } from '../common/secret/idp';
+import { isEmailAvailable } from '../common/user/email';
+import { PrerequisiteError } from '../common/util/error';
 
 export { GraphQLUser, toPublicToken, UNAUTHENTICATED_USER, getUserForSession } from '../common/user/session';
 
 const logger = getLogger('GraphQL Authentication');
 
-export async function updateSessionUser(context: GraphQLContext, user: User) {
+export async function updateSessionUser(context: GraphQLContext, user: User, deviceId: string | null) {
     // Only update the session user if the user updated was the user associated to the session (and e.g. not a screener or admin)
     if (context.user.userID === user.userID) {
-        await loginAsUser(user, context);
+        await loginAsUser(user, context, deviceId);
     }
 }
 
@@ -113,17 +117,26 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext) {
+export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string | null) {
     ensureSession(context);
-
     const roles = await evaluateUserRoles(user);
-
-    context.user = { ...user, roles };
+    context.user = { ...user, deviceId, roles };
 
     await userSessions.set(context.sessionToken, context.user);
     logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
     await updateLastLogin(user);
 }
+
+enum SSOAuthStatus {
+    success,
+    register,
+    error,
+    link,
+}
+
+registerEnumType(SSOAuthStatus, {
+    name: 'SSOAuthStatus',
+});
 
 @Resolver((of) => UserType)
 export class AuthenticationResolver {
@@ -155,7 +168,7 @@ export class AuthenticationResolver {
             throw new AuthenticationError('Invalid email or password');
         }
 
-        await loginAsUser(userForScreener(screener), context);
+        await loginAsUser(userForScreener(screener), context, undefined);
 
         return true;
     }
@@ -168,21 +181,39 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.UNAUTHENTICATED)
+    @Authorized(Role.UNAUTHENTICATED, Role.SSO_REGISTERING_USER)
     @Mutation((returns) => Boolean)
-    async loginPassword(@Ctx() context: GraphQLContext, @Arg('email') email: string, @Arg('password') password: string) {
+    async loginPassword(
+        @Ctx() context: GraphQLContext,
+        @Arg('email') email: string,
+        @Arg('password') password: string,
+        @Arg('deviceId', { nullable: true }) deviceId: string | null
+    ) {
+        const sessionUser = context.user;
         email = validateEmail(email);
 
         ensureSession(context);
 
+        /** User is trying to link their Lern-Fair account with an IDP */
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
+
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
+
         try {
             const user = await loginPassword(email, password);
-            await loginAsUser(user, context);
+            await loginAsUser(user, context, deviceId);
 
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
             } else if (user.pupilId) {
                 await actionTaken(user, 'pupil_login', {});
+            }
+
+            // Now that the user confirmed their identity, we can complete linking process
+            if (isSSO) {
+                await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
             }
 
             return true;
@@ -193,10 +224,10 @@ export class AuthenticationResolver {
 
     @Authorized(Role.UNAUTHENTICATED)
     @Mutation((returns) => Boolean)
-    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string) {
+    async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId', { nullable: true }) deviceId: string | null) {
         try {
-            const user = await loginToken(token);
-            await loginAsUser(user, context);
+            const user = await loginToken(token, deviceId);
+            await loginAsUser(user, context, deviceId);
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
             } else if (user.pupilId) {
@@ -212,7 +243,8 @@ export class AuthenticationResolver {
     @Authorized(Role.USER)
     @Mutation((returns) => Boolean)
     async loginRefresh(@Ctx() context: GraphQLContext) {
-        await updateSessionUser(context, getSessionUser(context));
+        const sessionUser = getSessionUser(context);
+        await updateSessionUser(context, sessionUser, sessionUser.deviceId);
         return true;
     }
 
@@ -224,7 +256,7 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     @Mutation((returns) => Boolean)
     logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
@@ -240,5 +272,54 @@ export class AuthenticationResolver {
         logger.info(`Successfully logged out`);
 
         return true;
+    }
+
+    @Authorized(Role.UNAUTHENTICATED)
+    @Mutation((returns) => SSOAuthStatus)
+    async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string, @Arg('referrer') referrer: string) {
+        const { email, firstname, lastname, clientId, sub } = await authenticateWithIDP({ code, referrer });
+        if (!email || !firstname) {
+            throw new Error('Invalid token payload: Missing required fields (email/name)');
+        }
+
+        const setSSORegisteringUser = async () => {
+            const newRoles = new Set(context.user.roles.concat(Role.SSO_REGISTERING_USER));
+            await userSessions.set(context.sessionToken, {
+                ...context.user,
+                roles: Array.from(newRoles),
+                email,
+                firstname,
+                lastname,
+                idpClientId: clientId,
+                idpSub: sub,
+            });
+        };
+
+        try {
+            // Get our userId using IDP sub/clientId
+            const userId = await getUserIdFromIDPLogin(sub, clientId);
+            const user = await getUser(userId, true);
+            // A user with the given IDP sub/clientId was found
+            await loginAsUser(user, context, getSessionUser(context).deviceId);
+            return SSOAuthStatus.success;
+        } catch (error) {
+            // No credentials with the given sub/clientId, check if the email is available
+            if (await isEmailAvailable(email)) {
+                // User is not registered. They'll have to complete the registration flow
+                await setSSORegisteringUser();
+                return SSOAuthStatus.register;
+            }
+
+            // If email is already taken, we'll try to link it with the given sub/clientId
+            const user = await getUserByEmail(email);
+            const preferredLoginOption = await determinePreferredLoginOption(user);
+
+            if (preferredLoginOption === LoginOption.password) {
+                await setSSORegisteringUser();
+                return SSOAuthStatus.link;
+            }
+            // For now we don't allow IDP linking for this type of authentication (magic link)
+            throw new PrerequisiteError('Account linking with an Identity Provider requires a password. Please set a password first');
+        }
     }
 }

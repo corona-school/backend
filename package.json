@@ -57,8 +57,9 @@
         "dotenv": "^8.2.0",
         "dotenv-cli": "^7.3.0",
         "ejs": "^3.1.10",
-        "express": "^4.21.1",
+        "express": "^4.21.2",
         "express-favicon": "^2.0.1",
+        "google-auth-library": "^9.15.1",
         "graphql": "15.7.2",
         "graphql-fields": "^2.0.3",
         "graphql-request": "^4.2.0",
@@ -148,7 +149,9 @@
         "projects": [
             {
                 "displayName": "unit",
-                "testRegex": [".*\\.spec\\.ts$"],
+                "testRegex": [
+                    ".*\\.spec\\.ts$"
+                ],
                 "moduleFileExtensions": [
                     "js",
                     "json",
@@ -177,7 +180,9 @@
             },
             {
                 "displayName": "perf",
-                "testRegex": [".*\\.perf\\.ts$"],
+                "testRegex": [
+                    ".*\\.perf\\.ts$"
+                ],
                 "moduleFileExtensions": [
                     "js",
                     "json",

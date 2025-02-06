@@ -13,6 +13,7 @@ import {
     pupil_schooltype_enum as SchoolType,
     Prisma,
     PrismaClient,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
@@ -25,6 +26,7 @@ import { getLogger } from '../logger/logger';
 export interface RegisterPupilData {
     firstname: string;
     lastname: string;
+    emailOwner: PupilEmailOwner;
     email: string;
     newsletter: boolean;
     school?: CreateSchoolArgs;
@@ -34,6 +36,7 @@ export interface RegisterPupilData {
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
+    referredById?: string;
 }
 
 export interface BecomeTuteeData {
@@ -66,6 +69,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
 
     const pupil = await prismaInstance.pupil.create({
         data: {
+            emailOwner: data.emailOwner,
             email: data.email.toLowerCase(),
             firstname: data.firstname,
             lastname: data.lastname,
@@ -88,6 +92,9 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
 
             // the authToken is used to verify the e-mail instead
             verification,
+
+            // the ID of the referrer (type + id)
+            referredById: data.referredById,
 
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,
