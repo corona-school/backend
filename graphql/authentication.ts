@@ -256,7 +256,7 @@ export class AuthenticationResolver {
         return true;
     }
 
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     @Mutation((returns) => Boolean)
     logout(@Ctx() context: GraphQLContext) {
         ensureSession(context);
