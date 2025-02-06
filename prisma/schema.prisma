@@ -1564,6 +1564,7 @@ enum dissolved_by_enum {
 
 enum dissolve_reason {
   accountDeactivated // The account was deactivated, causing any active matches to be dissolved automatically
+  accountDeactivatedNoCoC // The account was deactivated because the student did not hand in a Certificate of Conduct
   ghosted // "Mein:e Lernpartner:in hat sich nicht zurückgemeldet"
   noMoreHelpNeeded // "Mein:e Lernpartner:in benötigt keine Unterstützung mehr" and "Ich benötige keine Unterstützung mehr"
   isOfNoHelp // "Ich konnte meinem/meiner Lernpartner:in nicht behilflich sein" and "Mein:e Lernpartner:in konnte mir nicht behilflich sein"
