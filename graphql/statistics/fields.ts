@@ -1023,4 +1023,23 @@ export class StatisticsResolver {
             ) AS durations;`
         )[0];
     }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async deactivationReasons(@Root() statistics: Statistics, @Arg('type') type: 'pupil' | 'student') {
+        if (type !== 'pupil' && type !== 'student') {
+            throw new Error('Invalid account type');
+        }
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                      AS value,
+                                             date_part('year', "createdAt"::date)  AS year,
+                                             date_part('month', "createdAt"::date) AS month,
+                                             (data::json)->>'deactivationReason' AS group
+                                      FROM "log"
+                                      WHERE logtype = 'deActivate'
+                                        AND starts_with("userID", ${type})
+                                        AND "createdAt" > ${statistics.from}::timestamp
+                                        AND "createdAt" < ${statistics.to}::timestamp
+                                      GROUP BY "year", "month", (data::json)->>'deactivationReason'
+                                      ORDER BY "year" ASC, "month" ASC, (data::json)->>'deactivationReason' ASC;`;
+    }
 }
