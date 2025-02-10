@@ -162,7 +162,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
 
     // how good a match is in (0, 1)
-    const score = 0.97 * subjectBonus + 0.02 * stateBonus + 0.01 * offerWaitingBonus;
+    const score = 0.8 * subjectBonus /* + 0.02 * stateBonus + */ + 0.2 * offerWaitingBonus;
 
     // TODO: Fix retention for matches with only few subjects (e.g. both helper and helpee only have math as subject)
     // in that case the score is not so high, and thus they are retained for a long time, although the match is perfect
