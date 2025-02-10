@@ -255,6 +255,7 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         dissolvedAt: null,
         dissolvedBy: null,
         dissolveReasons: [],
+        otherDissolveReason: null,
         didHaveMeeting: true,
         proposedTime: null,
         createdAt: new Date(),

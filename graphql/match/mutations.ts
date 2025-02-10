@@ -34,6 +34,8 @@ class MatchDissolveInput {
     matchId!: number;
     @TypeGraphQL.Field((_type) => [dissolve_reason])
     dissolveReasons!: dissolve_reason[];
+    @TypeGraphQL.Field((_type) => String, { nullable: true })
+    otherDissolveReason?: string;
 }
 
 @InputType()
@@ -79,7 +81,11 @@ export class MutateMatchResolver {
             dissolvedBy = dissolved_by_enum.admin;
         }
 
-        await dissolveMatch(match, info.dissolveReasons, dissolver, dissolvedBy);
+        if (!!info.otherDissolveReason && !info.dissolveReasons.includes(dissolve_reason.other)) {
+            info.dissolveReasons.push(dissolve_reason.other);
+        }
+
+        await dissolveMatch(match, info.dissolveReasons, dissolver, dissolvedBy, info.otherDissolveReason);
         return true;
     }
 

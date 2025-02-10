@@ -453,6 +453,7 @@ model match {
   dissolvedAt           DateTime?          @db.Timestamp(6)
   dissolvedBy           dissolved_by_enum?
   dissolveReasons       dissolve_reason[]  @default([])
+  otherDissolveReason   String?            @db.VarChar // user can enter detailed explanation when selected dissolve reason is "other"
   didHaveMeeting        Boolean            @default(false) // whether the match partners did actually have an initial meeting
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
@@ -582,10 +583,10 @@ model participation_certificate {
 }
 
 model instant_certificate {
-  id                        Int       @id @default(autoincrement())
+  id                        Int      @id @default(autoincrement())
   createdAt                 DateTime @default(now()) @db.Timestamp(6)
   // Non-guessable, used for the public verification endpoint that everyone can visit to check that a certificate was issued by us
-  uuid                      String    @unique @db.VarChar
+  uuid                      String   @unique @db.VarChar
   studentId                 Int
   student                   student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   startDate                 DateTime
@@ -593,7 +594,7 @@ model instant_certificate {
   matchAppointmentsCount    Int
   courseParticipantsCount   Int
   courseAppointmentsCount   Int
-  totalAppointmentsDuration Int
+  totalAppointmentsDuration Int // in minutes
 }
 
 // DEPRECATED: We once had a project were students helped pupils with their Jugend-Forscht Project, and had a separate screening for that
@@ -724,9 +725,12 @@ model pupil {
   descriptionForScreening                      String                                         @default("") @db.VarChar
   // Screeners provide future matches tips or information about the pupil to help improve the collaboration
   descriptionForMatch                          String                                         @default("") @db.VarChar
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById                                 String?                                        @db.VarChar
+
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner                                   pupil_email_owner_enum                         @default(unknown)
+  emailOwner pupil_email_owner_enum @default(unknown)
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -937,6 +941,9 @@ model student {
   descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender                  gender_enum?
+
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById String? @db.VarChar
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1045,6 +1052,7 @@ model secret {
   // (i.e. during email address change)
   description      String?          @db.VarChar
   lastUsedDeviceId String?          @db.VarChar // the permanent device identifier this secret was last used on
+  idpClientId      String?          @db.VarChar
 }
 
 // DEPRECATED: Used by our old ORM to track migrations, to be removed once Prisma Migrations work reliably
@@ -1430,6 +1438,7 @@ enum secret_type_enum {
   PASSWORD
   TOKEN
   EMAIL_TOKEN
+  IDP
 }
 
 enum course_schooltype_enum {
@@ -1548,6 +1557,7 @@ enum dissolved_by_enum {
 
 enum dissolve_reason {
   accountDeactivated // The account was deactivated, causing any active matches to be dissolved automatically
+  accountDeactivatedNoCoC // The account was deactivated because the student did not hand in a Certificate of Conduct
   ghosted // "Mein:e Lernpartner:in hat sich nicht zurückgemeldet"
   noMoreHelpNeeded // "Mein:e Lernpartner:in benötigt keine Unterstützung mehr" and "Ich benötige keine Unterstützung mehr"
   isOfNoHelp // "Ich konnte meinem/meiner Lernpartner:in nicht behilflich sein" and "Mein:e Lernpartner:in konnte mir nicht behilflich sein"
