@@ -80,6 +80,7 @@ import { LearningTopicMutationsResolver } from './learning/topic/mutations';
 import { LearningAssignmentMutationsResolver } from './learning/assignment/mutations';
 import { LearningNoteMutationsResolver } from './learning/note/mutations';
 import { ExternalSchoolResolver } from './external_school/fields';
+import { MutateLessonPlanResolver } from './lessonplan/mutations';
 import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
@@ -214,6 +215,8 @@ const schema = buildSchemaSync({
 
         /** School Search */
         ExternalSchoolResolver,
+
+        MutateLessonPlanResolver,
     ],
     authChecker,
 });
