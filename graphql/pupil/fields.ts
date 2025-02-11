@@ -29,7 +29,7 @@ import { subcourseSearch } from '../../common/courses/search';
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => UserType)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.PUPIL_SCREENER)
     user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
     }

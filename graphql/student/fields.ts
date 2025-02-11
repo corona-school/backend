@@ -64,7 +64,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => UserType)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.STUDENT_SCREENER)
     user(@Root() student: Required<Student>) {
         return userForStudent(student);
     }

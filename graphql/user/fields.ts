@@ -164,6 +164,22 @@ export class UserFieldsResolver {
         });
     }
 
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.SCREENER, Role.ADMIN)
+    async receivedScreeningSuggestions(@Root() user: User): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                notification: {
+                    onActions: { has: 'screening_suggestion' },
+                },
+            },
+            include: { notification: true },
+        });
+    }
+
     @FieldResolver((returns) => Date, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async lastTimeCheckedNotifications(@Root() user: User): Promise<Date | null> {
