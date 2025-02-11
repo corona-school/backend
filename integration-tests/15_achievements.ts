@@ -1,6 +1,7 @@
 import { createNewPupil, createNewStudent, pupilTwo, studentOne } from './01_user';
 import { test } from './base';
 import { screenerOne } from './02_screening';
+import { createSubcourse } from './utils';
 import { adminClient } from './base/clients';
 import { prisma } from '../common/prisma';
 import { achievement_template_for_enum, achievement_type_enum, achievement_action_type_enum, lecture_appointmenttype_enum } from '@prisma/client';
@@ -9,6 +10,8 @@ import { _createFixedToken } from '../common/secret/token';
 import assert from 'assert';
 import { AchievementTemplateCreate, purgeAchievementTemplateCache } from '../common/achievement/template';
 import { achievement_with_template, ConditionDataAggregations } from '../common/achievement/types';
+import { deleteUnreachableCourseAchievements } from '../jobs/periodic/delete-unreachable-achievements/courses';
+import { createRelation, EventRelationType } from '../common/achievement/relation';
 
 function findTemplateByMetric(achievements: achievement_with_template[], metric: string) {
     for (const achievement of achievements) {
@@ -30,6 +33,7 @@ async function createTemplates() {
     await createPupilConductedMatchMeetingTemplates();
     await createStudentRegularLearningTemplate();
     await createPupilRegularLearningTemplate();
+    await createPupilCourseParticipationTemplates();
 }
 
 void test('Reward student onboarding achievement sequence', async () => {
@@ -506,6 +510,101 @@ void test('Resolver achievement by id', async () => {
     const { achievement: pupilAchievement } = pupilMe;
     assert.ok(pupilAchievement);
     assert.strictEqual(pupilAchievement.id, pupilAchievementId);
+});
+
+void test('Delete unreachable achievements', async () => {
+    const lectureStart = new Date();
+    lectureStart.setDate(new Date().getDate() + 8);
+    const { subcourseId } = await createSubcourse({
+        name: 'Course that will be deleted',
+        lectures: [{ start: lectureStart }],
+    });
+    // await addAppointmentToSubcourse()
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: pupilClient, pupil } = await createNewPupil();
+    await pupilClient.request(`mutation updateSchoolGradePupil($grade: Int!) {meUpdate(update: {pupil: {gradeAsInt: $grade}})}`, { grade: 7 });
+    const { subcourseJoin } = await pupilClient.request(`mutation SubcourseJoin($subcourseId: Float!) {subcourseJoin(subcourseId: $subcourseId)}`, {
+        subcourseId,
+    });
+    assert.strictEqual(subcourseJoin, true);
+
+    const lecture = await prisma.lecture.findFirst({
+        where: {
+            subcourseId,
+        },
+    });
+
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    await prisma.lecture.update({
+        where: { id: lecture.id },
+        data: {
+            start: twoDaysAgo,
+        },
+    });
+
+    const cntBefore = await prisma.user_achievement.count({
+        where: {
+            userId: pupil.userID,
+            relation: createRelation(EventRelationType.Subcourse, subcourseId),
+        },
+    });
+    assert.notStrictEqual(cntBefore, 0);
+
+    await deleteUnreachableCourseAchievements(false);
+
+    // Check if course related achievements are gone
+    const cntAfter = await prisma.user_achievement.count({
+        where: {
+            userId: pupil.userID,
+            relation: createRelation(EventRelationType.Subcourse, subcourseId),
+        },
+    });
+    assert.strictEqual(cntAfter, 0);
+    // Tests if it only deleted the achievements related to the course and not all of them
+    const totalCntAfter = await prisma.user_achievement.count({
+        where: {
+            userId: pupil.userID,
+        },
+    });
+    assert.notStrictEqual(totalCntAfter, 0);
+});
+
+void test('Should not delete achievements for ongoing courses', async () => {
+    const lectureStart = new Date();
+    lectureStart.setDate(new Date().getDate() + 8);
+    const pastLecture = new Date();
+    pastLecture.setDate(new Date().getDate() - 8);
+    const { subcourseId } = await createSubcourse({
+        name: 'Course that will be deleted',
+        lectures: [{ start: pastLecture }, { start: lectureStart }],
+    });
+    // await addAppointmentToSubcourse()
+    await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
+    const { client: pupilClient, pupil } = await createNewPupil();
+    await pupilClient.request(`mutation updateSchoolGradePupil($grade: Int!) {meUpdate(update: {pupil: {gradeAsInt: $grade}})}`, { grade: 7 });
+    const { subcourseJoin } = await pupilClient.request(`mutation SubcourseJoin($subcourseId: Float!) {subcourseJoin(subcourseId: $subcourseId)}`, {
+        subcourseId,
+    });
+    assert.strictEqual(subcourseJoin, true);
+
+    const cntBefore = await prisma.user_achievement.count({
+        where: {
+            userId: pupil.userID,
+            relation: createRelation(EventRelationType.Subcourse, subcourseId),
+        },
+    });
+    assert.notStrictEqual(cntBefore, 0);
+
+    await deleteUnreachableCourseAchievements(false);
+
+    const cntAfter = await prisma.user_achievement.count({
+        where: {
+            userId: pupil.userID,
+            relation: createRelation(EventRelationType.Subcourse, subcourseId),
+        },
+    });
+    assert.notStrictEqual(cntAfter, 0);
 });
 
 /* -------------- additional functions for template and data creation ------------- */
@@ -1031,5 +1130,55 @@ const createPupilRegularLearningTemplate = async () => {
                 bucketAggregator: 'presence_of_events',
             },
         },
+    });
+};
+
+const createPupilCourseParticipationTemplates = async () => {
+    await createTemplate({
+        templateFor: achievement_template_for_enum.Course,
+        group: 'pupil_course_participation',
+        groupOrder: 1,
+        sequentialStepName: 'Zum Kurs anmelden',
+        type: achievement_type_enum.SEQUENTIAL,
+        title: 'Kurs erfolgreich beendet',
+        tagline: '{{course.name}}',
+        subtitle: null,
+        footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+        achievedFooter: 'This is not in use',
+        description: 'This is not in use',
+        achievedDescription: null,
+        image: 'course-image',
+        achievedImage: null,
+        actionName: null,
+        actionRedirectLink: null,
+        actionType: null,
+        condition: 'pupil_course_joined > 0',
+        conditionDataAggregations: JSON.parse('{"pupil_course_joined":{"metric":"pupil_course_joined","aggregator":"count"}}'),
+    });
+
+    await createTemplate({
+        templateFor: achievement_template_for_enum.Course,
+        group: 'pupil_course_participation',
+        groupOrder: 2,
+        sequentialStepName: 'Alle Kurs-Termine abschließen',
+        type: achievement_type_enum.SEQUENTIAL,
+        title: 'Kurs erfolgreich beendet',
+        tagline: '{{course.name}}',
+        subtitle: null,
+        footer: '{{progress}} von {{maxValue}} Schritten abgeschlossen',
+        achievedFooter: 'Wow! Du hast den Kurs abgeschlossen.',
+        description:
+            'Um diesen Erfolg zu erhalten, sei bei allen Terminen des Kurses {{course.name}} dabei. Die kontinuierliche Teilnahme ermöglicht dir nicht nur, das Beste aus dem Kurs herauszuholen, sondern stärkt auch deine Lernfortschritte und das Verständnis der Kursinhalte. Du bist auf dem richtigen Weg, bleib dran!',
+        achievedDescription:
+            'Herzlichen Glückwunsch zum erfolgreichen Abschluss des letzten Termins des Kurses {{course.name}}! Wir hoffen, dir hat der Kurs viel Freude bereitet und dass du etwas mitnehmen konntest. Dein Feedback ist uns sehr wichtig – wir freuen uns darauf, von deinen Erfahrungen zu hören! ',
+        image: 'course-image',
+        achievedImage: null,
+        actionName: 'Zu den Terminen',
+        actionRedirectLink: '/single-course/{{subcourse.id}}',
+        actionType: achievement_action_type_enum.Appointment,
+        condition: 'pupil_conducted_subcourse_appointment > 0',
+        conditionDataAggregations: JSON.parse(
+            '{"pupil_conducted_subcourse_appointment":{"metric":"pupil_conducted_subcourse_appointment","aggregator":"at_least_one_event_per_bucket","createBuckets":"by_lecture_participation","bucketAggregator":"presence_of_events"}}'
+        ),
     });
 };

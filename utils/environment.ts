@@ -33,3 +33,7 @@ export function getLogLevel(defaultLevel: string): string {
 export function getLogFormat(): string | null {
     return process.env.LOG_FORMAT;
 }
+
+export function isAchievementCleanupActive(): boolean {
+    return JSON.parse(process.env.ACHIEVEMENT_CLEANUP_ACTIVE || 'false');
+}
