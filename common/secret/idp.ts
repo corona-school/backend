@@ -31,3 +31,8 @@ export const getUserIdFromIDPLogin = async (sub: string, clientId: string) => {
     }
     return result.userId;
 };
+
+export const isSSOUser = async (userId: string) => {
+    const result = await prisma.secret.count({ where: { type: SecretType.IDP, userId } });
+    return result > 0;
+};

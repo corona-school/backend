@@ -54,4 +54,8 @@ export enum Role {
      * or trying to link their Lern-Fair account with an IDP
      */
     SSO_REGISTERING_USER = 'SSO_REGISTERING_USER',
+    /**
+     * User has their Lern-Fair account linked with an IDP
+     */
+    SSO_USER = 'SSO_USER',
 }

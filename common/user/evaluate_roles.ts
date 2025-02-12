@@ -3,6 +3,7 @@ import { prisma } from '../prisma';
 import { Role } from '../user/roles';
 import { getLogger } from '../logger/logger';
 import { getStudent, getPupil, getScreener, User } from '.';
+import { isSSOUser } from '../secret/idp';
 
 const logger = getLogger('Roles');
 
@@ -21,6 +22,10 @@ export async function evaluateUserRoles(user: User): Promise<Role[]> {
     if (user.screenerId) {
         const screener = await getScreener(user);
         evaluateScreenerRoles(screener, roles);
+    }
+
+    if (await isSSOUser(user.userID)) {
+        roles.push(Role.SSO_USER);
     }
 
     return roles;
