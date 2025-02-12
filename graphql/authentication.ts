@@ -214,6 +214,10 @@ export class AuthenticationResolver {
             // Now that the user confirmed their identity, we can complete linking process
             if (isSSO) {
                 await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
+                await userSessions.set(context.sessionToken, {
+                    ...context.user,
+                    roles: context.user.roles.concat(Role.SSO_USER),
+                });
             }
 
             return true;
