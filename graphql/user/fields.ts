@@ -125,7 +125,7 @@ export class UserFieldsResolver {
         return count;
     }
 
-    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils' })
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils - 0 if less than 3 users were referred for privacy' })
     @Authorized(Role.OWNER, Role.ADMIN)
     async supportedHours(@Root() user: User): Promise<number> {
         const totalHours = await getTotalSupportedHours(user.userID);
