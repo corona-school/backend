@@ -279,6 +279,14 @@ const _notificationActions = {
             },
         },
     },
+    instructor_first_appointment_completed: {
+        description: 'Instructor / Completed first appointment',
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            ...sampleCourse,
+        },
+    },
     instructor_course_ended: {
         description: 'Instructor / Course ended',
         sampleContext: sampleCourse,
@@ -341,6 +349,14 @@ const _notificationActions = {
             matchDate: '...',
         },
     },
+    tutee_match_dissolved_mature: {
+        description: 'Tutee / Match was dissolved after a month',
+        sampleContext: {
+            student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
     tutor_match_requested: {
         description: 'Tutor / Match requested',
         sampleContext: {},
@@ -367,6 +383,14 @@ const _notificationActions = {
     },
     tutor_match_dissolved_quickly: {
         description: 'Tutor / Match was dissolved in less than a month',
+        sampleContext: {
+            pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutor_match_dissolved_mature: {
+        description: 'Tutor / Match was dissolved after a month',
         sampleContext: {
             pupil: sampleUser,
             matchHash: '...',
@@ -407,6 +431,26 @@ const _notificationActions = {
 
     tutor_matching_success: {
         description: 'Tutor / Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
+    tutor_daz_matching_success: {
+        description: 'Tutor / DaZ Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
+    tutor_standard_matching_success: {
+        description: 'Tutor / Standard Match success',
         sampleContext: {
             pupil: sampleUser,
             pupilGrade: '3. Klasse',

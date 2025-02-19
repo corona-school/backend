@@ -37,12 +37,23 @@ function basicMetaFactory(data: any): WebflowMetadata {
 // https://developers.webflow.com/reference/get-authorized-user
 
 export async function getCollectionItems<T extends WebflowMetadata>(collectionID: string, factory: (data: any) => T): Promise<T[]> {
-    // TODO: implement pagination
-    const data = await request({ path: `v2/collections/${collectionID}/items`, method: 'GET' });
-    if (!data.items) {
-        throw new Error('Response did not include any items');
-    }
-    return data.items.map(factory);
+    const pageSize = 100;
+    let items = [];
+    let totalPages = 1;
+    let currentPage = 0;
+    do {
+        const pagination = { offset: (currentPage * pageSize).toString(), limit: pageSize.toString() };
+        const params = new URLSearchParams(pagination);
+        const data = await request({ path: `v2/collections/${collectionID}/items?${params.toString()}`, method: 'GET' });
+        if (currentPage === 0 && !data.items) {
+            throw new Error('Response did not include any items');
+        }
+        items = items.concat(data.items);
+        totalPages = data.pagination.total ? Math.floor(data.pagination.total / pageSize) : 0;
+        currentPage = currentPage + 1;
+    } while (currentPage <= totalPages);
+
+    return items.map(factory);
 }
 
 export async function createNewItem<T extends WebflowMetadata>(collectionID: string, data: T): Promise<string> {

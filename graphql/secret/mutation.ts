@@ -1,15 +1,17 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, requestToken, revokeToken, revokeTokenByToken } from '../../common/secret';
+import { createPassword, createToken, getSecretByToken, requestToken, revokeSecret } from '../../common/secret';
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
-import { getUser, getUserByEmail } from '../../common/user';
+import { getUser, getUserByEmail, User } from '../../common/user';
 import { RateLimit } from '../rate-limit';
 import { getLogger } from '../../common/logger/logger';
 import { UserInputError } from 'apollo-server-express';
 import { validateEmail } from '../validators';
 import { GraphQLString } from 'graphql';
+import { deleteSessionsByDevice } from '../../common/user/session';
+import { prisma } from '../../common/prisma';
 
 const logger = getLogger('MutateSecretResolver');
 
@@ -17,8 +19,13 @@ const logger = getLogger('MutateSecretResolver');
 export class MutateSecretResolver {
     @Mutation((returns) => String)
     @Authorized(Role.USER)
-    async tokenCreate(@Ctx() context: GraphQLContext, @Arg('description', { nullable: true }) description: string | null) {
-        return await createToken(getSessionUser(context), /* expiresAt */ null, description);
+    async tokenCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('expiresAt', { nullable: true }) expiresAt: Date | null,
+        @Arg('description', { nullable: true }) description: string | null,
+        @Arg('deviceId', { nullable: true }) deviceId: string | null
+    ) {
+        return await createToken(getSessionUser(context), expiresAt, description, deviceId);
     }
 
     @Mutation((returns) => String)
@@ -28,7 +35,7 @@ export class MutateSecretResolver {
         inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
-        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`);
+        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`, null);
         logger.info(`Admin/trusted screener created a login token for User(${userId})`);
         return token;
     }
@@ -50,22 +57,37 @@ export class MutateSecretResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER, Role.ADMIN)
-    async tokenRevoke(@Ctx() context: GraphQLContext, @Arg('id', { nullable: true }) id?: number, @Arg('token', { nullable: true }) token?: string) {
+    async tokenRevoke(
+        @Ctx() context: GraphQLContext,
+        @Arg('invalidateSessions') invalidateSessions: boolean,
+        @Arg('id', { nullable: true }) id?: number,
+        @Arg('token', { nullable: true }) token?: string
+    ) {
+        let user: User | undefined = undefined;
+        if (!isAdmin(context)) {
+            // if user is not admin, only allow to revoke own secrets
+            user = getSessionUser(context);
+        }
+        let secret = undefined;
         if (id) {
-            if (isAdmin(context)) {
-                await revokeToken(null, id);
-            } else {
-                await revokeToken(getSessionUser(context), id);
-            }
-            return true;
+            secret = await prisma.secret.findFirst({ where: { id, userId: user?.userID } });
+        } else if (token) {
+            secret = await getSecretByToken(token);
+        } else {
+            throw new UserInputError(`Either the id or the token must be passed`);
+        }
+        if (!secret) {
+            throw new UserInputError(`Secret(${id ?? '<token>'}) not found/not accessible for user`);
+        }
+        const { id: secretId, lastUsedDeviceId: deviceId } = secret;
+
+        await revokeSecret(user, secretId);
+
+        if (invalidateSessions && deviceId) {
+            await deleteSessionsByDevice(deviceId, user);
         }
 
-        if (token) {
-            await revokeTokenByToken(token);
-            return true;
-        }
-
-        throw new UserInputError(`Either the id or the token must be passed`);
+        return true;
     }
 
     @Mutation((returns) => Boolean)

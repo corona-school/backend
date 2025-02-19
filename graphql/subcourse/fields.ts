@@ -1,4 +1,4 @@
-import { Prisma, subcourse, course_coursestate_enum as CourseState } from '@prisma/client';
+import { course_coursestate_enum as CourseState, Prisma, subcourse } from '@prisma/client';
 import { canCancel, canDeleteSubcourse, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
@@ -26,8 +26,8 @@ import { subcourseSearch } from '../../common/courses/search';
 import { GraphQLInt } from 'graphql';
 import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
-import { getPupilsFromList } from '../../common/user';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
+import { getParticipants } from '../../common/pupil';
 
 @ObjectType()
 class Participant {
@@ -48,6 +48,13 @@ class Participant {
 }
 
 @ObjectType()
+// Inherits from Participant but additionally has a conversationId
+class ProspectParticipant extends Participant {
+    @Field((_type) => String)
+    conversationId: string;
+}
+
+@ObjectType()
 class OtherParticipant {
     @Field((_type) => Int)
     id: number;
@@ -59,16 +66,6 @@ class OtherParticipant {
     gradeAsInt: number;
     @Field((_type) => String)
     aboutMe: string;
-}
-
-@ObjectType()
-class PupilIdName {
-    @Field(() => Int)
-    id: number;
-    @Field(() => String)
-    firstname: string;
-    @Field(() => String)
-    lastname: string;
 }
 
 export function IS_PUBLIC_SUBCOURSE(): Prisma.subcourseWhereInput {
@@ -394,27 +391,17 @@ export class ExtendedFieldsSubcourseResolver {
     @Authorized(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     @LimitEstimated(100)
     async pupilsOnWaitinglist(@Root() subcourse: Subcourse): Promise<Participant[]> {
-        const pupils = await prisma.pupil.findMany({
-            select: { id: true, firstname: true, lastname: true, grade: true, schooltype: true, aboutMe: true, waiting_list_enrollment: true },
-            where: {
-                waiting_list_enrollment: {
-                    some: {
-                        subcourseId: subcourse.id,
-                    },
-                },
-            },
+        const participants = await getParticipants({
+            waiting_list_enrollment: { some: { subcourseId: subcourse.id } },
         });
 
-        pupils.sort(
+        participants.sort(
             (a, b) =>
                 +a.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt -
                 +b.waiting_list_enrollment.find((it) => it.subcourseId === subcourse.id).createdAt
         );
 
-        return pupils.map((e) => ({
-            ...e,
-            gradeAsInt: gradeAsInt(e.grade),
-        }));
+        return participants;
     }
 
     @Deprecated('Use pupilsOnWaitinglist instead')
@@ -442,12 +429,20 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
-    @FieldResolver(() => [PupilIdName])
+    @FieldResolver(() => [ProspectParticipant])
     @Authorized(Role.OWNER)
-    async prospectParticipants(@Root() subcourse: Subcourse): Promise<PupilIdName[]> {
+    async prospectParticipants(@Root() subcourse: Subcourse): Promise<ProspectParticipant[]> {
         const chats = getSubcourseProspects(subcourse);
-        const pupils = await getPupilsFromList(chats.map((chat) => `pupil/${chat.pupilId}`));
-        return pupils.map((p) => ({ id: p.id, firstname: p.firstname, lastname: p.lastname }));
+        const participants = await getParticipants({
+            id: {
+                in: chats.map((it) => it.pupilId),
+            },
+        });
+
+        return participants.map((p) => ({
+            ...p,
+            conversationId: chats.find((it) => it.pupilId === p.id).conversationId,
+        }));
     }
 
     @FieldResolver((returns) => Boolean)

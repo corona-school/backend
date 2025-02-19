@@ -106,7 +106,8 @@ async function deliverNotification(
     try {
         // Always trigger the hook, no matter whether we actually send something to the user
         if (notification.hookID) {
-            await triggerHook(notification.hookID, user);
+            logger.debug(`Running Hook(${notification.hookID}) for ConcreteNotification(${concreteNotification.id})`);
+            await triggerHook(notification.hookID, user, context);
         }
 
         const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);

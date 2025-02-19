@@ -1,5 +1,6 @@
 {
     "name": "Corona School Backend",
+    "stack": "heroku-24",
     "description": "The backend of Corona School",
     "keywords": ["coronaschool", "node", "typescript"],
     "website": "https://lern-fair.de/",

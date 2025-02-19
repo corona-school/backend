@@ -95,8 +95,7 @@ export async function runJob(jobName: JobName): Promise<boolean> {
 
         // ---------- RUN ----------------
 
-        const span = tracer.startSpan(jobName);
-        await tracer.scope().activate(span, async () => {
+        await tracer.trace('CronJob', { resource: jobName }, async (span) => {
             let hasError = false;
             try {
                 const job = allJobs[jobName];

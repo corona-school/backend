@@ -124,7 +124,6 @@ export async function postStatisticsToSlack() {
         },
         where: {
             lecture: {
-                every: { start: { lt: end } },
                 some: { start: { gte: begin, lt: end } },
             },
             published: true,

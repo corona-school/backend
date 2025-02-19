@@ -12,16 +12,14 @@ import {
     notification_channel_enum as NotificationChannelEnum,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
 import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
@@ -34,8 +32,8 @@ import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
-import _ from 'lodash';
 import { getUserNotificationPreferences } from '../../common/notification';
+import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -61,13 +59,13 @@ export class Contact {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
@@ -117,18 +115,21 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = {
-            user: UNAUTHENTICATED_USER,
-            ip: '?',
-            prisma,
-            sessionToken: 'fake',
-            setCookie: () => {
-                /* ignore */
-            },
-            sessionID: 'FAKE',
-        };
-        await loginAsUser(user, fakeContext);
-        return fakeContext.user.roles;
+        return await evaluateUserRoles(user);
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Number of referrals made by the user' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async referralCount(@Root() user: User): Promise<number> {
+        const count = await getReferredByIDCount(user.userID);
+        return count;
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils - 0 if less than 3 users were referred for privacy' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async supportedHours(@Root() user: User): Promise<number> {
+        const totalHours = await getTotalSupportedHours(user.userID);
+        return totalHours;
     }
 
     // -------- Notifications ---------------------
@@ -160,6 +161,22 @@ export class UserFieldsResolver {
             },
             take,
             skip,
+        });
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.SCREENER, Role.ADMIN)
+    async receivedScreeningSuggestions(@Root() user: User): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                notification: {
+                    onActions: { has: 'screening_suggestion' },
+                },
+            },
+            include: { notification: true },
         });
     }
 

@@ -73,7 +73,15 @@ import { MutateCooperationResolver } from './cooperation/mutation';
 import { FieldsChatResolver } from './chat/fields';
 import { AchievementTemplateFieldResolver } from './achievement_template/fields';
 import { MutateAchievementTemplateResolver } from './achievement_template/mutations';
+import { LearningTopicFieldResolver } from './learning/topic/fields';
+import { LearningAssignmentFieldResolver } from './learning/assignment/fields';
+import { LearningNoteFieldResolver } from './learning/note/fields';
+import { LearningTopicMutationsResolver } from './learning/topic/mutations';
+import { LearningAssignmentMutationsResolver } from './learning/assignment/mutations';
+import { LearningNoteMutationsResolver } from './learning/note/mutations';
 import { ExternalSchoolResolver } from './external_school/fields';
+import { MutateLessonPlanResolver } from './lessonplan/mutations';
+import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -142,6 +150,9 @@ const schema = buildSchemaSync({
         ExtendedFieldsParticipationCertificateResolver,
         MutateParticipationCertificateResolver,
 
+        /* InstantCertificate */
+        MutateInstantCertificateResolver,
+
         /* Schools */
         FindManySchoolResolver,
 
@@ -194,8 +205,18 @@ const schema = buildSchemaSync({
         /* Admin */
         AdminMutationsResolver,
 
+        /* Learning */
+        LearningTopicFieldResolver,
+        LearningTopicMutationsResolver,
+        LearningAssignmentFieldResolver,
+        LearningAssignmentMutationsResolver,
+        LearningNoteFieldResolver,
+        LearningNoteMutationsResolver,
+
         /** School Search */
         ExternalSchoolResolver,
+
+        MutateLessonPlanResolver,
     ],
     authChecker,
 });

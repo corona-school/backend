@@ -295,6 +295,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Jufo_verification_transmission: allAdmin,
     Mentor: allAdmin,
     Participation_certificate: allAdmin,
+    Instant_certificate: allAdmin,
     Project_coaching_screening: allAdmin,
     Project_field_with_grade_restriction: allAdmin,
     Remission_request: allAdmin,
@@ -346,6 +347,9 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     User_achievement: allAdmin,
     Achievement_event: allAdmin,
     Job_run: { _all: nobody },
+    Learning_assignment: allAdmin,
+    Learning_note: allAdmin,
+    Learning_topic: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -421,6 +425,13 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             waiting_list_enrollment: nobody,
             lastLogin: adminOrOwner,
             gradeUpdatedAt: adminOrOwner,
+            learning_topics: adminOrOwner,
+            descriptionForMatch: onlyAdminOrScreener,
+            descriptionForScreening: onlyAdminOrScreener,
+            hasSpecialNeeds: onlyAdminOrScreener,
+            onlyMatchWith: onlyAdminOrScreener,
+            referredById: adminOrOwner,
+            emailOwner: adminOrOwnerOrScreener,
         }),
     },
 
@@ -487,6 +498,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lecture: nobody,
             match: nobody,
             participation_certificate: nobody,
+            instant_certificate: nobody,
             project_coaching_screening: nobody,
             project_field_with_grade_restriction: nobody,
             project_match: nobody,
@@ -504,6 +516,12 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             lastLogin: adminOrOwner,
             cooperation: everyone,
             cooperationID: nobody,
+            hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
+            descriptionForMatch: onlyAdminOrScreener,
+            hasSpecialExperience: onlyAdminOrScreener,
+            gender: onlyAdminOrScreener,
+            referredById: adminOrOwner,
+            descriptionForScreening: onlyAdminOrScreener,
         }),
     },
 

@@ -14,7 +14,13 @@ import moment from 'moment';
 
 const logger = getLogger('Match');
 
-export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reason[], dissolver: Pupil | Student | null, dissolvedBy: dissolved_by_enum) {
+export async function dissolveMatch(
+    match: Match,
+    dissolveReasons: dissolve_reason[],
+    dissolver: Pupil | Student | null,
+    dissolvedBy: dissolved_by_enum,
+    otherReason?: string
+) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
     }
@@ -28,6 +34,7 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
         data: {
             dissolved: true,
             dissolveReasons: dissolveReasons,
+            otherDissolveReason: otherReason,
             dissolvedAt: new Date(),
             dissolvedBy,
         },
@@ -72,6 +79,9 @@ export async function dissolveMatch(match: Match, dissolveReasons: dissolve_reas
     if (new Date() < moment(match.createdAt).add(30, 'days').toDate()) {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_quickly', { pupil, matchHash, matchDate, uniqueId });
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_quickly', { student, matchHash, matchDate, uniqueId });
+    } else {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_mature', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_mature', { student, matchHash, matchDate, uniqueId });
     }
 
     if (dissolver && dissolver.email === student.email) {

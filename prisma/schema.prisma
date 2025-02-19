@@ -320,6 +320,84 @@ model jufo_verification_transmission {
   student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
+// A topic a pupil is currently learning in a certain subject
+// This is used to group notes and assignments
+model learning_topic {
+  id        Int      @id() @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  pupilId Int
+  pupil   pupil @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  name    String
+  subject course_subject_enum
+
+  matchId Int?
+  match   match? @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  assignments learning_assignment[]
+  notes       learning_note[]
+}
+
+enum learning_assignment_status {
+  pending
+  in_progress
+  done
+}
+
+// A certain task a pupil is supposed to do, both small "solve equation XY" or large "write an analysis for book XY"
+model learning_assignment {
+  id        Int      @id() @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  topicId Int
+  topic   learning_topic @relation(fields: [topicId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  task   String
+  status learning_assignment_status
+
+  notes learning_note[]
+}
+
+enum learning_note_type {
+  question // from the pupil
+
+  answer // providing the solution to the assignment
+  correct_answer // answer marked as correct by the helper
+  wrong_answer // answer marked as wrong by the helper or tool
+
+  task // Ask the pupil to do something for the assignment or topic
+
+  comment
+}
+
+// Learning notes are semi-structured collection of texts and images for an assignment or topic
+// which are shared by a pupil, their match partner and assisting tools
+model learning_note {
+  id        Int      @id() @default(autoincrement())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  type learning_note_type
+
+  authorID   String? // userID, NULL if from a tool
+  authorName String
+
+  // Linked to an assignment XOR topic
+
+  topicId Int?
+  topic   learning_topic? @relation(fields: [topicId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  assignmentId Int?
+  assignment   learning_assignment? @relation(fields: [assignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  text String
+  // image, file, ...
+
+  replyToId Int?
+  replyTo   learning_note?  @relation(name: "reply", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  repliedBy learning_note[] @relation(name: "reply")
+}
+
 // Till Summer 2023 we only offered "Course Lectures", so a meeting for a Subcourse at a particular point in time
 // Then we evolved "Course Lectures" into "Appointments", were any group of users could meet together.
 // In the codebase we call this 'appointment' and also still 'lecture'
@@ -328,7 +406,7 @@ model lecture {
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
   start                 DateTime                     @db.Timestamp(6)
-  duration              Int // in seconds
+  duration              Int // in minutes
   title                 String?
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
@@ -382,6 +460,7 @@ model match {
   dissolveReason        Int?
   dissolveReasonEnum    dissolve_reason?
   dissolveReasons       dissolve_reason[]  @default([])
+  otherDissolveReason   String?            @db.VarChar // user can enter detailed explanation when selected dissolve reason is "other"
   didHaveMeeting        Boolean            @default(false) // whether the match partners did actually have an initial meeting
   // DEPRECATED: At some point students could suggest a first meeting time to pupils when they got the match
   // The functionality was removed a long time ago, and is generally replaced with Appointments
@@ -394,9 +473,6 @@ model match {
   feedbackToStudentMail Boolean            @default(false)
   followUpToPupilMail   Boolean            @default(false)
   followUpToStudentMail Boolean            @default(false)
-
-  // DEPRECATED: In the early days, matching was done offline and the data was imported into the DB
-  source match_source_enum @default(matchedinternal)
 
   // FirstMatchRequest - createdAt gives a rough estimate how long a student / pupil had to wait for a match
   // As a user can create multiple match requests, and we do not know which match request lead to which match,
@@ -413,6 +489,12 @@ model match {
   pupil     pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
   student   student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
   lecture   lecture[]
+
+  learning_topics learning_topic[]
+
+  // For "automatic matches", stores the Match Run that created this match (since 01/2025)
+  matchPoolRunId Int?
+  matchPoolRun   match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -505,6 +587,21 @@ model participation_certificate {
   pupilId           Int?
   pupil             pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_01437dc10f00eace91b0f93a805")
   student           student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_b8bb6da6b807a7b382218947647")
+}
+
+model instant_certificate {
+  id                        Int      @id @default(autoincrement())
+  createdAt                 DateTime @default(now()) @db.Timestamp(6)
+  // Non-guessable, used for the public verification endpoint that everyone can visit to check that a certificate was issued by us
+  uuid                      String   @unique @db.VarChar
+  studentId                 Int
+  student                   student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  startDate                 DateTime
+  matchesCount              Int
+  matchAppointmentsCount    Int
+  courseParticipantsCount   Int
+  courseAppointmentsCount   Int
+  totalAppointmentsDuration Int // in minutes
 }
 
 // DEPRECATED: We once had a project were students helped pupils with their Jugend-Forscht Project, and had a separate screening for that
@@ -625,6 +722,22 @@ model pupil {
   subcourse_participants_pupil                 subcourse_participants_pupil[]
   waiting_list_enrollment                      waiting_list_enrollment[]
   gradeUpdatedAt                               DateTime?
+  learning_topics                              learning_topic[]
+  // There are cases where pupils prefer to be matched with a specific gender (e.g only with women)
+  onlyMatchWith                                gender_enum?
+  // Used to match pupils that have learning difficulties with students that have experience with these cases
+  hasSpecialNeeds                              Boolean                                        @default(false)
+  // Used as an "AboutMe" only for screening purposes. This field should not contain any sensitive information
+  // about the pupil
+  descriptionForScreening                      String                                         @default("") @db.VarChar
+  // Screeners provide future matches tips or information about the pupil to help improve the collaboration
+  descriptionForMatch                          String                                         @default("") @db.VarChar
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById                                 String?                                        @db.VarChar
+
+  // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
+  // Here we specify who is the owner of this email
+  emailOwner pupil_email_owner_enum @default(unknown)
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -815,15 +928,29 @@ model student {
   lecture                              lecture[]
   match                                match[]
   participation_certificate            participation_certificate[]
+  instant_certificate                  instant_certificate[]
   project_coaching_screening           project_coaching_screening?
   project_field_with_grade_restriction project_field_with_grade_restriction[]
   project_match                        project_match[]
   remission_request                    remission_request?
   screening                            screening?
   subcourse_instructors_student        subcourse_instructors_student[]
+  // Should stay null for users who where registered before the onboarding got added
+  hasDoneEthicsOnboarding              Boolean?
 
-  cooperationID Int?
-  cooperation   cooperation? @relation(fields: [cooperationID], references: [id])
+  cooperationID           Int?
+  cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
+  // Used to match students that have have experience supporting pupils with learning difficulties
+  hasSpecialExperience    Boolean      @default(false)
+  // Used as an "AboutMe" for screening or for other type of Meetings between Lern-Fair and the student
+  descriptionForScreening String       @default("") @db.VarChar
+  // Screeners provide future matches tips or information about the student to help improve the collaboration
+  descriptionForMatch     String       @default("") @db.VarChar
+  // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
+  gender                  gender_enum?
+
+  // The referring user's type and ID, e.g., "pupil/5", "student/3"
+  referredById String? @db.VarChar
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -913,22 +1040,26 @@ model match_pool_run {
   matchingPool   String   @db.VarChar
   matchesCreated Int
   stats          Json     @db.Json
+
+  matches match[]
 }
 
 // A Secret allows a User to log in, i.e. a Token sent to the user via Email or their Password
 model secret {
-  id          Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
-  createdAt   DateTime         @default(now()) @db.Timestamp(6)
-  userId      String           @db.VarChar
-  type        secret_type_enum
-  secret      String           @db.VarChar
-  expiresAt   DateTime?        @db.Timestamp(6)
-  lastUsed    DateTime?        @db.Timestamp(6)
+  id               Int              @id(map: "PK_6afa4961954e17ec2d6401afc3d") @default(autoincrement())
+  createdAt        DateTime         @default(now()) @db.Timestamp(6)
+  userId           String           @db.VarChar
+  type             secret_type_enum
+  secret           String           @db.VarChar
+  expiresAt        DateTime?        @db.Timestamp(6)
+  lastUsed         DateTime?        @db.Timestamp(6)
   // For Tokens created on a device, this contains the User-Agent of the Device
   // Might also be 'Support' if someone from Support logs in on behalf of the user
   // For EMAIL_TOKENs, contains the email the token is sent to. Can be used to confirm additional email addresses
   // (i.e. during email address change)
-  description String?          @db.VarChar
+  description      String?          @db.VarChar
+  lastUsedDeviceId String?          @db.VarChar // the permanent device identifier this secret was last used on
+  idpClientId      String?          @db.VarChar
 }
 
 // DEPRECATED: Used by our old ORM to track migrations, to be removed once Prisma Migrations work reliably
@@ -1024,6 +1155,7 @@ enum course_category_enum {
   revision
   club
   coaching
+  homework_help
 }
 
 enum course_coursestate_enum {
@@ -1074,13 +1206,6 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
   skippedCoC
-}
-
-// DEPRECATED
-enum match_source_enum {
-  imported
-  matchedexternal
-  matchedinternal
 }
 
 // DEPRECATED
@@ -1320,6 +1445,7 @@ enum secret_type_enum {
   PASSWORD
   TOKEN
   EMAIL_TOKEN
+  IDP
 }
 
 enum course_schooltype_enum {
@@ -1438,6 +1564,7 @@ enum dissolved_by_enum {
 
 enum dissolve_reason {
   accountDeactivated // The account was deactivated, causing any active matches to be dissolved automatically
+  accountDeactivatedNoCoC // The account was deactivated because the student did not hand in a Certificate of Conduct
   ghosted // "Mein:e Lernpartner:in hat sich nicht zurückgemeldet"
   noMoreHelpNeeded // "Mein:e Lernpartner:in benötigt keine Unterstützung mehr" and "Ich benötige keine Unterstützung mehr"
   isOfNoHelp // "Ich konnte meinem/meiner Lernpartner:in nicht behilflich sein" and "Mein:e Lernpartner:in konnte mir nicht behilflich sein"
@@ -1448,4 +1575,16 @@ enum dissolve_reason {
   languageIssues // "Wir hatten sprachliche Schwierigkeiten"
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
+}
+enum gender_enum {
+  male
+  female
+  other
+}
+
+enum pupil_email_owner_enum {
+  pupil
+  parent
+  other
+  unknown
 }

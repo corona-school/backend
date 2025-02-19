@@ -49,7 +49,7 @@ class PublicCourseEditInput {
     @TypeGraphQL.Field((_type) => String, { nullable: true })
     description?: string;
     @TypeGraphQL.Field((_type) => course_category_enum, { nullable: true })
-    category?: 'revision' | 'club' | 'coaching';
+    category?: course_category_enum;
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
 
@@ -78,6 +78,10 @@ export class MutateCourseResolver {
         @Arg('course') course: PublicCourseCreateInput,
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Course> {
+        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
+        if (!mayCreateHomeworkHelp && course.category === 'homework_help') {
+            throw new ForbiddenError('Only authorized users can create homework help courses');
+        }
         const student = await getSessionStudent(context, studentId);
         const result = await prisma.course.create({ data: { ...course, courseState: 'created' } });
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
@@ -117,7 +121,10 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-
+        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
+        if (!mayCreateHomeworkHelp && data.category === 'homework_help') {
+            throw new ForbiddenError('Only authorized users can create homework help courses');
+        }
         if (course.courseState === 'allowed') {
             let editableSubcourse = false;
             for (const subcourse of await getSubcoursesForCourse(courseId, true)) {

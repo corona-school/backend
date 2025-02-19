@@ -3,7 +3,7 @@ import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Res
 import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import { Deprecated, getMatch, getSubcourse } from '../util';
+import { Deprecated, getLecture, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
@@ -80,7 +80,7 @@ export class ExtendedFieldsLectureResolver {
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN, Role.COURSE_SCREENER)
     @LimitEstimated(30)
     async participants(
         @Ctx() context: GraphQLContext,
@@ -177,12 +177,10 @@ export class ExtendedFieldsLectureResolver {
     async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
         const { user } = context;
         const isAdmin = user.roles.includes(Role.ADMIN);
-
         if (!appointment.zoomMeetingId) {
             logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
             return null;
         }
-
         if (isAdmin) {
             const zoomMeeting = await getZoomMeeting(appointment);
             logger.info(`Admin requested zoom meeting url`);

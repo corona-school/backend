@@ -6,7 +6,7 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -18,6 +18,8 @@ import {
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
+    gender_enum as Gender,
+    school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -30,9 +32,10 @@ import { addPupilScreening, updatePupilScreening } from '../../common/pupil/scre
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
+import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../types/userInputs';
 import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
+import { findOrCreateSchool } from '../../common/school/create';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -82,6 +85,21 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
+
+    @Field((type) => Gender, { nullable: true })
+    onlyMatchWith?: Gender;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialNeeds?: boolean;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
 }
 
 @InputType()
@@ -153,6 +171,11 @@ export async function updatePupil(
         matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        onlyMatchWith,
+        hasSpecialNeeds,
+        descriptionForMatch,
+        descriptionForScreening,
+        school,
     } = update;
 
     if (projectFields && !pupil.isProjectCoachee) {
@@ -167,6 +190,30 @@ export async function updatePupil(
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
     }
 
+    if (hasSpecialNeeds != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
+    }
+
+    if (onlyMatchWith !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    let dbSchool: School | undefined;
+    try {
+        dbSchool = await findOrCreateSchool(school);
+    } catch (error) {
+        logger.error('School could not be created', error);
+        throw new PrerequisiteError('School could not be created');
+    }
+
     const res = await prismaInstance.pupil.update({
         data: {
             firstname: ensureNoNull(firstname),
@@ -177,13 +224,18 @@ export async function updatePupil(
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
             projectFields: ensureNoNull(projectFields),
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
-            schooltype: ensureNoNull(schooltype),
+            state: ensureNoNull(dbSchool?.state ?? state),
+            schooltype: ensureNoNull(dbSchool?.schooltype ?? schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
+            onlyMatchWith,
+            hasSpecialNeeds,
+            descriptionForMatch,
+            descriptionForScreening,
+            schoolId: dbSchool?.id,
         },
         where: { id: pupil.id },
     });
@@ -193,7 +245,7 @@ export async function updatePupil(
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForPupil(res));
+    await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
@@ -247,7 +299,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN, Role.PUPIL_SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);

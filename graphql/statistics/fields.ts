@@ -680,7 +680,25 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
-    async knowsCoronaSchoolFrom(@Root() statistics: Statistics) {
+    async knowsCoronaSchoolFrom(@Root() statistics: Statistics, @Arg('type') type: 'pupil' | 'student') {
+        if (type === 'pupil') {
+            return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                                                   date_part('year', "createdAt"::date)  AS year,
+                                                   date_part('month', "createdAt"::date) AS month,
+                                                   "knowsCoronaSchoolFrom"               AS group
+                                            FROM (
+                                                     SELECT pupil_screening."createdAt", "pupilId", "knowsCoronaSchoolFrom",
+                                                            ROW_NUMBER() OVER (PARTITION BY "pupilId" ORDER BY pupil_screening."createdAt") AS row_num
+                                                     FROM "pupil_screening"
+                                                     JOIN pupil p ON pupil_screening."pupilId" = p.id
+                                                     WHERE "knowsCoronaSchoolFrom" IS NOT NULL
+                                                       AND p."createdAt" > ${statistics.from}::timestamp
+                                                       AND p."createdAt" < ${statistics.to}::timestamp
+                                                 ) as query
+                                            WHERE row_num = 1
+                                            GROUP BY "year", "month", "knowsCoronaSchoolFrom"
+                                            ORDER BY "year" ASC, "month" ASC, "knowsCoronaSchoolFrom" ASC;`;
+        }
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month,
