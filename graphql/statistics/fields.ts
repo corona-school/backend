@@ -77,7 +77,7 @@ export class StatisticsResolver {
                                                      date_part('year', "createdAt"::date)  AS year,
                                                      date_part('month', "createdAt"::date) AS month
                                               FROM "student"
-                                              WHERE "verification" is NULL
+                                              WHERE "verifiedAt" is NOT NULL
                                                 AND "createdAt" > ${statistics.from}::timestamp
                                                 AND "createdAt" < ${statistics.to}::timestamp
                                               GROUP BY "year", "month"
@@ -94,7 +94,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "state"                               AS group
                                       FROM "student"
-                                      WHERE verification is NULL
+                                      WHERE "verifiedAt" is NOT  NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "state"
@@ -111,14 +111,14 @@ export class StatisticsResolver {
             FROM (
                 SELECT student."createdAt", screening."jobStatus" as "jobStatus" FROM student
                 LEFT JOIN screening on screening."studentId" = student.id
-                WHERE verification is NULL
+                WHERE verifiedAt is NOT NULL
                   AND student."createdAt" > ${statistics.from}::timestamp
                   AND student."createdAt" < ${statistics.to}::timestamp
                   AND screening."jobStatus" IS NOT NULL
                 UNION
                 SELECT student."createdAt", instructor_screening."jobStatus" as "jobStatus" FROM student
                 LEFT JOIN instructor_screening on instructor_screening."studentId" = student.id
-                WHERE verification is NULL
+                WHERE verifiedAt is NOT NULL
                   AND student."createdAt" > ${statistics.from}::timestamp
                   AND student."createdAt" < ${statistics.to}::timestamp
                   AND instructor_screening."jobStatus" IS NOT NULL
@@ -135,7 +135,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "university"                          AS group
                                       FROM "student"
-                                      WHERE verification is NULL
+                                      WHERE verifiedAt is NOT NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "university"
@@ -149,7 +149,7 @@ export class StatisticsResolver {
                                              date_part('year', "createdAt"::date)  AS year,
                                              date_part('month', "createdAt"::date) AS month
                                       FROM "pupil"
-                                      WHERE verification is NULL
+                                      WHERE verifiedAt is NOT NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month"
@@ -164,7 +164,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "state"                               as group
                                       FROM "pupil"
-                                      WHERE verification is NULL
+                                      WHERE verifiedAt is NOT NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "state"
@@ -179,7 +179,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "schooltype"                          as group
                                       FROM "pupil"
-                                      WHERE verification is NULL
+                                      WHERE "verifiedAt" is NOT NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "schooltype"
@@ -194,7 +194,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "grade"                               as group
                                       FROM "pupil"
-                                      WHERE verification is NULL
+                                      WHERE "verifiedAt" is NOT NULL
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "grade"
