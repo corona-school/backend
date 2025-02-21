@@ -7,7 +7,7 @@ import { userForPupil } from '../user';
 const logger = getLogger('Pupil Token Auth');
 
 export async function refreshToken(pupil: pupil): Promise<string | never> {
-    if (pupil.verification !== null) {
+    if (!pupil.verifiedAt) {
         throw new Error('Cannot request access token for Pupil in Verification process');
     }
 
