@@ -383,7 +383,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             matchReason: everyone,
 
             email: adminOrOwnerOrScreener,
-            verification: nobody,
             verifiedAt: adminOrOwnerOrScreener,
             wix_id: adminOrOwner,
             newsletter: adminOrOwner,
@@ -453,7 +452,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             email: adminOrOwnerOrScreener,
             phone: adminOrOwner,
-            verification: nobody,
             verifiedAt: adminOrOwner,
             newsletter: adminOrOwner,
             openMatchRequestCount: adminOrOwnerOrScreener,
@@ -527,7 +525,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
 
     Screener: {
         fields: withPublicFields<Screener, 'id'>({
-            verification: nobody,
             password: nobody,
             verified: nobody,
             verifiedAt: nobody,
