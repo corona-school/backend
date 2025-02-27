@@ -485,7 +485,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructor_screening: nobody,
             isRedacted: nobody,
             oldNumberID: nobody,
-            project_coaching_screening: nobody,
             screenings: nobody,
             updatedAt: nobody,
             _count: nobody,

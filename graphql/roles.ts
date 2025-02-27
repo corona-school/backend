@@ -12,8 +12,7 @@ export function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
     roles.push(Role.UNAUTHENTICATED, Role.USER, Role.PUPIL);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
-    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
-    if (!pupil.verifiedAt && pupil.verification) {
+    if (!pupil.verifiedAt) {
         logger.info(`Pupil(${pupil.id}) was not verified yet, they should re authenticate`);
         return;
     }
@@ -43,8 +42,7 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
     roles.push(Role.UNAUTHENTICATED, Role.USER, Role.STUDENT);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
-    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
-    if (!student.verifiedAt && student.verification) {
+    if (!student.verifiedAt) {
         logger.info(`Student(${student.id}) was not verified yet, they should re authenticate`);
         return;
     }
