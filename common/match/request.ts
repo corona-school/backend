@@ -4,13 +4,14 @@ import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
 import { RedundantError } from '../util/error';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
+import * as Notification from '../notification';
+import { userForPupil, userForStudent } from '../user';
 
 const logger = getLogger('Match');
 
 const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
-const PUPIL_MAX_MATCHES = 1;
-const PUPIL_MAX_DISSOLVED_MATCHES = 5;
+const PUPIL_MAX_MATCHES = 2;
 
 type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
@@ -29,18 +30,12 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
         return { allowed: true };
     }
 
-    const lastYear = new Date();
-    lastYear.setFullYear(lastYear.getFullYear() - 1);
-
     const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
     if (pupil.openMatchRequestCount + activeMatchCount >= PUPIL_MAX_MATCHES) {
         return { allowed: false, reason: 'max-matches', limit: PUPIL_MAX_MATCHES };
     }
 
-    /* const dissolvedMatchCountLastYear = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: true, createdAt: { gte: lastYear } } });
-    if (pupil.openMatchRequestCount + activeMatchCount + dissolvedMatchCountLastYear >= PUPIL_MAX_DISSOLVED_MATCHES) {
-        return { allowed: false, reason: 'max-dissolved-matches', limit: PUPIL_MAX_DISSOLVED_MATCHES };
-    } */
+    // previously we also had max-dissolved-matches - this was removed a long time ago
 
     return { allowed: true };
 }
@@ -63,6 +58,9 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
             data: { firstMatchRequest: new Date() },
         });
     }
+
+    await Notification.actionTaken(userForPupil(pupil), 'tutee_match_requested', {});
+
     logger.info(`Created match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
 
@@ -79,6 +77,10 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
     });
 
     await invalidateAllScreeningsOfPupil(pupil.id);
+
+    if (result.openMatchRequestCount === 0) {
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
+    }
 
     logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
 }
@@ -117,6 +119,8 @@ export async function createStudentMatchRequest(student: Student, adminOverride 
         });
     }
 
+    await Notification.actionTaken(userForStudent(student), 'tutor_match_requested', {});
+
     logger.info(`Created match request for Student(${student.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
 
@@ -129,6 +133,10 @@ export async function deleteStudentMatchRequest(student: Student) {
         where: { id: student.id },
         data: { openMatchRequestCount: { decrement: 1 } },
     });
+
+    if (result.openMatchRequestCount === 0) {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_request_revoked', {});
+    }
 
     logger.info(`Deleted match request for student, now has ${result.openMatchRequestCount} requests`);
 }

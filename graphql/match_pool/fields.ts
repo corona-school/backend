@@ -14,6 +14,7 @@ import {
     getPupilsToContactNext,
     getInterestConfirmationRate,
     validatePoolToggles,
+    screeningInvitationsToSend,
 } from '../../common/match/pool';
 import { Role } from '../authorizations';
 import { JSONResolver } from 'graphql-scalars';
@@ -47,6 +48,12 @@ class SubjectDemand {
     subject: string;
     @Field()
     demand: number;
+    @Field()
+    offered: number;
+    @Field()
+    requested: number;
+    @Field({ nullable: true })
+    requestedMandatory?: number;
 }
 
 @ObjectType()
@@ -131,17 +138,27 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => Int)
     @Authorized(Role.ADMIN)
     async confirmationRequestsToSend(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.confirmInterest) {
+        if (!matchPool.toggles.includes('confirmation-unknown')) {
             return 0;
         }
 
         return await confirmationRequestsToSend(matchPool);
     }
 
+    @FieldResolver((returns) => Int)
+    @Authorized(Role.ADMIN)
+    async screeningInvitationsToSend(@Root() matchPool: MatchPoolType) {
+        if (!matchPool.toggles.includes('pupil-screening-pending')) {
+            return 0;
+        }
+
+        return await screeningInvitationsToSend(matchPool);
+    }
+
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     async pupilsToRequestInterest(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.confirmInterest) {
+        if (!matchPool.toggles.includes('confirmation-unknown') && !matchPool.toggles.includes('pupil-screening-unknown')) {
             return [];
         }
 
@@ -151,7 +168,7 @@ export class FieldsMatchPoolResolver {
     @FieldResolver((returns) => [Pupil])
     @Authorized(Role.ADMIN)
     async pupilsToScreen(@Root() matchPool: MatchPoolType) {
-        if (!matchPool.needsScreening) {
+        if (!matchPool.toggles.includes('pupil-screening-unknown')) {
             return [];
         }
 

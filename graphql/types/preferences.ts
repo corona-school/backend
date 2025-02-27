@@ -5,6 +5,8 @@ import { Field, InputType, ObjectType } from 'type-graphql';
 export class Channels {
     @Field()
     email: boolean;
+    @Field({ nullable: true })
+    push?: boolean;
 
     [otherChannel: string]: boolean;
 }

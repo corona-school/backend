@@ -1,12 +1,14 @@
 import { User } from '../user';
 import { ChatMetaData, ContactReason, Conversation, ConversationInfos, FinishedReason, SystemMessage, TJConversation } from './types';
-import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId } from './helper';
+import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
 import { getOrCreateChatUser } from './user';
 import { prisma } from '../prisma';
 import { getMyContacts } from './contacts';
 import systemMessages from './localization';
 import { getLogger } from '../logger/logger';
+import assert from 'assert';
+import { createHmac } from 'crypto';
 
 const logger = getLogger('Chat');
 const getOrCreateOneOnOneConversation = async (
@@ -16,7 +18,6 @@ const getOrCreateOneOnOneConversation = async (
     subcourseId?: number
 ): Promise<Conversation> => {
     await ensureChatUsersExist(participants);
-
     const participantsConversationId = createOneOnOneId(participants[0], participants[1]);
     const participantsConversation = await getConversation(participantsConversationId);
 
@@ -43,7 +44,6 @@ const getOrCreateOneOnOneConversation = async (
     } else {
         const newConversationId = await createConversation(participants, conversationInfos, 'oneOnOne');
         const newConversation = await getConversation(newConversationId);
-        await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
 
         const convertedConversation = convertTJConversation(newConversation);
         logger.info(`One-on-one conversation was created with ID ${convertedConversation.id} `);
@@ -62,6 +62,15 @@ async function ensureChatUsersExist(participants: [User, User] | User[]): Promis
         })
     );
 }
+
+const createChatSignature = async (user: User): Promise<string> => {
+    const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
+    assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
+    const userId = (await getOrCreateChatUser(user)).id;
+    const key = TALKJS_SECRET_KEY;
+    const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
+    return hash.digest('hex');
+};
 
 async function handleExistingConversation(
     conversationId: string,
@@ -116,7 +125,7 @@ async function updateParticipantConversation(conversationId: string, subcourseId
 }
 
 async function updateProspectConversation(conversationId: string, subcourseId: number | undefined, conversation: TJConversation): Promise<void> {
-    const prospectSubcoursesFromConversation = conversation?.custom.prospectSubcourse;
+    const prospectSubcoursesFromConversation = conversation?.custom?.prospectSubcourse;
     let prospectSubcourseIds = [];
 
     prospectSubcourseIds = JSON.parse(prospectSubcoursesFromConversation || '[]');
@@ -132,7 +141,6 @@ async function updateProspectConversation(conversationId: string, subcourseId: n
     };
 
     logger.info(`Existing prospect conversation ${conversationId} was updated for subcourse ${subcourseId}.`);
-
     await updateConversation(updatedConversation);
 }
 
@@ -159,6 +167,7 @@ const getOrCreateGroupConversation = async (participants: User[], subcourseId: n
         const newConversationId = await createConversation(participants, conversationInfos, 'group');
         const newConversation = await getConversation(newConversationId);
         await sendSystemMessage(systemMessages.de.groupChat, newConversationId, SystemMessage.FIRST);
+
         await prisma.subcourse.update({
             where: { id: subcourseId },
             data: { conversationId: newConversationId },
@@ -184,7 +193,9 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
     }
 
     const conversationInfos: ConversationInfos = {
+        welcomeMessages: [systemMessages.de.oneOnOne],
         custom: {
+            createdBy: meUser.userID,
             ...(contact.match && { match: { matchId: contact.match.matchId } }),
             ...(contact.subcourse && { subcourse: [...new Set(contact.subcourse)] }),
         },
@@ -195,4 +206,4 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
     return conversation.id;
 }
 
-export { getOrCreateOneOnOneConversation, getOrCreateGroupConversation, createContactChat };
+export { getOrCreateOneOnOneConversation, getOrCreateGroupConversation, createContactChat, createChatSignature };

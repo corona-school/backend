@@ -2,13 +2,11 @@
    New notifications can be created / modified at runtime. This module contains various utilities to do that */
 
 import { prisma } from '../prisma';
-import { Context, Notification, NotificationID, NotificationMessage, NotificationRecipient } from './types';
+import { Context, Notification, NotificationID, NotificationRecipient } from './types';
 import { Prisma } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
-// eslint-disable-next-line import/no-cycle
 import { hookExists } from './hook';
-import { ActionID, getNotificationActions, sampleUser } from './actions';
-import { MessageTemplateType } from '../../graphql/types/notificationMessage';
+import { getNotificationActions, sampleUser } from './actions';
 import { NotificationUpdateInput } from '../../graphql/generated';
 import { USER_APP_DOMAIN } from '../util/environment';
 
@@ -147,6 +145,24 @@ export async function create(notification: Prisma.notificationCreateInput) {
     invalidateCache();
 
     return result;
+}
+
+export async function deleteOne(id: NotificationID) {
+    await getNotification(id, true); //throws error if notification doesn't exist
+    if ((await prisma.concrete_notification.count({ where: { notificationID: id } })) > 0) {
+        throw new Error('Cannot delete a notification which has concrete notifications.');
+    }
+
+    // If there is a related message_translation for this notification it has to be deleted first due to foreign key constraint
+    await prisma.message_translation.deleteMany({
+        where: { notificationId: id },
+    });
+
+    await prisma.notification.delete({
+        where: { id },
+    });
+
+    logger.info(`Notification(${id}) deleted\n`);
 }
 
 /* Imports Changes to the Notification System

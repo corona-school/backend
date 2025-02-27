@@ -1,6 +1,5 @@
 import assert from 'assert';
-// eslint-disable-next-line import/no-cycle
-import { adminClient } from '.';
+import { adminClient } from './clients';
 
 interface MockNotification {
     id: number;
@@ -24,7 +23,7 @@ export async function createMockNotification(
     const {
         notificationCreate: { id },
     } = await adminClient.request(`mutation Create${description} {
-        notificationCreate(notification: { 
+        notificationCreate(notification: {
             description: "MOCK ${description}"
             active: false
             recipient: 0
@@ -35,11 +34,14 @@ export async function createMockNotification(
         }) { id }
     }`);
 
-    await adminClient.request(`mutation Activate${description} { notificationActivate(notificationId: ${id}, active: true)}`);
+    await addMockNotification(id);
+    return { id };
+}
+
+export async function addMockNotification(id: number) {
+    await adminClient.request(`mutation Activate${id} { notificationActivate(notificationId: ${id}, active: true)}`);
 
     currentMockedNotifications.push(id);
-
-    return { id };
 }
 
 export async function cleanupMockedNotifications() {
@@ -54,8 +56,8 @@ export async function assertUserReceivedNotification(notification: MockNotificat
     // Sending of concrete notifications happens concurrently to the main flow, so we might get a response back before a notification was sent
     await new Promise((res) => setTimeout(res, 500));
 
-    const result = await adminClient.request(`query GetNotificationForUser { 
-        concrete_notifications(where: { userId: { equals: "${userID}" } notificationID: { equals: ${notification.id} } state: { equals: 2 } }, take: 2) { 
+    const result = await adminClient.request(`query GetNotificationForUser {
+        concrete_notifications(where: { userId: { equals: "${userID}" } notificationID: { equals: ${notification.id} } state: { equals: 2 } }, take: 2) {
            contextID
            context
            error

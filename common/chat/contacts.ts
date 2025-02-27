@@ -61,32 +61,34 @@ export type MatchContactStudent = {
 };
 const getMatchContactsForUser = async (user: User): Promise<MatchContactStudent[] | MatchContactPupil[]> => {
     if (user.pupilId) {
-        const studentsWithMatchId = await prisma.student.findMany({
+        const matchesWithStudent = await prisma.match.findMany({
             where: {
-                match: { some: { pupilId: user.pupilId, dissolved: false } },
+                pupilId: user.pupilId,
+                dissolved: false,
             },
-            include: { match: true },
+            include: { student: true },
         });
 
-        const studentWithMatchId: MatchContactStudent[] = studentsWithMatchId.map((studentWithMatchId) => {
+        const studentWithMatchId: MatchContactStudent[] = matchesWithStudent.map((matchWithStudent) => {
             return {
-                student: studentWithMatchId,
-                matchId: studentWithMatchId.match[0].id,
+                student: matchWithStudent.student,
+                matchId: matchWithStudent.id,
             };
         });
         return studentWithMatchId;
     }
     if (user.studentId) {
-        const pupilsWithMatchId = await prisma.pupil.findMany({
+        const matchesWithPupil = await prisma.match.findMany({
             where: {
-                match: { some: { studentId: user.studentId, dissolved: false } },
+                studentId: user.studentId,
+                dissolved: false,
             },
-            include: { match: true },
+            include: { pupil: true },
         });
-        const pupilWithMatchId: MatchContactPupil[] = pupilsWithMatchId.map((pupilWithMatchId) => {
+        const pupilWithMatchId: MatchContactPupil[] = matchesWithPupil.map((matchWithPupil) => {
             return {
-                pupil: pupilWithMatchId,
-                matchId: pupilWithMatchId.match[0].id,
+                pupil: matchWithPupil.pupil,
+                matchId: matchWithPupil.id,
             };
         });
 

@@ -1,11 +1,10 @@
 import { message_translation_language_enum as TranslationLanguage } from '@prisma/client';
-import { getSampleContext } from './notification';
-import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate } from './types';
+import { getNotification, getSampleContext } from './notification';
+import { ConcreteNotification, Notification, NotificationContext, NotificationMessage, NotificationType, TranslationTemplate, getContext } from './types';
 import { prisma } from '../prisma';
 import { compileTemplate, renderTemplate } from '../../utils/helpers';
 import { ClientError } from '../util/error';
 import { MessageTemplateType, NotificationMessageType } from '../../graphql/types/notificationMessage';
-import { getContext } from '.';
 import { getUser } from '../user';
 import { getLogger } from '../logger/logger';
 
@@ -15,10 +14,7 @@ export async function getMessageForNotification(
     notificationId: number,
     language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessage | null> {
-    const notification = await prisma.notification.findUnique({
-        where: { id: notificationId },
-        select: { type: true },
-    });
+    const notification = await getNotification(notificationId);
 
     if (!notification || !notification.type) {
         return null;
@@ -86,9 +82,14 @@ async function loadTemplate(notificationID: number, language: TranslationLanguag
     return template;
 }
 
+export async function hasMessage(notificationId: number) {
+    const template = await loadTemplate(notificationId, TranslationLanguage.de);
+    return !!template;
+}
+
 // Renders a Message for a certain Concrete Notification
 export async function getMessage(
-    concreteNotification: ConcreteNotification,
+    concreteNotification: Pick<ConcreteNotification, 'id' | 'notificationID' | 'userId' | 'context'>,
     language: TranslationLanguage = TranslationLanguage.de
 ): Promise<NotificationMessageType | null> {
     const template = await loadTemplate(concreteNotification.notificationID, language);
@@ -156,7 +157,7 @@ export async function getMessage(
     }
 
     return {
-        type: template.type,
+        type: context?.overrideType ?? template.type,
         headline,
         body,
         navigateTo,

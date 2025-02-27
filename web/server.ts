@@ -50,6 +50,7 @@ export const server = (async function setupWebserver() {
             verify: (req: WithRawBody<IncomingMessage>, res, buf) => {
                 req.rawBody = buf;
             },
+            limit: '10MB',
         })
     );
     app.use(cookieParser());

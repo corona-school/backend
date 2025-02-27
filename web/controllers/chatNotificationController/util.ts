@@ -45,10 +45,12 @@ export async function getNotificationContext(notificationBody: NotificationTrigg
             courseId = subcourse.courseId;
         }
 
+        const filteredMessages = messages.filter((message) => message.type !== 'SystemMessage');
+
         notificationContext = {
             sender: { firstname: firstnameSender },
             conversationId: conversation.id,
-            message: messages[0].text,
+            message: filteredMessages[0].text,
             totalUnread: messages.length.toString(),
             ...(match ? { matchId: match.matchId } : {}),
             ...(courseId ? { courseId: courseId.toString() } : {}),

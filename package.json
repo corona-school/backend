@@ -28,7 +28,9 @@
         "heroku:release": "./release.sh",
         "integration-tests": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests",
         "integration-tests:debug": "node -r source-map-support/register -r dotenv/config ./built/integration-tests/index.js dotenv_config_path=.env.integration-tests.debug",
-        "test": "jest",
+        "unit": "TZ=UTC jest --selectProjects unit",
+        "perf": "TZ=UTC jest --selectProjects perf",
+        "test": "TZ=UTC jest",
         "db:reset": "prisma migrate reset --skip-generate",
         "db:reset-hard": "prisma migrate reset -f --skip-generate",
         "db:seed": "node -r dotenv/config ./built/seed-db.js",
@@ -37,8 +39,12 @@
         "db:deploy-migrations": "prisma migrate deploy"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.369.0",
+        "@aws-sdk/client-s3": "^3.645.0",
         "@aws-sdk/s3-request-presigner": "^3.137.0",
+        "@langchain/community": "^0.3.6",
+        "@langchain/core": "^0.3.13",
+        "@langchain/openai": "^0.3.8",
+        "@onlabsorg/swan-js": "^0.13.0",
         "@prisma/client": "4.15.0",
         "apollo-server-express": "3.4.0",
         "apollo-server-plugin-response-cache": "3.4.0",
@@ -46,16 +52,17 @@
         "bcrypt": "^5.0.0",
         "body-parser": "^1.19.0",
         "class-validator": "^0.14.0",
-        "cookie-parser": "^1.4.6",
+        "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "cron": "^1.8.2",
         "date-holidays": "^1.5.3",
-        "dd-trace": "^4.1.0",
+        "dd-trace": "^5.2.0",
         "dotenv": "^8.2.0",
         "dotenv-cli": "^7.3.0",
-        "ejs": "^3.1.7",
-        "express": "^4.15.2",
+        "ejs": "^3.1.10",
+        "express": "^4.21.2",
         "express-favicon": "^2.0.1",
+        "google-auth-library": "^9.15.1",
         "graphql": "15.7.2",
         "graphql-fields": "^2.0.3",
         "graphql-request": "^4.2.0",
@@ -66,20 +73,29 @@
         "keyv": "^4.0.3",
         "lodash": "^4.17.21",
         "log4js": "^6.4.0",
+        "mammoth": "^1.8.0",
         "moment": "^2.29.2",
         "moment-timezone": "^0.5.35",
         "multer": "^1.4.2",
+        "munkres-algorithm": "^1.0.2",
         "object-hash": "^3.0.0",
+        "officeparser": "^4.2.0",
+        "openai": "^4.52.7",
+        "pdf-parse": "^1.1.1",
         "pg": "^8.7.3",
         "prom-client": "^15.0.0",
         "qrcode": "^1.4.4",
         "reflect-metadata": "^0.1.13",
+        "sharp": "^0.33.5",
         "source-map-support": "^0.5.21",
         "talkjs": "^0.15.9",
+        "tiktoken": "^1.0.17",
         "type-graphql": "^1.1.1",
         "uuid": "^7.0.3",
+        "web-push": "^3.6.7",
         "wildcard-match": "^5.1.2",
-        "ws": "^8.11.0"
+        "ws": "^8.17.1",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@types/basic-auth": "^1.1.3",
@@ -101,6 +117,7 @@
         "@types/qrcode": "^1.5.1",
         "@types/react-select": "^3.0.12",
         "@types/uuid": "^8.3.4",
+        "@types/web-push": "^3.6.3",
         "@types/ws": "^8.5.3",
         "@typescript-eslint/eslint-plugin": "^6.4.1",
         "@typescript-eslint/parser": "^6.4.1",
@@ -111,6 +128,7 @@
         "eslint-plugin-import": "^2.26.0",
         "eslint-plugin-lernfair-lint": "./linter/",
         "jest": "^29.5.0",
+        "jest-mock-extended": "^3.0.5",
         "lint-staged": "^14.0.1",
         "nodemon": "^3.0.1",
         "pre-commit": "^1.2.2",
@@ -121,7 +139,6 @@
         "typescript": "^4.3.5"
     },
     "optionalDependencies": {
-        "corona-school-matching": "1.3.0",
         "html-pppdf": "^1.0.1"
     },
     "repository": {
@@ -138,32 +155,63 @@
         "lint-staged"
     ],
     "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "ts"
-        ],
-        "preset": "ts-jest/presets/default-esm",
-        "extensionsToTreatAsEsm": [
-            ".ts"
-        ],
-        "testRegex": ".*\\.spec\\.ts$",
-        "moduleNameMapper": {
-            "^(\\.{1,2}/.*)\\.js$": "$1"
-        },
-        "transform": {
-            "^.+\\.[tj]sx?$": [
-                "ts-jest",
-                {
-                    "useESM": true
-                }
-            ]
-        },
-        "collectCoverageFrom": [
-            "**/*.(t|j)s"
-        ],
-        "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "projects": [
+            {
+                "displayName": "unit",
+                "testRegex": [
+                    ".*\\.spec\\.ts$"
+                ],
+                "moduleFileExtensions": [
+                    "js",
+                    "json",
+                    "ts"
+                ],
+                "preset": "ts-jest/presets/default-esm",
+                "extensionsToTreatAsEsm": [
+                    ".ts"
+                ],
+                "moduleNameMapper": {
+                    "^(\\.{1,2}/.*)\\.js$": "$1"
+                },
+                "transform": {
+                    "^.+\\.[tj]sx?$": [
+                        "ts-jest",
+                        {
+                            "useESM": true
+                        }
+                    ]
+                },
+                "testEnvironment": "node",
+                "clearMocks": true,
+                "setupFilesAfterEnv": [
+                    "<rootDir>/jest/singletons.ts"
+                ]
+            },
+            {
+                "displayName": "perf",
+                "testRegex": [
+                    ".*\\.perf\\.ts$"
+                ],
+                "moduleFileExtensions": [
+                    "js",
+                    "json",
+                    "ts"
+                ],
+                "preset": "ts-jest/presets/default-esm",
+                "extensionsToTreatAsEsm": [
+                    ".ts"
+                ],
+                "transform": {
+                    "^.+\\.[tj]sx?$": [
+                        "ts-jest",
+                        {
+                            "useESM": true
+                        }
+                    ]
+                },
+                "testEnvironment": "node"
+            }
+        ]
     },
     "nodemonConfig": {
         "verbose": true,

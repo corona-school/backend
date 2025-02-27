@@ -1,19 +1,20 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import assert from 'assert';
-import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
+import { Lecture, lecture_appointmenttype_enum, Subcourse } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
-import { ZoomUser, createZoomUser, getOrCreateZoomUser, getZoomUser } from '../zoom/user';
-import { Prisma, student as Student, lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
+import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
+import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
 import moment from 'moment';
 import { getLogger } from '../../common/logger/logger';
 import { isZoomFeatureActive } from '../zoom/util';
 import * as Notification from '../../common/notification';
-import { getNotificationContextForSubcourse } from '../mails/courses';
-import { User, getStudentsFromList, userForPupil, userForStudent } from '../user';
-import { getLecture, getMatch, getPupil, getStudent } from '../../graphql/util';
+import { getStudentsFromList, User, userForPupil, userForStudent } from '../user';
+import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
+import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
+import { assertAllowed, Decision } from '../util/decision';
 
 const logger = getLogger();
 
@@ -58,12 +59,21 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     const { pupil, student } = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, include: { student: true, pupil: true } });
     const studentUserId = userForStudent(student).userID;
     const pupilUserId = userForPupil(pupil).userID;
-    const hosts = await hostsForStudents([student]);
+
+    // the correct meeting link is provided via appointmentsToBeCreated.
+    // Cases:
+    // - override meeting link is adopted
+    // - new override meeting link
+    // - create zoom meeting
+    let hosts: ZoomUser[] | null = null;
+    if (isZoomFeatureActive() && !appointmentsToBeCreated[0].meetingLink) {
+        hosts = await hostsForStudents([student]);
+    }
 
     const createdMatchAppointments = await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
             let zoomMeetingId: string | null;
-            if (isZoomFeatureActive()) {
+            if (hosts != null) {
                 const videoChat = await createZoomMeetingForAppointmentWithHosts(hosts, appointmentToBeCreated, false);
                 logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId}`);
                 zoomMeetingId = videoChat.id.toString();
@@ -79,6 +89,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                     organizerIds: [studentUserId],
                     participantIds: [pupilUserId],
                     zoomMeetingId,
+                    override_meeting_link: appointmentToBeCreated.meetingLink,
                 },
             });
         })
@@ -106,19 +117,37 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     return createdMatchAppointments;
 };
 
+export function canCreateGroupAppointment(subcourse: Subcourse, hasInstructors: boolean): Decision {
+    if (subcourse.cancelled) {
+        return { allowed: false, reason: 'course-cancelled' };
+    }
+
+    if (!hasInstructors) {
+        return { allowed: false, reason: 'no-instructors' };
+    }
+
+    return { allowed: true };
+}
+
 export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+    const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
+    const decision = canCreateGroupAppointment(subcourse, instructors.length > 0);
+    assertAllowed(decision);
 
-    assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
-    const hosts = await hostsForStudents(instructors.map((i) => i.student));
+    // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
+    let hosts: ZoomUser[] | null = null;
+    if (isZoomFeatureActive() && lastAppointment?.override_meeting_link == null && !appointmentsToBeCreated[0].meetingLink) {
+        hosts = await hostsForStudents(instructors.map((i) => i.student));
+    }
 
     const createdGroupAppointments = await Promise.all(
         appointmentsToBeCreated.map(async (appointmentToBeCreated) => {
             let zoomMeetingId: string | null;
 
-            if (isZoomFeatureActive()) {
+            if (hosts != null) {
                 const videoChat = await createZoomMeetingForAppointmentWithHosts(hosts, appointmentToBeCreated, true);
                 logger.info(`Zoom - Created meeting ${videoChat.id} for subcourse ${subcourseId}`);
                 zoomMeetingId = videoChat.id.toString();
@@ -135,6 +164,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
                     participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                     zoomMeetingId,
+                    override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
                 },
             });
         })
@@ -149,19 +179,26 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
         // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                student: organizer,
-            });
+            await Notification.actionTakenAt(
+                new Date(appointment.start),
+                userForPupil(participant.pupil),
+                'pupil_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+            );
         }
     }
 
     for (const instructor of instructors) {
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                student: organizer,
-            });
+            if (subcourse.published) {
+                // For unpublished courses, this is deferred to a later point
+                await Notification.actionTakenAt(
+                    new Date(appointment.start),
+                    userForStudent(instructor.student),
+                    'student_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
+                );
+            }
         }
     }
 
@@ -241,6 +278,7 @@ export async function createAdHocMeeting(matchId: number, user: User) {
     // Silent as we trigger a dedicated notification action for it anyways
     const matchAppointment = await createMatchAppointments(matchId, appointment, /* silent */ true);
     const { id, appointmentType } = matchAppointment[0];
+    const zoomUrl = await getZoomUrl(user, matchAppointment[0]);
 
     await Notification.actionTaken(userForPupil(pupil), 'student_add_ad_hoc_meeting', {
         appointmentId: id.toString(),
@@ -250,5 +288,5 @@ export async function createAdHocMeeting(matchId: number, user: User) {
         },
     });
 
-    return { id, appointmentType };
+    return { id, appointmentType, zoomUrl };
 }

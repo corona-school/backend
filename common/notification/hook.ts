@@ -5,29 +5,26 @@
 
 import { student as Student, pupil as Pupil } from '@prisma/client';
 import { getPupil, getStudent, User } from '../user';
-// eslint-disable-next-line import/no-cycle
-import { getNotifications } from './notification';
-import { prisma } from '../prisma';
-import { ActionID, ConcreteNotificationState } from './types';
+import { NotificationContext } from './types';
 
-type NotificationHook = { fn: (user: User) => Promise<void>; description: string };
+type NotificationHook = { fn: (user: User, context: NotificationContext) => Promise<void>; description: string };
 
 const hooks: { [hookID: string]: NotificationHook } = {};
 
 export const hookExists = (hookID: string) => hookID in hooks;
 export const getHookDescription = (hookID: string) => hooks[hookID]?.description;
 
-export async function triggerHook(hookID: string, user: User) {
+export async function triggerHook(hookID: string, user: User, context: NotificationContext) {
     if (!hookExists(hookID)) {
         throw new Error(`Unknown hook ${hookID}`);
     }
 
     const hook = hooks[hookID];
 
-    await hook.fn(user);
+    await hook.fn(user, context);
 }
 
-export function registerHook(hookID: string, description: string, fn: (user: User) => Promise<void>) {
+export function registerHook(hookID: string, description: string, fn: (user: User, context: NotificationContext) => Promise<void>) {
     if (hookExists(hookID)) {
         throw new Error(`Hook may only be registered once`);
     }
@@ -35,26 +32,8 @@ export function registerHook(hookID: string, description: string, fn: (user: Use
     hooks[hookID] = { description, fn };
 }
 
-export const registerStudentHook = (hookID: string, description: string, hook: (student: Student) => Promise<void>) =>
-    registerHook(hookID, description, (user) => getStudent(user).then(hook));
+export const registerStudentHook = (hookID: string, description: string, hook: (student: Student, context: NotificationContext) => Promise<void>) =>
+    registerHook(hookID, description, (user, context) => getStudent(user).then((student) => hook(student, context)));
 
-export const registerPupilHook = (hookID: string, description: string, hook: (pupil: Pupil) => Promise<void>) =>
-    registerHook(hookID, description, (user) => getPupil(user).then(hook));
-
-// Predicts when a hook will run for a certain user as caused by a certain action
-// i.e. 'When will a user by deactivated (hook) due to Certificate of Conduct reminders (action) ?'
-// Returns null if no date is known or hook was already triggered
-export async function predictedHookActionDate(action: ActionID, hookID: string, user: User): Promise<Date | null> {
-    const viableNotifications = ((await getNotifications()).get(action)?.toSend ?? []).filter((it) => it.hookID === hookID);
-
-    const possibleTrigger = await prisma.concrete_notification.findFirst({
-        where: {
-            state: ConcreteNotificationState.DELAYED,
-            userId: user.userID,
-            notificationID: { in: viableNotifications.map((it) => it.id) },
-        },
-        select: { sentAt: true },
-    });
-
-    return possibleTrigger?.sentAt;
-}
+export const registerPupilHook = (hookID: string, description: string, hook: (pupil: Pupil, context: NotificationContext) => Promise<void>) =>
+    registerHook(hookID, description, (user, context) => getPupil(user).then((pupil) => hook(pupil, context)));

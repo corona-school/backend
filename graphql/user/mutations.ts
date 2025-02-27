@@ -1,4 +1,4 @@
-import { Role } from '../authorizations';
+import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { RateLimit } from '../rate-limit';
 import { Mutation, Resolver, Arg, Authorized, Ctx, InputType, Field } from 'type-graphql';
 import { UserType } from '../types/user';
@@ -7,12 +7,15 @@ import { determinePreferredLoginOption, LoginOption } from '../../common/secret'
 import { getFullName, getUserByEmail } from '../../common/user';
 import { GraphQLContext } from '../context';
 import { toPublicToken } from '../authentication';
-import mailjet from '../../common/mails/mailjet';
-import { DEFAULTSENDERS } from '../../common/mails/config';
 import { isDev } from '../../common/util/environment';
 import { Length } from 'class-validator';
 import { validateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
+import { Attachment, DEFAULTSENDERS, sendMail } from '../../common/notification/channels/mailjet';
+import { prisma } from '../../common/prisma';
+import { CreatePushSubscription, addPushSubcription, removePushSubscription } from '../../common/notification/channels/push';
+import { GraphQLInt } from 'graphql';
+import { GraphQLJSON } from 'graphql-scalars';
 
 @InputType()
 class SupportMessage {
@@ -23,6 +26,41 @@ class SupportMessage {
     @Field()
     @Length(/* min */ 1, /* max */ 200)
     subject: string;
+}
+
+@InputType()
+class AppFeedbackAttachment implements Attachment {
+    @Field()
+    @Length(/* min */ 1, /* max */ 2 * 1024 * 1024)
+    Base64Content: string;
+    @Field()
+    ContentType: string;
+    @Field()
+    Filename: string;
+}
+
+@InputType()
+class AppFeedback {
+    @Field()
+    @Length(/* min */ 1, /* max */ 10_000)
+    notes: string;
+
+    @Field()
+    allowContact: boolean;
+
+    @Field(() => AppFeedbackAttachment, { nullable: true })
+    attachment?: AppFeedbackAttachment;
+}
+
+@InputType()
+class CreatePushSubscriptionInput implements CreatePushSubscription {
+    @Field()
+    @Length(/* min */ 1, /* max */ 10_000)
+    endpoint: string;
+    @Field({ nullable: true })
+    expirationTime?: Date;
+    @Field((type) => GraphQLJSON)
+    keys: object;
 }
 
 const logger = getLogger('User Mutations');
@@ -43,66 +81,11 @@ export class MutateUserResolver {
     async userDetermineLoginOptions(@Arg('email') email: string) {
         try {
             const user = await getUserByEmail(validateEmail(email));
-            return await determinePreferredLoginOption(user);
+            return user.active ? await determinePreferredLoginOption(user) : 'deactivated';
         } catch (error) {
             // Invalid email
             return LoginOption.none;
         }
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    @RateLimit('Report Issue', 5 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    async userReportIssue(
-        @Ctx() context: GraphQLContext,
-        @Arg('issueTag') issueTag: string,
-        @Arg('errorMessage') errorMessage: string,
-        @Arg('errorStack') errorStack: string,
-        @Arg('logs', (type) => [String]) logs: string[],
-        @Arg('userAgent') userAgent: string,
-        @Arg('componentStack', { nullable: true }) componentStack: string | null
-    ) {
-        let result = '';
-        const section = (name: string, level: number) => (result += '\n\n' + ('-'.repeat(5 - level) + ' ' + name + ' ').padEnd(30 - level * 2, '-') + '\n');
-        const info = (name: string, value: string) => (result += (name + ':').padEnd(10, ' ') + value + '\n');
-
-        section('USER', 0);
-        info('IssueTag', issueTag);
-        info('UserID', context.user.userID);
-        info('E-Mail', context.user.email);
-
-        section('BACKEND', 0);
-        info('SessionID', context.sessionToken ? toPublicToken(context.sessionToken) : '-');
-        info('Roles', context.user.roles.join(', '));
-        info('Time', new Date().toISOString());
-
-        section('FRONTEND', 0);
-        info('UserAgent', userAgent);
-        info('ErrorMessage', errorMessage);
-
-        section('STACK', 1);
-        result += errorStack;
-
-        section('LOGS', 1);
-        result += logs.join('\n');
-
-        issueReporterLogger.addContext('issureTag', issueTag);
-        issueReporterLogger.addContext('userAgent', userAgent);
-        issueReporterLogger.addContext('userID', context.user.userID);
-
-        logs.map((log) => issueReporterLogger.info(log));
-        const err: Error = {
-            name: 'IssueReporter',
-            stack: `Error: ${errorMessage}\n\t at ${errorStack}`,
-            message: errorMessage,
-        };
-        issueReporterLogger.error(errorMessage, err, { componentStack });
-
-        if (!isDev) {
-            await mailjet.sendPure(`Frontend Issue: ${errorMessage}`, result, DEFAULTSENDERS.noreply, 'backend@lern-fair.de', 'Backend', 'Tech-Team');
-        }
-
-        return true;
     }
 
     @Mutation((returns) => Boolean)
@@ -115,7 +98,7 @@ export class MutateUserResolver {
             `SessionID: ${context.sessionToken ? toPublicToken(context.sessionToken) : '-'}\n` +
             `Roles: ${context.user.roles.join(', ')}\n`;
 
-        await mailjet.sendPure(
+        await sendMail(
             `User-App - ${getFullName(context.user)} - ${message.subject}`,
             body,
             /* from */ DEFAULTSENDERS.noreply,
@@ -126,6 +109,62 @@ export class MutateUserResolver {
             /* reply to name */ getFullName(context.user)
         );
 
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userSendAppFeedback(@Ctx() context: GraphQLContext, @Arg('message') message: AppFeedback) {
+        const body =
+            `Von: ${context.user.email}\n\n` +
+            `Dürfen uns melden: ${message.allowContact ? 'Ja' : 'Nein'}\n\n` +
+            `Deine Anmerkung:\n ${message.notes}\n` +
+            `\n\n\n` +
+            `+------ Tech-Team Infos ------------------------+\n` +
+            `SessionID: ${context.sessionToken ? toPublicToken(context.sessionToken) : '-'}\n` +
+            `Roles: ${context.user.roles.join(', ')}\n`;
+
+        await sendMail(
+            'Feedback aus User App',
+            body,
+            /* from */ DEFAULTSENDERS.noreply,
+            /* to */ isDev ? 'backend@lern-fair.de' : 'support@lern-fair.de',
+            /* from name */ 'User-App Feedback',
+            /* to name */ `Das beste Supportteam der Welt`,
+            /* reply to */ context.user.email,
+            /* reply to name */ getFullName(context.user),
+            message.attachment ? [message.attachment] : undefined
+        );
+
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userPushSubcriptionAdd(@Ctx() context: GraphQLContext, @Arg('subscription') subscription: CreatePushSubscriptionInput) {
+        await addPushSubcription(context.user, subscription);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.USER)
+    async userPushSubcriptionRemove(@Ctx() context: GraphQLContext, @Arg('subscriptionID', () => GraphQLInt) id: number) {
+        await removePushSubscription(context.user, id);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    async markAchievementAsSeen(@Ctx() context: GraphQLContext, @Arg('achievementId') achievementId: number) {
+        const achievement = await prisma.user_achievement.findFirstOrThrow({
+            where: { id: achievementId },
+        });
+        await hasAccess(context, 'User_achievement', achievement);
+
+        await prisma.user_achievement.update({
+            where: { id: achievementId },
+            data: { isSeen: true },
+        });
         return true;
     }
 }

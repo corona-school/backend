@@ -1,7 +1,9 @@
 import assert from 'assert';
 import { randomBytes } from 'crypto';
-import { adminClient, test } from './base';
+import { test } from './base';
+import { adminClient } from './base/clients';
 import { pupilOne, studentOne } from './01_user';
+import { prisma } from '../common/prisma';
 
 /* eslint-disable  */
 
@@ -147,7 +149,7 @@ void test('Admin Manage Notifications', async () => {
     const {
         notificationCreate: { id },
     } = await adminClient.request(`mutation CreateNotification {
-        notificationCreate(notification: { 
+        notificationCreate(notification: {
             description: "MOCK"
             active: false
             recipient: 0
@@ -181,7 +183,7 @@ void test('Admin Manage Notifications', async () => {
 
     await adminClient.request(`mutation Activate { notificationActivate(notificationId: ${id}, active: true)}`);
 
-    await adminClient.requestShallFail(`mutation SendOutWithMissingContext { 
+    await adminClient.requestShallFail(`mutation SendOutWithMissingContext {
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
         skipDraft: true
@@ -191,7 +193,7 @@ void test('Admin Manage Notifications', async () => {
       )
     }`);
 
-    await adminClient.request(`mutation SendOut { 
+    await adminClient.request(`mutation SendOut {
         concreteNotificationBulkCreate(
         startAt: "${new Date(0).toISOString()}"
         skipDraft: true
@@ -203,13 +205,13 @@ void test('Admin Manage Notifications', async () => {
 
     const {
         me: { concreteNotifications: scheduled },
-    } = await pupilClient.request(`query NotificationScheduled { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationScheduled {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo
@@ -221,17 +223,17 @@ void test('Admin Manage Notifications', async () => {
 
     assert.ok(!scheduled.find((it) => it.notificationID === id), 'Concrete notification already visible?');
 
-    await adminClient.request(`mutation { _executeJob(job: "Notification") }`);
+    await adminClient.request(`mutation { _executeJob(job: "checkReminders") }`);
 
     const {
         me: { concreteNotifications: sent },
-    } = await pupilClient.request(`query NotificationSent { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationSent {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo
@@ -261,13 +263,13 @@ void test('Admin Manage Notifications', async () => {
 
     const {
         me: { concreteNotifications: sent2 },
-    } = await pupilClient.request(`query NotificationSent2 { 
-        me { 
-          concreteNotifications(take:100) { 
+    } = await pupilClient.request(`query NotificationSent2 {
+        me {
+          concreteNotifications(take:100) {
             notificationID
             state
             sentAt
-            message { 
+            message {
               headline
               body
               navigateTo
@@ -282,4 +284,30 @@ void test('Admin Manage Notifications', async () => {
     assert.strictEqual(notification2.message.headline, pupil.firstname);
     assert.strictEqual(notification2.message.body, 'TEST');
     assert.strictEqual(notification2.message.navigateTo, null);
+});
+
+void test('Job Synchronization', async () => {
+    await adminClient.requestShallFail(`mutation RunNonExistentJob { _executeJob(job: "FindTheAnswerToTheUniverse") }`);
+
+    const timeBefore = new Date();
+
+    const results = await Promise.allSettled([
+        adminClient.request(`mutation RunJob1 { _executeJob(job: "NOTHING_DO_NOT_USE") }`),
+        adminClient.request(`mutation RunJob2 { _executeJob(job: "NOTHING_DO_NOT_USE") }`),
+        adminClient.request(`mutation RunJob3 { _executeJob(job: "NOTHING_DO_NOT_USE") }`),
+        adminClient.request(`mutation RunJob4 { _executeJob(job: "NOTHING_DO_NOT_USE") }`),
+        adminClient.request(`mutation RunJob5 { _executeJob(job: "NOTHING_DO_NOT_USE") }`),
+    ]);
+
+    const succeeded = results.filter((it) => it.status === 'fulfilled').length;
+    assert.strictEqual(1, succeeded, 'Expected only one concurrent run to succeed');
+
+    const successBooked = await prisma.job_run.findMany({
+        where: { job_name: 'NOTHING_DO_NOT_USE', startedAt: { gt: timeBefore } },
+    });
+
+    assert.strictEqual(successBooked.length, 1, 'Expected only one job to be booked to the database');
+    assert.ok(!!successBooked[0].endedAt, 'Expected endedAt to be set after job execution');
+
+    await adminClient.request(`mutation RunJob6 { _executeJob(job: "NOTHING_DO_NOT_USE") }`);
 });

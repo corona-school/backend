@@ -39,8 +39,9 @@ async function handleChatNotification(req: WithRawBody<Request>, res: Response):
         const chatType = getChatType(conversationParticipants);
 
         const isUserVerified = await verifyChatUser(recipientUser);
+        const onlySystemMessages = data.messages.every((m) => m.type === 'SystemMessage');
 
-        if (isUserVerified) {
+        if (!onlySystemMessages && isUserVerified) {
             const notificationContext = await getNotificationContext(notificationBody);
 
             const notificationAction = chatType === ChatType.ONE_ON_ONE ? 'missed_one_on_one_chat_message' : 'missed_course_chat_message';

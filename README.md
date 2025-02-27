@@ -1,4 +1,4 @@
-# LernFair Backend
+# Lern-Fair Backend
 
 Basics:
 
@@ -11,20 +11,26 @@ Components:
 -   [Appointments](common/appointment/README.md)
 -   [Chat (TalkJS)](common/chat/README.md)
 -   [Video Chat (Zoom)](common/zoom/README.md)
+-   [Gamification](common/achievement/README.md)
 
 The backend exposes various APIs to other services and runs various background jobs on top of a PostgreSQL database.
 It is deployed in two Heroku Dynos, one answering API requests and one running jobs.
 
 ```
-                                       +-[ Backend Web Dyno ]-----------------------------------------------------------+
-web-user-app      ----[ REST    ]----> | (Express) /web/controllers                                                     |
-backend-screening ----[ REST    ]----> | (Express) /web/controllers/screeningController   (Prisma)  /prisma/*           | ----- SQL ----> PostgreSQL
-                                       |                                                                                |
-   ReTool         ----[ GraphQL ]----> | (Apollo)  /graphql                             (Mailjet) /common/mails/*       | ----- REST ----> Mailjet
-                                       |                                                (Mailjet) /common/notification/*|
-                                       +-[ Backend Job Dyno ]--------------------                                       +
-                                       |  /jobs                                                                         |
-                                       +--------------------------------------------------------------------------------+
+                                  +-[ Backend Web Dyno ]--------------------------------------------------------+
+web-user-app ----[ GraphQL ]----> | (Express) /web/controllers                                                  |
+                                  |                             (Prisma)  /prisma/*                             | ----- SQL ----> PostgreSQL
+                                  |                                                                             |
+   ReTool    ----[ GraphQL ]----> | (Apollo)  /graphql          (Mailjet) /common/notification/channels/mailjet | ----- REST ----> Mailjet
+                                  |                             (WebSocket) /common/notification/channels/inapp | ----- WebSocket ----> User App
+                                  |                                                                             |
+                                  |                             (TalkJS) /common/chat/*                         | ----- REST ----> TalkJS
+                                  |                             (Zoom) /common/zoom/*                           | ----- REST ----> Zoom
+                                  |                             (S3) /common/file-bucket/*                      | ----- REST ----> S3 Provider
+                                  |                             (Datadog) /common/logger/*                      | ----- REST ----> Datadog
+                                  +-[ Backend Job Dyno ]--------------------------------------------------------+
+                                  |  /jobs                                                                      |
+                                  +-----------------------------------------------------------------------------+
 ```
 
 ### Build & Run
@@ -92,6 +98,13 @@ The following configuration can be done via ENV variables:
 
 | Name       | Value   | Description                                                               |
 | ---------- | ------- | ------------------------------------------------------------------------- |
+| LOG_LEVEL  | all     | Log levels are used to categorize log events by severity and control the  |
+|            | trace   | verbosity of the logs. Using levels, you can filter out less important    |
+|            | debug   | logs and focus on the most critical ones.                                 |
+|            | info    |                                                                           |
+|            | warn    |                                                                           |
+|            | error   |                                                                           |
+| ---------- | ------- | ------------------------------------------------------------------------- |
 | LOG_FORMAT | (unset) | Every log prefixed by session and transaction id, also log HTTP requests  |
 |            | json    | Log as JSON, used in deployed environments to pass rich info to Datadog   |
 |            | brief   | Only log category and message (omitting session prefix and HTTP requests) |
@@ -100,9 +113,9 @@ The following configuration can be done via ENV variables:
 
 The following command line arguments are available (i.e. run `npm run web -- --debug`):
 
-| Argument | Description                                                      |
-| -------- | ---------------------------------------------------------------- |
-| \--debug | Sets the log level to debug which prints out tons of information |
+| Argument | Description                          |
+| -------- | ------------------------------------ |
+| None     | There are no cli arguments right now |
 
 ### Changes to the Data-Model
 
@@ -119,7 +132,7 @@ When changing the data model, we have potentially differing states:
 To start changing the data model, ensure that they all are in sync:
 
 1. Check out a recent state of the master branch to fetch the latest schema and migrations
-2. Run `npm run db:reset-for-migration` to ensure the local database and typescript is in the state described by the migrations
+2. Run `npm run db:reset` to ensure the local database and typescript is in the state described by the migrations
 
 Then modify `prisma.schema` to your needs. Afterwards run `npm run db:create-migration`, which shows the difference between the schema and the migrations, creates a new migration and rebuilds the local database and typescript based on that. Make sure to commit both the schema change and the migration in the same commit to simplify a potential revert. You probably also need to adapt `graphql/authorizations.ts` for the build to work again, as we enforce that all GraphQL entities have proper permissions assigned. Now you can make further changes to the code till the feature is ready. When opening a pull request, a Github Action ensures that the migrations are in sync with the schema. When we merge the pull request to master and trigger a productive deployment, the migration will be run on the productive database, bringing all states back into sync.
 

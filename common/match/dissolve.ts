@@ -1,28 +1,40 @@
-import { match as Match, pupil as Pupil, student as Student } from '@prisma/client';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
+import { dissolve_reason, dissolved_by_enum, match as Match, pupil as Pupil, student as Student } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import { userForStudent, userForPupil } from '../user';
+import { userForStudent, userForPupil, User } from '../user';
 import { logTransaction } from '../transactionlog/log';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { deleteZoomUser } from '../zoom/user';
+import moment from 'moment';
 
 const logger = getLogger('Match');
 
-export async function dissolveMatch(match: Match, dissolveReason: number, dissolver: Pupil | Student | null) {
+export async function dissolveMatch(
+    match: Match,
+    dissolveReasons: dissolve_reason[],
+    dissolver: Pupil | Student | null,
+    dissolvedBy: dissolved_by_enum,
+    otherReason?: string
+) {
     if (match.dissolved) {
         throw new RedundantError('The match was already dissolved');
+    }
+
+    if (dissolveReasons.length === 0) {
+        throw new PrerequisiteError('Must specify at least one dissolve reason');
     }
 
     await prisma.match.update({
         where: { id: match.id },
         data: {
             dissolved: true,
-            dissolveReason,
+            dissolveReasons: dissolveReasons,
+            otherDissolveReason: otherReason,
             dissolvedAt: new Date(),
+            dissolvedBy,
         },
     });
     const matchLectures = await prisma.lecture.findMany({
@@ -35,8 +47,16 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
             await deleteZoomMeeting(lecture);
         }
     }
+    // by default, assume null is passed
+    let dissolverUserForLog: User | null = dissolver as null;
+    // now, let's trust on the dissolvedBy property to determine the right type for `dissolver`
+    if (dissolver && dissolvedBy === 'pupil') {
+        dissolverUserForLog = userForPupil(dissolver as Pupil);
+    } else if (dissolver && dissolvedBy === 'student') {
+        dissolverUserForLog = userForStudent(dissolver as Student);
+    }
 
-    await logTransaction('matchDissolve', dissolver, {
+    await logTransaction('matchDissolve', dissolverUserForLog, {
         matchId: match.id,
     });
 
@@ -54,6 +74,14 @@ export async function dissolveMatch(match: Match, dissolveReason: number, dissol
     await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved', { pupil, matchHash, matchDate, uniqueId });
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved', { student, matchHash, matchDate, uniqueId });
 
+    if (new Date() < moment(match.createdAt).add(30, 'days').toDate()) {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_quickly', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_quickly', { student, matchHash, matchDate, uniqueId });
+    } else {
+        await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_mature', { pupil, matchHash, matchDate, uniqueId });
+        await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_mature', { student, matchHash, matchDate, uniqueId });
+    }
+
     if (dissolver && dissolver.email === student.email) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
     } else if (dissolver && dissolver.email === pupil.email) {
@@ -67,7 +95,7 @@ export async function reactivateMatch(match: Match) {
     }
 
     await prisma.match.update({
-        data: { dissolved: false, dissolveReason: null, dissolvedAt: null },
+        data: { dissolved: false, dissolveReasons: [], dissolvedAt: null },
         where: { id: match.id },
     });
 

@@ -1,22 +1,18 @@
-import { emptyMetadata, WebflowMetadata } from './webflow-adapter';
-import { sha1 } from 'object-hash';
-
-export function hash<T extends WebflowMetadata>(data: T): string {
-    const raw = { ...data, ...emptyMetadata };
-    return sha1(raw);
-}
+import { WebflowMetadata } from './webflow-adapter';
+import { isEqual } from 'lodash';
+import { Logger } from '../../../common/logger/logger';
 
 export type DBIdMap<T> = { [key: number]: T };
 
 export function mapToDBId<T extends WebflowMetadata>(data: T[]): DBIdMap<T> {
     const res = {};
     for (const row of data) {
-        res[row.slug] = row;
+        res[row.fieldData.slug] = row;
     }
     return res;
 }
 
-export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
+export function diff<T extends WebflowMetadata>(logger: Logger, left: T[], right: T[]): { new: T[]; outdated: T[]; changed: T[] } {
     const leftMap = mapToDBId(left);
     const rightMap = mapToDBId(right);
 
@@ -29,10 +25,14 @@ export function diff<T extends WebflowMetadata>(left: T[], right: T[]): { new: T
             outdatedEntries.push(leftMap[dbId]);
             continue;
         }
-        if (leftMap[dbId].hash != rightMap[dbId].hash) {
+
+        const left = { ...leftMap[dbId].fieldData, hash: '' };
+        const right = { ...rightMap[dbId].fieldData, hash: '' };
+        if (!isEqual(left, right)) {
             // We have to save the old item id, so that it can be used for the update operation
-            rightMap[dbId]._id = leftMap[dbId]._id;
+            rightMap[dbId].id = leftMap[dbId].id;
             changedEntries.push(rightMap[dbId]);
+            logger.info('found diff in items', { left: JSON.stringify(left, null, 2), right: JSON.stringify(right, null, 2) });
         }
     }
 

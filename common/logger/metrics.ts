@@ -38,4 +38,23 @@ export const metrics = {
         help: 'Max amount of files in storage cache',
         registers: [registry],
     }),
+
+    AchievementsTrackedEvents: new promClient.Counter({
+        name: 'achievements_tracked_events',
+        help: 'Amount of tracked events within achievement system',
+        registers: [registry],
+        labelNames: ['metric', 'action'],
+    }),
+    AchievementsCreated: new promClient.Counter({
+        name: 'achievements_created',
+        help: 'Amount of created achievements',
+        registers: [registry],
+        labelNames: ['id', 'uid', 'type'],
+    }),
+    AchievementsAchieved: new promClient.Counter({
+        name: 'achievements_achieved',
+        help: 'Amount of achieved achievements',
+        registers: [registry],
+        labelNames: ['id', 'uid', 'type'],
+    }),
 };

@@ -1,4 +1,5 @@
-import { adminClient, test } from './base';
+import { test } from './base';
+import { adminClient } from './base/clients';
 import { gql } from 'graphql-request';
 import { randomBytes } from 'crypto';
 import assert from 'assert';
@@ -114,22 +115,28 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p1@lern-fair.de",
                     register: {
                         email: "test+differentEmail@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: bb
+                        school: {
+                            state: bw
+                        }
                     }
                 },
                 {  # invalid subject (to check if registration is rolled back properly)
                     email: "test+${runId}+p2@lern-fair.de",
                     register: {
                         email: "test+${runId}+p2@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     },
                     activate: {
                         languages: [Albanisch, Franz_sisch],
@@ -144,11 +151,14 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p2@lern-fair.de ",
                     register: {
                         email: "test+${runId}+p2@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "*updatedF*",
                         lastname: "*updatedL*",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     },
                     activate: {
                         languages: [Albanisch, Franz_sisch],
@@ -176,11 +186,14 @@ void test('Plus pupil batch registration', async () => {
                     email: "test+${runId}+p?@@lern-fair.de",
                     register: {
                         email: "test+${runId}+p?@@lern-fair.de",
+                        emailOwner: pupil,
                         firstname: "f${userRandom()}",
                         lastname: "l${userRandom()}",
                         newsletter: false,
                         registrationSource: plus,
-                        state: be
+                        school: {
+                            state: be
+                        }
                     }
                 },
             ]}) {email, reason, success}

@@ -12,8 +12,16 @@ import {
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
     pupil_screening_status_enum as PupilScreeningStatus,
+    gender_enum as Gender,
+    course_subject_enum,
+    school_schooltype_enum,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
+
+registerEnumType(PupilEmailOwner, {
+    name: 'PupilEmailOwner',
+});
 
 registerEnumType(SchoolType, {
     name: 'SchoolType',
@@ -56,6 +64,20 @@ registerEnumType(CourseCategory, {
     name: 'CourseCategory',
 });
 
+registerEnumType(Gender, {
+    name: 'Gender',
+});
+
 registerEnumType(LoginOption, { name: 'LoginOption' });
 
 registerEnumType(PupilScreeningStatus, { name: 'PupilScreeningStatus' });
+
+registerEnumType(course_subject_enum, {
+    name: 'CourseSubjectEnum',
+    description: 'The subject of the course',
+});
+
+registerEnumType(school_schooltype_enum, {
+    name: 'SchoolSchoolTypeEnum',
+    description: 'The type of school',
+});

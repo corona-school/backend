@@ -2,18 +2,20 @@ import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prism
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
-import { sendTemplateMail, mailjetTemplates } from '../mails';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
 import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
 import { createSecretEmailToken } from '../secret';
-import { userForPupil } from '../user';
+import { userForPupil, userForStudent } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
+import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { getLastLecture } from './lectures';
 
 const delay = (time: number) => new Promise((res) => setTimeout(res, time));
 
@@ -89,7 +91,7 @@ export async function joinSubcourseWaitinglist(subcourse: Subcourse, pupil: Pupi
             },
         });
 
-        await logTransaction('participantJoinedWaitingList', pupil, { courseID: subcourse.id });
+        await logTransaction('participantJoinedWaitingList', userForPupil(pupil), { courseID: subcourse.id });
     } catch (error) {
         throw new RedundantError(`Failed to join waiting list, pupil is already on it`);
     }
@@ -105,10 +107,13 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
 
     if (queueEnrollmentDeletions.count > 0) {
         logger.info(`Removed Pupil(${pupil.id}) from waiting list of Subcourse(${subcourse.id})`);
-        await logTransaction('participantLeftWaitingList', pupil, { courseID: subcourse.id });
+        await logTransaction('participantLeftWaitingList', userForPupil(pupil), { courseID: subcourse.id });
+        return true;
     } else if (force) {
         throw new RedundantError(`Pupil is not on the waiting list`);
     }
+
+    return false;
 }
 
 type CourseDecision =
@@ -118,6 +123,7 @@ type CourseDecision =
     | 'grade-to-low'
     | 'grade-to-high'
     | 'already-started'
+    | 'already-ended'
     | 'already-participant'
     | 'already-on-waitinglist';
 
@@ -142,23 +148,41 @@ export async function canJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Prom
     return { allowed: true };
 }
 
+// Whether a subcourse is in principle joinable at this point in time, not considering the number of participants
+async function subcourseJoinable(subcourse: Subcourse): Promise<Decision<CourseDecision>> {
+    const firstLecture = await prisma.lecture.findMany({
+        where: { subcourseId: subcourse.id },
+        orderBy: { start: 'asc' },
+        take: 1,
+    });
+
+    if (firstLecture.length !== 1) {
+        return { allowed: false, reason: 'no-lectures' };
+    }
+
+    if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
+        return { allowed: false, reason: 'already-started' };
+    }
+
+    const lastLecture = await getLastLecture(subcourse);
+    if (lastLecture.start < new Date()) {
+        return { allowed: false, reason: 'already-ended' };
+    }
+
+    return { allowed: true };
+}
+
 // Whether the pupil could join the course if the course was not full (i.e. pupils can still join the waitinglist)
 export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Promise<Decision<CourseDecision>> {
     if (!canJoinSubcourses(pupil).allowed) {
         return canJoinSubcourses(pupil);
     }
 
-    const firstLecture = await prisma.lecture.findMany({
-        where: { subcourseId: subcourse.id },
-        orderBy: { start: 'asc' },
-        take: 1,
-    });
-    if (firstLecture.length !== 1) {
-        return { allowed: false, reason: 'no-lectures' };
+    const joinable = await subcourseJoinable(subcourse);
+    if (!joinable.allowed) {
+        return joinable;
     }
-    if (firstLecture[0].start < new Date() && !subcourse.joinAfterStart) {
-        return { allowed: false, reason: 'already-started' };
-    }
+
     if (await isParticipant(subcourse, pupil)) {
         return { allowed: false, reason: 'already-participant' };
     }
@@ -174,7 +198,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean): Promise<void> {
+export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
 
     if (strict && !canJoin.allowed) {
@@ -208,8 +232,8 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         const pupilUser = userForPupil(pupil);
-        await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
-
+        const leftWaitingList = await leaveSubcourseWaitinglist(subcourse, pupil, /* force: */ false);
+        const leftProspects = await removeSubcourseProspect(subcourse.id, pupil.id);
         const insertion = await prisma.subcourse_participants_pupil.create({
             data: {
                 pupilId: pupil.id,
@@ -222,13 +246,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
-        await logTransaction('participantJoinedCourse', pupil, { subcourseID: subcourse.id });
-
-        const firstLecture = await prisma.lecture.findMany({
-            where: { subcourseId: subcourse.id },
-            orderBy: { start: 'asc' },
-            take: 1,
-        });
+        await logTransaction('participantJoinedCourse', userForPupil(pupil), { subcourseID: subcourse.id });
 
         await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
         if (isChatFeatureActive() && subcourse.conversationId) {
@@ -236,31 +254,37 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         }
 
         try {
-            const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
-            const courseStart = moment(firstLecture[0].start);
-            const authToken = await createSecretEmailToken(userForPupil(pupil), undefined, moment().add(7, 'days'));
+            const course = await getCourseOfSubcourse(subcourse);
 
-            /* TODO: Deprecate usage of old mailjet templates */
-            const mail = mailjetTemplates.COURSESPARTICIPANTREGISTRATIONCONFIRMATION({
-                participantFirstname: pupil.firstname,
-                courseName: course.name,
-                courseId: String(course.id),
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
-                authToken,
-            });
-
-            await sendTemplateMail(mail, pupil.email);
+            const context = await getNotificationContextForSubcourse(course, subcourse);
+            if (leftWaitingList) {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_waitinglist', context);
+            } else if (leftProspects) {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_from_prospects', context);
+            } else {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', context);
+            }
 
             await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
-                course,
-                firstLectureDate: courseStart.format('DD.MM.YYYY'),
-                firstLectureTime: courseStart.format('HH:mm'),
+                ...context,
+                skipAchievementBucketsBefore: new Date().toISOString(),
             });
         } catch (error) {
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
     });
+
+    if (notifyIfFull) {
+        // Notify instructors if the subcourse is full now
+        const participantCountAfter = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
+        if (participantCountAfter == subcourse.maxParticipants) {
+            const context = await getNotificationContextForSubcourse(await getCourseOfSubcourse(subcourse), subcourse);
+
+            for (const instructor of await getSubcourseInstructors(subcourse)) {
+                await Notification.actionTaken(userForStudent(instructor), 'instructor_course_full', context);
+            }
+        }
+    }
 }
 
 export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
@@ -280,13 +304,20 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     }
 
     logger.info(`Pupil(${pupil.id}) left Subcourse(${subcourse.id})`);
-    await logTransaction('participantLeftCourse', pupil, { subcourseID: subcourse.id });
+    await logTransaction('participantLeftCourse', userForPupil(pupil), { subcourseID: subcourse.id });
 
     const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
 
     await Notification.actionTaken(userForPupil(pupil), 'participant_course_leave', {
         course,
     });
+
+    // If a pupil left a course, maybe some other pupil can join from the waiting list?
+    const joinable = await subcourseJoinable(subcourse);
+    if (joinable.allowed) {
+        // This will check if there are pupils on the waiting list, and short circuit if not
+        await fillSubcourse(subcourse);
+    }
 }
 
 export async function fillSubcourse(subcourse: Subcourse) {
@@ -307,21 +338,9 @@ export async function fillSubcourse(subcourse: Subcourse) {
 
     for (const { pupil } of toJoin) {
         try {
-            await joinSubcourse(subcourse, pupil, true);
+            await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
         } catch (error) {
             logger.warn(`Course filling - Failed to add Pupil(${pupil.id}) as:`, error);
         }
     }
-}
-
-export async function getCourseParticipantCount(subcourse: Subcourse) {
-    return await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
-}
-
-export async function getCourseCapacity(subcourse: Subcourse) {
-    return (await getCourseParticipantCount(subcourse)) / (subcourse.maxParticipants || 1);
-}
-
-export async function getCourseFreePlaces(subcourse: Subcourse) {
-    return Math.max(0, subcourse.maxParticipants - (await getCourseParticipantCount(subcourse)));
 }

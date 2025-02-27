@@ -6,7 +6,7 @@ import { getLogger } from '../logger/logger';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getAppointmentForNotification } from './util';
 import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
-import { getNotificationContextForSubcourse } from '../mails/courses';
+import { getNotificationContextForSubcourse } from '../courses/notifications';
 
 const logger = getLogger('Appointment');
 
@@ -15,7 +15,7 @@ export async function updateAppointment(
     appointment: Appointment,
     appointmentUpdate: Partial<Pick<Appointment, 'description' | 'duration' | 'start' | 'title'>>
 ) {
-    const { id, start, duration, appointmentType } = appointment;
+    const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link } = appointment;
     const { duration: newDuration, start: newStart } = appointmentUpdate;
 
     const currentDate = moment();
@@ -25,16 +25,17 @@ export async function updateAppointment(
         throw new Error(`Cannot update past appointment.`);
     }
 
-    const updatedAppointment = await prisma.lecture.update({
-        where: { id: id },
-        data: { ...appointmentUpdate },
-    });
-
-    logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
-
     const sameStart = !newStart || start.toISOString() === newStart.toISOString();
     const sameDuration = !newDuration || duration === newDuration;
     const sameDate = sameStart && sameDuration;
+    const matchAppointmentDateChanged = appointmentType === 'match' && !sameDate;
+
+    const updatedAppointment = await prisma.lecture.update({
+        where: { id: id },
+        data: matchAppointmentDateChanged ? { ...appointmentUpdate, declinedBy: [] } : appointmentUpdate,
+    });
+
+    logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
 
     if (sameDate) {
         return;
@@ -58,17 +59,24 @@ export async function updateAppointment(
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                     ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 });
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                await Notification.actionTakenAt(
+                    new Date(updatedAppointment.start),
+                    userForPupil(participant.pupil),
+                    'pupil_group_appointment_starts',
+                    await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                );
             }
 
             for (const instructor of instructors) {
-                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
-                    ...(await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)),
-                    student,
-                });
+                if (subcourse.published) {
+                    // For unpublished courses, this is deferred to a later point
+                    await Notification.actionTakenAt(
+                        new Date(updatedAppointment.start),
+                        userForStudent(instructor.student),
+                        'student_group_appointment_starts',
+                        await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                    );
+                }
             }
             break;
         }
@@ -104,7 +112,9 @@ export async function updateAppointment(
         endDate: lastDate,
     };
 
-    await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
+    if (!override_meeting_link && zoomMeetingId) {
+        await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
+    }
 
     logger.info(`Participants of Appointment(${id}) were notified of the appointment change`);
 }

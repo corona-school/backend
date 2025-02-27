@@ -11,12 +11,15 @@ import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
+import * as Notification from '../../common/notification';
 
-import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject, course_coursestate_enum as CourseState } from '../generated';
+import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
-import { addCourseInstructor, allowCourse, denyCourse, subcourseOver } from '../../common/courses/states';
+import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteSubcourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
+import { userForStudent } from '../../common/user';
+import { updateAchievementCTXByCourse } from '../../common/achievement/update';
 
 @InputType()
 class PublicCourseCreateInput {
@@ -46,7 +49,7 @@ class PublicCourseEditInput {
     @TypeGraphQL.Field((_type) => String, { nullable: true })
     description?: string;
     @TypeGraphQL.Field((_type) => course_category_enum, { nullable: true })
-    category?: 'revision' | 'club' | 'coaching';
+    category?: course_category_enum;
     @TypeGraphQL.Field((_type) => Boolean, { nullable: true })
     allowContact?: boolean | undefined;
 
@@ -69,12 +72,16 @@ const logger = getLogger('MutateCourseResolver');
 @Resolver((of) => GraphQLModel.Course)
 export class MutateCourseResolver {
     @Mutation((returns) => GraphQLModel.Course)
-    @Authorized(Role.ADMIN, Role.INSTRUCTOR)
+    @Authorized(Role.ADMIN, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async courseCreate(
         @Ctx() context: GraphQLContext,
         @Arg('course') course: PublicCourseCreateInput,
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Course> {
+        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
+        if (!mayCreateHomeworkHelp && course.category === 'homework_help') {
+            throw new ForbiddenError('Only authorized users can create homework help courses');
+        }
         const student = await getSessionStudent(context, studentId);
         const result = await prisma.course.create({ data: { ...course, courseState: 'created' } });
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
@@ -82,8 +89,31 @@ export class MutateCourseResolver {
         return result;
     }
 
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
+    async courseDelete(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+        const result = await deleteCourse(course);
+        return true;
+    }
+
     @Mutation((returns) => GraphQLModel.Course)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
+    async courseMarkShared(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('shared') shared: boolean): Promise<GraphQLModel.Course> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+
+        const updatedCourse = await prisma.course.update({
+            where: { id: course.id },
+            data: { shared: shared },
+        });
+        logger.info(`Course(${course.id} was ${shared ? 'shared' : 'unshared'} by User(${context.user.userID})`);
+        return updatedCourse;
+    }
+
+    @Mutation((returns) => GraphQLModel.Course)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseEdit(
         @Ctx() context: GraphQLContext,
         @Arg('courseId') courseId: number,
@@ -91,7 +121,10 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-
+        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
+        if (!mayCreateHomeworkHelp && data.category === 'homework_help') {
+            throw new ForbiddenError('Only authorized users can create homework help courses');
+        }
         if (course.courseState === 'allowed') {
             let editableSubcourse = false;
             for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
@@ -106,11 +139,14 @@ export class MutateCourseResolver {
         }
         const result = await prisma.course.update({ data, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
+
+        await updateAchievementCTXByCourse(result);
+
         return result;
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSetTags(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('courseTagIds', (_type) => [Number]) courseTagIds: number[]) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -139,7 +175,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -164,7 +200,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseAddInstructor(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -175,7 +211,7 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.INSTRUCTOR)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseDeleteInstructor(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
@@ -187,31 +223,48 @@ export class MutateCourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async courseSubmit(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         await prisma.course.update({ data: { courseState: 'submitted' }, where: { id: courseId } });
         logger.info(`Course (${courseId}) submitted by Student (${context.user.studentId})`);
+
+        const subcourses = await prisma.subcourse.findMany({
+            where: { courseId: courseId },
+            include: { subcourse_instructors_student: { select: { student: true } } },
+        });
+        for (const subcourse of subcourses) {
+            if (!subcourse.subcourse_instructors_student) {
+                continue;
+            }
+            for (const subcourseInstructor of subcourse.subcourse_instructors_student) {
+                await Notification.actionTaken(userForStudent(subcourseInstructor.student), 'instructor_course_submitted', {
+                    course: { name: course.name },
+                    subcourse: { id: subcourse.id.toString() },
+                    relation: `subcourse/${subcourse.id}`,
+                });
+            }
+        }
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseAllow(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await allowCourse(await getCourse(courseId), screeningComment);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseDeny(@Arg('courseId') courseId: number, @Arg('screeningComment', { nullable: true }) screeningComment?: string | null): Promise<boolean> {
         await denyCourse(await getCourse(courseId), screeningComment);
         return true;
     }
 
     @Mutation((returns) => GraphQLModel.Course_tag)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseTagCreate(@Ctx() context: GraphQLContext, @Arg('data') data: CourseTagCreateInput) {
         const { category, name } = data;
         const tag = await createCourseTag(context.user, name, category as course_category_enum);
@@ -219,8 +272,25 @@ export class MutateCourseResolver {
         return tag;
     }
 
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
+    async courseTagActivate(@Ctx() context: GraphQLContext, @Arg('courseTagId') courseTagId: number, @Arg('active') active: boolean) {
+        const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId } });
+        if (!tag) {
+            throw new UserInputError(`Unknown CourseTag(${courseTagId})`);
+        }
+
+        await prisma.course_tag.update({
+            where: { id: courseTagId },
+            data: { active },
+        });
+
+        logger.info(`User(${context.user.userID}) ${active ? 'activated' : 'deactivated'} CourseTag(${tag.id})`);
+        return true;
+    }
+
     @Mutation((returns) => GraphQLModel.Course_tag)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.COURSE_SCREENER)
     async courseTagDelete(@Ctx() context: GraphQLContext, @Arg('courseTagId') courseTagId: number) {
         const tag = await prisma.course_tag.findUnique({ where: { id: courseTagId } });
         if (!tag) {

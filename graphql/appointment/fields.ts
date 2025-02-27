@@ -3,13 +3,17 @@ import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Res
 import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
-import { Deprecated, getMatch, getSubcourse } from '../util';
+import { Deprecated, getLecture, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
 import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
+import { getZoomUrl } from '../../common/zoom/user';
+import { getLogger } from '../../common/logger/logger';
+
+const logger = getLogger('Appointment Fields');
 
 @ObjectType()
 class AppointmentParticipant {
@@ -76,7 +80,7 @@ export class ExtendedFieldsLectureResolver {
         return isParticipant;
     }
     @FieldResolver((returns) => [AppointmentParticipant], { nullable: true })
-    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN, Role.COURSE_SCREENER)
     @LimitEstimated(30)
     async participants(
         @Ctx() context: GraphQLContext,
@@ -167,6 +171,22 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getZoomMeeting(appointment);
+    }
+    @FieldResolver((returns) => String, { nullable: true })
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)
+    async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
+        const { user } = context;
+        const isAdmin = user.roles.includes(Role.ADMIN);
+        if (!appointment.zoomMeetingId) {
+            logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
+            return null;
+        }
+        if (isAdmin) {
+            const zoomMeeting = await getZoomMeeting(appointment);
+            logger.info(`Admin requested zoom meeting url`);
+            return zoomMeeting.join_url;
+        }
+        return await getZoomUrl(user, appointment);
     }
 
     @FieldResolver((returns) => Match, { nullable: true })

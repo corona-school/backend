@@ -3,11 +3,19 @@ import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
-import { getSessionScreener, getSessionStudent, isElevated, updateSessionUser } from '../authentication';
+import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { addInstructorScreening, addTutorScreening, cancelCoCReminders, scheduleCoCReminders } from '../../common/student/screening';
+import {
+    addInstructorScreening,
+    addTutorScreening,
+    cancelCoCReminders,
+    scheduleCoCReminders,
+    requireStudentOnboarding,
+    updateInstructorScreening,
+    updateTutorScreening,
+} from '../../common/student/screening';
 import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
@@ -15,6 +23,7 @@ import {
     student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    gender_enum as Gender,
     PrismaClient,
     Prisma,
 } from '@prisma/client';
@@ -28,11 +37,11 @@ import { createRemissionRequestPDF } from '../../common/remission-request';
 import { getFileURL, addFile } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
 const log = getLogger(`StudentMutation`);
-// eslint-disable-next-line import/no-cycle
-import { BecomeTutorInput, RegisterStudentInput } from '../me/mutation';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
-import { GraphQLJSON, JSONResolver } from 'graphql-scalars';
+import { GraphQLJSON } from 'graphql-scalars';
+import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
+import { ForbiddenError } from '../error';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -57,6 +66,14 @@ export class ScreeningInput {
         nullable: true,
     })
     knowsCoronaSchoolFrom?: string | undefined;
+}
+
+@InputType()
+class ScreeningUpdateInput {
+    @Field((_type) => String, {
+        nullable: true,
+    })
+    comment?: string | undefined;
 }
 
 @ObjectType()
@@ -128,6 +145,21 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     university?: string;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasDoneEthicsOnboarding?: boolean;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialExperience?: boolean;
+
+    @Field((type) => Gender, { nullable: true })
+    gender?: Gender;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
 }
 
 const logger = getLogger('Student Mutations');
@@ -150,6 +182,11 @@ export async function updateStudent(
         lastTimeCheckedNotifications,
         notificationPreferences,
         university,
+        hasDoneEthicsOnboarding,
+        hasSpecialExperience,
+        gender,
+        descriptionForMatch,
+        descriptionForScreening,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -162,6 +199,22 @@ export async function updateStudent(
 
     if ((firstname != undefined || lastname != undefined) && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the name without verification`);
+    }
+
+    if (hasSpecialExperience !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
+    }
+
+    if (gender !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('gender may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
     const res = await prismaInstance.student.update({
@@ -177,12 +230,17 @@ export async function updateStudent(
             notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
+            hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
+            hasSpecialExperience: ensureNoNull(hasSpecialExperience),
+            gender: ensureNoNull(gender),
+            descriptionForMatch,
+            descriptionForScreening,
         },
         where: { id: student.id },
     });
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForStudent(res));
+    await updateSessionUser(context, userForStudent(res), getSessionUser(context).deviceId);
 
     logger.info(`Student(${student.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
@@ -257,7 +315,7 @@ async function studentRegisterPlus(data: StudentRegisterPlusInput, ctx: GraphQLC
 @Resolver((of) => GraphQLModel.Student)
 export class MutateStudentResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.STUDENT, Role.ADMIN)
+    @Authorized(Role.STUDENT, Role.ADMIN, Role.STUDENT_SCREENER)
     async studentUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: StudentUpdateInput, @Arg('studentId', { nullable: true }) studentId?: number) {
         const student = await getSessionStudent(context, studentId);
         await updateStudent(context, student, data);
@@ -265,7 +323,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
@@ -273,7 +331,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentReactivate(@Arg('studentId') studentId: number, @Arg('reason') reason: string): Promise<boolean> {
         const student = await getStudent(studentId);
         await reactivateStudent(student, reason);
@@ -281,7 +339,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
 
@@ -291,7 +349,7 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTOR)
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
         await deleteStudentMatchRequest(student);
@@ -300,22 +358,31 @@ export class MutateStudentResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
-    async studentInstructorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentInstructorScreeningCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('studentId') studentId: number,
+        @Arg('screening') screening: ScreeningInput,
+        @Arg('skipCoC', { nullable: true }) skipCoC?: boolean
+    ) {
         const student = await getStudent(studentId);
 
         if (!student.isInstructor) {
             await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
             log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
         }
-
         const screener = await getSessionScreener(context);
-        await addInstructorScreening(screener, student, screening);
+        if (!!skipCoC && !context.user.roles.includes(Role.ADMIN)) {
+            log.warn(`Screener (${screener.id}) tried to skip CoC on Student (${student.id}) even though they're not an admin`);
+            throw new ForbiddenError(`Requiring admin role to skip CoC`);
+        }
+
+        await addInstructorScreening(screener, student, screening, !!skipCoC);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
         const student = await getStudent(studentId);
 
@@ -329,8 +396,24 @@ export class MutateStudentResolver {
         return true;
     }
 
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentTutorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateTutorScreening(screeningId, data, screener.id);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async studentInstructorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+        const screener = await getSessionScreener(context);
+        await updateInstructorScreening(screeningId, data, screener.id);
+        return true;
+    }
+
     @Mutation((returns) => [StudentRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: StudentRegisterPlusManyInput) {
         const { entries } = data;
         log.info(`Starting studentRegisterPlusMany, received ${entries.length} students`);
@@ -422,6 +505,14 @@ export class MutateStudentResolver {
 
         await deleteZoomUser(student);
         logger.info(`Admin deleted the Zoom User of Student(${student.id})`);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER)
+    async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
+        const student = await getStudent(studentId);
+        await requireStudentOnboarding(student.id);
         return true;
     }
 }

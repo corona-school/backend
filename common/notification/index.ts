@@ -1,6 +1,5 @@
-// eslint-disable-next-line import/no-cycle
 import { mailjetChannel } from './channels/mailjet';
-import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel } from './types';
+import { NotificationID, NotificationContext, Context, Notification, ConcreteNotification, ConcreteNotificationState, Channel, getContext } from './types';
 import { prisma } from '../prisma';
 import { getNotification, getNotifications, getSampleContextExternal } from './notification';
 import { getFullName, User, queryUser, getUser } from '../user';
@@ -8,14 +7,18 @@ import { getLogger } from '../logger/logger';
 import { v4 as uuid } from 'uuid';
 import { AttachmentGroup, createAttachment, File, getAttachmentGroupByAttachmentGroupId, getAttachmentListHTML } from '../attachments';
 import { triggerHook } from './hook';
-import { USER_APP_DOMAIN, isDev } from '../util/environment';
+import { isDev } from '../util/environment';
 import { inAppChannel } from './channels/inapp';
 import { ActionID, getSampleContextForAction, SpecificNotificationContext } from './actions';
 import { Channels } from '../../graphql/types/preferences';
-import { ALL_PREFERENCES } from './defaultPreferences';
+import { ALL_PREFERENCES, DEFAULT_PREFERENCES } from './defaultPreferences';
 import assert from 'assert';
 import { Prisma } from '@prisma/client';
-import { addTagsToActiveSpan } from '../logger/tracing';
+import tracer, { addTagsToActiveSpan } from '../logger/tracing';
+// eslint-disable-next-line import/no-cycle
+import * as Achievement from '../../common/achievement';
+import { webpushChannel } from './channels/push';
+import _ from 'lodash';
 
 const logger = getLogger('Notification');
 
@@ -23,7 +26,7 @@ const logger = getLogger('Notification');
 // Default Channels are always on, the user cannot turn them off
 const DEFAULT_CHANNELS = [inAppChannel];
 // The optional channels are steered via the user preferences
-const OPTIONAL_CHANNELS = [mailjetChannel];
+const OPTIONAL_CHANNELS = [mailjetChannel, webpushChannel];
 
 const HOURS_TO_MS = 60 * 60 * 1000;
 
@@ -62,39 +65,30 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
-const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
-    const notification = await getNotification(concreteNotification.notificationID);
+export const getUserNotificationPreferences = async (user: User, includeAlwaysEnabledPreferences: boolean) => {
+    const basePreferences = includeAlwaysEnabledPreferences ? ALL_PREFERENCES : DEFAULT_PREFERENCES;
 
-    let { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
-
-    // TODO: Remove after all users where migrated
-    if (notificationPreferences && typeof notificationPreferences === 'string') {
-        notificationPreferences = JSON.parse(notificationPreferences);
-    }
-
-    const channelsBasePreference = ALL_PREFERENCES[notification.type];
-    assert.ok(channelsBasePreference, `No default channel preferences maintained for notification type ${notification.type}`);
-
-    const channelsUserPreference = notificationPreferences?.[notification.type] ?? {};
-
-    const result = Object.assign({}, channelsBasePreference, channelsUserPreference);
-    logger.info(`Got Notification preferences for User(${user.userID})`, {
-        type: notification.type,
-        notificationPreferences,
-        channelsBasePreference,
-        result,
-    });
-
-    return result;
+    const storedPreferences = (await queryUser(user, { notificationPreferences: true })).notificationPreferences as Record<string, unknown> | null;
+    return storedPreferences ? _.merge({ ...basePreferences }, { ...storedPreferences }) : basePreferences;
 };
 
-export function getContext(notificationContext: NotificationContext, user: User): Context {
-    return {
-        ...notificationContext,
-        user: { ...user, fullName: getFullName(user) },
-        USER_APP_DOMAIN,
-    };
-}
+const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {
+    const notification = await getNotification(concreteNotification.notificationID);
+    const type = (concreteNotification.context as Context)?.overrideType ?? notification.type;
+
+    const notificationPreferences = await getUserNotificationPreferences(user, true);
+
+    const channelPreference = notificationPreferences?.[type];
+    assert.ok(channelPreference, `No default channel preferences maintained for notification type ${type}`);
+
+    logger.info(`Got Notification preferences for User(${user.userID})`, {
+        type,
+        notificationPreferences,
+        channelPreference,
+    });
+
+    return channelPreference;
+};
 
 async function deliverNotification(
     concreteNotification: ConcreteNotification,
@@ -110,8 +104,10 @@ async function deliverNotification(
     let activeChannels: Channel[] = [];
 
     try {
+        // Always trigger the hook, no matter whether we actually send something to the user
         if (notification.hookID) {
-            await triggerHook(notification.hookID, user);
+            logger.debug(`Running Hook(${notification.hookID}) for ConcreteNotification(${concreteNotification.id})`);
+            await triggerHook(notification.hookID, user, context);
         }
 
         const channelPreferencesForMessageType = await getNotificationChannelPreferences(user, concreteNotification);
@@ -124,7 +120,14 @@ async function deliverNotification(
             }
         }
 
-        activeChannels = enabledChannels.filter((channel) => channel.canSend(notification, user));
+        activeChannels = [];
+        for (const enabled of enabledChannels) {
+            const canBeSent = await enabled.canSend(notification, user);
+            const isChannelDisabledForNotification = notification.disabledChannels.includes(enabled.type);
+            if (canBeSent && !isChannelDisabledForNotification) {
+                activeChannels.push(enabled);
+            }
+        }
 
         if (!activeChannels.length) {
             logger.warn(
@@ -159,7 +162,7 @@ async function deliverNotification(
         logger.warn(
             `Failed to send ConcreteNotification(${concreteNotification.id}) of Notification(${notification.id}) to User(${
                 user.userID
-            }) via Channels (${activeChannels.map((it) => it.type).join(', ')})`,
+            }) via Channels (${activeChannels.map((it) => it.type).join(', ')}) - ${error?.message}`,
             error
         );
 
@@ -258,8 +261,13 @@ export async function rescheduleNotification(notification: ConcreteNotification,
 
 /* --------------------------- Campaigns ---------------------------------------------------- */
 
-const allowedExtensions = ['uniqueId'];
+// overrideType and overrideMailjetTemplateId are not listed here, they need to be specified
+// in the Notification.sample_context to be overridable
+const allowedExtensions = ['uniqueId', 'campaign', 'overrideReceiverEmail'];
 
+// ATTENTION: This currently allows very powerful extensions needed for Campaign Notifications
+// This should only be used to validate contexts from trusted sources (Admins), for other users
+// prohibit the use of the "allowedExtensions"
 export function validateContext(notification: Notification, context: NotificationContext) {
     const sampleContext = getSampleContextExternal(notification);
 
@@ -318,7 +326,7 @@ export async function bulkCreateConcreteNotifications(
             notificationID: notification.id,
             state,
             userId: user.userID,
-            sentAt: new Date(+startAt + 1000 * 60 * 60 * 24 * Math.floor(index / 500)),
+            sentAt: new Date(+startAt + 1000 * 60 * 15 * Math.floor(index / 250)),
             contextID: context.uniqueId,
             context,
         })),
@@ -343,6 +351,26 @@ export async function cancelDraftedAndDelayed(notification: Notification, contex
     });
 
     logger.info(`Cancelled ${publishedCount} drafted notifications for Notification(${notification.id})`);
+}
+
+/* -------------------------------- Hook ----------------------------------------------------------- */
+
+// Predicts when a hook will run for a certain user as caused by a certain action
+// i.e. 'When will a user by deactivated (hook) due to Certificate of Conduct reminders (action) ?'
+// Returns null if no date is known or hook was already triggered
+export async function predictedHookActionDate(action: ActionID, hookID: string, user: User): Promise<Date | null> {
+    const viableNotifications = ((await getNotifications()).get(action)?.toSend ?? []).filter((it) => it.hookID === hookID);
+
+    const possibleTrigger = await prisma.concrete_notification.findFirst({
+        where: {
+            state: ConcreteNotificationState.DELAYED,
+            userId: user.userID,
+            notificationID: { in: viableNotifications.map((it) => it.id) },
+        },
+        select: { sentAt: true },
+    });
+
+    return possibleTrigger?.sentAt;
 }
 
 export * from './hook';
@@ -421,7 +449,8 @@ If 'noDuplicates' is set, a Notification will be ignored if a Notification alrea
 Otherwise a Notification will just be sent multiple times.
 */
 
-export async function actionTakenAt<ID extends ActionID>(
+export const actionTakenAt = tracer.wrap('notification.actionTakenAt', _actionTakenAt);
+export async function _actionTakenAt<ID extends ActionID>(
     at: Date,
     user: User,
     actionId: ID,
@@ -430,10 +459,20 @@ export async function actionTakenAt<ID extends ActionID>(
     noDuplicates = false,
     attachments?: AttachmentGroup
 ) {
+    try {
+        // To be able to reuse all existing action taken events, we had to move the achievement reward here
+        await Achievement.rewardActionTakenAt(at, user, actionId, notificationContext);
+    } catch (e) {
+        logger.error('Failed to reward achievement', e, { at, user, actionId, notificationContext });
+    }
+
     if (SILENCE_NOTIFICATION_SYTEM && isDev) {
         logger.debug(`No Action taken as Notification System is silenced`);
         return;
     }
+
+    // Prevent that we accidentally contact inactive or unverified accounts
+    // DO NOT TOUCH THIS! We are legally required to not send emails to deactivated accounts!
 
     if (!user.active) {
         logger.debug(`No action '${actionId}' taken for User(${user.userID}) as the account is deactivated`);
@@ -565,6 +604,20 @@ export async function actionTakenAt<ID extends ActionID>(
         }
 
         // --------------- Send out Notifications to send directly --------------------------------------
+        const userData = await queryUser(user, { createdAt: true, verifiedAt: true });
+        // During the registration process, users might get emails before they are verified
+        // We generally allow this for 30 days, but then require verification at some point
+        const oldAccount = +userData.createdAt < +Date.now() - 30 * 24 * HOURS_TO_MS;
+        // Some actions are always allowed to trigger notifications, so that users can recover their account even after 30 days:
+        const isAlwaysAllowed = actionId === 'user-authenticate' || actionId === 'user-password-reset' || actionId === 'user-verify-email';
+
+        if (!isAlwaysAllowed && oldAccount && !userData.verifiedAt) {
+            logger.error(
+                `Tried to send notifications for triggered action '${actionId}' for unverified User(${user.userID}) who is unverified for more than 30 days`
+            );
+            return;
+        }
+
         if (!dryRun) {
             for (const directSend of directSends) {
                 const concreteNotification = await createConcreteNotification(directSend, user, notificationContext, attachments);

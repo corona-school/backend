@@ -5,8 +5,8 @@
   This can be run with 'npm run integration-tests', and by default runs against the dev backend.
   A different target can be configured by setting the INTEGRATION_TARGET environment */
 
+import 'reflect-metadata';
 import { finalizeTests, logger } from './base';
-
 /* Base Tests - Other tests build on them and they always must run */
 import './01_user';
 import './02_screening';
@@ -34,5 +34,6 @@ import './12_notifications';
 /* Account Deactivation - Independent, but needs to be last */
 import './13_deactivation';
 import './14_redaction';
+import './15_achievements';
 
 void finalizeTests();

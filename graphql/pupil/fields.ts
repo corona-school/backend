@@ -7,6 +7,7 @@ import {
     Participation_certificate as ParticipationCertificate,
     Match,
     Pupil_screening as PupilScreening,
+    School,
 } from '../generated';
 import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -23,11 +24,12 @@ import { UserType } from '../types/user';
 import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
 import { GraphQLBoolean } from 'graphql';
+import { subcourseSearch } from '../../common/courses/search';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => UserType)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.PUPIL_SCREENER)
     user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
     }
@@ -39,7 +41,8 @@ export class ExtendFieldsPupilResolver {
     async subcoursesJoined(
         @Root() pupil: Required<Pupil>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
-        @Arg('onlyPast', { nullable: true }) onlyPast?: boolean
+        @Arg('onlyPast', { nullable: true }) onlyPast?: boolean,
+        @Arg('search', { nullable: true }) search?: string
     ) {
         const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
 
@@ -51,6 +54,10 @@ export class ExtendFieldsPupilResolver {
             filters.push(onlyPastSubcourses());
         }
 
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
         return await prisma.subcourse.findMany({
             where: { AND: filters },
         });
@@ -59,19 +66,25 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)
-    async subcoursesWaitingList(@Root() pupil: Pupil) {
+    async subcoursesWaitingList(@Root() pupil: Pupil, @Arg('search', { nullable: true }) search?: string) {
+        const filters: Prisma.subcourseWhereInput[] = [
+            {
+                waiting_list_enrollment: {
+                    some: {
+                        pupilId: pupil.id,
+                    },
+                },
+            },
+            excludePastSubcourses(),
+        ];
+
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
         return await prisma.subcourse.findMany({
             where: {
-                AND: [
-                    {
-                        waiting_list_enrollment: {
-                            some: {
-                                pupilId: pupil.id,
-                            },
-                        },
-                    },
-                    excludePastSubcourses(),
-                ],
+                AND: filters,
             },
         });
     }
@@ -81,16 +94,6 @@ export class ExtendFieldsPupilResolver {
     @LimitEstimated(100)
     async concreteNotifications(@Root() pupil: Required<Pupil>) {
         return await prisma.concrete_notification.findMany({ where: { userId: userForPupil(pupil).userID } });
-    }
-
-    @FieldResolver((type) => [Log])
-    @Authorized(Role.ADMIN)
-    @LimitEstimated(100)
-    async logs(@Root() pupil: Required<Pupil>) {
-        return await prisma.log.findMany({
-            where: { user: pupil.wix_id },
-            orderBy: { createdAt: 'asc' },
-        });
     }
 
     @FieldResolver((type) => [Subject])
@@ -128,7 +131,7 @@ export class ExtendFieldsPupilResolver {
     }
 
     @FieldResolver((type) => Int)
-    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER, Role.TUTOR, Role.INSTRUCTOR)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
     }
@@ -154,13 +157,24 @@ export class ExtendFieldsPupilResolver {
     }
 
     @Query((returns) => [Pupil])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilsToBeScreened(@Arg('onlyDisputed', () => GraphQLBoolean, { nullable: true }) onlyDisputed = false) {
         return await prisma.pupil.findMany({
             where: {
                 active: true,
                 pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
             },
+        });
+    }
+
+    @FieldResolver((returns) => School, { nullable: true })
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
+    async school(@Root() pupil: Required<Pupil>) {
+        if (!pupil.schoolId) {
+            return;
+        }
+        return await prisma.school.findFirst({
+            where: { id: pupil.schoolId },
         });
     }
 }

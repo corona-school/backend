@@ -1,117 +1,30 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionStudent, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
+import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import {
-    pupil_learninggermansince_enum as LearningGermanSince,
-    pupil_languages_enum as Language,
-    pupil_registrationsource_enum as RegistrationSource,
-    pupil_schooltype_enum as SchoolType,
-    pupil_state_enum as State,
-    school as School,
-} from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
 import { RateLimit } from '../rate-limit';
-import { becomeInstructor, BecomeInstructorData, becomeTutor, BecomeTutorData, registerStudent, RegisterStudentData } from '../../common/student/registration';
-import {
-    becomeStatePupil,
-    BecomeStatePupilData,
-    becomeTutee,
-    BecomeTuteeData,
-    becomeParticipant,
-    registerPupil,
-    RegisterPupilData,
-} from '../../common/pupil/registration';
+import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } from '../../common/student/registration';
+import { becomeStatePupil, BecomeStatePupilData, becomeTutee, becomeParticipant, registerPupil } from '../../common/pupil/registration';
 import '../types/enums';
-import { Subject } from '../types/subject';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
-import { evaluatePupilRoles, evaluateStudentRoles } from '../roles';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
-// eslint-disable-next-line import/no-cycle
 import { StudentUpdateInput, updateStudent } from '../student/mutations';
-// eslint-disable-next-line import/no-cycle
 import { PupilUpdateInput, updatePupil } from '../pupil/mutations';
 import { NotificationPreferences } from '../types/preferences';
 import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
-
-@InputType()
-export class RegisterStudentInput implements RegisterStudentData {
-    @Field((type) => String)
-    @MaxLength(100)
-    firstname: string;
-
-    @Field((type) => String)
-    @MaxLength(100)
-    lastname: string;
-
-    @Field((type) => String)
-    @ValidateEmail()
-    email: string;
-
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
-    @Field((type) => String, { defaultValue: '' })
-    @MaxLength(500)
-    aboutMe: string;
-
-    /* After registration, the user receives an email to verify their account.
-   The user is redirected to this URL afterwards to continue with whatever they're registering for */
-    @Field((type) => String, { nullable: true })
-    redirectTo?: string;
-
-    @Field((type) => String, { nullable: true })
-    cooperationTag?: string;
-}
-
-@InputType()
-export class RegisterPupilInput implements RegisterPupilData {
-    @Field((type) => String)
-    @MaxLength(100)
-    firstname: string;
-
-    @Field((type) => String)
-    @MaxLength(100)
-    lastname: string;
-
-    @Field((type) => String)
-    @ValidateEmail()
-    email: string;
-
-    @Field((type) => Boolean)
-    newsletter: boolean;
-
-    @Field((type) => Int, { nullable: true })
-    schoolId?: School['id'];
-
-    @Field((type) => SchoolType, { nullable: true })
-    schooltype?: SchoolType;
-
-    @Field((type) => State)
-    state: State;
-
-    @Field((type) => RegistrationSource)
-    registrationSource: RegistrationSource;
-
-    @Field((type) => String, { defaultValue: '' })
-    @MaxLength(500)
-    aboutMe: string;
-
-    /* After registration, the user receives an email to verify their account.
-       The user is redirected to this URL afterwards to continue with whatever they're registering for */
-    @Field((type) => String, { nullable: true })
-    redirectTo?: string;
-}
+import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
+import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
+import { verifyEmail } from '../../common/secret';
+import { createIDPLogin } from '../../common/secret/idp';
 
 @InputType()
 class MeUpdateInput {
@@ -146,33 +59,6 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 @InputType()
-export class BecomeTutorInput implements BecomeTutorData {
-    @Field((type) => [Subject], { nullable: true })
-    subjects?: Subject[];
-
-    @Field((type) => [Language], { nullable: true })
-    languages?: Language[];
-
-    @Field((type) => Boolean, { nullable: true })
-    supportsInDaZ?: boolean;
-}
-
-@InputType()
-export class BecomeTuteeInput implements BecomeTuteeData {
-    @Field((type) => [Subject])
-    subjects: Subject[];
-
-    @Field((type) => [Language])
-    languages: Language[];
-
-    @Field((type) => LearningGermanSince, { nullable: true })
-    learningGermanSince?: LearningGermanSince;
-
-    @Field((type) => Int)
-    gradeAsInt: number;
-}
-
-@InputType()
 class BecomeStatePupilInput implements BecomeStatePupilData {
     @Field((type) => String)
     @ValidateEmail()
@@ -186,24 +72,37 @@ const logger = getLogger('Me Mutations');
 @Resolver((of) => UserType)
 export class MutateMeResolver {
     @Mutation((returns) => Student)
-    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN, Role.SSO_REGISTERING_USER)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterStudent(
         @Ctx() context: GraphQLContext,
         @Arg('data') data: RegisterStudentInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
+        // User registered after trying to log in via IDP, pick up the IDP user info
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus students may only be registered by admins');
         }
 
-        const student = await registerStudent(data, noEmail);
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
+
+        const student = await registerStudent({ ...data, email: isSSO ? sessionUser.email : data.email }, noEmail);
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
+        if (isSSO) {
+            const user = userForStudent(student);
+            // We assume here that the IDP already validated the email
+            await verifyEmail(user);
+            await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
+        }
 
         if (!byAdmin) {
-            await loginAsUser(userForStudent(student), context);
+            await loginAsUser(userForStudent(student), context, undefined);
         }
 
         return student;
@@ -215,24 +114,36 @@ export class MutateMeResolver {
     }
 
     @Mutation((returns) => Pupil)
-    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN, Role.SSO_REGISTERING_USER)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterPupil(
         @Ctx() context: GraphQLContext,
         @Arg('data') data: RegisterPupilInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const pupil = await registerPupil(data, noEmail);
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
+
+        const pupil = await registerPupil({ ...data, email: isSSO ? sessionUser.email : data.email }, noEmail);
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
+        if (isSSO) {
+            const user = userForPupil(pupil);
+            // We assume here that the IDP already validated the email
+            await verifyEmail(user);
+            await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
+        }
 
         if (!byAdmin) {
-            await loginAsUser(userForPupil(pupil), context);
+            await loginAsUser(userForPupil(pupil), context, undefined);
         }
 
         return pupil;
@@ -278,10 +189,10 @@ export class MutateMeResolver {
     async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil, reason);
+            const updatedPupil = await deactivatePupil(pupil, false, reason, false);
 
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
 
             logger.info(`Pupil(${pupil.id}) deactivated their account`);
@@ -312,7 +223,7 @@ export class MutateMeResolver {
             const updatedPupil = await activatePupil(pupil);
 
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
 
             logger.info(`Pupil(${pupil.id}) reactivated their account`);
@@ -338,7 +249,7 @@ export class MutateMeResolver {
         logger.info(`Student(${student.id}) requested to become an instructor`);
 
         // User gets the WANNABE_INSTRUCTOR role
-        await updateSessionUser(context, userForStudent(student));
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).deviceId);
 
         // After successful screening and re authentication, the user will receive the INSTRUCTOR role
 
@@ -357,7 +268,7 @@ export class MutateMeResolver {
         await becomeTutor(student, data);
 
         // User gets the WANNABE_TUTOR role
-        await updateSessionUser(context, userForStudent(student));
+        await updateSessionUser(context, userForStudent(student), getSessionUser(context).deviceId);
 
         // After successful screening and re authentication, the user will receive the TUTOR role
 
@@ -373,7 +284,7 @@ export class MutateMeResolver {
         const updatedPupil = await becomeTutee(pupil, data);
         if (!byAdmin) {
             const roles: Role[] = [];
-            evaluatePupilRoles(updatedPupil, roles);
+            await evaluatePupilRoles(updatedPupil, roles);
             context.user = { ...context.user, roles };
         }
 
@@ -389,7 +300,7 @@ export class MutateMeResolver {
 
         const updatedPupil = await becomeStatePupil(pupil, data);
         const roles: Role[] = [];
-        evaluatePupilRoles(updatedPupil, roles);
+        await evaluatePupilRoles(updatedPupil, roles);
         context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
@@ -404,7 +315,7 @@ export class MutateMeResolver {
 
         const updatedPupil = await becomeParticipant(pupil);
         const roles: Role[] = [];
-        evaluatePupilRoles(updatedPupil, roles);
+        await evaluatePupilRoles(updatedPupil, roles);
         context.user = { ...context.user, roles };
 
         logger.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);

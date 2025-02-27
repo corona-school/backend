@@ -5,6 +5,7 @@ import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { NotFoundError } from '@prisma/client/runtime';
 import { userForPupil } from '../user';
+import { updateSessionRolesOfUser } from '../user/session';
 
 const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
@@ -13,19 +14,22 @@ interface PupilScreeningInput {
     invalidated?: boolean;
 }
 
-export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}) {
+export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}, silent = false) {
     if (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, invalidated: false } })) {
         throw new RedundantError(`There already is a valid pupil screening for pupil ${pupil.id}`);
     }
     if (!pupil.isPupil) {
         throw new PrerequisiteError(`Pupil ${pupil.id} has isPupil = false`);
     }
-    if (!pupil.verifiedAt && pupil.verification) {
+    if (!pupil.verifiedAt) {
         throw new PrerequisiteError(`Pupil ${pupil.id} does not have a verified email`);
     }
 
     await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
-    await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+
+    if (!silent) {
+        await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
+    }
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
 }
@@ -33,6 +37,7 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
 interface PupilScreeningUpdate {
     status?: PupilScreeningStatus;
     comment?: string;
+    knowsCoronaSchoolFrom?: string;
 }
 
 export async function updatePupilScreening(screener: Screener, pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
@@ -51,23 +56,38 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
 
     // We only want to send notifications when the status got updated.
     // Otherwise, we might spam the user while updating the comment.
-    if (screening.status && screening.status === screeningUpdate.status) {
+    if (!screeningUpdate.status || screening.status === screeningUpdate.status) {
         return;
     }
 
+    const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId } });
+    const isFirstScreening = validScreeningCount === 1;
+    const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_rejected', {});
+            if (isFirstScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_rejected', {});
+            } else {
+                await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
+            }
             break;
         case PupilScreeningStatus.success:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_succeeded', {});
+            if (isFirstScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {});
+            } else {
+                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+            }
+            await updateSessionRolesOfUser(asUser.userID);
             break;
 
         case PupilScreeningStatus.dispute:
-            await Notification.actionTaken(userForPupil(screening.pupil), 'pupil_screening_dispute', {});
+            await Notification.actionTaken(asUser, 'pupil_screening_dispute', {});
             break;
 
         case PupilScreeningStatus.pending:
+            /**
+             * Notifications for missed screenings are handled in `pupil/mutations.ts` `pupilMissedScreening`
+             */
             break;
     }
 }

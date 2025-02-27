@@ -4,9 +4,6 @@
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
-import { validateEmail } from '../../graphql/validators';
-import { updateZoomUser } from '../zoom/user';
-import { isZoomFeatureActive } from '../zoom/util';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -26,7 +23,6 @@ export type User = {
     studentId?: number;
     screenerId?: number;
 };
-
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
@@ -64,6 +60,92 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     }
 
     throw new Error(`Unknown User(${userID})`);
+}
+
+export async function getReferredByIDCount(userId: string): Promise<number> {
+    const amountofReferredStudents = await prisma.student.count({
+        where: { referredById: userId },
+    });
+
+    const amountofReferredPupils = await prisma.pupil.count({
+        where: { referredById: userId },
+    });
+
+    return amountofReferredPupils + amountofReferredStudents;
+}
+
+export async function getReferredStudentsAndPupils(userId: string): Promise<{ students: string[]; pupils: string[] }> {
+    const referredStudents = await prisma.student.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const referredPupils = await prisma.pupil.findMany({
+        where: { referredById: userId },
+        select: { id: true },
+    });
+
+    const students = referredStudents.map((student) => `student/${student.id}`);
+    const pupils = referredPupils.map((pupil) => `pupil/${pupil.id}`);
+
+    return { students, pupils };
+}
+
+export async function getTotalSupportedHours(userId: string): Promise<number> {
+    const { students, pupils } = await getReferredStudentsAndPupils(userId);
+
+    // Provide k-anonymity (k = 2) - if only one user or two users was referred, do not show
+    // the supported hours
+    const referredUsers = students.length + pupils.length;
+    if (referredUsers <= 2) {
+        return 0;
+    }
+
+    const studentLectures = await prisma.lecture.findMany({
+        where: {
+            organizerIds: {
+                hasSome: students,
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+        select: {
+            duration: true,
+            organizerIds: true,
+            declinedBy: true,
+        },
+    });
+
+    const pupilLectures = await prisma.lecture.findMany({
+        where: {
+            participantIds: {
+                hasSome: pupils,
+            },
+            isCanceled: false,
+            start: { lt: new Date() },
+        },
+        select: {
+            duration: true,
+            participantIds: true,
+            declinedBy: true,
+        },
+    });
+
+    const totalStudentDuration = studentLectures.reduce((acc, lecture) => {
+        const actualParticipants = lecture.organizerIds.filter((id) => students.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
+        const actualParticipants = lecture.participantIds.filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
+        const participantCount = actualParticipants.length;
+        return acc + lecture.duration * participantCount;
+    }, 0);
+
+    const totalDurationInMinutes = totalStudentDuration + totalPupilDuration;
+
+    return Math.round(totalDurationInMinutes / 60);
 }
 
 export async function getUserByEmail(email: string, active?: boolean): Promise<User> {
@@ -128,7 +210,6 @@ export async function getStudent(user: User): Promise<Student | never> {
     if (!user.studentId) {
         throw new Error(`Expected User(${user.userID}) to be student`);
     }
-
     return await prisma.student.findUnique({ where: { id: user.studentId } });
 }
 
@@ -138,6 +219,14 @@ export async function getPupil(user: User): Promise<Pupil | never> {
     }
 
     return await prisma.pupil.findUnique({ where: { id: user.pupilId } });
+}
+
+export async function getScreener(user: User): Promise<Screener | never> {
+    if (!user.screenerId) {
+        throw new Error(`Expected User(${user.userID}) to be screener`);
+    }
+
+    return await prisma.screener.findUnique({ where: { id: user.screenerId } });
 }
 
 type UserSelect = PrismaTypes.studentSelect & PrismaTypes.pupilSelect & PrismaTypes.screenerSelect;
@@ -165,33 +254,6 @@ export async function queryUser<Select extends UserSelect>(user: User, select: S
     }
 
     throw new Error(`Unknown User(${user.userID})`);
-}
-
-export async function updateUser(userId: string, { email }: Partial<Pick<User, 'email'>>) {
-    const validatedEmail = validateEmail(email);
-    const user = await getUser(userId, /* active */ true);
-    if (user.studentId) {
-        if (isZoomFeatureActive()) {
-            await updateZoomUser(user);
-        }
-
-        return userForStudent(
-            (await prisma.student.update({
-                where: { id: user.studentId },
-                data: { email: validatedEmail },
-                select: userSelection,
-            })) as Student
-        );
-    }
-    if (user.pupilId) {
-        return userForPupil(
-            (await prisma.pupil.update({
-                where: { id: user.pupilId },
-                data: { email: validatedEmail },
-                select: userSelection,
-            })) as Pupil
-        );
-    }
 }
 
 export async function getUsers(userIds: User['userID'][]): Promise<User[]> {

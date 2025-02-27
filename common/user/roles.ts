@@ -7,6 +7,13 @@ export enum Role {
     SCREENER = 'SCREENER',
     /* A screener who is additionally able to log in with users' accounts */
     TRUSTED_SCREENER = 'TRUSTED_SCREENER',
+    /* A screener that can manage courses */
+    COURSE_SCREENER = 'COURSE_SCREENER',
+    /* A screener that can screen pupils */
+    PUPIL_SCREENER = 'PUPIL_SCREENER',
+    /* A screener that can screen students */
+    STUDENT_SCREENER = 'STUDENT_SCREENER',
+
     /* Access via User Interface, not yet E-Mail verified */
     PUPIL = 'PUPIL',
     STUDENT = 'STUDENT',
@@ -37,4 +44,13 @@ export enum Role {
     SUBCOURSE_PARTICIPANT = 'SUBCOURSE_PARTICIPANT',
     /* User is a pupil and participant of a specific appointment */
     APPOINTMENT_PARTICIPANT = 'APPOINTMENT_PARTICIPANT',
+    /**
+     * User is trying to authenticate with SSO. It may be that they're registering a new account
+     * or trying to link their Lern-Fair account with an IDP
+     */
+    SSO_REGISTERING_USER = 'SSO_REGISTERING_USER',
+    /**
+     * User has their Lern-Fair account linked with an IDP
+     */
+    SSO_USER = 'SSO_USER',
 }

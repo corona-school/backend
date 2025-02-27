@@ -7,6 +7,8 @@ import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
 import { assureZoomFeatureActive } from './util';
 import { ZoomUserResponse, ZoomUserType } from './type';
+import { User } from '../user';
+import { Lecture as Appointment } from '../../graphql/generated';
 
 const logger = getLogger('Zoom User');
 
@@ -23,6 +25,12 @@ type ZoomUser = {
 
 type ZAKResponse = {
     token: string;
+};
+
+type GetZoomUserArgs = {
+    id: student['id'];
+    email: student['email'];
+    zoomUserId?: student['zoomUserId'];
 };
 
 enum ZoomLicenseType {
@@ -98,37 +106,55 @@ const createZoomUser = async (student: Pick<student, 'id' | 'firstname' | 'lastn
     return newUser;
 };
 
-async function getZoomUser(email: string): Promise<ZoomUser | null> {
+async function getZoomUser({ id, email, zoomUserId }: GetZoomUserArgs): Promise<ZoomUser | null> {
     assureZoomFeatureActive();
-
     const { access_token } = await getAccessToken();
-    const response = await zoomRetry(
-        () =>
-            fetch(`${zoomUserApiUrl}/${email}`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${access_token}`,
-                    'Content-Type': 'application/json',
-                },
-            }),
-        3,
-        1000
-    );
 
-    if (response.status === 404) {
-        logger.info(`Zoom - No Zoom user found for student with email ${email}`);
-        return null;
-    } else if (!response.ok) {
-        throw new Error(`Zoom failed to get user: ${response.status} ${await response.text()}`);
+    const zoomFetchUser = (zoomIdOrEmail: string) => {
+        return zoomRetry(
+            () =>
+                fetch(`${zoomUserApiUrl}/${zoomIdOrEmail}`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }),
+            2,
+            1000
+        );
+    };
+
+    const byEmailResponse = await zoomFetchUser(email);
+    if (byEmailResponse.status === 404) {
+        logger.info(`Zoom - No Zoom user found for Student(${id}) with email ${email}`);
+        if (!zoomUserId) {
+            return null;
+        }
+
+        /** Let's try with the user id because sometimes the zoom API works with one or the other... */
+        const byIdResponse = await zoomFetchUser(zoomUserId);
+        if (byIdResponse.status === 404) {
+            logger.info(`Zoom - No Zoom user found for Student(${id}) with zoomUserId ${zoomUserId}`);
+            return null;
+        } else if (!byIdResponse.ok) {
+            throw new Error(`Zoom failed to get Student(${id}) zoom user by zoomUserId: ${byIdResponse.status} ${await byIdResponse.text()}`);
+        }
+
+        logger.info(`Zoom - Retrieved Zoom user for Student(${id}) with zoomUserId ${zoomUserId}`);
+        const data = byIdResponse.json() as unknown as ZoomUser;
+        return data;
+    } else if (!byEmailResponse.ok) {
+        throw new Error(`Zoom failed to get Student(${id}) zoom user by email: ${byEmailResponse.status} ${await byEmailResponse.text()}`);
     }
 
-    logger.info(`Zoom - Retrieved Zoom user for student with email ${email}`);
-    const data = response.json() as unknown as ZoomUser;
+    logger.info(`Zoom - Retrieved Zoom user for Student(${id}) with email ${email}`);
+    const data = byEmailResponse.json() as unknown as ZoomUser;
     return data;
 }
 
-export async function getOrCreateZoomUser(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email'>) {
-    const existing = await getZoomUser(student.email);
+export async function getOrCreateZoomUser(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email' | 'zoomUserId'>) {
+    const existing = await getZoomUser(student);
     if (existing) {
         return existing;
     }
@@ -136,40 +162,9 @@ export async function getOrCreateZoomUser(student: Pick<student, 'id' | 'firstna
     return await createZoomUser(student);
 }
 
-async function updateZoomUser(student: Pick<student, 'firstname' | 'lastname' | 'email'>): Promise<ZoomUser> {
-    assureZoomFeatureActive();
-
-    const { access_token } = await getAccessToken();
-    const response = await zoomRetry(
-        () =>
-            fetch(`${zoomUserApiUrl}/${student.email}`, {
-                method: 'PATCH',
-                headers: {
-                    Authorization: `Bearer ${access_token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    first_name: student.firstname,
-                    last_name: student.lastname,
-                    display_name: `${student.firstname} ${student.lastname}`,
-                    type: ZoomLicenseType.LICENSED,
-                }),
-            }),
-        3,
-        1000
-    );
-
-    if (!response.ok) {
-        throw new Error(`Zoom failed to update user: ${response.status} ${await response.text()}`);
-    }
-
-    const data = response.json() as unknown as ZoomUser;
-
-    if (response.status === 204) {
-        logger.info(`Zoom - Updated Zoom user ${data.id} with email ${data.email}`);
-    }
-
-    return data;
+export async function changeEmail(student: Pick<student, 'id' | 'firstname' | 'lastname' | 'email' | 'zoomUserId'>, newEmail: string) {
+    await deleteZoomUser(student);
+    await createZoomUser({ ...student, email: newEmail });
 }
 
 // To find out more about the Zoom Access Key (ZAK), visit https://developers.zoom.us/docs/api/rest/reference/zoom-api/methods/#operation/userZak
@@ -218,8 +213,8 @@ const deleteZoomUser = async (student: Pick<student, 'id' | 'zoomUserId'>): Prom
         1000
     );
 
-    if (!response.ok) {
-        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${response.text()}`);
+    if (!response.ok && response.status !== 404) {
+        throw new Error(`Zoom failed to delete user for Student(${student.id}): ${await response.text()}`);
     }
 
     await prisma.student.update({ where: { id: student.id }, data: { zoomUserId: null } });
@@ -262,4 +257,26 @@ async function getZoomUserInfos(): Promise<ZoomUserType[] | null> {
         return null;
     }
 }
-export { createZoomUser, getZoomUser, updateZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUserInfos as getZoomUsers };
+
+async function getZoomUrl(user: User, appointment: Appointment) {
+    if (!appointment.zoomMeetingId) {
+        throw new Error(`No zoom meeting ID found for appointment ID: ${appointment.id}`);
+    }
+    const basicStartUrl = 'https://lern-fair.zoom.us/s';
+    const basicJoinUrl = 'https://lern-fair.zoom.us/j';
+    const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
+    const isAppointmentParticipant = appointment.participantIds.includes(user.userID);
+
+    // The start_url always includes the ZAK from the host, who created the meeting and so every host and alternativHost would use the same identity
+    // The workaround with creating own start_urls with the ZAK is an undocumented feature of zoom
+    if (isAppointmentOrganizer) {
+        const zoomOrganizerZak = (await getUserZAK(user.email)).token;
+        return `${basicStartUrl}/${appointment.zoomMeetingId}?zak=${zoomOrganizerZak}`;
+    } else if (isAppointmentParticipant) {
+        // participants have to manually set their name for the zoom meeting
+        return `${basicJoinUrl}/${appointment.zoomMeetingId}`;
+    } else {
+        throw new Error(`User with the ID ${user.userID} is no appointment organizer or participant `);
+    }
+}
+export { createZoomUser, getZoomUser, deleteZoomUser, ZoomUser, getUserZAK, getZoomUrl, getZoomUserInfos as getZoomUsers };

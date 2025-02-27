@@ -1,12 +1,6 @@
 import { prisma } from '../prisma';
-import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore The matching algorithm is optional, to allow for slim local setups
-import type { Helpee, Helper, Settings, SubjectWithGradeRestriction } from 'corona-school-matching';
-// eslint-disable-next-line import/no-cycle
+import type { Prisma, pupil as Pupil, student as Student, match as Match } from '@prisma/client';
 import { createMatch } from './create';
-import { parseSubjectString, Subject } from '../util/subjectsutils';
-import { gradeAsInt } from '../util/gradestrings';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
 import { isDev } from '../util/environment';
@@ -14,11 +8,7 @@ import { cleanupUnconfirmed, InterestConfirmationStatus, requestInterestConfirma
 import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
-
-export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
-    MIN: 1,
-    MAX: 13,
-};
+import { computeMatchings, getMatchExclusions, MatchOffer, MatchRequest, pupilsToRequests, studentsToOffers } from './matching';
 
 const logger = getLogger('MatchingPool');
 
@@ -26,12 +16,12 @@ const logger = getLogger('MatchingPool');
     which can then be matched to a Set of matches */
 
 type Toggle = InterestConfirmationToggle | PupilScreeningToggle | 'allow-unverified';
+
 export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
-    readonly settings: Settings;
-    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<void | never>;
+    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<Match>;
     readonly toggles: readonly Toggle[];
     // There are a few well known toggles:
     //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
@@ -39,12 +29,16 @@ export interface MatchPool {
     //  "confirmation-unknown" -> pupils who have not been asked for their interest
 
     // if present, the matching is run automatically on a daily basis if the criteria are matched
+    // Not used yet
     readonly automatic?: {
         readonly minStudents: number;
         readonly minPupils: number;
     };
-    readonly confirmInterest?: boolean;
-    readonly needsScreening?: boolean;
+
+    // If set, pupils are automatically invited for screening or interest confirmation
+    // Otherwise this can be done manually via GraphQL
+    readonly autoInviteForInterestConfirmation?: boolean;
+    readonly autoInviteForScreening?: boolean;
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -55,7 +49,7 @@ const getViableUsers = (toggles: string[]) => {
     };
 
     if (!toggles.includes('allow-unverified')) {
-        viableUsers.verification = null; // require verification to be unset
+        viableUsers.verifiedAt = { not: null }; // require verifiedAt to be set
     }
 
     /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
@@ -83,7 +77,16 @@ export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: numbe
 
     return await prisma.pupil.findMany({
         where: { AND: [where, userSearch(search)] },
-        orderBy: [{ match: { _count: 'asc' } }, { firstMatchRequest: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
+        orderBy: [
+            { match: { _count: 'asc' } },
+            {
+                firstMatchRequest: {
+                    sort: 'asc',
+                    nulls: 'first',
+                },
+            },
+            { createdAt: 'asc' },
+        ],
         take,
         skip,
     });
@@ -119,48 +122,6 @@ export async function getPupilDemandCount(pool: MatchPool, toggles: Toggle[]) {
     )._sum.openMatchRequestCount;
 }
 
-async function studentToHelper(student: Student): Promise<Helper> {
-    const existingMatches = await prisma.match.findMany({ select: { pupil: { select: { wix_id: true } } }, where: { studentId: student.id } });
-
-    return {
-        id: student.id,
-        uuid: student.wix_id,
-        matchRequestCount: student.openMatchRequestCount,
-        subjects: parseSubjectString(student.subjects).map(formattedSubjectToSubjectWithGradeRestriction),
-        createdAt: student.createdAt,
-        excludeMatchesWith: existingMatches.map((it) => ({ uuid: it.pupil.wix_id })),
-        state: student.state,
-        // firstMatchRequest: student.firstMatchRequest
-    };
-}
-
-async function pupilToHelpee(pupil: Pupil): Promise<Helpee> {
-    const existingMatches = await prisma.match.findMany({ select: { student: { select: { wix_id: true } } }, where: { pupilId: pupil.id } });
-
-    return {
-        id: pupil.id,
-        uuid: pupil.wix_id,
-        matchRequestCount: pupil.openMatchRequestCount,
-        subjects: parseSubjectString(pupil.subjects),
-        createdAt: pupil.createdAt,
-        excludeMatchesWith: existingMatches.map((it) => ({ uuid: it.student.wix_id })),
-        state: pupil.state,
-        matchingPriority: pupil.matchingPriority,
-        grade: gradeAsInt(pupil.grade),
-        // firstMatchRequest: pupil.firstMatchRequest
-    };
-}
-
-function formattedSubjectToSubjectWithGradeRestriction(subject: Subject): SubjectWithGradeRestriction {
-    return {
-        name: subject.name,
-        gradeRestriction: {
-            min: subject.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN, //due to a screening tool's bug (or how it is designed), those values may be null (which causes the algorithm to fail)
-            max: subject.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX,
-        },
-    };
-}
-
 const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
 type InterestConfirmationToggle = (typeof INTEREST_CONFIRMATION_TOGGLES)[number];
 
@@ -178,7 +139,13 @@ function addInterestConfirmationFilter(query: Prisma.pupilWhereInput, toggles: s
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
         // The confirmation request sent but the user might still react to it (after more than two weeks this is unlikely)
-        query.pupil_tutoring_interest_confirmation_request = { some: { status: 'pending', createdAt: { gt: twoWeeksAgo }, invalidated: false } };
+        query.pupil_tutoring_interest_confirmation_request = {
+            some: {
+                status: 'pending',
+                createdAt: { gt: twoWeeksAgo },
+                invalidated: false,
+            },
+        };
     }
 
     if (toggles.includes('confirmation-unknown')) {
@@ -223,13 +190,6 @@ function addPupilScreeningFilter(query: Prisma.pupilWhereInput, toggles: string[
 
 /* ---------------------- POOLS ----------------------------------- */
 
-const balancingCoefficients = {
-    subjectMatching: 0.65,
-    state: 0.05,
-    waitingTime: 0.2,
-    matchingPriority: 0.1,
-};
-
 export const TEST_POOL = {
     name: 'TEST-DO-NOT-USE',
     toggles: ['allow-unverified'],
@@ -247,13 +207,12 @@ export const TEST_POOL = {
         }
         return createMatch(pupil, student, this);
     },
-    settings: { balancingCoefficients },
 } as const;
 
 const _pools = [
     {
         name: 'lern-fair-now',
-        confirmInterest: false,
+        autoInviteForScreening: true,
         toggles: [...INTEREST_CONFIRMATION_TOGGLES, ...PUPIL_SCREENING_TOGGLES],
 
         pupilsToMatch: (toggles: (InterestConfirmationToggle | PupilScreeningToggle)[]): Prisma.pupilWhereInput => {
@@ -271,7 +230,14 @@ const _pools = [
                 // As we slowly move from pupil screening to interest confirmations, by default take those pupils that have either the one or the other
                 query.OR = [
                     { pupil_screening: { some: { status: 'success', invalidated: false } } },
-                    { pupil_tutoring_interest_confirmation_request: { some: { status: 'confirmed', invalidated: false } } },
+                    {
+                        pupil_tutoring_interest_confirmation_request: {
+                            some: {
+                                status: 'confirmed',
+                                invalidated: false,
+                            },
+                        },
+                    },
                 ];
 
                 assert(!query.pupil_screening, 'expected no pupil_screening filter to be present');
@@ -288,7 +254,6 @@ const _pools = [
             registrationSource: { notIn: ['plus'] },
         }),
         createMatch,
-        settings: { balancingCoefficients },
     },
     {
         name: 'lern-fair-plus',
@@ -317,7 +282,6 @@ const _pools = [
             registrationSource: { equals: 'plus' },
         }),
         createMatch,
-        settings: { balancingCoefficients },
     },
     TEST_POOL,
 ] as const;
@@ -354,50 +318,101 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const pupils = await getPupils(pool, toggles);
     const students = await getStudents(pool, toggles);
 
-    // The matching algorithm works on it's own entities, but we need to map them back to pupils and students when receiving the result
-    const pupilsMap = new Map(pupils.map((it) => [it.wix_id, it]));
-    const studentsMap = new Map(students.map((it) => [it.wix_id, it]));
+    const offers: MatchOffer[] = studentsToOffers(students);
+    const requests: MatchRequest[] = pupilsToRequests(pupils);
 
-    const helpers: Helper[] = await Promise.all(students.map(studentToHelper));
-    const helpees: Helpee[] = await Promise.all(pupils.map(pupilToHelpee));
+    const subjectStats = new Map<string, { offered: number; requested: number; requestedMandatory: number; fulfilledRequests: number }>();
+
+    for (const request of requests) {
+        for (const subject of request.subjects) {
+            if (!subjectStats.has(subject.name)) {
+                subjectStats.set(subject.name, { fulfilledRequests: 0, offered: 0, requested: 0, requestedMandatory: 0 });
+            }
+
+            const subjectStat = subjectStats.get(subject.name);
+            subjectStat.requested += 1;
+            if (subject.mandatory) {
+                subjectStat.requestedMandatory += 1;
+            }
+        }
+    }
+
+    for (const offer of offers) {
+        for (const subject of offer.subjects) {
+            if (!subjectStats.has(subject.name)) {
+                subjectStats.set(subject.name, { fulfilledRequests: 0, offered: 0, requested: 0, requestedMandatory: 0 });
+            }
+
+            const subjectStat = subjectStats.get(subject.name);
+            subjectStat.offered += 1;
+        }
+    }
 
     timing.preparation = Date.now() - startPreparation;
     logger.info(`MatchingPool(${pool.name}) found ${pupils.length} pupils and ${students.length} students for matching in ${timing.preparation}ms`);
 
     const startMatching = Date.now();
 
-    // To run the matching we need the C++ Part, if it is not installed this will fail at runtime
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const { match } = await import('corona-school-matching');
+    const excludeMatchings = await getMatchExclusions(requests, offers);
+    const result = computeMatchings(requests, offers, excludeMatchings);
 
-    const result = match(helpers, helpees, pool.settings);
-
-    const matches = result.matches.map((it) => ({
-        student: assertExists(studentsMap.get(it.helper.uuid)),
-        pupil: assertExists(pupilsMap.get(it.helpee.uuid)),
+    const matches = result.map((it) => ({
+        student: assertExists(it.offer.student),
+        pupil: assertExists(it.request.pupil),
     }));
 
     timing.matching = Date.now() - startMatching;
     logger.info(`MatchingPool(${pool.name}) calculated ${matches.length} matches in ${timing.matching}ms`);
 
-    const stats = { ...result.stats, toggles };
+    for (const matching of result) {
+        for (const offeredSubject of matching.offer.subjects) {
+            for (const requestedSubject of matching.request.subjects) {
+                if (offeredSubject.name === requestedSubject.name) {
+                    const subjectStat = assertExists(subjectStats.get(offeredSubject.name));
+                    subjectStat.fulfilledRequests += 1;
+                }
+            }
+        }
+    }
+
+    const stats = {
+        helperCount: students.length,
+        helpeeCount: pupils.length,
+        matchCount: result.length,
+        // The old matching algorithm additionally reported these, removed them for now,
+        // we might want to compute them again if needed:
+        // averageWaitingDaysMatchedHelpee: 0,
+        // mostWaitingDaysUnmatchedHelpee: 0,
+        // numberOfCoveredSubjects: 0,
+        // numberOfUncoveredSubjects: 0,
+        // numberOfOfferedSubjects: 0,
+        toggles,
+        subjectStats: [...subjectStats.entries()].map(([name, stats]) => ({ name, stats })),
+    };
 
     if (apply) {
         const startCommit = Date.now();
+        const createdMatches: Match[] = [];
+
         for (const match of matches) {
-            await pool.createMatch(match.pupil, match.student, pool);
+            createdMatches.push(await pool.createMatch(match.pupil, match.student, pool));
         }
 
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
 
-        await prisma.match_pool_run.create({
+        const run = await prisma.match_pool_run.create({
             data: {
                 matchingPool: pool.name,
                 matchesCreated: matches.length,
                 stats,
             },
+        });
+
+        // After creating matches and the match run, link them together
+        await prisma.match.updateMany({
+            data: { matchPoolRunId: run.id },
+            where: { id: { in: createdMatches.map((it) => it.id) } },
         });
     }
 
@@ -444,12 +459,18 @@ export interface MatchPoolStatistics {
         year: number;
         matches: number;
         subjects: {
-            [subject: string]: { offered: number; requested: number; fulfilled: number };
+            [subject: string]: { offered: number; requested: number; requestedMandatory?: number; fulfilled: number };
         };
     }[];
     averageMatchesPerMonth: number;
     predictedPupilMatchTime: number /* in days */;
-    subjectDemand: { subject: string; demand: number /* >1 -> too many offers, <1 -> to few offers */ }[];
+    subjectDemand: {
+        subject: string;
+        demand: number; // >1 -> too many offers, <1 -> to few offers
+        offered: number;
+        requested: number;
+        requestedMandatory?: number;
+    }[];
 }
 
 const statisticsCache: { [pool: string]: { at: number; result: Promise<MatchPoolStatistics> } } = {};
@@ -485,10 +506,18 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
             entry.matches += matchesCreated;
             for (const {
                 name,
-                stats: { offered, requested, fulfilledRequests },
+                stats: { offered, requested, fulfilledRequests, requestedMandatory },
             } of subjectStats) {
-                const subjectStats = entry.subjects[name] ?? (entry.subjects[name] = { requested: 0, fulfilled: 0, offered: 0 });
+                const subjectStats =
+                    entry.subjects[name] ??
+                    (entry.subjects[name] = {
+                        requested: 0,
+                        requestedMandatory: 0,
+                        fulfilled: 0,
+                        offered: 0,
+                    });
                 subjectStats.fulfilled += fulfilledRequests;
+                subjectStats.requestedMandatory += requestedMandatory;
                 subjectStats.offered += offered;
                 subjectStats.requested += requested;
             }
@@ -505,9 +534,12 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
 
         // Current Subject Demand in the last finished month
         const lastMonth = matchesByMonth.slice(-2)[0];
-        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested }]) => ({
+        const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested, requestedMandatory }]) => ({
             subject,
             demand: requested / offered,
+            offered: offered,
+            requested: requested,
+            requestedMandatory: isNaN(requestedMandatory) ? null : requestedMandatory,
         }));
 
         const result: MatchPoolStatistics = {
@@ -536,6 +568,15 @@ export async function getInterestConfirmationRate() {
     return confirmedInterestConfirmations / totalInterestConfirmations || 0;
 }
 
+export async function getScreeningSuccessRate() {
+    const totalScreenings = await prisma.pupil_screening.count({});
+    const successfulScreenings = await prisma.pupil_screening.count({
+        where: { status: 'success' },
+    });
+
+    return successfulScreenings / totalScreenings || 0;
+}
+
 // Predicted Pupil Match Time in Days
 // As we do not collect the actual wait time, this is only a very rough estimation
 export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMonth: number): Promise<number> {
@@ -549,15 +590,15 @@ export async function predictPupilMatchTime(pool: MatchPool, averageMatchesPerMo
     // From those we lose about a third of pupils as they do not confirm their interest
     // This needs to be factored in, as it reduces the actual waiting time
     if (pool.toggles.includes('confirmation-pending')) {
-        const futureConfirmations = pool.confirmInterest ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const futureConfirmations = pool.autoInviteForInterestConfirmation ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
         const pendingConfirmations = await getPupilCount(pool, ['confirmation-pending']);
         backlog += (futureConfirmations + pendingConfirmations) * (await getInterestConfirmationRate());
     }
 
     if (pool.toggles.includes('pupil-screening-pending')) {
-        const futureScreenings = pool.needsScreening ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
+        const futureScreenings = pool.autoInviteForScreening ? await getPupilCount(pool, ['pupil-screening-unknown', 'confirmation-unknown']) : 0;
         const pendingScreenings = await getPupilCount(pool, ['pupil-screening-pending']);
-        backlog += (futureScreenings + pendingScreenings) * 1; // TODO: Calculate Screening success rate once we have enough data
+        backlog += (futureScreenings + pendingScreenings) * (await getScreeningSuccessRate());
     }
 
     return Math.round((backlog / Math.max(1, averageMatchesPerMonth)) * 30);
@@ -584,16 +625,32 @@ export async function confirmationRequestsToSend(pool: MatchPool) {
     return requestsToSend;
 }
 
-async function offeredSubjects(pool: MatchPool): Promise<string[]> {
-    const subjects = new Set<string>();
-    const students = await getStudents(pool, [], 100);
-    for (const student of students) {
-        for (const subject of JSON.parse(student.subjects)) {
-            subjects.add(subject.name);
-        }
-    }
+// As Screenings are held by the Lern-Fair Team, prevent scheduling to many screenings at once
+const MAX_SCREENINGS_PER_DAY = 10;
 
-    return [...subjects];
+export async function screeningInvitationsToSend(pool: MatchPool) {
+    const offers = await getStudentOfferCount(pool, []);
+    const requests = await getPupilDemandCount(pool, []);
+    const openOffers = Math.max(0, offers + OVERPROVISION_DEMAND - requests);
+
+    const successRate = (await getScreeningSuccessRate()) || 1;
+    const screeningsNeeded = Math.floor(openOffers / successRate);
+
+    const screeningPending = await getPupilDemandCount(pool, ['pupil-screening-pending']);
+    const requestsToSend = Math.max(0, screeningsNeeded - screeningPending);
+
+    const requestsToSendLimited = Math.min(requestsToSend, MAX_SCREENINGS_PER_DAY);
+
+    logger.info(`Calculated screening invitations to send`, {
+        offers,
+        requests,
+        openOffers,
+        screeningsNeeded,
+        screeningPending,
+        requestsToSend,
+        requestsToSendLimited,
+    });
+    return requestsToSendLimited;
 }
 
 export async function getPupilsToContactNext(pool: MatchPool, toggles: Toggle[], toSend: number): Promise<Pupil[]> {
@@ -625,10 +682,12 @@ export async function sendConfirmationRequests(pool: MatchPool) {
 }
 
 export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) {
-    if (!toSendCount) {
-        // TODO: Implement heuristics once we have enough data
-        throw new Error(`No heuristic yet to calculate the number of pupil screenings to send`);
+    if (toSendCount === undefined) {
+        toSendCount = await screeningInvitationsToSend(pool);
+        logger.info(`Calculated ${toSendCount} pupil screening invitations to send`);
     }
+
+    logger.info(`Inviting ${toSendCount} to the pupil screening`);
 
     const pupils = await getPupilsToContactNext(pool, ['confirmation-unknown', 'pupil-screening-unknown'], toSendCount);
     for (const pupil of pupils) {
@@ -638,10 +697,11 @@ export async function addPupilScreenings(pool: MatchPool, toSendCount?: number) 
 
 export async function runInterestConfirmations() {
     for (const pool of pools) {
-        if (pool.confirmInterest) {
+        if (pool.autoInviteForInterestConfirmation) {
             await sendConfirmationRequests(pool);
         }
-        if (pool.needsScreening) {
+
+        if (pool.autoInviteForScreening) {
             await addPupilScreenings(pool);
         }
     }

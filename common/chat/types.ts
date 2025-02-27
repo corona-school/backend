@@ -25,6 +25,7 @@ export type ChatMetaData = {
     subcourse?: number[];
     prospectSubcourse?: number[];
     finished?: FinishedReason;
+    createdBy?: string;
 };
 
 export type TJConversation = Conversation & {
@@ -74,8 +75,5 @@ export enum FinishedReason {
     MATCH_DISSOLVED = 'match_dissolved',
     COURSE_OVER = 'course_over',
     REACTIVATE = 'reactivated',
+    REACTIVATE_BY_ADMIN = 'reactivated_by_admin',
 }
-
-export type AllConversations = {
-    data: TJConversation[];
-};

@@ -1,9 +1,15 @@
 import moment from 'moment';
-import { Lecture as Appointment } from '../../graphql/generated';
+import { Lecture as Appointment, Match } from '../../graphql/generated';
 import { prisma } from '../prisma';
 import { User } from '../user';
 
 type QueryDirection = 'last' | 'next';
+type Edge = 'first' | 'last';
+
+/**
+ * The current maximum duration of an appointment is 4 hours.
+ */
+const MAXIMUM_APPOINTMENT_DURATION = 4;
 
 export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     const appointmentsCount = await prisma.lecture.count({
@@ -35,8 +41,9 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     });
     return appointmentsCount > 0;
 };
-export const getLastAppointmentId = async (user: User): Promise<number> => {
-    const lastAppointment = await prisma.lecture.findFirst({
+export const getEdgeAppointmentId = async (user: User, edge: Edge): Promise<number> => {
+    const isFirst = edge === 'first';
+    const edgeAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
             NOT: {
@@ -60,10 +67,10 @@ export const getLastAppointmentId = async (user: User): Promise<number> => {
                 },
             ],
         },
-        orderBy: [{ start: 'desc' }],
+        orderBy: [isFirst ? { start: 'asc' } : { start: 'desc' }],
         take: 1,
     });
-    return lastAppointment?.id;
+    return edgeAppointment?.id;
 };
 
 export const getAppointmentsForUser = async (user: User, take: number, skip: number, cursor?: number, direction?: QueryDirection): Promise<Appointment[]> => {
@@ -116,11 +123,6 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
 };
 
 const getAppointmentsForUserFromNow = async (userId: User['userID'], take: number, skip: number): Promise<Appointment[]> => {
-    /**
-     * The current maximum duration of an appointment is 4 hours.
-     */
-    const MAXIMUM_APPOINTMENT_DURATION = 4;
-
     const appointmentsFromNow = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
@@ -154,4 +156,74 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
     });
 
     return appointmentsFromNow;
+};
+
+const getAppointmentsForMatchFromNow = async (matchId: Match['id'], userId: User['userID'], take: number, skip: number) => {
+    const appointmentsFromNow = await prisma.lecture.findMany({
+        where: {
+            isCanceled: false,
+            start: {
+                gte: moment().subtract(MAXIMUM_APPOINTMENT_DURATION, 'hours').toDate(),
+            },
+            NOT: {
+                declinedBy: { has: userId },
+            },
+            matchId,
+        },
+        orderBy: { start: 'asc' },
+        take,
+        skip,
+    });
+
+    return appointmentsFromNow;
+};
+
+export const getAppointmentsForMatch = async (
+    matchId: Match['id'],
+    userId: User['userID'],
+    take: number,
+    skip: number,
+    cursor?: number,
+    direction?: QueryDirection
+) => {
+    if (!direction && !cursor) {
+        return getAppointmentsForMatchFromNow(matchId, userId, take, skip);
+    }
+    if (!direction || !cursor) {
+        throw Error('Cursor or direction not specified for cursor based pagination');
+    }
+    const isNextQuery = direction === 'next';
+    const appointments = await prisma.lecture.findMany({
+        where: {
+            matchId,
+            isCanceled: false,
+            NOT: {
+                declinedBy: { has: userId },
+            },
+        },
+        orderBy: [isNextQuery ? { start: 'asc' } : { start: 'desc' }],
+        take,
+        skip: skip,
+        cursor: { id: cursor },
+    });
+    if (!isNextQuery) {
+        appointments.reverse();
+    }
+    return appointments;
+};
+
+export const getEdgeMatchAppointmentId = async (matchId: Match['id'], userId: User['userID'], edge: Edge) => {
+    const isFirst = edge === 'first';
+    const edgeAppointment = await prisma.lecture.findFirst({
+        where: {
+            isCanceled: false,
+            NOT: {
+                declinedBy: { has: userId },
+            },
+            matchId,
+        },
+        orderBy: [isFirst ? { start: 'asc' } : { start: 'desc' }],
+        take: 1,
+    });
+    return edgeAppointment?.id;
 };

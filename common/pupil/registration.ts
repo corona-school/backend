@@ -12,27 +12,30 @@ import {
     pupil_schooltype_enum as SchoolType,
     Prisma,
     PrismaClient,
+    pupil_email_owner_enum as PupilEmailOwner,
 } from '@prisma/client';
 import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { toPupilSubjectDatabaseFormat, Subject } from '../util/subjectsutils';
 import { DISABLED_NEWSLETTER, ENABLED_NEWSLETTER } from '../notification/defaultPreferences';
 import { userForPupil } from '../user';
+import { CreateSchoolArgs, findOrCreateSchool } from '../school/create';
+import { getLogger } from '../logger/logger';
 
 export interface RegisterPupilData {
     firstname: string;
     lastname: string;
+    emailOwner: PupilEmailOwner;
     email: string;
     newsletter: boolean;
-    schoolId?: School['id'];
-    schooltype?: SchoolType;
-    state: State;
+    school?: CreateSchoolArgs;
     registrationSource: RegistrationSource;
     aboutMe: string;
 
     /* After registration, the user receives an email to verify their account.
        The user is redirected to this URL afterwards to continue with whatever they're registering for */
     redirectTo?: string;
+    referredById?: string;
 }
 
 export interface BecomeTuteeData {
@@ -47,36 +50,32 @@ export interface BecomeStatePupilData {
     gradeAsInt?: number;
 }
 
+const logger = getLogger('pupilRegistration');
+
 export async function registerPupil(data: RegisterPupilData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
     if (!(await isEmailAvailable(data.email))) {
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    if (data.schoolId != undefined) {
-        const school = await prismaInstance.school.findUnique({ where: { id: data.schoolId } });
-        if (!school) {
-            throw new Error(`Invalid School ID '${data.schoolId}'`);
-        }
-        if (data.registrationSource === RegistrationSource.cooperation && !school.activeCooperation) {
-            throw new Error(`Pupil cannot register with type COOPERATION as his School(${school.id}) is not a cooperation school`);
-        }
-    } else if (data.registrationSource === RegistrationSource.cooperation) {
-        throw new Error('Pupil cannot register with type COOPERATION as they did not provide a cooperation school');
+    let school: School;
+    try {
+        school = await findOrCreateSchool(data.school);
+    } catch (error) {
+        logger.error('School was not found or could not be created', error);
     }
-
-    const verification = uuidv4();
 
     const pupil = await prismaInstance.pupil.create({
         data: {
+            emailOwner: data.emailOwner,
             email: data.email.toLowerCase(),
             firstname: data.firstname,
             lastname: data.lastname,
             newsletter: data.newsletter,
             createdAt: new Date(),
-            schooltype: data.schooltype,
-            schoolId: data.schoolId,
-            state: data.state,
+            schooltype: data.school?.schooltype,
+            state: data.school?.state,
             registrationSource: data.registrationSource,
+            schoolId: school?.id,
             aboutMe: data.aboutMe,
 
             // Compatibility with legacy foreign keys
@@ -88,8 +87,8 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
             // Every pupil is made a Tutee by registration.
             isPupil: true,
 
-            // the authToken is used to verify the e-mail instead
-            verification,
+            // the ID of the referrer (type + id)
+            referredById: data.referredById,
 
             // Pupils need to specifically request a match
             openMatchRequestCount: 0,
@@ -102,7 +101,7 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
         await Notification.actionTaken(userForPupil(pupil), 'pupil_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
-    await logTransaction('verificationRequets', pupil, {});
+    await logTransaction('verificationRequets', userForPupil(pupil), {});
 
     return pupil;
 }
@@ -127,6 +126,7 @@ export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData, prismaIns
     return updatedPupil;
 }
 
+// TODO: Remove deprecated feature
 export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData) {
     if (!pupil.grade && !data.gradeAsInt) {
         throw new Error(`State Pupils must set their grade field`);
@@ -134,12 +134,6 @@ export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData)
 
     if (pupil.registrationSource !== RegistrationSource.cooperation) {
         throw new Error(`For pupils to become a state pupil, they must register with COOPERATION as registration source`);
-    }
-
-    const school = await prisma.school.findUnique({ where: { id: pupil.schoolId }, rejectOnNotFound: true });
-
-    if (!data.teacherEmail.endsWith(school.emailDomain)) {
-        throw new Error(`Invalid Teacher Email '${data.teacherEmail} as School Domain is '${school.emailDomain}'`);
     }
 
     const updatedPupil = await prisma.pupil.update({

@@ -1,9 +1,8 @@
 import tracer from './tracing';
 import formats from 'dd-trace/ext/formats';
-import { isCommandArg } from '../util/basic';
 import { configure, addLayout, getLogger as getlog4jsLogger, Logger as Log4jsLogger } from 'log4js';
 import { getCurrentTransaction } from '../session';
-import { getServiceName, getHostname } from '../../utils/environment';
+import { getServiceName, getHostname, getLogLevel, getLogFormat } from '../../utils/environment';
 
 addLayout('json', function () {
     return function (logEvent) {
@@ -25,12 +24,13 @@ addLayout('json', function () {
     };
 });
 
+const logFormat = getLogFormat();
 let appenders = ['out'];
-if (process.env.LOG_FORMAT === 'json') {
+if (logFormat === 'json') {
     appenders = ['outJson'];
-} else if (process.env.LOG_FORMAT === 'brief') {
+} else if (logFormat === 'brief') {
     appenders = ['outBrief'];
-} else if (process.env.LOG_FORMAT === 'verbose') {
+} else if (logFormat === 'verbose') {
     appenders = ['outBrief', 'fileVerbose'];
 }
 
@@ -83,7 +83,7 @@ configure({
     categories: {
         default: {
             appenders,
-            level: isCommandArg('--debug') ? 'debug' : 'info',
+            level: getLogLevel('info'),
         },
     },
 
@@ -150,7 +150,7 @@ export class Logger {
     }
 
     // Error Logs should be used for unexpected errors, as they trigger alerts
-    error(message: string, err?: Error, args: LogData = {}): void {
+    error(message: string, err?: Error | null, args: LogData = {}): void {
         this.enrich();
         // In order to use the datadog error tracking feature, we have to attach the error details to the root of the log message.
         // Unfortunately, in log4js this is only possible by adding it as context, otherwise, it would end up in .data.

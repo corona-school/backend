@@ -1,5 +1,5 @@
-import { Role } from '../roles';
 import { prisma } from '../../common/prisma';
+import { Role } from '../authorizations';
 import { Cooperation } from '../generated';
 import { Arg, Authorized, Field, InputType, Mutation, Resolver } from 'type-graphql';
 

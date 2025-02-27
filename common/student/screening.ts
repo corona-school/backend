@@ -7,6 +7,7 @@ import { screening_jobstatus_enum } from '../../graphql/generated';
 import { RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { userForStudent } from '../user';
+import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
     success: boolean;
@@ -17,7 +18,19 @@ interface ScreeningInput {
 
 const logger = getLogger('Student Screening');
 
-export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput) {
+export const requireStudentOnboarding = async (studentId: number, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) => {
+    const student = await prisma.student.findFirst({ where: { id: studentId }, include: { instructor_screening: true, screening: true } });
+    const hadSuccessfulScreening = student.screening?.success || student.instructor_screening?.success;
+    if (!hadSuccessfulScreening) {
+        await prismaInstance.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+    }
+};
+
+export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id);
+    }
+
     await prisma.instructor_screening.create({
         data: {
             ...screening,
@@ -27,8 +40,16 @@ export async function addInstructorScreening(screener: Screener, student: Studen
     });
 
     if (screening.success) {
-        await scheduleCoCReminders(student);
-        await Notification.actionTaken(userForStudent(student), 'instructor_screening_success', {});
+        if (!skipCoC) {
+            await scheduleCoCReminders(student);
+        } else {
+            await logTransaction('skippedCoC', userForStudent(student), { screenerId: screener.id });
+            logger.info(`Skipped CoC for Student (${student.id}) by Screener (${screener.id}) `);
+        }
+
+        const asUser = userForStudent(student);
+        await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
     }
@@ -43,6 +64,10 @@ export async function addTutorScreening(
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
     batchMode = false
 ) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id, prismaInstance);
+    }
+
     await prismaInstance.screening.create({
         data: {
             ...screening,
@@ -53,6 +78,8 @@ export async function addTutorScreening(
 
     if (!batchMode) {
         if (screening.success) {
+            const asUser = userForStudent(student);
+            await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
         } else {
@@ -80,5 +107,31 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 
 export async function cancelCoCReminders(student: Student) {
     await Notification.actionTaken(userForStudent(student), 'coc_cancelled', {});
-    await logTransaction('cocCancel', student, { studentId: student.id });
+    await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
+}
+
+export async function updateTutorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
+    const screening = await prisma.screening.update({
+        where: {
+            id: screeningId,
+        },
+        data: {
+            comment: data.comment,
+        },
+        include: { student: true },
+    });
+    logger.info(`Screener(${screenerId}) updated tutor screening of Student(${screening.studentId})`, data);
+}
+
+export async function updateInstructorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
+    const screening = await prisma.instructor_screening.update({
+        where: {
+            id: screeningId,
+        },
+        data: {
+            comment: data.comment,
+        },
+        include: { student: true },
+    });
+    logger.info(`Screener(${screenerId}) updated instructor screening of Student(${screening.studentId})`, data);
 }

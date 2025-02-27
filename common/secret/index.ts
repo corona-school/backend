@@ -4,8 +4,8 @@ import { getLogger } from '../logger/logger';
 import { secret_type_enum as SecretType } from '@prisma/client';
 
 export * from './password';
-// eslint-disable-next-line import/no-cycle
 export * from './token';
+export * from './emailToken';
 
 const logger = getLogger('Secret');
 
@@ -15,7 +15,7 @@ export async function getSecrets(user: User): Promise<object[]> {
             userId: user.userID,
             OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
         },
-        select: { createdAt: true, expiresAt: true, id: true, lastUsed: true, type: true, userId: true, description: true },
+        select: { createdAt: true, expiresAt: true, id: true, lastUsed: true, type: true, userId: true, description: true, lastUsedDeviceId: true },
     });
 
     logger.info(`User(${user.userID}) retrieved ${result.length} secrets`);

@@ -6,7 +6,7 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, isElevated, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
     Prisma,
@@ -17,21 +17,24 @@ import {
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
+    gender_enum as Gender,
+    school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForPupil } from '../../common/user';
+import { userForPupil, userForScreener } from '../../common/user';
 import { MaxLength } from 'class-validator';
-// eslint-disable-next-line import/no-cycle
-import { BecomeTuteeInput, RegisterPupilInput } from '../me/mutation';
 import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
 import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { JSONResolver } from 'graphql-scalars';
+import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../types/userInputs';
+import moment from 'moment';
+import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
+import { findOrCreateSchool } from '../../common/school/create';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -78,6 +81,21 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
+
+    @Field((type) => Gender, { nullable: true })
+    onlyMatchWith?: Gender;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialNeeds?: boolean;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
 }
 
 @InputType()
@@ -87,6 +105,9 @@ export class PupilScreeningUpdateInput {
 
     @Field(() => String, { nullable: true })
     comment?: string;
+
+    @Field(() => String, { nullable: true })
+    knowsCoronaSchoolFrom?: string;
 }
 
 @InputType()
@@ -145,14 +166,43 @@ export async function updatePupil(
         matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        onlyMatchWith,
+        hasSpecialNeeds,
+        descriptionForMatch,
+        descriptionForScreening,
+        school,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
     }
 
-    if (email != undefined && !isElevated(context)) {
+    if (email != undefined && !isAdmin(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
+    }
+
+    if (hasSpecialNeeds != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
+    }
+
+    if (onlyMatchWith !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    let dbSchool: School | undefined;
+    try {
+        dbSchool = await findOrCreateSchool(school);
+    } catch (error) {
+        logger.error('School could not be created', error);
+        throw new PrerequisiteError('School could not be created');
     }
 
     const res = await prismaInstance.pupil.update({
@@ -164,13 +214,18 @@ export async function updatePupil(
             grade: gradeAsInt ? `${gradeAsInt}. Klasse` : undefined,
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
-            schooltype: ensureNoNull(schooltype),
+            state: ensureNoNull(dbSchool?.state ?? state),
+            schooltype: ensureNoNull(dbSchool?.schooltype ?? schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
+            onlyMatchWith,
+            hasSpecialNeeds,
+            descriptionForMatch,
+            descriptionForScreening,
+            schoolId: dbSchool?.id,
         },
         where: { id: pupil.id },
     });
@@ -180,7 +235,7 @@ export async function updatePupil(
     }
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
-    await updateSessionUser(context, userForPupil(res));
+    await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
@@ -234,7 +289,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);
@@ -242,7 +297,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.SCREENER)
+    @Authorized(Role.PUPIL_SCREENER)
     async pupilUpdateSubjects(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateSubjectsInput, @Arg('pupilId') pupilId: number) {
         const pupil = await getPupil(pupilId);
         await updatePupil(context, pupil, { subjects: data.subjects });
@@ -258,15 +313,15 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil);
+        await deactivatePupil(pupil, false, 'deactivated by admin', true);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTEE)
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async pupilCreateMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
 
@@ -276,7 +331,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.TUTEE)
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
@@ -285,7 +340,7 @@ export class MutatePupilResolver {
     }
 
     @Mutation((returns) => [PupilRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
         const { entries } = data;
         logger.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
@@ -303,16 +358,16 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
-    async pupilCreateScreening(@Arg('pupilId') pupilId: number): Promise<boolean> {
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
+    async pupilCreateScreening(@Arg('pupilId') pupilId: number, @Arg('silent', { nullable: true }) silent?: boolean): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await addPupilScreening(pupil);
+        await addPupilScreening(pupil, undefined, silent ?? false);
 
         return true;
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdateScreening(
         @Ctx() context: GraphQLContext,
         @Arg('pupilScreeningId') pupilScreeningId: number,
@@ -324,9 +379,63 @@ export class MutatePupilResolver {
     }
 
     @Mutation(() => Boolean)
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
+    async pupilMissedScreening(
+        @Ctx() context: GraphQLContext,
+        @Arg('pupilScreeningId') pupilScreeningId: number,
+        @Arg('comment') comment: string
+    ): Promise<boolean> {
+        const screener = await getSessionScreener(context);
+        const { pupil, pupilId } = await prisma.pupil_screening.findUniqueOrThrow({ where: { id: pupilScreeningId }, include: { pupil: true } });
+        await updatePupilScreening(screener, pupilScreeningId, { status: PupilScreeningStatus.pending, comment });
+        const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId } });
+        const asUser = userForPupil(pupil);
+        const isFirstScreening = validScreeningCount === 1;
+        if (isFirstScreening) {
+            await Notification.actionTaken(asUser, 'pupil_screening_after_registration_missed', {});
+        } else {
+            await Notification.actionTaken(asUser, 'pupil_screening_missed', {});
+        }
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilInvalidateScreening(@Arg('pupilScreeningId') pupilScreeningId?: number): Promise<boolean> {
         await invalidatePupilScreening(pupilScreeningId);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.ADMIN)
+    async adminIncreasePupilGrades() {
+        const grades = Array.from({ length: 12 }, (_, i) => gradeAsString(i + 1)).reverse();
+        for (const grade of grades) {
+            try {
+                const nextGrade = gradeAsString(gradeAsInt(grade) + 1);
+                const query = {
+                    grade,
+                    active: true,
+                    OR: [{ gradeUpdatedAt: { lt: moment().subtract(10, 'months').toDate() } }, { gradeUpdatedAt: { equals: null } }],
+                };
+                const pupils = await prisma.pupil.findMany({ where: query });
+                await prisma.pupil.updateMany({
+                    where: query,
+                    data: {
+                        grade: nextGrade,
+                        gradeUpdatedAt: new Date(),
+                    },
+                });
+                await Notification.bulkActionTaken(
+                    pupils.map((pupil) => userForPupil(pupil)),
+                    'pupil_grade_increased',
+                    { uniqueId: `pupil_grade_increased_${new Date().toISOString()}` }
+                );
+                logger.info(`Successfully increased the grade of ${pupils.length} pupils from ${grade} to ${nextGrade}`);
+            } catch (error) {
+                logger.info(`Attempting to increase the grade of pupils from ${grade}`, error);
+            }
+        }
         return true;
     }
 }

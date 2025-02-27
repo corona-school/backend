@@ -28,6 +28,7 @@ export interface RegisterStudentData {
     redirectTo?: string;
     // Associates the student with a cooperation
     cooperationTag?: string;
+    referredById?: string;
 }
 
 export interface BecomeInstructorData {
@@ -70,8 +71,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
             wix_id: 'Z-' + uuidv4(),
             wix_creation_date: new Date(),
 
-            // the authToken is used to verify the e-mail instead
-            verification: uuidv4(),
+            referredById: data.referredById,
 
             openMatchRequestCount: 0,
             notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,
@@ -84,7 +84,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
         await Notification.actionTaken(userForStudent(student), 'student_registration_started', { redirectTo: data.redirectTo ?? '' });
     }
 
-    await logTransaction('verificationRequets', student, {});
+    await logTransaction('verificationRequets', userForStudent(student), {});
 
     return student;
 }

@@ -32,6 +32,11 @@ const sampleCourse = {
     },
 };
 
+const sampleAchievementCourse = {
+    course: { name: 'Apollo' },
+    subcourse: { id: '1' },
+};
+
 const sampleAppointment = {
     start_day: 'Sonntag',
     start_date: '20. Juli 1969',
@@ -102,8 +107,24 @@ const _notificationActions = {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
         sampleContext: {},
     },
+    pupil_screening_missed: {
+        description: 'Pupil / Screening was missed',
+        sampleContext: {},
+    },
     pupil_screening_dispute: {
         description: 'Pupil / Screening was disputed (a Screener saved some info but did not take a decision)',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_succeeded: {
+        description: 'Pupil / Screening after registration was successful',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_rejected: {
+        description: 'Pupil / Screening after registration was rejected',
+        sampleContext: {},
+    },
+    pupil_screening_after_registration_missed: {
+        description: 'Pupil / Screening after registration was missed',
         sampleContext: {},
     },
     pupil_registration_finished: {
@@ -141,12 +162,28 @@ const _notificationActions = {
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
-            firstLectureDate: '12.12.1984',
-            firstLectureTime: '12:00',
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_from_waitinglist: {
+        description: 'Participant / Joined Course from Waitinglist',
+        sampleContext: {
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_from_prospects: {
+        description: 'Participant / Joined Course from Prospects',
+        sampleContext: {
+            ...sampleCourse,
+        },
+        recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
+    },
+    participant_course_joined_directly: {
+        description: 'Participant / Joined Course directly (not from Waitinglist)',
+        sampleContext: {
+            ...sampleCourse,
         },
         recommendedCancelations: ['participant_course_leave', 'participant_course_cancelled'],
     },
@@ -184,6 +221,10 @@ const _notificationActions = {
             },
         },
     },
+    participant_course_ended: {
+        description: 'Participant / Course ended',
+        sampleContext: sampleCourse,
+    },
     participant_subcourse_reminder: {
         description: 'Participant / Course starts soon',
         sampleContext: {
@@ -193,10 +234,22 @@ const _notificationActions = {
     instructor_course_created: {
         description: 'Instructor / Course created (not yet published)',
         sampleContext: {
-            course: {
-                name: 'Hallo Welt',
-                description: 'Ein Kurs',
-            },
+            ...sampleAchievementCourse,
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_submitted: {
+        description: 'Instructor / Course submitted for review',
+        sampleContext: {
+            ...sampleAchievementCourse,
+            relation: 'subcourse/1',
+        },
+    },
+    instructor_course_approved: {
+        description: 'Instructor / Course approved',
+        sampleContext: {
+            ...sampleAchievementCourse,
+            relation: 'subcourse/1',
         },
     },
     instructor_course_cancelled: {
@@ -226,6 +279,18 @@ const _notificationActions = {
             },
         },
     },
+    instructor_first_appointment_completed: {
+        description: 'Instructor / Completed first appointment',
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            ...sampleCourse,
+        },
+    },
+    instructor_course_ended: {
+        description: 'Instructor / Course ended',
+        sampleContext: sampleCourse,
+    },
     instructor_subcourse_published: {
         description: 'Pupil / New course was published',
         sampleContext: sampleCourse,
@@ -248,6 +313,18 @@ const _notificationActions = {
             certificateLink: 'https://...',
         },
     },
+    pupil_grade_increased: {
+        description: 'Pupil Grade was increased',
+        sampleContext: {},
+    },
+    tutee_match_requested: {
+        description: 'Tutee / Match requested',
+        sampleContext: {},
+    },
+    tutee_match_request_revoked: {
+        description: 'Tutee / Match Request revoked',
+        sampleContext: {},
+    },
     tutee_match_dissolved_other: {
         description: 'Tutee / Match was dissolved by student',
         sampleContext: {
@@ -264,6 +341,30 @@ const _notificationActions = {
             matchDate: '...',
         },
     },
+    tutee_match_dissolved_quickly: {
+        description: 'Tutee / Match was dissolved in less than a month',
+        sampleContext: {
+            student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutee_match_dissolved_mature: {
+        description: 'Tutee / Match was dissolved after a month',
+        sampleContext: {
+            student: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutor_match_requested: {
+        description: 'Tutor / Match requested',
+        sampleContext: {},
+    },
+    tutor_match_request_revoked: {
+        description: 'Tutor / Match Request revoked',
+        sampleContext: {},
+    },
     tutor_match_dissolved_other: {
         description: 'Tutor / Match was dissolved by pupil',
         sampleContext: {
@@ -274,6 +375,22 @@ const _notificationActions = {
     },
     tutor_match_dissolved: {
         description: 'Tutor / Match was dissolved',
+        sampleContext: {
+            pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutor_match_dissolved_quickly: {
+        description: 'Tutor / Match was dissolved in less than a month',
+        sampleContext: {
+            pupil: sampleUser,
+            matchHash: '...',
+            matchDate: '...',
+        },
+    },
+    tutor_match_dissolved_mature: {
+        description: 'Tutor / Match was dissolved after a month',
         sampleContext: {
             pupil: sampleUser,
             matchHash: '...',
@@ -322,6 +439,26 @@ const _notificationActions = {
             firstMatch: true,
         },
     },
+    tutor_daz_matching_success: {
+        description: 'Tutor / DaZ Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
+    tutor_standard_matching_success: {
+        description: 'Tutor / Standard Match success',
+        sampleContext: {
+            pupil: sampleUser,
+            pupilGrade: '3. Klasse',
+            matchHash: '...',
+            matchDate: '...',
+            firstMatch: true,
+        },
+    },
     'tutor_matching_lern-fair-now': {
         description: 'Tutor / Lern-Fair Now Match success',
         sampleContext: {
@@ -360,7 +497,9 @@ const _notificationActions = {
 
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
-        sampleContext: {},
+        sampleContext: {
+            date: '20. Juli 1969',
+        },
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
@@ -370,7 +509,10 @@ const _notificationActions = {
         description: 'Student / Certificate of Conduct Cancelled',
         sampleContext: {},
     },
-
+    instructor_course_full: {
+        description: 'Instructor / Course full',
+        sampleContext: sampleCourse,
+    },
     instructor_course_participant_message: {
         description: 'Instructor / Course Message from Participant',
         sampleContext: {
@@ -398,6 +540,10 @@ const _notificationActions = {
 
     pupil_account_deactivated: {
         description: 'Pupil / Account deactivated',
+        sampleContext: {},
+    },
+    pupil_account_deactivated_by_admin: {
+        description: 'Pupil / Account deactivated by admin',
         sampleContext: {},
     },
     student_account_deactivated: {
@@ -433,29 +579,23 @@ const _notificationActions = {
             redirectTo: '/start',
         },
     },
-    student_add_appointment_group: {
-        description: 'Student / Group Appointment Added',
-        sampleContext: {
-            student: sampleUser,
-            ...sampleCourse,
-        },
+    student_login: {
+        description: 'Student logged in',
+        sampleContext: {},
     },
-    student_add_appointments_group: {
-        description: 'Student / Group Appointments Added',
+    pupil_login: {
+        description: 'Pupil logged in',
+        sampleContext: {},
+    },
+    student_add_appointment_group: {
+        description: 'Participant / Instructor added Group Appointment',
         sampleContext: {
             student: sampleUser,
             ...sampleCourse,
         },
     },
     student_add_appointment_match: {
-        description: 'Student / Match Appointment Added',
-        sampleContext: {
-            student: sampleUser,
-            matchId: '1',
-        },
-    },
-    student_add_appointments_match: {
-        description: 'Student / Match Appointments Added',
+        description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
             student: sampleUser,
             matchId: '1',
@@ -477,7 +617,7 @@ const _notificationActions = {
         },
     },
     student_cancel_appointment_group: {
-        description: 'Student / Group Appointment Cancelled',
+        description: 'Participant / Group Appointment Cancelled by Instructor',
         sampleContext: {
             appointment: sampleAppointment,
             student: sampleUser,
@@ -524,42 +664,147 @@ const _notificationActions = {
     },
     pupil_match_appointment_starts: {
         description: 'Remind pupil of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', student: { firstname: 'Student' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            student: { firstname: 'Student' },
+        },
     },
     student_match_appointment_starts: {
         description: 'Remind student of upcoming match appointment',
-        sampleContext: { appointment: sampleAppointment, matchId: '1', pupil: { firstname: 'Pupil' } },
+        sampleContext: {
+            uniqueId: 'REQUIRED',
+            appointment: sampleAppointment,
+            matchId: '1',
+            pupil: { firstname: 'Pupil' },
+        },
     },
     pupil_group_appointment_starts: {
         description: 'Remind pupil of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     student_group_appointment_starts: {
         description: 'Remind student of upcoming group appointment',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
-            student: { firstname: 'Student' },
             ...sampleCourse,
         },
     },
     cancel_group_appointment_reminder: {
         description: 'Cancel / group appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },
     cancel_match_appointment_reminder: {
         description: 'Cancel / match appointment reminder',
         sampleContext: {
+            uniqueId: 'REQUIRED',
             appointment: sampleAppointment,
         },
     },
     screening_suggestion: {
         description: 'Screener suggests a Ressource for a User',
+        sampleContext: {},
+    },
+
+    // ACHIEVEMENT ACTIONS
+
+    /* ONBOARDING */
+    student_screening_appointment_done: {
+        description: 'Student has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_screening_appointment_done: {
+        description: 'Pupil has attended screening appointment',
+        sampleContext: {},
+    },
+    pupil_registration_verified_email: {
+        description: 'Pupil / E-Mail verified',
+        sampleContext: {
+            date: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            email: 'max-mustermann@abc.de',
+        },
+    },
+    student_registration_verified_email: {
+        description: 'Student / E-Mail verified',
+        sampleContext: {
+            date: 'Wed Jul 28 1993 14:39:07 GMT+0200 (CEST)',
+            email: 'max-mustermann@abc.de',
+        },
+    },
+
+    user_achievement_reward_issued: {
+        description: 'Reward issued',
+        sampleContext: {
+            achievement: {
+                id: '0',
+                name: 'achievement',
+            },
+        },
+    },
+    student_calendly_appointment_booked: {
+        description: 'Student booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    pupil_calendly_appointment_booked: {
+        description: 'Pupil booked appointment via calendly ',
+        sampleContext: {},
+    },
+
+    /* MEETINGS */
+    student_joined_match_meeting: {
+        description: 'Student joined a match meeting',
+        sampleContext: {
+            relation: 'match/1',
+            partner: { firstname: 'Puipl' },
+        },
+    },
+    student_joined_subcourse_meeting: {
+        description: 'Student joined subcourse meeting',
+        sampleContext: {
+            ...sampleAchievementCourse,
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+        },
+    },
+    student_presence_in_meeting: {
+        description: 'Student joined a meeting',
+        sampleContext: {},
+    },
+    pupil_joined_match_meeting: {
+        description: 'Pupil joined a match meeting',
+        sampleContext: {
+            relation: 'match/1',
+            partner: { firstname: 'Student' },
+        },
+    },
+    pupil_joined_subcourse_meeting: {
+        description: 'Pupil joined subcourse meeting',
+        sampleContext: {
+            ...sampleAchievementCourse,
+            relation: 'subcourse/1',
+            subcourseLecturesCount: '5',
+        },
+    },
+    pupil_presence_in_meeting: {
+        description: 'Pupil joined a meeting',
+        sampleContext: {},
+    },
+    user_original_corona_school: {
+        description: 'User Original Corona School',
+        sampleContext: {},
+    },
+    user_original_lern_fair: {
+        description: 'User Original Lern Fair',
         sampleContext: {},
     },
     TEST: {

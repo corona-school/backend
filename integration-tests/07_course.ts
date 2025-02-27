@@ -1,10 +1,13 @@
-import { adminClient, defaultClient, test } from './base';
-import { pupilOne, pupilUpdated } from './01_user';
+import { test } from './base';
+import { adminClient } from './base/clients';
+import { pupilOne, pupilUpdated, studentOne } from './01_user';
 import * as assert from 'assert';
 import { screenedInstructorOne, screenedInstructorTwo } from './02_screening';
 import { ChatType } from '../common/chat/types';
 import { expectFetch } from './base/mock';
 import { course_coursestate_enum as CourseState } from '@prisma/client';
+import { prisma } from '../common/prisma';
+import { createOneOnOneId } from '../common/chat/helper';
 
 const appointmentTitle = 'Group Appointment 1';
 
@@ -54,6 +57,28 @@ const courseOne = test('Create Course One', async () => {
 
     assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
 
+    // Admin Course Search
+    const { courseSearch } = await adminClient.request(`
+        query AdminFindsCourseByName {
+            courseSearch(search: "integrationstest", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+        query AdminFindsCourseByOutline {
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch3 } = await adminClient.request(`
+        query AdminFindsCourseBySubject {
+            courseSearch(search: "informatik", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch3.some((it) => it.id === courseId));
+
     await adminClient.request(`
         mutation AllowCourse {
             courseAllow(courseId: ${courseId} screeningComment: "Kreative Kursbeschreibung!")
@@ -82,7 +107,103 @@ const courseOne = test('Create Course One', async () => {
     return { courseId };
 });
 
-export const subcourseOne = test('Create Subcourse', async () => {
+const courseTwo = test('Create Course Two', async () => {
+    const { client } = await screenedInstructorOne;
+    const {
+        courseCreate: { id: courseId, isInstructor, courseState },
+    } = await client.request(`
+        mutation CreateCourse {
+            courseCreate(course:{
+            name: "Wie schreibe ich Integrationstests"
+            outline: "Am besten gar nicht, ist viel zu viel Arbeit"
+            description: "Why should I test if my users can do that for me in production?"
+            category: club
+            allowContact: true
+            subject: Informatik
+            schooltype: gymnasium
+        }) {
+            id
+            isInstructor
+            courseState
+        }
+        }
+    `);
+
+    assert.ok(isInstructor);
+    assert.strictEqual(courseState, 'created');
+
+    await client.request(`mutation SubmitCourse { courseSubmit(courseId: ${courseId}) }`);
+
+    const {
+        me: {
+            student: { coursesInstructing },
+        },
+    } = await client.request(`
+        query GetCoursesInstructing {
+            me {
+                student {
+                    coursesInstructing {
+                        id
+                        courseState
+                    }
+                }
+            }
+        }
+    `);
+
+    assert.ok(coursesInstructing.some((it) => it.id === courseId && it.courseState === 'submitted'));
+
+    // Admin Course Search
+    const { courseSearch } = await adminClient.request(`
+        query AdminFindsCourseByName {
+            courseSearch(search: "integrationstest", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch2 } = await adminClient.request(`
+        query AdminFindsCourseByOutline {
+            courseSearch(search: "zu viel arbeit", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+
+    const { courseSearch: courseSearch3 } = await adminClient.request(`
+        query AdminFindsCourseBySubject {
+            courseSearch(search: "informatik", take: 100) { id }
+        }
+    `);
+    assert.ok(courseSearch3.some((it) => it.id === courseId));
+
+    await adminClient.request(`
+        mutation AllowCourse {
+            courseAllow(courseId: ${courseId} screeningComment: "Kreative Kursbeschreibung!")
+        }
+    `);
+
+    const {
+        me: {
+            student: { coursesInstructing: coursesInstructing2 },
+        },
+    } = await client.request(`
+        query GetCoursesInstructing {
+            me {
+                student {
+                    coursesInstructing {
+                        id
+                        courseState
+                    }
+                }
+            }
+        }
+    `);
+
+    assert.ok(coursesInstructing2.some((it) => it.id === courseId && it.courseState === 'allowed'));
+
+    return { courseId };
+});
+
+export const subcourseOne = test('Create Subcourse one', async () => {
     const nextMinute = new Date();
     nextMinute.setMinutes(nextMinute.getMinutes() + 1);
     const nextMonth = new Date();
@@ -90,6 +211,45 @@ export const subcourseOne = test('Create Subcourse', async () => {
 
     const { client, instructor } = await screenedInstructorOne;
     const { courseId } = await courseOne;
+    const { student } = await studentOne;
+
+    const {
+        subcourseCreate: { id: subcourseId },
+    } = await client.request(`
+        mutation CreateSubcourse {
+            subcourseCreate(courseId: ${courseId}, subcourse: {
+                minGrade: 5
+                maxGrade: 10
+                maxParticipants: 1
+                joinAfterStart: true
+                allowChatContactProspects: true
+                allowChatContactParticipants: true
+                groupChatType: ${ChatType.NORMAL}
+            })
+  		{id}
+  }
+    `);
+
+    const { subcoursesPublic } = await client.request(`
+        query PublicSubcourses {
+            subcoursesPublic(take: 100) { id }
+        }
+    `);
+
+    // Does not yet appear in public subcourses
+    assert.ok(!subcoursesPublic.some((it) => it.id === subcourseId));
+
+    return { subcourseId, client, instructor, courseId };
+});
+
+export const subcourseTwo = test('Create Subcourse two', async () => {
+    const nextMinute = new Date();
+    nextMinute.setMinutes(nextMinute.getMinutes() + 1);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const { client, instructor } = await screenedInstructorOne;
+    const { courseId } = await courseTwo;
 
     const {
         subcourseCreate: { id: subcourseId },
@@ -366,4 +526,179 @@ void test('Add / Remove another instructor', async () => {
     await client.request(`mutation RemoveInstructorFromSubcourse {
         subcourseDeleteInstructor(subcourseId: ${subcourseId} studentId: ${instructor2.student.id})
     }`);
+});
+
+void test('Delete course', async () => {
+    const { courseId, client: courseClient, subcourseId } = await subcourseTwo;
+
+    await courseClient.requestShallFail(
+        `
+        mutation DeleteCourseWithSubcourses {courseDelete(courseId: ${courseId})}
+    `
+    );
+
+    await prisma.subcourse.updateMany({ where: { id: subcourseId }, data: { published: false } });
+
+    await courseClient.request(
+        `
+        mutation DeleteSubcourse {subcourseDelete(subcourseId: ${subcourseId})}
+    `
+    );
+    const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId } });
+    assert.ok(!subcourse);
+
+    //Test deletion of empty course => should work
+
+    await courseClient.request(
+        `
+        mutation DeleteEmptyCourse {courseDelete(courseId: ${courseId})}
+    `
+    );
+});
+void test('Find shared course', async () => {
+    const { instructor: instructor2, client: instructor2client } = await screenedInstructorTwo;
+    const { courseId, client, instructor: subcourseInstructor } = await subcourseOne;
+
+    await client.request(`
+        mutation MarkCourseShared {
+            courseMarkShared(courseId: ${courseId}, shared: true){id}
+        }
+    `);
+
+    const { templateCourses: templateCoursesEmptySearch } = await instructor2client.request(`
+        query FindSharedCourses {
+            templateCourses(search: "", take: 1) {
+              id
+            }
+        }
+    `);
+    // Instructor from subcourseOne creates subcourse, Different instructor (instructor2) must find it.
+    assert.ok(templateCoursesEmptySearch.some((it) => it.id === courseId));
+
+    const course = await prisma.course.findUnique({
+        where: { id: courseId },
+    });
+
+    const { templateCourses: templateCoursesNonEmptySearch } = await instructor2client.request(`
+    query FindSharedCourses {
+        templateCourses(search: "${course.name}", take: 1) {
+          id
+        }
+    }
+`);
+    // Instructor 2 must be able to find shared course by name
+    assert.ok(templateCoursesNonEmptySearch.some((it) => it.id === courseId));
+
+    await client.request(`
+    mutation MarkCourseShared {
+        courseMarkShared(courseId: ${courseId}, shared: false){id}
+    }
+`);
+
+    const { templateCourses: courseSearch } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(studentId: ${instructor2.student.id}, search: "", take: 10) { id }
+    }
+    `);
+
+    //Subcourse is not shared anymore. Instructor 2 must not find the course since it was created
+    //by the subcourseInstructor
+    assert.ok(courseSearch.every((it) => it.id != courseId));
+
+    const { templateCourses: courseSearch2 } = await adminClient.request(`
+    query FindSharedCourses {
+        templateCourses(studentId: ${subcourseInstructor.student.id}, search: "", take: 10) { id }
+    }
+`);
+
+    //SubcourseOneInstructor must be able to find his own subcourse, even if it is not shared
+    assert.ok(courseSearch2.some((it) => it.id === courseId));
+});
+
+// Call prospectChatCreate mutation for a course, then have course instructor add this prospect and check if the prospect
+// is added to the course and if they were removed from prospects list.
+void test('Create Prospect Chat, then join', async () => {
+    const { client: instructorClient, instructor, courseId, subcourseId } = await subcourseOne;
+    const { client: pupilClient, pupil } = await pupilUpdated;
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {},
+    });
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${instructor.student.id}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: {},
+    });
+    const conversationId = createOneOnOneId({ userID: `pupil/${pupil.pupil.id}` }, { userID: `student/${instructor.student.id}` });
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' },
+    });
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' },
+    });
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/${conversationId}`,
+        method: 'PUT',
+        responseStatus: 200,
+        body: JSON.stringify({ custom: { prospectSubcourse: `[${subcourseId}]` } }),
+        response: {},
+    });
+
+    await pupilClient.request(`
+        mutation CreateProspectChat {
+            prospectChatCreate(instructorUserId: "student/${instructor.student.id}", subcourseId: ${subcourseId})
+        }
+    `);
+
+    const { subcourse: subcourseRes } = await instructorClient.request(`
+        query GetSubcourse {
+            subcourse(subcourseId: ${subcourseId}) {
+                prospectParticipants {
+                    id
+                }
+            }
+        }
+    `);
+    assert.ok(subcourseRes.prospectParticipants.some((it) => it.id === pupil.pupil.id));
+
+    await instructorClient.request(`
+        mutation AddProspectToSubcourse {
+            subcourseJoinFromProspects(subcourseId: ${subcourseId}, pupilId: ${pupil.pupil.id})
+        }
+    `);
+
+    const { subcourse: subcourse2 } = await instructorClient.request(`
+        query GetSubcourse {
+            subcourse(subcourseId: ${subcourseId}) {
+                prospectParticipants {
+                    id
+                }
+                participants {
+                    id
+                }
+            }
+        }
+    `);
+
+    assert.ok(!subcourse2.prospectParticipants.some((it) => it.id === pupil.pupil.id));
+    assert.ok(subcourse2.participants.some((it) => it.id === pupil.pupil.id));
+
+    // leave subcourse again such that our tests are self-contained
+    await pupilClient.request(`
+        mutation LeaveSubcourse {
+            subcourseLeave(subcourseId: ${subcourseId})
+        }
+    `);
 });

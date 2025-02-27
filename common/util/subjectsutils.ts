@@ -16,6 +16,7 @@ export type Subject = {
 
 export const SUBJECTS = [
     'Altgriechisch',
+    'Arbeitslehre',
     'Biologie',
     'Chemie',
     'Chinesisch',
@@ -23,8 +24,10 @@ export const SUBJECTS = [
     'Deutsch als Zweitsprache',
     'Englisch',
     'Erdkunde',
+    'Ethik',
     'Französisch',
     'Geschichte',
+    'Gesundheit',
     'Informatik',
     'Italienisch',
     'Kunst',
@@ -40,7 +43,9 @@ export const SUBJECTS = [
     'Russisch',
     'Sachkunde',
     'Spanisch',
+    'Technik',
     'Wirtschaft',
+    'Lernen lernen',
 ] as const;
 
 export const isValidSubjectName = (subject: string) => SUBJECTS.includes(subject as any);
@@ -111,12 +116,4 @@ export function parseSubjectString(subjects: string): Subject[] {
     });
 }
 
-export function checkCoDuSubjectRequirements(subjects: Subject[]) {
-    // CoDu requires that one of Math, English, German is selected and that this
-    // is taught in one of the grades 8 to 10
-    const relevantSubjects = subjects.filter(
-        (s) => ['mathematik', 'deutsch', 'englisch'].includes(s.name.toLowerCase()) && (!s.grade || (s.grade.min <= 10 && s.grade.max >= 8))
-    );
-
-    return relevantSubjects.length > 0;
-}
+export const DAZ = 'Deutsch als Zweitsprache';

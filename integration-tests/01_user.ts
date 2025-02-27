@@ -1,4 +1,5 @@
-import { test, createUserClient, adminClient } from './base';
+import { test } from './base';
+import { createUserClient, adminClient } from './base/clients';
 import assert from 'assert';
 import { randomBytes } from 'crypto';
 import { assertUserReceivedNotification, createMockNotification } from './base/notifications';
@@ -8,7 +9,7 @@ const setup = test('Setup Configuration', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
 });
 
-const createMockVerification = test('Create Mock Email Verify Notification', async () => {
+export const createMockVerification = test('Create Mock Email Verify Notification', async () => {
     await setup;
     return await createMockNotification('user-verify-email', 'UserVerifyEmailNotification');
 });
@@ -34,10 +35,13 @@ export async function createNewPupil() {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "test+${userRandom}@lern-fair.de"
-                newsletter: false
-                state: bw
+                newsletter: true
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -50,10 +54,13 @@ export async function createNewPupil() {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "TEST+${userRandom}@lern-fair.de"
-                newsletter: false
-                state: bw
+                newsletter: true
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -125,10 +132,13 @@ export const pupilTwo = test('Register Pupil', async () => {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "test+${userRandom}@lern-fair.de"
-                newsletter: false
-                state: bw
+                newsletter: true
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -141,10 +151,13 @@ export const pupilTwo = test('Register Pupil', async () => {
             meRegisterPupil(data: {
                 firstname: "firstname:${userRandom}"
                 lastname: "lastname:${userRandom}"
+                emailOwner: pupil
                 email: "TEST+${userRandom}@lern-fair.de"
-                newsletter: false
-                state: bw
+                newsletter: true
                 registrationSource: normal
+                school: {
+                  state: bw
+                }
             }) {
                 id
             }
@@ -470,5 +483,5 @@ export const pupilUpdated = test('Update Pupil', async () => {
         }
     }`);
 
-    return { pupilsGrade: me.pupil.grade };
+    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
 });

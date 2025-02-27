@@ -1,17 +1,22 @@
 /* eslint-disable camelcase */
-import { course_coursestate_enum, student as Student } from '@prisma/client';
+import { course_coursestate_enum, dissolve_reason, dissolved_by_enum, student as Student } from '@prisma/client';
 import { prisma } from '../prisma';
 import { dissolveMatch } from '../match/dissolve';
 import * as Notification from '../notification';
-import { getZoomUser } from '../zoom/user';
 import { deleteZoomUser } from '../zoom/user';
-import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
+import { CertificateState } from '../certificate';
+import { removeAllPushSubcriptions } from '../notification/channels/push';
 
-export async function deactivateStudent(student: Student, silent = false, reason?: string) {
+export async function deactivateStudent(
+    student: Student,
+    silent = false,
+    reason?: string,
+    dissolveReasons: dissolve_reason[] = [dissolve_reason.accountDeactivated]
+) {
     if (!student.active) {
         throw new Error('Student was already deactivated');
     }
@@ -32,8 +37,14 @@ export async function deactivateStudent(student: Student, silent = false, reason
         },
     });
     for (const match of matches) {
-        await dissolveMatch(match, 0, student);
+        await dissolveMatch(match, dissolveReasons, student, dissolved_by_enum.student);
     }
+
+    // Remove any pending certificates, so that they no longer show up in pupil dashboards
+    await prisma.participation_certificate.updateMany({
+        where: { studentId: student.id, state: CertificateState.awaitingApproval },
+        data: { state: CertificateState.manual },
+    });
 
     //Delete course records for the student.
     const courses = await prisma.course.findMany({
@@ -88,12 +99,14 @@ export async function deactivateStudent(student: Student, silent = false, reason
         await deleteZoomUser(student);
     }
 
+    await removeAllPushSubcriptions(userForStudent(student));
+
     const updatedStudent = await prisma.student.update({
         data: { active: false },
         where: { id: student.id },
     });
 
-    await logTransaction('deActivate', student, { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason });
 
     return updatedStudent;
 }
@@ -106,5 +119,5 @@ export async function reactivateStudent(student: Student, reason: string) {
         throw new PrerequisiteError('Student already got redacted, too late... :(');
     }
     await prisma.student.update({ where: { id: student.id }, data: { active: true } });
-    await logTransaction('deActivate', student, { newStatus: true, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: true, deactivationReason: reason });
 }

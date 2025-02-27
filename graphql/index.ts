@@ -38,7 +38,6 @@ import { ExtendedFieldsLectureResolver, ExtendedFieldsOrganizerResolver, Extende
 import { MutateMeResolver } from './me/mutation';
 import responseCachePlugin from 'apollo-server-plugin-response-cache';
 import { cacheModelEnhancementMap } from './cache';
-import { ExtendedFieldsSchoolResolver } from './school/fields';
 import { MutateStudentResolver } from './student/mutations';
 import { MutateCertificateOfConductResolver } from './certificate_of_conduct/mutations';
 import { ExtendedFieldsCertificateOfConductResolver } from './certificate_of_conduct/fields';
@@ -69,6 +68,18 @@ import { playground } from './playground';
 import { ExtendedFieldsScreenerResolver } from './screener/fields';
 import { ExtendedFieldsCooperationResolver } from './cooperation/fields';
 import { MutateCooperationResolver } from './cooperation/mutation';
+import { FieldsChatResolver } from './chat/fields';
+import { AchievementTemplateFieldResolver } from './achievement_template/fields';
+import { MutateAchievementTemplateResolver } from './achievement_template/mutations';
+import { LearningTopicFieldResolver } from './learning/topic/fields';
+import { LearningAssignmentFieldResolver } from './learning/assignment/fields';
+import { LearningNoteFieldResolver } from './learning/note/fields';
+import { LearningTopicMutationsResolver } from './learning/topic/mutations';
+import { LearningAssignmentMutationsResolver } from './learning/assignment/mutations';
+import { LearningNoteMutationsResolver } from './learning/note/mutations';
+import { ExternalSchoolResolver } from './external_school/fields';
+import { MutateLessonPlanResolver } from './lessonplan/mutations';
+import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -133,9 +144,11 @@ const schema = buildSchemaSync({
         ExtendedFieldsParticipationCertificateResolver,
         MutateParticipationCertificateResolver,
 
+        /* InstantCertificate */
+        MutateInstantCertificateResolver,
+
         /* Schools */
         FindManySchoolResolver,
-        ExtendedFieldsSchoolResolver,
 
         /* Certificate of Conduct */
         MutateCertificateOfConductResolver,
@@ -172,13 +185,32 @@ const schema = buildSchemaSync({
         ExtendedFieldsOrganizerResolver,
 
         /* Chat */
+        FieldsChatResolver,
         MutateChatResolver,
 
         /* Cooperation */
         ExtendedFieldsCooperationResolver,
         MutateCooperationResolver,
 
+        /* Achievement Templates */
+        AchievementTemplateFieldResolver,
+        MutateAchievementTemplateResolver,
+
+        /* Admin */
         AdminMutationsResolver,
+
+        /* Learning */
+        LearningTopicFieldResolver,
+        LearningTopicMutationsResolver,
+        LearningAssignmentFieldResolver,
+        LearningAssignmentMutationsResolver,
+        LearningNoteFieldResolver,
+        LearningNoteMutationsResolver,
+
+        /** School Search */
+        ExternalSchoolResolver,
+
+        MutateLessonPlanResolver,
     ],
     authChecker,
 });

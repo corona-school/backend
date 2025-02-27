@@ -98,7 +98,7 @@ export class MutateConcreteNotificationsResolver {
         return true;
     }
 
-    @Mutation((returns) => GraphQLJSON)
+    @Mutation((returns) => GraphQLJSON, { nullable: true })
     @Authorized(Role.ADMIN)
     @Deprecated('TEST ONLY, DO NOT USE!')
     async _actionTakenAt(

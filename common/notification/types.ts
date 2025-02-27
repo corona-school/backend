@@ -1,9 +1,9 @@
 // Prisma exports lowercase types, but we want capitalized types
 import { concrete_notification as ConcreteNotification, notification as Notification, student as Student, pupil as Pupil } from '.prisma/client';
 import { AttachmentGroup } from '../attachments';
-import { User } from '../user';
-// eslint-disable-next-line import/no-cycle
+import { User, getFullName } from '../user';
 import { ActionID } from './actions';
+import { USER_APP_DOMAIN } from '../util/environment';
 
 export type NotificationID = number; // either our own or we reuse them from Mailjet. Maybe we can structure them a bit better
 export type CategoryID = string; // categories as means to opt out from a certain category of mails
@@ -26,15 +26,33 @@ export interface NotificationContextExtensions {
     student?: Student; // set if the pupil is notified, and a certain student is relevant, this property is set
     pupil?: Pupil; // if the pupil is notified and a certain student is somehow relevant, this property is set
     replyToAddress?: Email;
-    // Sometimes it makes sense to send to some other email than the user's
-    // (i.e. when verifying an email change, or when testing mails)
-    overrideReceiverEmail?: Email;
     attachments?: Attachment[];
+
     // The notification is sent out as part of a certain campaign,
     // This will be used by Mailjet to show statistics for all notifications with the same campaign
+    // The campaign should also be set as the 'uniqueId' to properly prevent campaigns being sent to the same users multiple times
     campaign?: string;
-    // For Campaigns, support sending custom Mailjet Notifications:
+
+    // ---------------------------------------------------------------
+
+    // ATTENTION: These override attributes of the Notification in a Concrete Notification and should
+    // be used with extreme care, as they might come with unintended consequences
+
+    // For Campaigns, support sending custom Mailjet Templates / with a different Type per Campaign,
+    // without having to create a new Notification for each campaign
     overrideMailjetTemplateID?: string;
+    overrideType?: NotificationType;
+
+    // Sometimes it makes sense to send to some other email than the user's
+    // (i.e. when verifying an email change, or when testing mails)
+    // BE CAREFUL: This might otherwise send an email with an auth token to someone else!
+    overrideReceiverEmail?: Email;
+    // ------ Achievements ------
+    // For Achievements, the match or subcourse is needed as a relation to allocate events to a specific user achievement
+    relation?: string;
+    // If skipAchievementBucketsBefore is set, it indicates that a user may have joined an already running course.
+    // Therefore, we should skip the achievement buckets before the user's join, so that he still has the possibility to achieve the achievements.
+    skipAchievementBucketsBefore?: string;
 }
 
 export interface NotificationContext extends NotificationContextExtensions {
@@ -50,11 +68,19 @@ export interface Context extends NotificationContext {
     USER_APP_DOMAIN: string;
 }
 
+export function getContext(notificationContext: NotificationContext, user: User): Context {
+    return {
+        ...notificationContext,
+        user: { ...user, fullName: getFullName(user) },
+        USER_APP_DOMAIN,
+    };
+}
+
 // Abstract away from the core: Channels are our Ports to external notification systems (Mailjet, SMS, ...)
 export interface Channel {
-    type: 'email' | 'inapp';
+    type: 'email' | 'inapp' | 'push';
     send(notification: Notification, to: User, context: Context, concreteID: number, attachments?: AttachmentGroup): Promise<any>;
-    canSend(notification: Notification, user: User): boolean;
+    canSend(notification: Notification, user: User): boolean | Promise<boolean>;
 }
 
 export interface BulkAction<Entity> {
@@ -118,4 +144,5 @@ export enum NotificationType {
     COURSE = 'course',
     CERTIFICATE = 'certificate',
     LEGACY = 'legacy',
+    ACHIEVEMENT = 'achievement',
 }

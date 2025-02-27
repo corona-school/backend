@@ -1,21 +1,39 @@
-import { Student, Pupil, Screener, Secret, Concrete_notification as ConcreteNotification, Lecture, StudentWhereInput, PupilWhereInput } from '../generated';
+import {
+    Student,
+    Pupil,
+    Screener,
+    Secret,
+    Concrete_notification as ConcreteNotification,
+    Lecture,
+    StudentWhereInput,
+    PupilWhereInput,
+    Log,
+    Push_subscription as PushSubscription,
+    notification_channel_enum as NotificationChannelEnum,
+} from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
-import { UNAUTHENTICATED_USER, loginAsUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
-import { DEFAULT_PREFERENCES } from '../../common/notification/defaultPreferences';
 import { findUsers } from '../../common/user/search';
-import { getAppointmentsForUser, getLastAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
+import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } from '../../common/appointment/get';
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
 import { ConcreteNotificationState } from '../../common/notification/types';
+import { getAchievementById, getFurtherAchievements, getNextStepAchievements, getUserAchievements } from '../../common/achievement/get';
+import { Achievement } from '../types/achievement';
+import { Deprecated, Doc } from '../util';
+import { createChatSignature } from '../../common/chat/create';
+import assert from 'assert';
+import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
+import { getUserNotificationPreferences } from '../../common/notification';
+import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -41,13 +59,13 @@ export class Contact {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
@@ -97,33 +115,68 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => [String])
     @Authorized(Role.ADMIN)
     async roles(@Root() user: User) {
-        const fakeContext: GraphQLContext = {
-            user: UNAUTHENTICATED_USER,
-            ip: '?',
-            prisma,
-            sessionToken: 'fake',
-            setCookie: () => {
-                /* ignore */
-            },
-            sessionID: 'FAKE',
-        };
-        await loginAsUser(user, fakeContext);
-        return fakeContext.user.roles;
+        return await evaluateUserRoles(user);
     }
+
+    @FieldResolver((returns) => Int, { description: 'Number of referrals made by the user' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async referralCount(@Root() user: User): Promise<number> {
+        const count = await getReferredByIDCount(user.userID);
+        return count;
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils - 0 if less than 3 users were referred for privacy' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async supportedHours(@Root() user: User): Promise<number> {
+        const totalHours = await getTotalSupportedHours(user.userID);
+        return totalHours;
+    }
+
+    // -------- Notifications ---------------------
 
     @FieldResolver((returns) => [ConcreteNotification])
     @Authorized(Role.OWNER, Role.ADMIN)
     @LimitedQuery()
     async concreteNotifications(
+        @Ctx() context: GraphQLContext,
         @Root() user: User,
         @Arg('take', { nullable: true }) take?: number,
         @Arg('skip', { nullable: true }) skip?: number
     ): Promise<ConcreteNotification[]> {
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
+        const userQuery = {
+            notification: {
+                message_translation: {
+                    some: {},
+                },
+            },
+            NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
+        };
         return await prisma.concrete_notification.findMany({
             orderBy: [{ sentAt: 'desc' }],
-            where: { userId: user.userID, state: ConcreteNotificationState.SENT },
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                AND: [isAdmin ? null : userQuery],
+            },
             take,
             skip,
+        });
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.SCREENER, Role.ADMIN)
+    async receivedScreeningSuggestions(@Root() user: User): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                notification: {
+                    onActions: { has: 'screening_suggestion' },
+                },
+            },
+            include: { notification: true },
         });
     }
 
@@ -136,11 +189,30 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => JSONResolver, { nullable: true })
     @Authorized(Role.OWNER, Role.ADMIN)
     async notificationPreferences(@Root() user: User) {
-        return (await queryUser(user, { notificationPreferences: true })).notificationPreferences ?? DEFAULT_PREFERENCES;
+        return await getUserNotificationPreferences(user, false);
     }
 
+    // ------------- Web Push ----------------
+
+    @FieldResolver((returns) => [PushSubscription])
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async pushSubscriptions(@Root() user: User) {
+        return await getPushSubscriptions(user);
+    }
+
+    // Query doesn't really belong to the User entity, but there isn't a better place
+    // for such global config
+    @Query((returns) => String, { nullable: true })
+    @Authorized(Role.UNAUTHENTICATED)
+    @Doc("Returns the 'applicationServerKey' as described by the WebPush Spec")
+    pushPublicKey() {
+        return publicKey;
+    }
+
+    // ------------- User Queries ----------------
+
     @Query((returns) => [UserType])
-    @Authorized(Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.STUDENT_SCREENER)
     async usersSearch(
         @Ctx() context: GraphQLContext,
         @Arg('query') query: string,
@@ -148,6 +220,22 @@ export class UserFieldsResolver {
         @Arg('take', () => Int, { nullable: true }) take?: number
     ) {
         const strict = false; // !(context.user.roles?.includes(Role.ADMIN) ?? false);
+
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
+        if (!isAdmin) {
+            const isPupilScreener = context.user.roles.includes(Role.PUPIL_SCREENER);
+            const isStudentScreener = context.user.roles.includes(Role.STUDENT_SCREENER);
+            if (!isPupilScreener) {
+                assert(isStudentScreener);
+                only = 'student';
+            }
+
+            if (!isStudentScreener) {
+                assert(isPupilScreener);
+                only = 'pupil';
+            }
+        }
+
         return await findUsers(query, only, take, strict);
     }
 
@@ -165,9 +253,32 @@ export class UserFieldsResolver {
 
         if (pupilQuery) {
             // Make sure only active users with verified email are returned
-            const pupils = await prisma.student.findMany({
+            const pupils = await prisma.pupil.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
-                where: { ...pupilQuery, active: true, verification: null },
+                where: {
+                    ...pupilQuery,
+                    active: true,
+                    verifiedAt: { not: null },
+                    OR: [
+                        {
+                            subcourse_participants_pupil: {
+                                some: {},
+                            },
+                        },
+                        {
+                            match: {
+                                some: {},
+                            },
+                        },
+                        {
+                            pupil_screening: {
+                                some: {
+                                    status: 'success',
+                                },
+                            },
+                        },
+                    ],
+                },
             });
             result.push(...pupils.map(userForPupil));
         }
@@ -175,13 +286,28 @@ export class UserFieldsResolver {
         if (studentQuery) {
             const students = await prisma.student.findMany({
                 select: { firstname: true, lastname: true, email: true, id: true },
-                where: { ...studentQuery, active: true, verification: null },
+                where: {
+                    AND: [
+                        studentQuery,
+                        {
+                            active: true,
+                            verifiedAt: { not: null },
+                        },
+                        // For now we exclude unscreened helpers, as they wont be interested
+                        // in most of our marketing campaigns anyways
+                        {
+                            OR: [{ screening: { success: true } }, { instructor_screening: { success: true } }],
+                        },
+                    ],
+                },
             });
             result.push(...students.map(userForStudent));
         }
 
         return result;
     }
+
+    // ------------ Appointments --------------
 
     @FieldResolver((returns) => [Lecture], { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
@@ -204,16 +330,86 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
+    async firstAppointmentId(@Root() user: User): Promise<number> {
+        return await getEdgeAppointmentId(user, 'first');
+    }
+
+    @FieldResolver((returns) => Int, { nullable: true })
+    @Authorized(Role.ADMIN, Role.OWNER)
     async lastAppointmentId(@Root() user: User): Promise<number> {
-        return await getLastAppointmentId(user);
+        return await getEdgeAppointmentId(user, 'last');
+    }
+
+    // ------------- Achievements ------------
+
+    @FieldResolver((returns) => Achievement)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievement(@Root() user: User, @Arg('id') id: number): Promise<Achievement> {
+        const achievement = await getAchievementById(user, id);
+        return achievement;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async nextStepAchievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getNextStepAchievements(user);
+        return achievements;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async furtherAchievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getFurtherAchievements(user);
+        return achievements;
+    }
+    @FieldResolver((returns) => [Achievement])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async achievements(@Root() user: User): Promise<Achievement[]> {
+        const achievements = await getUserAchievements(user);
+        return achievements;
+    }
+
+    // Also expose the underlying data to simplify debugging
+    @FieldResolver((returns) => [JSONResolver])
+    @Authorized(Role.ADMIN)
+    @Doc(`Internal - Do not use!`)
+    async _achievementEvents(@Root() user: User) {
+        return await prisma.achievement_event.findMany({
+            where: { userId: user.userID },
+        });
+    }
+
+    @FieldResolver((returns) => [JSONResolver])
+    @Authorized(Role.ADMIN)
+    @Doc(`Internal - Do not use!`)
+    async _achievementData(@Root() user: User) {
+        return await prisma.user_achievement.findMany({
+            where: { userId: user.userID },
+        });
+    }
+
+    // ----------- Chat ----------------
+
+    @FieldResolver((returns) => [Contact])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async contactOptions(@Root() user: User) {
+        return await getMyContacts(user);
     }
 
     @Query((returns) => [Contact])
     @Authorized(Role.USER)
+    @Deprecated(`Use me { contactOptions } !`)
     async myContactOptions(@Ctx() context: GraphQLContext): Promise<Contact[]> {
         const { user } = context;
         return await getMyContacts(user);
     }
+
+    @FieldResolver((returns) => String)
+    @Authorized(Role.USER, Role.ADMIN)
+    async chatSignature(@Root() user: User): Promise<string> {
+        const signature = await createChatSignature(user);
+        return signature;
+    }
+
+    // ------------ Zoom ---------------
 
     @FieldResolver((returns) => String)
     @Authorized(Role.ADMIN, Role.OWNER)
@@ -244,5 +440,15 @@ export class UserFieldsResolver {
     async zoomUserLicenses() {
         const zoomUsers = await getZoomUsers();
         return zoomUsers;
+    }
+
+    @FieldResolver((type) => [Log])
+    @Authorized(Role.ADMIN)
+    @LimitEstimated(100)
+    async logs(@Root() user: Required<User>) {
+        return await prisma.log.findMany({
+            where: { userID: user.userID },
+            orderBy: { createdAt: 'asc' },
+        });
     }
 }
