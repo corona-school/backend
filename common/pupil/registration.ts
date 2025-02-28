@@ -3,7 +3,6 @@ import { isEmailAvailable } from '../user/email';
 import { v4 as uuidv4 } from 'uuid';
 import * as Notification from '../notification';
 import {
-    pupil_projectfields_enum as ProjectField,
     pupil_state_enum as State,
     pupil as Pupil,
     pupil_registrationsource_enum as RegistrationSource,

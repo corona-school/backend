@@ -5,21 +5,20 @@ import { deactivateStudent, reactivateStudent } from '../../common/student/activ
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import {
     addInstructorScreening,
     addTutorScreening,
     cancelCoCReminders,
-    requireStudentOnboarding,
     scheduleCoCReminders,
+    requireStudentOnboarding,
     updateInstructorScreening,
     updateTutorScreening,
 } from '../../common/student/screening';
-import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
+import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
-    pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     student as Student,
     student_state_enum as State,
@@ -28,7 +27,6 @@ import {
     PrismaClient,
     Prisma,
 } from '@prisma/client';
-import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForStudent } from '../../common/user';
@@ -112,16 +110,6 @@ class StudentRegisterPlusManyInput {
 }
 
 @InputType()
-export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
-    @Field((type) => ProjectField)
-    projectField: ProjectField;
-    @Field((type) => Int, { nullable: true })
-    min: number;
-    @Field((type) => Int, { nullable: true })
-    max: number;
-}
-
-@InputType()
 export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     firstname?: string;
@@ -135,9 +123,6 @@ export class StudentUpdateInput {
 
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
-
-    @Field((type) => [ProjectFieldWithGradeInput], { nullable: true })
-    projectFields?: ProjectFieldWithGradeInput[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -189,7 +174,6 @@ export async function updateStudent(
         firstname,
         lastname,
         email,
-        projectFields,
         subjects,
         registrationSource,
         state,
@@ -204,10 +188,6 @@ export async function updateStudent(
         descriptionForMatch,
         descriptionForScreening,
     } = update;
-
-    if (projectFields && !student.isProjectCoach) {
-        throw new PrerequisiteError(`Only project coaches can set the project fields`);
-    }
 
     if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
@@ -235,10 +215,6 @@ export async function updateStudent(
 
     if (descriptionForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
-    }
-
-    if (projectFields) {
-        await setProjectFields(student, projectFields);
     }
 
     const res = await prismaInstance.student.update({
