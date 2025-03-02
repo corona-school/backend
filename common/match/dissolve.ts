@@ -3,8 +3,6 @@ import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { userForStudent, userForPupil, User } from '../user';
 import { logTransaction } from '../transactionlog/log';
-// eslint-disable-next-line camelcase
-import { Project_match } from '../../graphql/generated';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';

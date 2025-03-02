@@ -8,6 +8,7 @@ import redactInactiveAccounts from './periodic/redact-inactive-accounts';
 import { deactivateInactiveAccounts } from './periodic/redact-inactive-accounts/deactivate-inactive-accounts';
 import { sendInactivityNotification } from './periodic/redact-inactive-accounts/send-inactivity-notification';
 import syncToWebflow from './periodic/sync-to-webflow';
+import deleteUnreachableAchievements from './periodic/delete-unreachable-achievements';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
@@ -25,6 +26,7 @@ export const allJobs = {
     flagInactiveConversationsAsReadonly,
     notificationsEndedYesterday,
     checkReminders,
+    deleteUnreachableAchievements,
 
     assignOriginalAchievement,
 
@@ -61,4 +63,6 @@ export const regularJobs: ScheduledJob[] = [
     { cronTime: '00 00 10 * * *', name: 'flagInactiveConversationsAsReadonly' },
     // Every night, trigger actions for courses that ended yesterday
     { cronTime: '00 00 10 * * *', name: 'notificationsEndedYesterday' },
+    // Every six hours look for unreachable achievements and delete them
+    { cronTime: '00 00 */6 * * *', name: 'deleteUnreachableAchievements' },
 ];

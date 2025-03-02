@@ -3,7 +3,6 @@ import { isEmailAvailable } from '../user/email';
 import { v4 as uuidv4 } from 'uuid';
 import * as Notification from '../notification';
 import {
-    pupil_projectfields_enum as ProjectField,
     pupil_state_enum as State,
     pupil as Pupil,
     pupil_registrationsource_enum as RegistrationSource,
@@ -58,8 +57,6 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
         throw new PrerequisiteError(`Email is already used by another account`);
     }
 
-    const verification = uuidv4();
-
     let school: School;
     try {
         school = await findOrCreateSchool(data.school);
@@ -89,9 +86,6 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
             isParticipant: true,
             // Every pupil is made a Tutee by registration.
             isPupil: true,
-
-            // the authToken is used to verify the e-mail instead
-            verification,
 
             // the ID of the referrer (type + id)
             referredById: data.referredById,

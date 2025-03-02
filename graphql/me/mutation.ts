@@ -1,18 +1,9 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
-import {
-    getSessionPupil,
-    getSessionStudent,
-    getSessionUser,
-    getUserForSession,
-    isSessionPupil,
-    isSessionStudent,
-    loginAsUser,
-    updateSessionUser,
-} from '../authentication';
-import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
+import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
+import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { MaxLength, ValidateNested } from 'class-validator';
 import { RateLimit } from '../rate-limit';
 import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } from '../../common/student/registration';

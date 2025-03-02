@@ -125,7 +125,7 @@ export class UserFieldsResolver {
         return count;
     }
 
-    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils' })
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils - 0 if less than 3 users were referred for privacy' })
     @Authorized(Role.OWNER, Role.ADMIN)
     async supportedHours(@Root() user: User): Promise<number> {
         const totalHours = await getTotalSupportedHours(user.userID);
@@ -161,6 +161,22 @@ export class UserFieldsResolver {
             },
             take,
             skip,
+        });
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.SCREENER, Role.ADMIN)
+    async receivedScreeningSuggestions(@Root() user: User): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                notification: {
+                    onActions: { has: 'screening_suggestion' },
+                },
+            },
+            include: { notification: true },
         });
     }
 
@@ -242,7 +258,7 @@ export class UserFieldsResolver {
                 where: {
                     ...pupilQuery,
                     active: true,
-                    verification: null,
+                    verifiedAt: { not: null },
                     OR: [
                         {
                             subcourse_participants_pupil: {
@@ -275,7 +291,7 @@ export class UserFieldsResolver {
                         studentQuery,
                         {
                             active: true,
-                            verification: null,
+                            verifiedAt: { not: null },
                         },
                         // For now we exclude unscreened helpers, as they wont be interested
                         // in most of our marketing campaigns anyways

@@ -141,7 +141,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             matchAppointmentsCount,
             courseParticipantsCount,
             courseAppointmentsCount,
-            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration,
+            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration ?? 0,
         },
         include: { student: true },
     });

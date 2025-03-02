@@ -94,6 +94,13 @@ export async function getReferredStudentsAndPupils(userId: string): Promise<{ st
 export async function getTotalSupportedHours(userId: string): Promise<number> {
     const { students, pupils } = await getReferredStudentsAndPupils(userId);
 
+    // Provide k-anonymity (k = 2) - if only one user or two users was referred, do not show
+    // the supported hours
+    const referredUsers = students.length + pupils.length;
+    if (referredUsers <= 2) {
+        return 0;
+    }
+
     const studentLectures = await prisma.lecture.findMany({
         where: {
             organizerIds: {
