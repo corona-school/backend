@@ -420,13 +420,6 @@ model match {
   dissolved             Boolean            @default(false)
   dissolvedAt           DateTime?          @db.Timestamp(6)
   dissolvedBy           dissolved_by_enum?
-  // At some point in time the dissolve UI of pupils and students deviated,
-  // and they would write different ids for the same dissolve reason into this field
-  // As we do not store who dissolved the match, it is quite hard to interpret this number:
-  // (but you can make some weird joins with the log table to find out who dissolved it)
-  // dissolveReason is DEPRECATED, use dissolveReasonEnum instead
-  dissolveReason        Int?
-  dissolveReasonEnum    dissolve_reason?
   dissolveReasons       dissolve_reason[]  @default([])
   otherDissolveReason   String?            @db.VarChar // user can enter detailed explanation when selected dissolve reason is "other"
   didHaveMeeting        Boolean            @default(false) // whether the match partners did actually have an initial meeting
