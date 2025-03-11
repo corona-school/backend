@@ -23,7 +23,7 @@ import { strictUserSearch, userSearch } from '../../common/user/search';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
-import { excludeCancelledSubcourses, excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { excludeCancelledSubcourses, excludePastSubcourses, instructedBy, isMentoredBy } from '../../common/courses/filters';
 import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { isSessionStudent } from '../authentication';
@@ -153,6 +153,32 @@ export class ExtendFieldsStudentResolver {
         return await prisma.instructor_screening.findMany({
             where: { studentId: student.id },
         });
+    }
+
+    @LimitEstimated(10)
+    @FieldResolver((type) => [Subcourse])
+    @ImpliesRoleOnResult(Role.SUBCOURSE_MENTOR, Role.OWNER)
+    async subcoursesMentoring(
+        @Root() student: Required<Student>,
+        @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('excludeCancelled', { nullable: true }) excludeCancelled?: boolean,
+        @Arg('search', { nullable: true }) search?: string
+    ) {
+        const filters: Prisma.subcourseWhereInput[] = [isMentoredBy(student)];
+
+        if (excludePast) {
+            filters.push(excludePastSubcourses());
+        }
+
+        if (excludeCancelled) {
+            filters.push(excludeCancelledSubcourses());
+        }
+
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
+        return await prisma.subcourse.findMany({ where: { AND: filters } });
     }
 
     @FieldResolver((type) => [Subcourse])

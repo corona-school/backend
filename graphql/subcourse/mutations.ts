@@ -2,7 +2,15 @@ import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
-import { fillSubcourse, joinSubcourse, joinSubcourseWaitinglist, leaveSubcourse, leaveSubcourseWaitinglist } from '../../common/courses/participants';
+import {
+    fillSubcourse,
+    joinSubcourse,
+    joinSubcourseAsMentor,
+    joinSubcourseWaitinglist,
+    leaveSubcourse,
+    leaveSubcourseWaitinglist,
+    mentorLeaveSubcourse,
+} from '../../common/courses/participants';
 import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
@@ -237,6 +245,51 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourse(subcourse, pupil, true);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId})`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT, Role.COURSE_SCREENER)
+    async subcourseJoinAsMentor(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('studentId', { nullable: true }) studentId?: number
+    ): Promise<boolean> {
+        const student = await getSessionStudent(context, studentId);
+        const subcourse = await getSubcourse(subcourseId);
+        await joinSubcourseAsMentor(subcourse, student);
+        logger.info(`Student(${studentId}) joined Subcourse(${subcourseId}) as mentor`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR)
+    async subcourseMentorLeave(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('studentId', { nullable: true }) studentId?: number
+    ): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        // Make sure that only Admins/Owners can remove other mentors from the course
+        if (context.user.studentId && studentId && context.user.studentId !== studentId) {
+            logger.warn(`User tried to remove other mentor from course`, {
+                requestedStudentId: studentId,
+                actualStudentId: context.user.studentId,
+                user: context.user.userID,
+            });
+            return false;
+        }
+
+        const student = await getStudent(studentId || context.user.studentId);
+        const studentUser = userForStudent(student);
+
+        await mentorLeaveSubcourse(subcourse, student);
+        await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
+        if (subcourse.conversationId) {
+            await removeParticipantFromCourseChat(studentUser, subcourse.conversationId);
+        }
+        logger.info(`Student(${studentId}) left Subcourse(${subcourseId})`);
         return true;
     }
 
