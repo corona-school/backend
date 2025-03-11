@@ -1,5 +1,6 @@
 import { lecture as Appointment, subcourse as Subcourse } from '@prisma/client';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { getUserTypeAndIdForUserId } from '../user';
 
 const language = 'de-DE';
 
@@ -46,4 +47,12 @@ export async function getContextForGroupAppointmentReminder(
         appointment: await getAppointmentForNotification(appointment, original),
         ...(await getNotificationContextForSubcourse(course, subcourse)),
     };
+}
+
+export function getPupilParticipants(participantIds: string[]) {
+    const actualParticipants = participantIds.filter((id) => {
+        const [type] = getUserTypeAndIdForUserId(id);
+        return type === 'pupil';
+    });
+    return actualParticipants;
 }

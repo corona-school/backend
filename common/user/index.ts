@@ -4,6 +4,7 @@
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { prisma } from '../prisma';
 import { Prisma as PrismaTypes } from '@prisma/client';
+import { getPupilParticipants } from '../appointment/util';
 
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
@@ -138,7 +139,7 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
     }, 0);
 
     const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
-        const actualParticipants = lecture.participantIds.filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
+        const actualParticipants = getPupilParticipants(lecture.participantIds).filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
         const participantCount = actualParticipants.length;
         return acc + lecture.duration * participantCount;
     }, 0);
