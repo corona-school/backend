@@ -19,8 +19,8 @@ import assert from 'assert';
 import { getLogger } from '../common/logger/logger';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { AuthenticationError, ForbiddenError } from './error';
-import { isParticipant } from '../common/courses/participants';
-import { getPupil } from './util';
+import { isMentor, isParticipant } from '../common/courses/participants';
+import { getPupil, getStudent } from './util';
 import { Role } from '../common/user/roles';
 import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
@@ -221,11 +221,20 @@ const entityRoles: EntityRole[] = [
                 const pupil = await getPupil(context.user.pupilId);
                 return await isParticipant(root, pupil);
             }
-
             return false;
         },
     },
-
+    {
+        role: Role.SUBCOURSE_MENTOR,
+        async hasRole(context, modelName, root) {
+            assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine subcourse participant role');
+            if (context.user.studentId) {
+                const student = await getStudent(context.user.studentId);
+                return await isMentor(root.id, student.id);
+            }
+            return false;
+        },
+    },
     {
         role: Role.APPOINTMENT_PARTICIPANT,
         async hasRole(context, modelName, root) {
@@ -246,7 +255,7 @@ const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
-const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
+const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.SUBCOURSE_MENTOR, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
