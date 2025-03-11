@@ -11,7 +11,11 @@ const logger = getLogger('Appointment Tracking');
 // To track achievements we trigger actions whenever a user
 // joins an appointment meeting
 export async function trackUserJoinAppointmentMeeting(user: User, appointment: Appointment) {
-    // All actions in this file utilize the actionTakenAt funxtion to track each action.
+    const hasJoined = (await prisma.lecture.count({ where: { id: appointment.id, joinedBy: { has: user.userID } } })) > 0;
+    if (!hasJoined) {
+        await prisma.lecture.update({ where: { id: appointment.id }, data: { joinedBy: { push: user.userID } } });
+    }
+    // All actions in this file utilize the actionTakenAt function to track each action.
     // This approach serves as a workaround to avoid complications arising from overlapping appointments.
     //
     // Occasionally, it's possible to join an appointment way ahead of its scheduled start time.
