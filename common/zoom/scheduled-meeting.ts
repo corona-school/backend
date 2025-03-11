@@ -83,6 +83,19 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
                     settings: {
                         alternative_hosts: combinedAlternativeHosts,
                         alternative_hosts_email_notification: false,
+                        breakout_room: {
+                            enabled: true,
+                            rooms: [
+                                {
+                                    name: 'SuS warteraum',
+                                    participants: ['test+dev+p1@lern-fair.de'],
+                                },
+                                {
+                                    name: 'HuH Warteraum',
+                                    participants: ['test+dev+s4@lern-fair.de'],
+                                },
+                            ],
+                        },
                     },
                 }),
             }),
