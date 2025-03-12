@@ -263,7 +263,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR, Role.OWNER)
     async subcourseMentorLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -272,18 +272,9 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         // Make sure that only Admins/Owners can remove other mentors from the course
-        if (context.user.studentId && studentId && context.user.studentId !== studentId) {
-            logger.warn(`User tried to remove other mentor from course`, {
-                requestedStudentId: studentId,
-                actualStudentId: context.user.studentId,
-                user: context.user.userID,
-            });
-            return false;
-        }
-
-        const student = await getStudent(studentId || context.user.studentId);
+        const isOwner = context.user.roles.includes(Role.OWNER) && !!studentId;
+        const student = await (isOwner ? getStudent(studentId) : getSessionStudent(context, studentId));
         const studentUser = userForStudent(student);
-
         await mentorLeaveSubcourse(subcourse, student);
         await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
         if (subcourse.conversationId) {
