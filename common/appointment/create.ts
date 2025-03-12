@@ -271,7 +271,7 @@ export async function createAdHocMeeting(matchId: number, user: User) {
             title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
             matchId: matchId,
             start: start,
-            duration: 30,
+            duration: 60,
             appointmentType: lecture_appointmenttype_enum.match,
         },
     ];
