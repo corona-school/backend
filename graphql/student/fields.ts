@@ -156,6 +156,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @LimitEstimated(10)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_MENTOR)
     @FieldResolver((type) => [Subcourse])
     @ImpliesRoleOnResult(Role.SUBCOURSE_MENTOR, Role.OWNER)
     async subcoursesMentoring(
