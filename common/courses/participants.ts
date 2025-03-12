@@ -207,16 +207,12 @@ export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Stude
     if (course.category !== 'homework_help') {
         throw new Error('Only homework_help courses allow mentors');
     }
-    const insertion = await prisma.subcourse_mentors_student.create({
+    await prisma.subcourse_mentors_student.create({
         data: {
             studentId: student.id,
             subcourseId: subcourse.id,
         },
     });
-
-    if (insertion === null) {
-        throw new Error('Failed to join Subcourse as mentor');
-    }
 
     const user = userForStudent(student);
     await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
