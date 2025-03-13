@@ -272,7 +272,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         // Make sure that only Admins/Owners can remove other mentors from the course
-        const isOwner = context.user.roles.includes(Role.OWNER) && !!studentId;
+        const isOwner = studentId && (await prisma.subcourse_instructors_student.count({ where: { subcourseId, studentId: context.user.studentId } })) > 0;
         const student = await (isOwner ? getStudent(studentId) : getSessionStudent(context, studentId));
         const studentUser = userForStudent(student);
         await mentorLeaveSubcourse(subcourse, student);
