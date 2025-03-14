@@ -716,12 +716,11 @@ void (async function setupDevDB() {
         outline: 'Hausaufgabenhilfe',
         description:
             'Wenn du Hilfe bei deinen Schulaufgaben brauchst und dir Zuhause niemand helfen kann, dann helfen wir dir. Montag bis Donnerstag von 17-18 Uhr sind wir auf Zoom. \n\nBitte bringe deine Aufgaben mit, die du am Bildschirm zeigen kannst. \nZum Beispiel: \n- Deine Hausaufgaben \n- Übungsaufgaben für eine Klassenarbeit \n- Aufgaben, die du im Unterricht nicht verstanden hast',
-        category: CourseCategory.focus,
+        category: CourseCategory.homework_help,
         state: CourseState.allowed,
-        course_tags_course_tag: { create: { courseTagId: keepAtIt.id } },
         maxParticipants: 1000,
-        instructors: [student1, student2, student3, student4, student5],
-        participants: [pupil1, pupil2, pupil3, pupil4, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
+        instructors: [student1, student2, student3, student5],
+        participants: [pupil1, pupil2, pupil3, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
         lectures: { amount: 15, intervalInDays: 7, startOffsetInDays: -14 },
     });
 
