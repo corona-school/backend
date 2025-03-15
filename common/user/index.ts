@@ -25,6 +25,13 @@ export type User = {
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
+export function getPupilsIds(userIds: string[]) {
+    return userIds.filter((id) => {
+        const [type] = getUserTypeAndIdForUserId(id);
+        return type === 'pupil';
+    });
+}
+
 export function getUserTypeAndIdForUserId(userId: string): [type: UserTypes, id: number] {
     const validTypes = ['student', 'pupil', 'screener', 'admin'];
     const [type, id] = userId.split('/');
@@ -138,7 +145,7 @@ export async function getTotalSupportedHours(userId: string): Promise<number> {
     }, 0);
 
     const totalPupilDuration = pupilLectures.reduce((acc, lecture) => {
-        const actualParticipants = lecture.participantIds.filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
+        const actualParticipants = getPupilsIds(lecture.participantIds).filter((id) => pupils.includes(id) && !lecture.declinedBy.includes(id));
         const participantCount = actualParticipants.length;
         return acc + lecture.duration * participantCount;
     }, 0);
