@@ -23,12 +23,6 @@ export async function postStatisticsToSlack() {
     const studentsRegisteredCount = await prisma.student.count({ where: { verifiedAt: { not: null }, createdAt: { gte: begin, lte: end } } });
 
     // Screenings
-    // Pupil screening - total
-    const pupilScreeningCount = await prisma.pupil_screening.count({
-        where: {
-            createdAt: { gte: begin, lte: end },
-        },
-    });
 
     // Pupil screening - success
     const pupilScreeningSuccessCount = await prisma.pupil_screening.count({
