@@ -592,7 +592,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             participantIds: adminOrOwner,
             organizerIds: adminOrOwner,
             declinedBy: participantOrOwnerOrAdmin,
-            joinedBy: participantOrOwnerOrAdmin,
             zoomMeetingId: participantOrOwnerOrAdmin,
             zoomMeetingReport: adminOrOwner,
             override_meeting_link: participantOrOwnerOrAdmin,
