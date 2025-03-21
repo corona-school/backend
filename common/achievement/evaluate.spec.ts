@@ -291,7 +291,6 @@ function createLecture({ start }: { start: Date }): lecture {
         organizerIds: [],
         participantIds: [],
         declinedBy: [],
-        joinedBy: [],
         zoomMeetingId: null,
         zoomMeetingReport: [],
         instructorId: null,
