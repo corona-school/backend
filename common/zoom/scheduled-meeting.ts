@@ -1,5 +1,5 @@
 import { getAccessToken } from './authorization';
-import { ZoomUser } from './user';
+import type { ZoomUser } from './user';
 import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
 import { addHost, assureZoomFeatureActive, isZoomFeatureActive, removeHost } from './util';
