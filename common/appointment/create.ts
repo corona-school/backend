@@ -131,7 +131,6 @@ export function canCreateGroupAppointment(subcourse: Subcourse, hasInstructors: 
 
 export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
-    const mentors = await prisma.subcourse_mentors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
     const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
@@ -163,7 +162,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                     subcourseId: appointmentToBeCreated.subcourseId,
                     appointmentType: lecture_appointmenttype_enum.group,
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
-                    participantIds: [...participants.map((p) => userForPupil(p.pupil).userID), ...mentors.map((m) => userForStudent(m.student).userID)],
+                    participantIds: participants.map((p) => userForPupil(p.pupil).userID),
                     zoomMeetingId,
                     override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
                 },

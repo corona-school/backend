@@ -19,8 +19,8 @@ import assert from 'assert';
 import { getLogger } from '../common/logger/logger';
 import { isOwnedBy, ResolverModel, ResolverModelNames } from './ownership';
 import { AuthenticationError, ForbiddenError } from './error';
-import { isMentor, isParticipant } from '../common/courses/participants';
-import { getPupil, getStudent } from './util';
+import { isParticipant } from '../common/courses/participants';
+import { getPupil } from './util';
 import { Role } from '../common/user/roles';
 import { isDev, isTest } from '../common/util/environment';
 import { isAppointmentParticipant } from '../common/appointment/participants';
@@ -221,20 +221,11 @@ const entityRoles: EntityRole[] = [
                 const pupil = await getPupil(context.user.pupilId);
                 return await isParticipant(root, pupil);
             }
+
             return false;
         },
     },
-    {
-        role: Role.SUBCOURSE_MENTOR,
-        async hasRole(context, modelName, root) {
-            assert(modelName === 'Subcourse', 'Type must be a Subcourse to determine subcourse participant role');
-            if (context.user.studentId) {
-                const student = await getStudent(context.user.studentId);
-                return await isMentor(root.id, student.id);
-            }
-            return false;
-        },
-    },
+
     {
         role: Role.APPOINTMENT_PARTICIPANT,
         async hasRole(context, modelName, root) {
@@ -255,7 +246,7 @@ const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
 const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
-const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.SUBCOURSE_MENTOR, Role.OWNER)];
+const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
 const withPublicFields = <Entity = 'never', PublicFields extends keyof Entity = never>(otherFields: {
@@ -322,7 +313,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     },
     Subcourse_promotion: allAdmin,
     Subcourse_instructors_student: allAdmin,
-    Subcourse_mentors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Concrete_notification: allAdmin,
     Course_guest: allAdmin,
@@ -466,7 +456,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             participation_certificate: nobody,
             instant_certificate: nobody,
             subcourse_instructors_student: nobody,
-            subcourse_mentors_student: nobody,
             course: nobody,
             course_guest: nobody,
             course_instructors_student: nobody,
@@ -538,7 +527,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             course_participation_certificate: nobody,
             lecture: nobody,
             subcourse_instructors_student: nobody,
-            subcourse_mentors_student: nobody,
             subcourse_participants_pupil: nobody,
             _count: nobody,
             alreadyPromoted: adminOrOwner,

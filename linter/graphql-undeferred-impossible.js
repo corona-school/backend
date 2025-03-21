@@ -33,7 +33,7 @@ module.exports = {
                     return;
                 }
 
-                const needsToBeDeferred = (undeferredAuth ?? deferredAuth).expression.arguments.some((it) => ['OWNER', 'SUBCOURSE_PARTICIPANT', 'SUBCOURSE_MENTOR'].includes(it.property.name));
+                const needsToBeDeferred = (undeferredAuth ?? deferredAuth).expression.arguments.some((it) => ['OWNER', 'SUBCOURSE_PARTICIPANT'].includes(it.property.name));
 
                 if (undeferredAuth && needsToBeDeferred) {
                     context.report({

@@ -1,4 +1,4 @@
-import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
+import { course as Course, subcourse as Subcourse, pupil as Pupil } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
@@ -65,10 +65,6 @@ export async function isParticipant(subcourse: Subcourse, pupil: Pupil) {
             where: { pupilId: pupil.id, subcourseId: subcourse.id },
         })) > 0
     );
-}
-
-export async function isMentor(subcourseId: number, studentId: number) {
-    return (await prisma.subcourse_mentors_student.count({ where: { subcourseId, studentId } })) > 0;
 }
 
 export async function isOnWaitingList(subcourse: Subcourse, pupil: Pupil) {
@@ -202,23 +198,6 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Student) {
-    const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
-    if (course.category !== 'homework_help') {
-        throw new Error('Only homework_help courses allow mentors');
-    }
-    await prisma.subcourse_mentors_student.create({
-        data: {
-            studentId: student.id,
-            subcourseId: subcourse.id,
-        },
-    });
-
-    const user = userForStudent(student);
-    await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
-    await addGroupAppointmentsParticipant(subcourse.id, user.userID);
-}
-
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
     const canJoin = await canJoinSubcourse(subcourse, pupil);
 
@@ -339,22 +318,6 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
         // This will check if there are pupils on the waiting list, and short circuit if not
         await fillSubcourse(subcourse);
     }
-}
-
-export async function mentorLeaveSubcourse(subcourse: Subcourse, student: Student) {
-    const deletion = await prisma.subcourse_mentors_student.deleteMany({
-        where: {
-            subcourseId: subcourse.id,
-            studentId: student.id,
-        },
-    });
-    const studentUser = userForStudent(student);
-    await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
-    if (deletion.count === 0) {
-        throw new RedundantError(`Failed to leave Subcourse as the Student is not a mentor`);
-    }
-    logger.info(`Student(${student.id}) left Subcourse(${subcourse.id})`);
-    await logTransaction('mentorLeftCourse', studentUser, { subcourseID: subcourse.id });
 }
 
 export async function fillSubcourse(subcourse: Subcourse) {
