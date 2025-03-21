@@ -681,29 +681,29 @@ model school {
 // Historically there was a dedicated Screening Tool were screeners could log in.
 // Nowadays Screenings are done via Retool, with the Default Screener
 model screener {
-  id                           Int                    @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
-  createdAt                    DateTime               @default(now()) @db.Timestamp(6)
-  updatedAt                    DateTime               @default(now()) @updatedAt @db.Timestamp(6)
-  firstname                    String?                @db.VarChar
-  lastname                     String?                @db.VarChar
-  active                       Boolean                @default(true)
-  email                        String                 @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
-  verifiedAt                   DateTime?              @db.Timestamp(6)
-  isRedacted                   Boolean                @default(false)
-  lastTimeCheckedNotifications DateTime?              @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
-  notificationPreferences      Json?                  @db.Json
-  lastLogin                    DateTime?              @default(now()) @db.Timestamp(6)
+  id                           Int                          @id(map: "PK_3a023b02ed01df4a6956af1ea94") @default(autoincrement())
+  createdAt                    DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
+  firstname                    String?                      @db.VarChar
+  lastname                     String?                      @db.VarChar
+  active                       Boolean                      @default(true)
+  email                        String                       @unique(map: "IDX_29a6207bc70a2b9e6731d66bcf") @db.VarChar
+  verifiedAt                   DateTime?                    @db.Timestamp(6)
+  isRedacted                   Boolean                      @default(false)
+  lastTimeCheckedNotifications DateTime?                    @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  notificationPreferences      Json?                        @db.Json
+  lastLogin                    DateTime?                    @default(now()) @db.Timestamp(6)
   // DEPRECATED, Use Secret instead
-  password                     String                 @db.VarChar
-  verified                     Boolean?               @default(false)
+  password                     String                       @db.VarChar
+  verified                     Boolean?                     @default(false)
   // DEPRECATED:
-  oldNumberID                  Int?                   @unique(map: "UQ_96dc11de485d62615e78a875293")
+  oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
   instructor_screening         instructor_screening[]
   screenings                   screening[]
-  is_trusted                   Boolean                @default(false)
-  is_student_screener          Boolean                @default(false)
-  is_pupil_screener            Boolean                @default(false)
-  is_course_screener           Boolean                @default(false)
+  is_trusted                   Boolean                      @default(false)
+  is_student_screener          Boolean                      @default(false)
+  is_pupil_screener            Boolean                      @default(false)
+  is_course_screener           Boolean                      @default(false)
 }
 
 // A Screening for Students that want to tutor pupils
@@ -774,28 +774,28 @@ model student {
   sentInstructorScreeningReminderCount      Int                      @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                @db.Timestamp(6)
 
-  lastUpdatedSettingsViaBlocker    DateTime?                          @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker        DateTime?                              @db.Timestamp(6)
   // The registration form used to register the user, mainly used to find Lern-Fair Plus students
-  registrationSource               student_registrationsource_enum    @default(normal)
-  aboutMe                          String                             @default("") @db.VarChar
+  registrationSource                   student_registrationsource_enum        @default(normal)
+  aboutMe                              String                                 @default("") @db.VarChar
   // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
-  zoomUserId                       String?                            @db.VarChar
-  certificate_of_conduct           certificate_of_conduct?
-  course                           course[]
-  course_guest                     course_guest[]
-  course_instructors_student       course_instructors_student[]
-  course_participation_certificate course_participation_certificate[]
-  instructor_screening             instructor_screening?
-  jufo_verification_transmission   jufo_verification_transmission?
-  lecture                          lecture[]
-  match                            match[]
-  participation_certificate        participation_certificate[]
-  instant_certificate              instant_certificate[]
-  remission_request                remission_request?
-  screening                        screening?
-  subcourse_instructors_student    subcourse_instructors_student[]
+  zoomUserId                           String?                                @db.VarChar
+  certificate_of_conduct               certificate_of_conduct?
+  course                               course[]
+  course_guest                         course_guest[]
+  course_instructors_student           course_instructors_student[]
+  course_participation_certificate     course_participation_certificate[]
+  instructor_screening                 instructor_screening?
+  jufo_verification_transmission       jufo_verification_transmission?
+  lecture                              lecture[]
+  match                                match[]
+  participation_certificate            participation_certificate[]
+  instant_certificate                  instant_certificate[]
+  remission_request                    remission_request?
+  screening                            screening?
+  subcourse_instructors_student        subcourse_instructors_student[]
   // Should stay null for users who where registered before the onboarding got added
-  hasDoneEthicsOnboarding          Boolean?
+  hasDoneEthicsOnboarding              Boolean?
 
   cooperationID           Int?
   cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
@@ -809,8 +809,7 @@ model student {
   gender                  gender_enum?
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
-  referredById              String?                     @db.VarChar
-  subcourse_mentors_student subcourse_mentors_student[]
+  referredById String? @db.VarChar
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -844,7 +843,6 @@ model subcourse {
   subcourse_participants_pupil     subcourse_participants_pupil[]
   waiting_list_enrollment          waiting_list_enrollment[]
   subcourse_promotions             subcourse_promotion[]
-  subcourse_mentors_student        subcourse_mentors_student[]
 }
 
 model subcourse_promotion {
@@ -853,18 +851,6 @@ model subcourse_promotion {
   type        subcourse_promotion_type_enum
   subcourse   subcourse                     @relation(fields: [subcourseId], references: [id], onDelete: Cascade)
   subcourseId Int
-}
-
-// These students only support pupils in the course. They don't own the course/subcourse (so, no edition rights)
-// They can join/leave courses that allow mentors (For now only used the Hausaufgabenhilfe)
-// They don't count as course participants (e.g for maxParticipants, referrals, etc...)
-model subcourse_mentors_student {
-  subcourseId Int
-  studentId   Int
-  subcourse   subcourse @relation(fields: [subcourseId], references: [id], onDelete: Cascade)
-  student     student   @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@id([subcourseId, studentId])
 }
 
 // This is redundant with the Appointment.organizerIds of the appointments attached to the Subcourse and should generally be in sync
@@ -1057,11 +1043,10 @@ enum log_logtype_enum {
   cancelledCourse
   cancelledSubcourse
   createdCourseAttendanceLog
+  contactMentor
   bbbMeeting
   participantJoinedCourse
   participantLeftCourse
-  mentorJoinedCourse
-  mentorLeftCourse
   participantJoinedWaitingList
   participantLeftWaitingList
   userAccessedCourseWhileAuthenticated
@@ -1400,7 +1385,6 @@ enum dissolve_reason {
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
 }
-
 enum gender_enum {
   male
   female
