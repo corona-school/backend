@@ -33,6 +33,7 @@ export type ZoomMeeting = {
     settings: {
         alternative_hosts: string;
     };
+    encrypted_password?: string;
 };
 
 export type ZoomMeetings = {

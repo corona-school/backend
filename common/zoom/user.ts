@@ -9,6 +9,7 @@ import { assureZoomFeatureActive } from './util';
 import { ZoomUserResponse, ZoomUserType } from './type';
 import { User } from '../user';
 import { Lecture as Appointment } from '../../graphql/generated';
+import { getZoomMeeting } from './scheduled-meeting';
 
 const logger = getLogger('Zoom User');
 
@@ -266,15 +267,17 @@ async function getZoomUrl(user: User, appointment: Appointment) {
     const basicJoinUrl = 'https://lern-fair.zoom.us/j';
     const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
     const isAppointmentParticipant = appointment.participantIds.includes(user.userID);
+    const zoomMeeting = await getZoomMeeting(appointment as any);
+    const password = zoomMeeting.encrypted_password;
 
     // The start_url always includes the ZAK from the host, who created the meeting and so every host and alternativHost would use the same identity
     // The workaround with creating own start_urls with the ZAK is an undocumented feature of zoom
     if (isAppointmentOrganizer) {
         const zoomOrganizerZak = (await getUserZAK(user.email)).token;
-        return `${basicStartUrl}/${appointment.zoomMeetingId}?zak=${zoomOrganizerZak}`;
+        return `${basicStartUrl}/${appointment.zoomMeetingId}?zak=${zoomOrganizerZak}${password ? `&pwd=${password}` : ''}`;
     } else if (isAppointmentParticipant) {
         // participants have to manually set their name for the zoom meeting
-        return `${basicJoinUrl}/${appointment.zoomMeetingId}`;
+        return `${basicJoinUrl}/${appointment.zoomMeetingId}${password ? `?pwd=${password}` : ''}`;
     } else {
         throw new Error(`User with the ID ${user.userID} is no appointment organizer or participant `);
     }

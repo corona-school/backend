@@ -189,6 +189,18 @@ export class ExtendedFieldsLectureResolver {
         return await getZoomUrl(user, appointment);
     }
 
+    // HOTFIX: During some time, many zoom meetings were created requiring a password
+    // For most meetings, this should not be the case and this should return null.
+    @FieldResolver((returns) => String, { nullable: true })
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)
+    async zoomMeetingPassword(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
+        if (!appointment.zoomMeetingId) {
+            return null;
+        }
+        const zoomMeeting = await getZoomMeeting(appointment);
+        return zoomMeeting.encrypted_password ?? null;
+    }
+
     @FieldResolver((returns) => Match, { nullable: true })
     @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
     async match(@Root() appointment: Appointment) {
