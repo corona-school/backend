@@ -1,8 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum, Subcourse } from '../../graphql/generated';
-import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
+import { createZoomMeeting } from '../zoom/scheduled-meeting';
 import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
 import moment from 'moment';
@@ -242,19 +241,55 @@ const createZoomMeetingForAppointmentWithHosts = async (
     }
 };
 
-export const saveZoomMeetingReport = async (appointment: Lecture) => {
-    const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+type ZoomMeetingReport = {
+    participants: {
+        id: string;
+        name: string;
+        join_time: string;
+        leave_time: string;
+    }[];
+};
 
-    if (!result) {
-        logger.info(`Meeting report could not be saved for appointment (${appointment.id})`);
-        return;
-    }
+export const saveAppointmentStats = async (report: ZoomMeetingReport, appointment: Pick<Lecture, 'id'>) => {
+    // hacky workaround:
+    // pupils don't have an `id` as they're not "logged in" to Zoom, and the `user_id` provided by Zoom changes
+    // every time a user rejoins the meeting, so we need to identify them by name
+    const pupilCount = new Set(report.participants.filter((p) => p.id === '').map((p) => p.name)).size;
+
+    // We assume students are meeting hosts, which means they have an id. This ID remains the same even if they rejoin
+    // the meeting, so we can use it to count unique students.
+    const studentCount = new Set(report.participants.filter((p) => p.id !== '').map((p) => p.id)).size;
+
+    const earliestJoinTime = report.participants.reduce((acc, p) => {
+        const joinTime = new Date(p.join_time);
+        return joinTime < acc ? joinTime : acc;
+    }, new Date('2100-01-01'));
+    const latestLeaveTime = report.participants.reduce((acc, p) => {
+        const leaveTime = new Date(p.leave_time);
+        return leaveTime > acc ? leaveTime : acc;
+    }, new Date(0));
+    const duration = Math.max(0, latestLeaveTime.getTime() - earliestJoinTime.getTime());
 
     await prisma.lecture.update({
         where: { id: appointment.id },
-        data: { zoomMeetingReport: { push: result } },
+        data: {
+            appointmentStats: {
+                upsert: {
+                    update: {
+                        meetingDuration: duration,
+                        joinedPupilsCount: pupilCount,
+                        joinedStudentsCount: studentCount,
+                    },
+                    create: {
+                        meetingDuration: duration,
+                        joinedPupilsCount: pupilCount,
+                        joinedStudentsCount: studentCount,
+                    },
+                },
+            },
+        },
     });
-    logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
+    logger.info(`Appointment stats saved for appointment (${appointment.id})`);
 };
 
 export async function createAdHocMeeting(matchId: number, user: User) {
