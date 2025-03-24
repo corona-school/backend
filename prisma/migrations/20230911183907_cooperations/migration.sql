@@ -13,3 +13,5 @@ CREATE TABLE "cooperation" (
 
 -- AddForeignKey
 ALTER TABLE "student" ADD CONSTRAINT "student_cooperationID_fkey" FOREIGN KEY ("cooperationID") REFERENCES "cooperation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+Select * lkjdf;
