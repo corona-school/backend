@@ -190,6 +190,12 @@ export class ExtendFieldsStudentResolver {
         return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
     }
 
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async totalLecturesOrganized(@Root() student: Required<Student>) {
+        return await prisma.lecture.count({ where: { organizerIds: { has: userForStudent(student).userID } } });
+    }
+
     @Query((returns) => [Student])
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentsToBeScreened() {
