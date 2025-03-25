@@ -1,7 +1,7 @@
 import { course_coursestate_enum as CourseState, Prisma, subcourse } from '@prisma/client';
 import { canCancel, canDeleteSubcourse, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { canJoinSubcourse, couldJoinSubcourse, isParticipant, isMentor as isSubcourseMentor } from '../../common/courses/participants';
+import { canJoinSubcourse, couldJoinSubcourse, isParticipant } from '../../common/courses/participants';
 import { prisma } from '../../common/prisma';
 import { getSessionPupil, getSessionStudent, isElevated, isSessionPupil, isSessionStudent } from '../authentication';
 import { Role } from '../authorizations';
@@ -465,17 +465,6 @@ export class ExtendedFieldsSubcourseResolver {
 
         const student = await getSessionStudent(context, studentId);
         return (await prisma.subcourse_instructors_student.count({ where: { subcourseId: subcourse.id, studentId: student.id } })) > 0;
-    }
-
-    @FieldResolver((returns) => Boolean)
-    @Authorized(Role.UNAUTHENTICATED)
-    async isMentor(@Ctx() context: GraphQLContext, @Root() subcourse: Subcourse, @Arg('studentId', { nullable: true }) studentId: number) {
-        if (!isElevated(context) && !isSessionStudent(context)) {
-            return false;
-        }
-
-        const student = await getSessionStudent(context, studentId);
-        return isSubcourseMentor(subcourse.id, student.id);
     }
 
     @FieldResolver((returns) => Boolean)
