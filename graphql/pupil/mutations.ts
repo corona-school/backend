@@ -12,6 +12,7 @@ import {
     Prisma,
     PrismaClient,
     pupil as Pupil,
+    pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_languages_enum as Language,
@@ -55,6 +56,9 @@ export class PupilUpdateInput {
 
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
+
+    @Field((type) => [ProjectField], { nullable: true })
+    projectFields?: ProjectField[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -155,6 +159,7 @@ export async function updatePupil(
     const {
         subjects,
         gradeAsInt,
+        projectFields,
         firstname,
         lastname,
         registrationSource,
@@ -172,6 +177,10 @@ export async function updatePupil(
         descriptionForScreening,
         school,
     } = update;
+
+    if (projectFields && !pupil.isProjectCoachee) {
+        throw new PrerequisiteError(`Only project coachees can set the project fields`);
+    }
 
     if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
@@ -213,6 +222,7 @@ export async function updatePupil(
             // TODO: Store numbers as numbers maybe ...
             grade: gradeAsInt ? `${gradeAsInt}. Klasse` : undefined,
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
+            projectFields: ensureNoNull(projectFields),
             registrationSource: ensureNoNull(registrationSource),
             state: ensureNoNull(dbSchool?.state ?? state),
             schooltype: ensureNoNull(dbSchool?.schooltype ?? schooltype),
@@ -265,7 +275,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
                 if (pupil) {
                     // if account already exists, overwrite relevant data with new plus data
                     logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
-                    pupil = await updatePupil(ctx, pupil, { ...register }, tx);
+                    pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
                 } else {
                     pupil = await registerPupil(register, true, tx);
                     logger.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
@@ -273,7 +283,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
             }
             if (activate && pupil?.isPupil) {
                 logger.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
-                await updatePupil(ctx, pupil, { ...activate }, tx);
+                await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
             } else if (activate) {
                 await becomeTutee(pupil, activate, tx);
                 logger.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);

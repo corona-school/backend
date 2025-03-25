@@ -68,6 +68,11 @@ export async function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
         logger.info(`Pupil(${pupil.id}) has PARTICIPANT role`);
     }
 
+    if (pupil.isProjectCoachee) {
+        roles.push(Role.PROJECT_COACHEE);
+        logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
+    }
+
     if (pupil.teacherEmailAddress) {
         roles.push(Role.STATE_PUPIL);
         logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
@@ -88,14 +93,22 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
         return;
     }
 
-    if (student.isStudent) {
-        // the user wants to be a tutor, let's check if they were screened and are authorized to do so
+    if (student.isStudent || student.isProjectCoach) {
+        // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
         const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             roles.push(Role.TUTOR);
         } else {
             roles.push(Role.WANNABE_TUTOR);
+        }
+    }
+
+    if (student.isProjectCoach) {
+        const wasCoachScreened = (await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } })) > 0;
+        if (wasCoachScreened) {
+            logger.info(`Student(${student.id}) was screened and has PROJECT_COACH role`);
+            roles.push(Role.PROJECT_COACH);
         }
     }
 

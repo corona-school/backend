@@ -4,10 +4,12 @@ import { registerEnumType } from 'type-graphql';
 import {
     pupil_learninggermansince_enum as LearningGermanSince,
     pupil_languages_enum as Language,
+    pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_state_enum as State,
     student_state_enum as StudentState,
+    student_module_enum as TeacherModule,
     student_languages_enum as StudentLanguage,
     notification_sender_enum as NotificationSender,
     course_category_enum as CourseCategory,
@@ -32,6 +34,11 @@ registerEnumType(RegistrationSource, {
     description: "How the user came to Lern-Fair. The 'Cooperation' value has a special meaning, see 'state pupil'",
 });
 
+registerEnumType(ProjectField, {
+    name: 'ProjectField',
+    description: 'The academic field a project is in',
+});
+
 registerEnumType(State, {
     name: 'State',
     description: 'A state in the federal republic of germany',
@@ -40,6 +47,10 @@ registerEnumType(State, {
 registerEnumType(StudentState, {
     name: 'StudentState',
     description: 'A state in the federal republic of germany',
+});
+
+registerEnumType(TeacherModule, {
+    name: 'TeacherModule',
 });
 
 registerEnumType(Language, {

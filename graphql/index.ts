@@ -6,6 +6,7 @@ import { buildSchemaSync } from 'type-graphql';
 import {
     FindManyMatchResolver,
     FindManyPupilResolver,
+    FindManyProject_matchResolver,
     FindManySubcourseResolver,
     FindManyLectureResolver,
     FindManyConcrete_notificationResolver,
@@ -25,6 +26,7 @@ import { ExtendFieldsPupilResolver } from './pupil/fields';
 import { ExtendedFieldsSubcourseResolver } from './subcourse/fields';
 import { ExtendedFieldsCourseResolver } from './course/fields';
 import { ExtendedFieldsMatchResolver } from './match/fields';
+import { ExtendedFieldsProjectMatchResolver } from './project_match/fields';
 import { MutateNotificationResolver } from './notification/mutations';
 import { complexityEnhanceMap } from './complexity';
 import { AuthenticationResolver } from './authentication';
@@ -123,6 +125,10 @@ const schema = buildSchemaSync({
         FindManyMatchResolver,
         ExtendedFieldsMatchResolver,
         MutateMatchResolver,
+
+        /* Projects */
+        FindManyProject_matchResolver,
+        ExtendedFieldsProjectMatchResolver,
 
         /* Notifications */
         FindManyNotificationResolver,

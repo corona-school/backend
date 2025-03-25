@@ -260,6 +260,38 @@ model course_tags_course_tag {
   @@index([courseId], map: "IDX_d6261ad9de1fc5f06946095bf8")
 }
 
+// DEPRECATED: There once was a project where 'experts' in certain areas would help pupils with 'Jugend Forscht' projects ("jufo")
+// For that we collected student skills for some time
+model expert_data {
+  id                                       Int                                        @id(map: "PK_096e6e0f8fcc7e142b555fde91e") @default(autoincrement())
+  createdAt                                DateTime                                   @default(now()) @db.Timestamp(6)
+  updatedAt                                DateTime                                   @default(now()) @updatedAt @db.Timestamp(6)
+  contactEmail                             String                                     @db.VarChar
+  description                              String?                                    @db.VarChar
+  active                                   Boolean                                    @default(false)
+  allowed                                  expert_data_allowed_enum                   @default(pending)
+  studentId                                Int?                                       @unique(map: "REL_0bf0d1a1e138fd47f60e263524")
+  student                                  student?                                   @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0bf0d1a1e138fd47f60e2635247")
+  expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
+}
+
+model expert_data_expertise_tags_expertise_tag {
+  expertDataId   Int
+  expertiseTagId Int
+  expert_data    expert_data   @relation(fields: [expertDataId], references: [id], onDelete: Cascade, map: "FK_73044a211048e72c2026425c81c")
+  expertise_tag  expertise_tag @relation(fields: [expertiseTagId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8a81e80d1d580b868ed36ca1234")
+
+  @@id([expertDataId, expertiseTagId], map: "PK_bc62a3cbf8ed9f07fc7e43163d4")
+  @@index([expertDataId], map: "IDX_73044a211048e72c2026425c81")
+  @@index([expertiseTagId], map: "IDX_8a81e80d1d580b868ed36ca123")
+}
+
+model expertise_tag {
+  id                                       Int                                        @id(map: "PK_4251b103cf2216af06b5c8625f8") @default(autoincrement())
+  name                                     String                                     @unique(map: "IDX_29beceeebc3a1eae3d78939713") @db.VarChar
+  expert_data_expertise_tags_expertise_tag expert_data_expertise_tags_expertise_tag[]
+}
+
 // If a Student wants to hold Courses, they are screened as Instructors by the Support Team
 // Durinng the Screening we also collect some additional user information
 model instructor_screening {
@@ -462,6 +494,32 @@ model match {
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
 }
 
+// DEPRECATED: We once had a third group of users apart from pupils and students called mentors
+model mentor {
+  id                           Int                     @id(map: "PK_9fcebd0a40237e9b6defcbd9d74") @default(autoincrement())
+  createdAt                    DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt                    DateTime                @default(now()) @updatedAt @db.Timestamp(6)
+  firstname                    String?                 @db.VarChar
+  lastname                     String?                 @db.VarChar
+  active                       Boolean                 @default(true)
+  email                        String                  @unique(map: "IDX_e03cfa18e81812d44f5cdf9479") @db.VarChar
+  verification                 String?                 @unique(map: "IDX_704a7bf0ca9889bd5c4ea1a15b") @db.VarChar
+  verifiedAt                   DateTime?               @db.Timestamp(6)
+  isRedacted                   Boolean                 @default(false)
+  lastTimeCheckedNotifications DateTime?               @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone")) @db.Timestamp(6)
+  notificationPreferences      Json?                   @db.Json
+  lastLogin                    DateTime?               @default(now()) @db.Timestamp(6)
+  wix_id                       String                  @unique(map: "IDX_5c42dcf75b1abecf9860e54a12") @db.VarChar
+  wix_creation_date            DateTime                @db.Timestamp(6)
+  division                     mentor_division_enum[]
+  expertise                    mentor_expertise_enum[]
+  subjects                     String?                 @db.VarChar
+  teachingExperience           Boolean?
+  message                      String?                 @db.VarChar
+  description                  String?                 @db.VarChar
+  imageUrl                     String?                 @db.VarChar
+}
+
 // A template for a Notification sent to a User
 model notification {
   id                    Int                         @id(map: "PK_705b6c7cdf9b2c2ff7ac7872cb7") @default(autoincrement())
@@ -539,6 +597,50 @@ model instant_certificate {
   totalAppointmentsDuration Int // in minutes
 }
 
+// DEPRECATED: We once had a project were students helped pupils with their Jugend-Forscht Project, and had a separate screening for that
+model project_coaching_screening {
+  id                    Int       @id(map: "PK_4a1d3d3d6f0fa2b36c8347e357c") @default(autoincrement())
+  success               Boolean
+  comment               String?   @db.VarChar
+  knowsCoronaSchoolFrom String?   @db.VarChar
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @db.Timestamp(6)
+  screenerId            Int?
+  studentId             Int?      @unique(map: "REL_565d757e2fd9a97fc3f30f5129")
+  student               student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_565d757e2fd9a97fc3f30f51297")
+  screener              screener? @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_91fa06e6e9aa04b5da93d034cae")
+}
+
+// DEPRECATED
+model project_field_with_grade_restriction {
+  id           Int                                                    @id(map: "PK_9f450f4d0e5e20c5a0a6fee6dea") @default(autoincrement())
+  createdAt    DateTime                                               @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime                                               @default(now()) @updatedAt @db.Timestamp(6)
+  projectField project_field_with_grade_restriction_projectfield_enum
+  min          Int?
+  max          Int?
+  studentId    Int
+  student      student                                                @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_8cdc7fe37faa309976893b8ad07")
+
+  @@unique([projectField, studentId], name: "UQ_PROJECT_FIELDS", map: "UQ_PROJECT_FIELDS")
+}
+
+// DEPRECATED
+model project_match {
+  id             Int      @id(map: "PK_14902d121cc871092943b3857e5") @default(autoincrement())
+  uuid           String   @unique(map: "IDX_58dbaf83a377f347d9fab47fc5") @db.VarChar
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  dissolved      Boolean  @default(false)
+  dissolveReason Int?
+  studentId      Int?
+  pupilId        Int?
+  pupil          pupil?   @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2f269fd77a19a301eb7c9aaa6b6")
+  student        student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ec8c8527004e4b21fa92dfde9f4")
+
+  @@unique([studentId, pupilId], name: "UQ_PJ_MATCH", map: "UQ_PJ_MATCH")
+}
+
 model pupil {
   id                           Int                   @id(map: "PK_34f2dbae733affb8884c2255c21") @default(autoincrement())
   createdAt                    DateTime              @default(now()) @db.Timestamp(6)
@@ -578,6 +680,13 @@ model pupil {
   // indicates whether a pupil wants to join courses, usually true
   isParticipant                Boolean               @default(true)
 
+  // DEPRECATED:
+  isProjectCoachee             Boolean                    @default(false)
+  projectFields                pupil_projectfields_enum[] @default([])
+  isJufoParticipant            String                     @default("unsure") @db.VarChar
+  openProjectMatchRequestCount Int                        @default(1)
+  projectMemberCount           Int                        @default(1)
+
   languages                                    pupil_languages_enum[]                         @default([])
   learningGermanSince                          pupil_learninggermansince_enum?
   // Can be used to match some pupils earlier than others, rarely used
@@ -597,6 +706,7 @@ model pupil {
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]
+  project_match                                project_match[]
   pupil_screening                              pupil_screening[]
   pupil_tutoring_interest_confirmation_request pupil_tutoring_interest_confirmation_request[]
   subcourse_participants_pupil                 subcourse_participants_pupil[]
@@ -699,6 +809,7 @@ model screener {
   // DEPRECATED:
   oldNumberID                  Int?                         @unique(map: "UQ_96dc11de485d62615e78a875293")
   instructor_screening         instructor_screening[]
+  project_coaching_screening   project_coaching_screening[]
   screenings                   screening[]
   is_trusted                   Boolean                      @default(false)
   is_student_screener          Boolean                      @default(false)
@@ -763,8 +874,20 @@ model student {
   msg                                       String?                  @db.VarChar
   state                                     student_state_enum?      @default(other)
   university                                String?                  @db.VarChar
+  // DEPRECATED
+  module                                    student_module_enum?
+  moduleHours                               Int?
+  isProjectCoach                            Boolean                  @default(false)
+  wasJufoParticipant                        String?                  @db.VarChar
+  hasJufoCertificate                        Boolean?
+  jufoPastParticipationInfo                 String?                  @db.VarChar
+  jufoPastParticipationConfirmed            Boolean?
   // DEPRECATED: Replaced by screening.jobInfo
   isUniversityStudent                       Boolean?
+  // DEPRECATED
+  openProjectMatchRequestCount              Int                      @default(1)
+  sentJufoAlumniScreeningReminderCount      Int                      @default(0)
+  lastSentJufoAlumniScreeningInvitationDate DateTime?                @db.Timestamp(6)
   // Might still be in use somewhere, is used to mark students that support in 'Deutsch als Zweitsprache'
   supportsInDaZ                             Boolean?
   languages                                 student_languages_enum[] @default([])
@@ -785,12 +908,16 @@ model student {
   course_guest                         course_guest[]
   course_instructors_student           course_instructors_student[]
   course_participation_certificate     course_participation_certificate[]
+  expert_data                          expert_data?
   instructor_screening                 instructor_screening?
   jufo_verification_transmission       jufo_verification_transmission?
   lecture                              lecture[]
   match                                match[]
   participation_certificate            participation_certificate[]
   instant_certificate                  instant_certificate[]
+  project_coaching_screening           project_coaching_screening?
+  project_field_with_grade_restriction project_field_with_grade_restriction[]
+  project_match                        project_match[]
   remission_request                    remission_request?
   screening                            screening?
   subcourse_instructors_student        subcourse_instructors_student[]
@@ -1025,15 +1152,24 @@ enum course_coursestate_enum {
   cancelled
 }
 
+// DEPRECATED
+enum expert_data_allowed_enum {
+  pending
+  yes
+  no
+}
+
 enum log_logtype_enum {
   misc
   verificationRequets // sic!
   verified
   matchDissolve
+  projectMatchDissolve
   fetchedFromWix
   deActivate
   updatePersonal
   updateSubjects
+  updateProjectFields
   accessedByScreener
   updatedByScreener
   updateStudentDescription
@@ -1045,6 +1181,7 @@ enum log_logtype_enum {
   createdCourseAttendanceLog
   contactMentor
   bbbMeeting
+  contactExpert
   participantJoinedCourse
   participantLeftCourse
   participantJoinedWaitingList
@@ -1055,6 +1192,35 @@ enum log_logtype_enum {
   pupilInterestConfirmationRequestReminderSent
   pupilInterestConfirmationRequestStatusChange
   skippedCoC
+}
+
+// DEPRECATED
+enum mentor_division_enum {
+  facebook
+  email
+  events
+  video
+  supervision
+}
+
+// DEPRECATED
+enum mentor_expertise_enum {
+  language_difficulties_and_communication @map("language difficulties and communication")
+  specialized_expertise_in_subjects       @map("specialized expertise in subjects")
+  educational_and_didactic_expertise      @map("educational and didactic expertise")
+  technical_support                       @map("technical support")
+  self_organization                       @map("self-organization")
+}
+
+// DEPRECATED
+enum project_field_with_grade_restriction_projectfield_enum {
+  Arbeitswelt
+  Biologie
+  Chemie
+  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik      @map("Mathematik/Informatik")
+  Physik
+  Technik
 }
 
 enum pupil_languages_enum {
@@ -1086,6 +1252,17 @@ enum pupil_learninggermansince_enum {
   two_to_four    @map("2-4")
   one_to_two     @map("1-2")
   less_than_one  @map("<1")
+}
+
+// DEPRECATED
+enum pupil_projectfields_enum {
+  Arbeitswelt
+  Biologie
+  Chemie
+  Geo_und_Raumwissenschaften @map("Geo-und-Raumwissenschaften")
+  Mathematik_Informatik      @map("Mathematik/Informatik")
+  Physik
+  Technik
 }
 
 enum pupil_registrationsource_enum {

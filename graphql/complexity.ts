@@ -91,4 +91,5 @@ export const complexityEnhanceMap: ResolversEnhanceMap = {
     Log: { logs: [LimitedQuery()] },
     Pupil: { pupils: [LimitedQuery()] },
     Match: { matches: [LimitedQuery()] },
+    Project_match: { project_matches: [LimitedQuery()] },
 };
