@@ -370,36 +370,48 @@ model learning_note {
 // Then we evolved "Course Lectures" into "Appointments", were any group of users could meet together.
 // In the codebase we call this 'appointment' and also still 'lecture'
 model lecture {
-  id                    Int                          @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
-  createdAt             DateTime                     @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
-  start                 DateTime                     @db.Timestamp(6)
-  duration              Int // in minutes
-  title                 String?
-  description           String?
-  appointmentType       lecture_appointmenttype_enum @default(legacy)
-  isCanceled            Boolean?                     @default(false)
+  id                Int                          @id(map: "PK_2abef7c1e52b7b58a9f905c9643") @default(autoincrement())
+  createdAt         DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt         DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
+  start             DateTime                     @db.Timestamp(6)
+  duration          Int // in minutes
+  title             String?
+  description       String?
+  appointmentType   lecture_appointmenttype_enum @default(legacy)
+  isCanceled        Boolean?                     @default(false)
   // A set of UserIDs of users that can modify the appointment:
-  organizerIds          String[]                     @default([])
+  organizerIds      String[]                     @default([])
   // A set of UserIDs of users that only participate:
-  participantIds        String[]                     @default([])
+  participantIds    String[]                     @default([])
   // A subset of organizerIds and participantIds that have declined the appointment:
-  declinedBy            String[]                     @default([])
+  declinedBy        String[]                     @default([])
   // A Zoom Meeting might be attached to an Appointment (unless Zoom is turned off):
-  zoomMeetingId         String?                      @db.VarChar
+  zoomMeetingId     String?                      @db.VarChar
   // When an organizer leaves a Zoom Meeting, we collect a Zoom Meeting Report from the API:
-  zoomMeetingReport     Json[]                       @default([]) @db.Json
+  zoomMeetingReport Json[]                       @default([]) @db.Json
+
+  appointmentStatsId Int?               @unique
+  appointmentStats   appointment_stats? @relation(fields: [appointmentStatsId], references: [id], onDelete: Cascade)
+
   // DEPRECATED: This was used for Course Lectures before the evolution to Appointments. Use organizerIds instead
   instructorId          Int?
   // An Appointment might be related to a Subcourse or a Match - but it can also be a standalone meeting:
   subcourseId           Int?
   matchId               Int?
-  subcourse             subcourse?                   @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
-  student               student?                     @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
-  match                 match?                       @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
+  subcourse             subcourse?              @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_087916363d2c5b483701d505a07")
+  student               student?                @relation(fields: [instructorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_2ca61c8451b53ad2da3c5f6432a")
+  match                 match?                  @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_5829da504d003d9aa252856574e")
   course_attendance_log course_attendance_log[]
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
+}
+
+model appointment_stats {
+  id                  Int      @id @default(autoincrement())
+  joinedPupilsCount   Int
+  joinedStudentsCount Int
+  meetingDuration     Int
+  lecture             lecture?
 }
 
 // The Transaction Log is supposed to store a history of business transactions for a user,
