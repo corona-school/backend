@@ -44,12 +44,14 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
         await prisma.lecture.update({ where: { id: lecture.id }, data: { participantIds: { push: userId } } });
         logger.info(`User(${userId}) added as participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
 
-        await Notification.actionTakenAt(
-            new Date(lecture.start),
-            user,
-            'pupil_group_appointment_starts',
-            await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
-        );
+        if (user.pupilId) {
+            await Notification.actionTakenAt(
+                new Date(lecture.start),
+                user,
+                'pupil_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
+            );
+        }
     }
 }
 
