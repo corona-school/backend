@@ -63,6 +63,13 @@ export class ExtendFieldsPupilResolver {
         });
     }
 
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async totalSubcoursesJoined(@Root() pupil: Required<Pupil>) {
+        const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
+        return await prisma.subcourse.count({ where: { AND: filters } });
+    }
+
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER)
     @LimitEstimated(10)

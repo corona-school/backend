@@ -1,6 +1,7 @@
 import { prisma } from '../common/prisma';
 import { sendToSlack, SLACK_CHANNEL } from '../common/slack';
 import { table } from '../common/slack/blocks';
+import { getPupilCount, pools } from '../common/match/pool';
 
 export async function postStatisticsToSlack() {
     const lastMonthBegin = new Date();
@@ -22,18 +23,20 @@ export async function postStatisticsToSlack() {
     const studentsRegisteredCount = await prisma.student.count({ where: { verifiedAt: { not: null }, createdAt: { gte: begin, lte: end } } });
 
     // Screenings
-    // Pupil screening - total
-    const pupilScreeningCount = await prisma.pupil_screening.count({
-        where: {
-            createdAt: { gte: begin, lte: end },
-        },
-    });
 
     // Pupil screening - success
     const pupilScreeningSuccessCount = await prisma.pupil_screening.count({
         where: {
             createdAt: { gte: begin, lte: end },
             status: 'success',
+        },
+    });
+
+    // Pupil screening - rejected
+    const pupilScreeningRejectedCount = await prisma.pupil_screening.count({
+        where: {
+            createdAt: { gte: begin, lte: end },
+            status: 'rejection',
         },
     });
 
@@ -141,17 +144,53 @@ export async function postStatisticsToSlack() {
         },
     });
 
+    const deactivatedPupilsCount = (
+        await prisma.$queryRaw`SELECT COUNT(*)::INT AS value
+                                      FROM "log"
+                                      WHERE logtype = 'deActivate'
+                                        AND starts_with("userID", 'pupil')
+                                        AND "createdAt" >= ${begin}::timestamp
+                                        AND "createdAt" < ${end}::timestamp;
+                                        `
+    )[0].value;
+
+    const pendingPupilScreenings = await getPupilCount(
+        pools.find((pool) => pool.name === 'lern-fair-now'),
+        ['pupil-screening-pending']
+    );
+
+    // count number of pupils that have a pupil screening created between begin and end where comment includes "Screening verpasst"
+    const pupilsWithMissedScreenings = (
+        await prisma.$queryRaw`
+        SELECT COUNT(*) AS value
+        FROM (
+            SELECT DISTINCT ON ("pupilId") "pupilId"
+            FROM pupil_screening
+            WHERE "createdAt" >= ${begin}::timestamp
+                AND "createdAt" < ${end}::timestamp
+                AND status = '0'
+                AND comment ILIKE '%Screening verpasst%'
+        ) AS missed_screenings;
+        `
+    )[0].value;
+
+    const completedScreeningsCount = pupilScreeningSuccessCount + pupilScreeningRejectedCount;
     await sendToSlack(SLACK_CHANNEL.PublicStatistics, {
         blocks: [
             ...table(`Statistiken vom ${begin} zum ${end}`, 'Name', 'Wert', [
                 ['Anzahl registrierter Schüler*innen', '' + pupilRegisteredCount],
                 ['Anzahl registrierter Helfer*innen', '' + studentsRegisteredCount],
-                ['Anzahl erfolgreicher Screenings Schüler*innen', '' + pupilScreeningSuccessCount + ' von ' + pupilScreeningCount],
+                ['Anzahl SuS mit verpasstem Screening', '' + pupilsWithMissedScreenings],
+                ['Anzahl ausstehender Screenings Schüler*innen', '' + pendingPupilScreenings],
+                ['Anzahl abgeschlossener Screenings Schüler:innen', '' + completedScreeningsCount],
+                ['  davon akzeptiert', `${pupilScreeningSuccessCount} (${((pupilScreeningSuccessCount / completedScreeningsCount) * 100).toFixed(2)}%)`],
+                ['  davon abgelehnt', `${pupilScreeningRejectedCount} (${((pupilScreeningRejectedCount / completedScreeningsCount) * 100).toFixed(2)}%)`],
                 ['Anzahl erfolgreicher Screenings Helfer*innen', '' + tutorScreeningSuccessCount + ' von ' + tutorScreeningCount],
                 ['Anzahl erfolgreicher Screenings Kursleiter*innen', '' + instructorScreeningSuccessCount + ' von ' + instructorScreeningCount],
                 ['Anzahl erstellter Matches', '' + matchCount],
                 ['Anzahl erstellter Kurse', '' + subcourseCreatedCount],
                 ['Anzahl Match-Termine', '' + matchAppointmentCount],
+                ['Anzahl deaktivierter Schüler*innen', '' + deactivatedPupilsCount],
             ]),
             ...table('Von uns gehört durch... (Helfer*innen)', 'Name', 'Wert', tutorKnowsCoronaSchoolFromTable),
             ...table('Von uns gehört durch... (Kursleiter*innen)', 'Name', 'Wert', instructorKnowsCoronaSchoolFromTable),

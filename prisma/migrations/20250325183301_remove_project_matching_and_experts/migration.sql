@@ -1,8 +1,3 @@
-/* MANUAL */
-DELETE FROM "log" WHERE 
- "logtype" IN ('projectMatchDissolve', 'updateProjectFields', 'contactExpert');
-
-/* GENERATED */
 /*
   Warnings:
 
@@ -33,7 +28,7 @@ DELETE FROM "log" WHERE
 */
 -- AlterEnum
 BEGIN;
-CREATE TYPE "log_logtype_enum_new" AS ENUM ('misc', 'verificationRequets', 'verified', 'matchDissolve', 'fetchedFromWix', 'deActivate', 'updatePersonal', 'updateSubjects', 'accessedByScreener', 'updatedByScreener', 'updateStudentDescription', 'createdCourse', 'certificateRequest', 'cocCancel', 'cancelledCourse', 'cancelledSubcourse', 'createdCourseAttendanceLog', 'contactMentor', 'bbbMeeting', 'participantJoinedCourse', 'participantLeftCourse', 'participantJoinedWaitingList', 'participantLeftWaitingList', 'userAccessedCourseWhileAuthenticated', 'instructorIssuedCertificate', 'pupilInterestConfirmationRequestSent', 'pupilInterestConfirmationRequestReminderSent', 'pupilInterestConfirmationRequestStatusChange');
+CREATE TYPE "log_logtype_enum_new" AS ENUM ('misc', 'verificationRequets', 'verified', 'matchDissolve', 'fetchedFromWix', 'deActivate', 'updatePersonal', 'updateSubjects', 'accessedByScreener', 'updatedByScreener', 'updateStudentDescription', 'createdCourse', 'certificateRequest', 'cocCancel', 'cancelledCourse', 'cancelledSubcourse', 'createdCourseAttendanceLog', 'contactMentor', 'bbbMeeting', 'participantJoinedCourse', 'participantLeftCourse', 'participantJoinedWaitingList', 'participantLeftWaitingList', 'userAccessedCourseWhileAuthenticated', 'instructorIssuedCertificate', 'pupilInterestConfirmationRequestSent', 'pupilInterestConfirmationRequestReminderSent', 'pupilInterestConfirmationRequestStatusChange', 'skippedCoC');
 ALTER TABLE "log" ALTER COLUMN "logtype" DROP DEFAULT;
 ALTER TABLE "log" ALTER COLUMN "logtype" TYPE "log_logtype_enum_new" USING ("logtype"::text::"log_logtype_enum_new");
 ALTER TYPE "log_logtype_enum" RENAME TO "log_logtype_enum_old";
