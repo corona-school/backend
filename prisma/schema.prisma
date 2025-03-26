@@ -390,9 +390,7 @@ model lecture {
   // When an organizer leaves a Zoom Meeting, we collect a Zoom Meeting Report from the API:
   zoomMeetingReport Json[]                       @default([]) @db.Json
 
-  appointmentStatsId Int?               @unique
-  appointmentStats   appointment_stats? @relation(fields: [appointmentStatsId], references: [id], onDelete: Cascade)
-
+  actualDuration    Int? // actual duration of Zoom meeting, in milliseconds
   // DEPRECATED: This was used for Course Lectures before the evolution to Appointments. Use organizerIds instead
   instructorId          Int?
   // An Appointment might be related to a Subcourse or a Match - but it can also be a standalone meeting:
@@ -404,14 +402,6 @@ model lecture {
   course_attendance_log course_attendance_log[]
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
-}
-
-model appointment_stats {
-  id                  Int      @id @default(autoincrement())
-  joinedPupilsCount   Int
-  joinedStudentsCount Int
-  meetingDuration     Int
-  lecture             lecture?
 }
 
 // The Transaction Log is supposed to store a history of business transactions for a user,

@@ -251,15 +251,6 @@ type ZoomMeetingReport = {
 };
 
 export const saveAppointmentStats = async (report: ZoomMeetingReport, appointment: Pick<Lecture, 'id'>) => {
-    // hacky workaround:
-    // pupils don't have an `id` as they're not "logged in" to Zoom, and the `user_id` provided by Zoom changes
-    // every time a user rejoins the meeting, so we need to identify them by name
-    const pupilCount = new Set(report.participants.filter((p) => p.id === '').map((p) => p.name)).size;
-
-    // We assume students are meeting hosts, which means they have an id. This ID remains the same even if they rejoin
-    // the meeting, so we can use it to count unique students.
-    const studentCount = new Set(report.participants.filter((p) => p.id !== '').map((p) => p.id)).size;
-
     const earliestJoinTime = report.participants.reduce((acc, p) => {
         const joinTime = new Date(p.join_time);
         return joinTime < acc ? joinTime : acc;
@@ -273,23 +264,10 @@ export const saveAppointmentStats = async (report: ZoomMeetingReport, appointmen
     await prisma.lecture.update({
         where: { id: appointment.id },
         data: {
-            appointmentStats: {
-                upsert: {
-                    update: {
-                        meetingDuration: duration,
-                        joinedPupilsCount: pupilCount,
-                        joinedStudentsCount: studentCount,
-                    },
-                    create: {
-                        meetingDuration: duration,
-                        joinedPupilsCount: pupilCount,
-                        joinedStudentsCount: studentCount,
-                    },
-                },
-            },
+            actualDuration: duration,
         },
     });
-    logger.info(`Appointment stats saved for appointment (${appointment.id})`);
+    logger.info(`Stats saved for Lecture (${appointment.id})`);
 };
 
 export async function createAdHocMeeting(matchId: number, user: User) {
