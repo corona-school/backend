@@ -121,10 +121,6 @@ export class MutateCourseResolver {
     ): Promise<GraphQLModel.Course> {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
-        const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
-        if (!mayCreateHomeworkHelp && data.category === 'homework_help') {
-            throw new ForbiddenError('Only authorized users can create homework help courses');
-        }
         if (course.courseState === 'allowed') {
             let editableSubcourse = false;
             for (const subcourse of await getSubcoursesForCourse(courseId, true)) {
