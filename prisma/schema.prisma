@@ -384,7 +384,9 @@ model lecture {
   // A set of UserIDs of users that only participate:
   participantIds    String[]                     @default([])
   // A subset of organizerIds and participantIds that have declined the appointment:
-  declinedBy        String[]                     @default([])
+  declinedBy            String[]                     @default([])
+  // A subset of UserIDs of users that joined the meeting
+  joinedBy              String[]                     @default([])
   // A Zoom Meeting might be attached to an Appointment (unless Zoom is turned off):
   zoomMeetingId     String?                      @db.VarChar
   // When an organizer leaves a Zoom Meeting, we collect a Zoom Meeting Report from the API:
