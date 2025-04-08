@@ -23,6 +23,7 @@ import {
     student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    student_screening_status_enum as StudentScreeningStatus,
     gender_enum as Gender,
     PrismaClient,
     Prisma,
@@ -61,6 +62,11 @@ export class ScreeningInput {
         nullable: true,
     })
     jobStatus?: screening_jobstatus_enum | undefined;
+
+    @Field((_type) => StudentScreeningStatus, {
+        nullable: true,
+    })
+    status: StudentScreeningStatus;
 
     @Field((_type) => String, {
         nullable: true,
