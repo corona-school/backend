@@ -93,7 +93,7 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
         languages: data.languages,
         subjects: data.subjects,
     });
-    await addTutorScreening(screener, student, { success: true, status: 'success' });
+    await addTutorScreening(screener, student, { status: 'success' });
     await prisma.student.update({ where: { id: student.id }, data: { hasDoneEthicsOnboarding: true } });
     if (isInstructor) {
         await becomeInstructor(student, {});
@@ -101,7 +101,6 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
             screener,
             student,
             {
-                success: true,
                 status: 'success',
                 comment: 'Success',
             },
@@ -586,6 +585,18 @@ void (async function setupDevDB() {
     const a1 = await createCourseTag(null, 'A1', CourseCategory.language);
     const a2 = await createCourseTag(null, 'A2', CourseCategory.language);
     await createCourseTag(null, 'B1', CourseCategory.language);
+
+    const course = await prisma.course.create({
+        data: {
+            name: 'Do not remove me',
+            outline: '',
+            description: "I'm here just to make sure course ids and subcourse ids are not equal This helps us to simulate a bit better how production works",
+            category: 'coaching',
+            courseState: 'created',
+            subject: 'Informatik',
+            allowContact: false,
+        },
+    });
 
     const [course1, subcourse1] = await createCourse({
         name: 'Deutsch Grammatik für Anfänger 📚',
