@@ -48,11 +48,6 @@ import { ForbiddenError } from '../error';
     isAbstract: true,
 })
 export class ScreeningInput {
-    @Field((_type) => Boolean, {
-        nullable: false,
-    })
-    success!: boolean;
-
     @Field((_type) => String, {
         nullable: true,
     })

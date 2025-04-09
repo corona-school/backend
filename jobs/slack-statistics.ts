@@ -51,7 +51,7 @@ export async function postStatisticsToSlack() {
     const tutorScreeningSuccessCount = await prisma.screening.count({
         where: {
             createdAt: { gte: begin, lte: end },
-            success: true,
+            status: 'success',
         },
     });
 
@@ -79,7 +79,7 @@ export async function postStatisticsToSlack() {
     const instructorScreeningSuccessCount = await prisma.instructor_screening.count({
         where: {
             createdAt: { gte: begin, lte: end },
-            success: true,
+            status: 'success',
         },
     });
 

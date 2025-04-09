@@ -10,7 +10,6 @@ import { userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
-    success: boolean;
     status: ScreeningStatus;
     comment?: string;
     jobStatus?: screening_jobstatus_enum;
@@ -21,14 +20,14 @@ const logger = getLogger('Student Screening');
 
 export const requireStudentOnboarding = async (studentId: number, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) => {
     const student = await prisma.student.findFirst({ where: { id: studentId }, include: { instructor_screening: true, screening: true } });
-    const hadSuccessfulScreening = student.screening?.success || student.instructor_screening?.success;
+    const hadSuccessfulScreening = student.screening?.status === ScreeningStatus.success || student.instructor_screening?.status === ScreeningStatus.success;
     if (!hadSuccessfulScreening) {
         await prismaInstance.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
     }
 };
 
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
-    if (screening.success) {
+    if (screening.status === ScreeningStatus.success) {
         await requireStudentOnboarding(student.id);
     }
 
@@ -40,7 +39,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         },
     });
 
-    if (screening.success) {
+    if (screening.status === ScreeningStatus.success) {
         if (!skipCoC) {
             await scheduleCoCReminders(student);
         } else {
@@ -65,7 +64,7 @@ export async function addTutorScreening(
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
     batchMode = false
 ) {
-    if (screening.success) {
+    if (screening.status === ScreeningStatus.success) {
         await requireStudentOnboarding(student.id, prismaInstance);
     }
 
@@ -78,12 +77,12 @@ export async function addTutorScreening(
     });
 
     if (!batchMode) {
-        if (screening.success) {
+        if (screening.status === ScreeningStatus.success) {
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
-        } else {
+        } else if (screening.status === ScreeningStatus.rejection) {
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }
     }

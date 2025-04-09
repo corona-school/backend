@@ -110,7 +110,7 @@ void test('Screener can Query Users to Screen', async () => {
                   }
 
                   tutorScreenings {
-                    success
+                    status
                     comment
                     jobStatus
                     knowsCoronaSchoolFrom
@@ -119,7 +119,7 @@ void test('Screener can Query Users to Screen', async () => {
                   }
 
                   instructorScreenings {
-                    success
+                    status
                     comment
                     jobStatus
                     knowsCoronaSchoolFrom
@@ -200,7 +200,7 @@ export const screenedInstructorOne = test('Screen Instructor One successfully', 
         mutation ScreenInstructorOne {
             studentInstructorScreeningCreate(
                 studentId: ${instructor.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);
@@ -223,7 +223,7 @@ export const screenedInstructorTwo = test('Screen Instructor Two successfully', 
         mutation ScreenInstructorOne {
             studentInstructorScreeningCreate(
                 studentId: ${instructor.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);
@@ -246,7 +246,7 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
         mutation ScreenInstructorOne {
             studentTutorScreeningCreate(
                 studentId: ${student.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);
