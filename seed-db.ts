@@ -93,7 +93,7 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
         languages: data.languages,
         subjects: data.subjects,
     });
-    await addTutorScreening(screener, student, { success: true });
+    await addTutorScreening(screener, student, { success: true, status: 'success' });
     await prisma.student.update({ where: { id: student.id }, data: { hasDoneEthicsOnboarding: true } });
     if (isInstructor) {
         await becomeInstructor(student, {});
@@ -102,6 +102,7 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
             student,
             {
                 success: true,
+                status: 'success',
                 comment: 'Success',
             },
             false
