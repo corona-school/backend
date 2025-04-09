@@ -45,7 +45,7 @@ void test('Plus student batch registration', async () => {
                 },
                 {  # try to update failed account (test removal of email whitespace)
                     email: "test+${runId}+s2@lern-fair.de ",
-                    screen: {status: "success"}
+                    screen: {status: success}
                 },
                 {  # Now create it properly
                     email: "test+${runId}+s2@lern-fair.de ",
@@ -69,7 +69,7 @@ void test('Plus student batch registration', async () => {
                         subjects: [{name: "Französisch"}],
                         supportsInDaZ: true  # update this
                     }
-                    screen: {status: "success"}
+                    screen: {status: success}
                 },
                 {  # fail because account doesn't exist
                     email: "test+${runId}+s3@lern-fair.de",
