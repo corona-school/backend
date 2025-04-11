@@ -12,9 +12,10 @@ import * as Notification from '../../common/notification';
 import { getStudentsFromList, User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
-import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
+import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 import { assertAllowed, Decision } from '../util/decision';
+import { Attachment } from '../notification/channels/mailjet';
 
 const logger = getLogger();
 
@@ -96,9 +97,21 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     );
 
     if (!silent) {
+        const icsForPupil: Attachment = {
+            Base64Content: await getIcsFile(createdMatchAppointments, false),
+            ContentType: 'text/calendar',
+            Filename: 'termin.ics',
+        };
+        const icsForStudent: Attachment = {
+            Base64Content: await getIcsFile(createdMatchAppointments, true),
+            ContentType: 'text/calendar',
+            Filename: 'termin.ics',
+        };
+
         await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
             student,
             matchId: matchId.toString(),
+            attachments: [icsForPupil],
         });
 
         // Send out reminders 12 hours before the appointment starts
@@ -106,10 +119,12 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             await Notification.actionTakenAt(new Date(appointment.start), userForPupil(pupil), 'pupil_match_appointment_starts', {
                 ...(await getContextForMatchAppointmentReminder(appointment)),
                 student,
+                attachments: [icsForPupil],
             });
             await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_starts', {
                 ...(await getContextForMatchAppointmentReminder(appointment)),
                 pupil,
+                attachments: [icsForStudent],
             });
         }
     }
@@ -171,21 +186,23 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         })
     );
 
+    const icsForPupil: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, false), ContentType: 'text/calendar', Filename: 'termin.ics' };
+    const icsForStudent: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, true), ContentType: 'text/calendar', Filename: 'termin.ics' };
+
     // * send notification
     for (const participant of participants) {
         await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+            attachments: [icsForPupil],
         });
 
         // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(
-                new Date(appointment.start),
-                userForPupil(participant.pupil),
-                'pupil_group_appointment_starts',
-                await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
-            );
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
+                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+                attachments: [icsForPupil],
+            });
         }
     }
 
@@ -193,12 +210,10 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         for (const appointment of createdGroupAppointments) {
             if (subcourse.published) {
                 // For unpublished courses, this is deferred to a later point
-                await Notification.actionTakenAt(
-                    new Date(appointment.start),
-                    userForStudent(instructor.student),
-                    'student_group_appointment_starts',
-                    await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
-                );
+                await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+                    ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+                    attachments: [icsForStudent],
+                });
             }
         }
     }
