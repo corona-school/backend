@@ -81,20 +81,15 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
             .format('YYYY-M-D-H-m')
             .split('-')
             .map((a) => parseInt(a)) as [number, number, number, number, number];
-        const end = moment(getAppointmentEnd(appointment))
-            .format('YYYY-M-D-H-m')
-            .split('-')
-            .map((a) => parseInt(a)) as [number, number, number, number, number];
         const durationHours = Math.floor(appointment.duration / 60);
         const durationMinutes = appointment.duration % 60;
         const displayName = displayNames[index];
 
         return {
             start,
-            end,
             duration: { hours: durationHours, minutes: durationMinutes },
             title: displayName,
-            description: appointment.description,
+            description: appointment.description ?? undefined,
             url: `https://app.lern-fair.de/appointment/${appointment.id}`,
             alarms: [
                 {
