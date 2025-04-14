@@ -16,6 +16,7 @@ import {
     course_subject_enum,
     school_schooltype_enum,
     pupil_email_owner_enum as PupilEmailOwner,
+    student_screening_status_enum as StudentScreeningStatus,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 
@@ -81,3 +82,5 @@ registerEnumType(school_schooltype_enum, {
     name: 'SchoolSchoolTypeEnum',
     description: 'The type of school',
 });
+
+registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });

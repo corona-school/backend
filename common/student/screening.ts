@@ -1,4 +1,4 @@
-import { student as Student, screener as Screener, Prisma, PrismaClient } from '@prisma/client';
+import { student as Student, screener as Screener, Prisma, PrismaClient, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
 import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
@@ -11,6 +11,7 @@ import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
     success: boolean;
+    status: ScreeningStatus;
     comment?: string;
     jobStatus?: screening_jobstatus_enum;
     knowsCoronaSchoolFrom?: string;

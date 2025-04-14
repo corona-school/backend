@@ -263,20 +263,21 @@ model course_tags_course_tag {
 // If a Student wants to hold Courses, they are screened as Instructors by the Support Team
 // Durinng the Screening we also collect some additional user information
 model instructor_screening {
-  id                    Int                       @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
+  id                    Int                           @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   success               Boolean
-  comment               String?                   @db.VarChar
+  status                student_screening_status_enum @default(pending)
+  comment               String?                       @db.VarChar
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
   // so a COUNT(*) GROUP BY should work relatively well:
-  knowsCoronaSchoolFrom String?                   @db.VarChar
-  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                  @default(now()) @updatedAt @db.Timestamp(6)
+  knowsCoronaSchoolFrom String?                       @db.VarChar
+  createdAt             DateTime                      @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                      @default(now()) @updatedAt @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?                      @unique(map: "REL_e176665fa769d2e603d825f6fa")
-  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
-  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
+  studentId             Int?                          @unique(map: "REL_e176665fa769d2e603d825f6fa")
+  student               student?                      @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
+  screener              screener?                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
 }
 
 // DEPRECATED: We once had a cooperation with Jugend Forscht ("jufo")
@@ -710,20 +711,21 @@ model screener {
 
 // A Screening for Students that want to tutor pupils
 model screening {
-  id                    Int                       @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
+  id                    Int                           @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   success               Boolean
-  comment               String?                   @db.VarChar
+  status                student_screening_status_enum @default(pending)
+  comment               String?                       @db.VarChar
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
   // so a COUNT(*) GROUP BY should work relatively well:
-  knowsCoronaSchoolFrom String?                   @db.VarChar
-  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime                  @default(now()) @updatedAt @db.Timestamp(6)
+  knowsCoronaSchoolFrom String?                       @db.VarChar
+  createdAt             DateTime                      @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                      @default(now()) @updatedAt @db.Timestamp(6)
   screenerId            Int?
-  studentId             Int?                      @unique(map: "REL_dfb78fd7887c69e3c52e002083")
-  screener              screener?                 @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
-  student               student?                  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
+  studentId             Int?                          @unique(map: "REL_dfb78fd7887c69e3c52e002083")
+  screener              screener?                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
+  student               student?                      @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_dfb78fd7887c69e3c52e0020838")
 }
 
 model student {
@@ -1414,4 +1416,11 @@ enum pupil_email_owner_enum {
   parent
   other
   unknown
+}
+
+enum student_screening_status_enum {
+  pending   @map("0")
+  success   @map("1")
+  rejection @map("2")
+  missed    @map("3")
 }
