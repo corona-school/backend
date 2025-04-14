@@ -91,6 +91,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
             title: displayName,
             description: appointment.description ?? undefined,
             url: `https://app.lern-fair.de/appointment/${appointment.id}`,
+            location: `https://app.lern-fair.de/appointment/${appointment.id}`,
             alarms: [
                 {
                     action: 'display',
@@ -99,6 +100,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
                 },
             ],
             busyStatus: 'BUSY',
+            organizer: { name: displayName },
         } satisfies EventAttributes;
     });
 
