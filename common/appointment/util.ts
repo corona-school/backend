@@ -110,6 +110,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
     const file: string = await new Promise((resolve, reject) => {
         ics.createEvents(events, (error, value) => {
             if (error) {
+                console.error('Error creating ICS file:', error);
                 reject(error);
             }
             resolve(value);
