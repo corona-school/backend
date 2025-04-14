@@ -116,5 +116,5 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
         });
     });
 
-    return btoa(file);
+    return Buffer.from(file).toString('base64');
 }
