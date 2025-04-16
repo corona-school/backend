@@ -92,6 +92,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
             duration: { hours: durationHours, minutes: durationMinutes },
             title: displayName,
             description: appointment.description ?? undefined,
+            url: `https://app.lern-fair.de/appointment/${appointment.id}`,
             location: `https://app.lern-fair.de/appointment/${appointment.id}`,
             alarms: [
                 {
