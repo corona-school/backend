@@ -45,7 +45,7 @@ const createPupil = async ({ includePassword = true, ...data }: CreatePupilArgs)
         lastname: data.lastname,
         email: data.email,
         aboutMe: data.aboutMe,
-        newsletter: data.newsletter ?? false,
+        newsletter: data.newsletter ?? true,
         registrationSource: 'normal',
         school: data.school ?? {
             name: 'Muster Schule',
@@ -82,7 +82,7 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
         lastname: data.lastname,
         email: data.email,
         aboutMe: data.aboutMe,
-        newsletter: false,
+        newsletter: data.newsletter ?? true,
         registrationSource: 'normal',
     });
     await verifyEmail(userForStudent(student));
@@ -457,6 +457,7 @@ void (async function setupDevDB() {
             email: 'test+dev+s1@lern-fair.de',
             aboutMe: `Im Student 1`,
             languages: ['Deutsch', 'Englisch', 'Spanisch'],
+            newsletter: true,
             subjects: [
                 { name: 'Spanisch', grade: { min: 4, max: 10 } },
                 { name: 'Deutsch als Zweitsprache', grade: { min: 4, max: 10 } },
@@ -497,7 +498,7 @@ void (async function setupDevDB() {
             lastname: 'Doe',
             email: 'test+dev+s3@lern-fair.de',
             aboutMe: `I'm Student 3`,
-            newsletter: false,
+            newsletter: true,
             registrationSource: 'normal',
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
             subjects: [
@@ -531,7 +532,7 @@ void (async function setupDevDB() {
             lastname: 'Doe',
             email: 'test+dev+s5@lern-fair.de',
             aboutMe: `I'm Student 5`,
-            newsletter: false,
+            newsletter: true,
             registrationSource: 'normal',
             languages: ['Englisch', 'Arabisch', 'Deutsch'],
             subjects: [
