@@ -100,7 +100,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
                 },
             ],
             busyStatus: 'BUSY',
-            organizer: { name: displayName },
+            // organizer: { name: displayName },
         } satisfies EventAttributes;
     });
 
