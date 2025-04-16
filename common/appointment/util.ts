@@ -76,7 +76,17 @@ export async function getDisplayName(appointment: Appointment, isOrganizer: bool
 }
 
 export async function getIcsFile(appointments: Appointment[], isOrganizer: boolean): Promise<string> {
-    const displayNames: string[] = await Promise.all(appointments.map((appointment) => getDisplayName(appointment, isOrganizer)));
+    const displayNames: string[] = await Promise.all(
+        appointments.map((appointment) => {
+            const baseName = getDisplayName(appointment, isOrganizer);
+            if (appointment.appointmentType === lecture_appointmenttype_enum.match) {
+                return `Termin mit ${baseName} via Lern-Fair`;
+            } else if (appointment.appointmentType === lecture_appointmenttype_enum.group) {
+                return `Kurstermin "${baseName}" via Lern-Fair`;
+            }
+            return baseName;
+        })
+    );
 
     const events: EventAttributes[] = appointments.map((appointment, index) => {
         const start = moment(appointment.start)
