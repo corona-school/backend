@@ -5,8 +5,10 @@ import { EventAttributes } from 'ics';
 import moment from 'moment';
 import { prisma } from '../prisma';
 import { getUsers } from '../user';
+import { getLogger } from '../logger/logger';
 
 const language = 'de-DE';
+const logger = getLogger('Appointment');
 
 export function getAppointmentEnd(appointment: Appointment) {
     const end = new Date(appointment.start);
@@ -90,8 +92,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
             duration: { hours: durationHours, minutes: durationMinutes },
             title: displayName,
             description: appointment.description ?? undefined,
-            url: `https://app.lern-fair.de/appointment/${appointment.id}`,
-            // location: `https://app.lern-fair.de/appointment/${appointment.id}`,
+            location: `https://app.lern-fair.de/appointment/${appointment.id}`,
             alarms: [
                 {
                     action: 'display',
@@ -100,14 +101,14 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
                 },
             ],
             busyStatus: 'BUSY',
-            // organizer: { name: displayName },
+            transp: 'OPAQUE',
         } satisfies EventAttributes;
     });
 
     const file: string = await new Promise((resolve, reject) => {
         ics.createEvents(events, (error, value) => {
             if (error) {
-                console.error('Error creating ICS file:', error);
+                logger.error('Error creating ICS file:', error);
                 reject(error);
             }
             resolve(value);
