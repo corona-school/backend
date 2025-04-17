@@ -51,7 +51,7 @@ export class ExtendFieldsStudentResolver {
             isInstructor: { equals: true },
             active: { equals: true },
             verifiedAt: { not: null },
-            instructor_screening: { is: { success: { equals: true } } },
+            instructor_screening: { is: { status: { equals: 'success' } } },
             id: { not: { equals: context.user.studentId } },
         };
 
@@ -106,7 +106,7 @@ export class ExtendFieldsStudentResolver {
             return { allowed: false, reason: 'not-instructor' };
         }
 
-        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
+        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, status: 'success' } })) > 0;
         if (!wasInstructorScreened) {
             return { allowed: false, reason: 'not-screened' };
         }

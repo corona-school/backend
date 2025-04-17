@@ -90,7 +90,7 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
 
     if (student.isStudent) {
         // the user wants to be a tutor, let's check if they were screened and are authorized to do so
-        const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
+        const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, status: 'success' } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             roles.push(Role.TUTOR);
@@ -101,7 +101,7 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
 
     if (student.isInstructor) {
         // the user wants to be a course instructor, let's check if they were screened and are authorized to do so
-        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, success: true } })) > 0;
+        const wasInstructorScreened = (await prisma.instructor_screening.count({ where: { studentId: student.id, status: 'success' } })) > 0;
         if (wasInstructorScreened) {
             logger.info(`Student(${student.id}) was instructor screened and has INSTRUCTOR role`);
             roles.push(Role.INSTRUCTOR);
