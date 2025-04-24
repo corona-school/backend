@@ -296,6 +296,7 @@ function createLecture({ start }: { start: Date }): lecture {
         zoomMeetingReport: [],
         instructorId: null,
         override_meeting_link: null,
+        actualDuration: null,
     };
 }
 
