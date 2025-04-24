@@ -438,7 +438,7 @@ export class StatisticsResolver {
                 FROM
                     student
                 LEFT JOIN screening on screening."studentId" = student.id
-                WHERE screening.success = TRUE
+                WHERE screening.status = '1'
                 GROUP BY student.id
             ),
             last_action AS (
@@ -704,7 +704,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "knowsCoronaSchoolFrom"               AS group
                                       FROM "screening"
-                                      WHERE "success" = TRUE
+                                      WHERE "status" = '1'
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "knowsCoronaSchoolFrom"

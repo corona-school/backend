@@ -90,7 +90,7 @@ export async function canStudentRequestMatch(student: Student): Promise<Decision
         return { allowed: false, reason: 'not-tutor' };
     }
 
-    const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
+    const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, status: 'success' } })) > 0;
     if (!wasScreened) {
         return { allowed: false, reason: 'not-screened' };
     }

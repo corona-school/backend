@@ -59,7 +59,7 @@ void test('Reward student onboarding achievement sequence', async () => {
         mutation ScreenInstructorOne {
             studentTutorScreeningCreate(
                 studentId: ${student.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                screening: {status: success comment: "" knowsCoronaSchoolFrom: ""}
             )
         }
     `);
