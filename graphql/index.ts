@@ -6,7 +6,6 @@ import { buildSchemaSync } from 'type-graphql';
 import {
     FindManyMatchResolver,
     FindManyPupilResolver,
-    FindManyProject_matchResolver,
     FindManySubcourseResolver,
     FindManyLectureResolver,
     FindManyConcrete_notificationResolver,
@@ -26,7 +25,6 @@ import { ExtendFieldsPupilResolver } from './pupil/fields';
 import { ExtendedFieldsSubcourseResolver } from './subcourse/fields';
 import { ExtendedFieldsCourseResolver } from './course/fields';
 import { ExtendedFieldsMatchResolver } from './match/fields';
-import { ExtendedFieldsProjectMatchResolver } from './project_match/fields';
 import { MutateNotificationResolver } from './notification/mutations';
 import { complexityEnhanceMap } from './complexity';
 import { AuthenticationResolver } from './authentication';
@@ -80,6 +78,8 @@ import { LearningTopicMutationsResolver } from './learning/topic/mutations';
 import { LearningAssignmentMutationsResolver } from './learning/assignment/mutations';
 import { LearningNoteMutationsResolver } from './learning/note/mutations';
 import { ExternalSchoolResolver } from './external_school/fields';
+import { MutateLessonPlanResolver } from './lessonplan/mutations';
+import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -124,10 +124,6 @@ const schema = buildSchemaSync({
         ExtendedFieldsMatchResolver,
         MutateMatchResolver,
 
-        /* Projects */
-        FindManyProject_matchResolver,
-        ExtendedFieldsProjectMatchResolver,
-
         /* Notifications */
         FindManyNotificationResolver,
         MutateNotificationResolver,
@@ -147,6 +143,9 @@ const schema = buildSchemaSync({
         /* ParticipationCertificate */
         ExtendedFieldsParticipationCertificateResolver,
         MutateParticipationCertificateResolver,
+
+        /* InstantCertificate */
+        MutateInstantCertificateResolver,
 
         /* Schools */
         FindManySchoolResolver,
@@ -210,6 +209,8 @@ const schema = buildSchemaSync({
 
         /** School Search */
         ExternalSchoolResolver,
+
+        MutateLessonPlanResolver,
     ],
     authChecker,
 });

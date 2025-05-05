@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import type { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
+import type { Prisma, pupil as Pupil, student as Student, match as Match } from '@prisma/client';
 import { createMatch } from './create';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
@@ -21,7 +21,7 @@ export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
-    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<any | never>;
+    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<Match>;
     readonly toggles: readonly Toggle[];
     // There are a few well known toggles:
     //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
@@ -49,13 +49,13 @@ const getViableUsers = (toggles: string[]) => {
     };
 
     if (!toggles.includes('allow-unverified')) {
-        viableUsers.verification = null; // require verification to be unset
+        viableUsers.verifiedAt = { not: null }; // require verifiedAt to be set
     }
 
     /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
     are accidentally matched to real users */
     if (!isDev) {
-        viableUsers.email = { not: { startsWith: 'test', endsWith: '@lern-fair.de' } };
+        viableUsers.NOT = [{ email: { startsWith: 'test', endsWith: '@lern-fair.de' } }];
     }
 
     return viableUsers;
@@ -392,19 +392,27 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
 
     if (apply) {
         const startCommit = Date.now();
+        const createdMatches: Match[] = [];
+
         for (const match of matches) {
-            await pool.createMatch(match.pupil, match.student, pool);
+            createdMatches.push(await pool.createMatch(match.pupil, match.student, pool));
         }
 
         timing.commit = Date.now() - startCommit;
         logger.info(`MatchingPool(${pool.name}) created ${matches.length} matches in ${timing.matching}ms`);
 
-        await prisma.match_pool_run.create({
+        const run = await prisma.match_pool_run.create({
             data: {
                 matchingPool: pool.name,
                 matchesCreated: matches.length,
                 stats,
             },
+        });
+
+        // After creating matches and the match run, link them together
+        await prisma.match.updateMany({
+            data: { matchPoolRunId: run.id },
+            where: { id: { in: createdMatches.map((it) => it.id) } },
         });
     }
 

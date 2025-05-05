@@ -1,7 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
 import assert from 'assert';
-import { Lecture, lecture_appointmenttype_enum } from '../../graphql/generated';
+import { Lecture, lecture_appointmenttype_enum, Subcourse } from '../../graphql/generated';
 import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
 import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
@@ -12,8 +12,10 @@ import * as Notification from '../../common/notification';
 import { getStudentsFromList, User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
-import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder } from './util';
+import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
+import { assertAllowed, Decision } from '../util/decision';
+import { Attachment } from '../notification/channels/mailjet';
 
 const logger = getLogger();
 
@@ -95,9 +97,21 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     );
 
     if (!silent) {
+        const icsForPupil: Attachment = {
+            Base64Content: await getIcsFile(createdMatchAppointments, false),
+            ContentType: 'text/calendar',
+            Filename: 'termin.ics',
+        };
+        const icsForStudent: Attachment = {
+            Base64Content: await getIcsFile(createdMatchAppointments, true),
+            ContentType: 'text/calendar',
+            Filename: 'termin.ics',
+        };
+
         await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
             student,
             matchId: matchId.toString(),
+            attachments: [icsForPupil],
         });
 
         // Send out reminders 12 hours before the appointment starts
@@ -105,10 +119,12 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             await Notification.actionTakenAt(new Date(appointment.start), userForPupil(pupil), 'pupil_match_appointment_starts', {
                 ...(await getContextForMatchAppointmentReminder(appointment)),
                 student,
+                attachments: [icsForPupil],
             });
             await Notification.actionTakenAt(new Date(appointment.start), userForStudent(student), 'student_match_appointment_starts', {
                 ...(await getContextForMatchAppointmentReminder(appointment)),
                 pupil,
+                attachments: [icsForStudent],
             });
         }
     }
@@ -116,13 +132,26 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
     return createdMatchAppointments;
 };
 
+export function canCreateGroupAppointment(subcourse: Subcourse, hasInstructors: boolean): Decision {
+    if (subcourse.cancelled) {
+        return { allowed: false, reason: 'course-cancelled' };
+    }
+
+    if (!hasInstructors) {
+        return { allowed: false, reason: 'no-instructors' };
+    }
+
+    return { allowed: true };
+}
+
 export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
+    const mentors = await prisma.subcourse_mentors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
     const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
-
-    assert(instructors.length > 0, `No instructors found for subcourse ${subcourseId} there must be at least one organizer for an appointment`);
+    const decision = canCreateGroupAppointment(subcourse, instructors.length > 0);
+    assertAllowed(decision);
 
     // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
     let hosts: ZoomUser[] | null = null;
@@ -149,7 +178,7 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
                     subcourseId: appointmentToBeCreated.subcourseId,
                     appointmentType: lecture_appointmenttype_enum.group,
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
-                    participantIds: participants.map((p) => userForPupil(p.pupil).userID),
+                    participantIds: [...participants.map((p) => userForPupil(p.pupil).userID), ...mentors.map((m) => userForStudent(m.student).userID)],
                     zoomMeetingId,
                     override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
                 },
@@ -157,21 +186,23 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         })
     );
 
+    const icsForPupil: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, false), ContentType: 'text/calendar', Filename: 'termin.ics' };
+    const icsForStudent: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, true), ContentType: 'text/calendar', Filename: 'termin.ics' };
+
     // * send notification
     for (const participant of participants) {
         await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
             student: organizer,
             ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+            attachments: [icsForPupil],
         });
 
         // Send out reminders 12 hours before the appointment start
         for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(
-                new Date(appointment.start),
-                userForPupil(participant.pupil),
-                'pupil_group_appointment_starts',
-                await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
-            );
+            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
+                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+                attachments: [icsForPupil],
+            });
         }
     }
 
@@ -179,12 +210,10 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
         for (const appointment of createdGroupAppointments) {
             if (subcourse.published) {
                 // For unpublished courses, this is deferred to a later point
-                await Notification.actionTakenAt(
-                    new Date(appointment.start),
-                    userForStudent(instructor.student),
-                    'student_group_appointment_starts',
-                    await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)
-                );
+                await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+                    ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+                    attachments: [icsForStudent],
+                });
             }
         }
     }
@@ -257,7 +286,7 @@ export async function createAdHocMeeting(matchId: number, user: User) {
             title: `Sofortbesprechung - ${pupil.firstname} und ${student.firstname} `,
             matchId: matchId,
             start: start,
-            duration: 30,
+            duration: 60,
             appointmentType: lecture_appointmenttype_enum.match,
         },
     ];

@@ -12,12 +12,13 @@ import {
     Prisma,
     PrismaClient,
     pupil as Pupil,
-    pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
     pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
+    gender_enum as Gender,
+    school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
@@ -30,9 +31,10 @@ import { addPupilScreening, updatePupilScreening } from '../../common/pupil/scre
 import { invalidatePupilScreening } from '../../common/pupil/screening';
 import { validateEmail, ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { RegisterPupilInput, BecomeTuteeInput } from '../types/userInputs';
+import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../types/userInputs';
 import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
+import { findOrCreateSchool } from '../../common/school/create';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -53,9 +55,6 @@ export class PupilUpdateInput {
 
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
-
-    @Field((type) => [ProjectField], { nullable: true })
-    projectFields?: ProjectField[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -82,6 +81,21 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     @MaxLength(500)
     matchReason?: string;
+
+    @Field((type) => Gender, { nullable: true })
+    onlyMatchWith?: Gender;
+
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialNeeds?: boolean;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
+
+    @Field((type) => RegistrationSchool, { nullable: true })
+    school?: RegistrationSchool;
 }
 
 @InputType()
@@ -141,7 +155,6 @@ export async function updatePupil(
     const {
         subjects,
         gradeAsInt,
-        projectFields,
         firstname,
         lastname,
         registrationSource,
@@ -153,11 +166,12 @@ export async function updatePupil(
         matchReason,
         lastTimeCheckedNotifications,
         notificationPreferences,
+        onlyMatchWith,
+        hasSpecialNeeds,
+        descriptionForMatch,
+        descriptionForScreening,
+        school,
     } = update;
-
-    if (projectFields && !pupil.isProjectCoachee) {
-        throw new PrerequisiteError(`Only project coachees can set the project fields`);
-    }
 
     if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
@@ -165,6 +179,30 @@ export async function updatePupil(
 
     if (email != undefined && !isAdmin(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
+    }
+
+    if (hasSpecialNeeds != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialNeeds may only be changed by elevated users');
+    }
+
+    if (onlyMatchWith !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('onlyMatchWith may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    let dbSchool: School | undefined;
+    try {
+        dbSchool = await findOrCreateSchool(school);
+    } catch (error) {
+        logger.error('School could not be created', error);
+        throw new PrerequisiteError('School could not be created');
     }
 
     const res = await prismaInstance.pupil.update({
@@ -175,15 +213,19 @@ export async function updatePupil(
             // TODO: Store numbers as numbers maybe ...
             grade: gradeAsInt ? `${gradeAsInt}. Klasse` : undefined,
             subjects: subjects ? JSON.stringify(subjects.map(toPupilSubjectDatabaseFormat)) : undefined,
-            projectFields: ensureNoNull(projectFields),
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
-            schooltype: ensureNoNull(schooltype),
+            state: ensureNoNull(dbSchool?.state ?? state),
+            schooltype: ensureNoNull(dbSchool?.schooltype ?? schooltype),
             languages: ensureNoNull(languages),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
+            onlyMatchWith,
+            hasSpecialNeeds,
+            descriptionForMatch,
+            descriptionForScreening,
+            schoolId: dbSchool?.id,
         },
         where: { id: pupil.id },
     });
@@ -223,7 +265,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
                 if (pupil) {
                     // if account already exists, overwrite relevant data with new plus data
                     logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
-                    pupil = await updatePupil(ctx, pupil, { ...register, projectFields: undefined }, tx);
+                    pupil = await updatePupil(ctx, pupil, { ...register }, tx);
                 } else {
                     pupil = await registerPupil(register, true, tx);
                     logger.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
@@ -231,7 +273,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
             }
             if (activate && pupil?.isPupil) {
                 logger.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
-                await updatePupil(ctx, pupil, { ...activate, projectFields: undefined }, tx);
+                await updatePupil(ctx, pupil, { ...activate }, tx);
             } else if (activate) {
                 await becomeTutee(pupil, activate, tx);
                 logger.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
@@ -247,7 +289,7 @@ async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLConte
 @Resolver((of) => GraphQLModel.Pupil)
 export class MutatePupilResolver {
     @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN, Role.PUPIL_SCREENER)
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilUpdate(@Ctx() context: GraphQLContext, @Arg('data') data: PupilUpdateInput, @Arg('pupilId', { nullable: true }) pupilId?: number) {
         const pupil = await getSessionPupil(context, pupilId);
         await updatePupil(context, pupil, data);

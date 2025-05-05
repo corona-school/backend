@@ -21,7 +21,7 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     if (!pupil.isPupil) {
         throw new PrerequisiteError(`Pupil ${pupil.id} has isPupil = false`);
     }
-    if (!pupil.verifiedAt && pupil.verification) {
+    if (!pupil.verifiedAt) {
         throw new PrerequisiteError(`Pupil ${pupil.id} does not have a verified email`);
     }
 

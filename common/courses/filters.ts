@@ -1,5 +1,11 @@
 import { Prisma, pupil as Pupil, student as Student } from '@prisma/client';
 
+export function isMentoredBy(student: Student) {
+    return {
+        subcourse_mentors_student: { some: { studentId: { equals: student.id } } },
+    };
+}
+
 export function instructedBy(student: Student) {
     return {
         subcourse_instructors_student: { some: { studentId: { equals: student.id } } },
@@ -26,6 +32,12 @@ export function excludePastSubcourses(): Prisma.subcourseWhereInput {
                 start: { gte: prevDay },
             },
         },
+    };
+}
+
+export function excludeCancelledSubcourses(): Prisma.subcourseWhereInput {
+    return {
+        cancelled: false,
     };
 }
 

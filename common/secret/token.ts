@@ -16,33 +16,20 @@ import { PrerequisiteError } from '../util/error';
 
 const logger = getLogger('Token');
 
-export async function revokeToken(user: User | null, id: number) {
+export async function revokeSecret(user: User | undefined, id: number) {
     const result = await prisma.secret.deleteMany({ where: { id, userId: user?.userID } });
     if (result.count !== 1) {
-        throw new Error(`Failed to revoke token, does not exist`);
+        throw new Error(`Failed to revoke secret, does not exist`);
     }
 
-    logger.info(`User(${user?.userID}) revoked token Secret(${id})`);
+    logger.info(`User(${user?.userID}) revoked Secret(${id})`);
 }
 
-export async function getSecretByToken(token: string): Promise<secret> {
+export async function getSecretByToken(token: string): Promise<secret | null> {
     const hash = hashToken(token);
     return await prisma.secret.findFirst({
         where: { secret: hash, type: { in: [SecretType.EMAIL_TOKEN, SecretType.TOKEN] } },
     });
-}
-
-// One can revoke any token that is known - i.e. one can also revoke a token if the token was leaked
-export async function revokeTokenByToken(token: string): Promise<number> {
-    const secret = await getSecretByToken(token);
-    if (!secret) {
-        throw new Error(`Secret not found`);
-    }
-
-    await prisma.secret.delete({ where: { id: secret.id } });
-
-    logger.info(`Token Secret(${secret.id}) was revoked`);
-    return secret.id;
 }
 
 // The token returned by this function MAY NEVER be persisted and may only be sent to the user
@@ -173,13 +160,13 @@ export async function loginToken(token: string, deviceId: string | null): Promis
 
 export async function verifyEmail(user: User) {
     if (user.studentId) {
-        const { verifiedAt, verification } = await prisma.student.findUniqueOrThrow({
+        const { verifiedAt } = await prisma.student.findUniqueOrThrow({
             where: { id: user.studentId },
-            select: { verifiedAt: true, verification: true },
+            select: { verifiedAt: true },
         });
-        if (!verifiedAt || verification) {
+        if (!verifiedAt) {
             await prisma.student.update({
-                data: { verifiedAt: new Date(), verification: null },
+                data: { verifiedAt: new Date() },
                 where: { id: user.studentId },
             });
             await Notification.actionTaken(user, 'student_registration_verified_email', {
@@ -192,13 +179,13 @@ export async function verifyEmail(user: User) {
     }
 
     if (user.pupilId) {
-        const { verifiedAt, verification } = await prisma.pupil.findUniqueOrThrow({
+        const { verifiedAt } = await prisma.pupil.findUniqueOrThrow({
             where: { id: user.pupilId },
-            select: { verifiedAt: true, verification: true },
+            select: { verifiedAt: true },
         });
-        if (!verifiedAt || verification) {
+        if (!verifiedAt) {
             await prisma.pupil.update({
-                data: { verifiedAt: new Date(), verification: null },
+                data: { verifiedAt: new Date() },
                 where: { id: user.pupilId },
             });
             await Notification.actionTaken(user, 'pupil_registration_verified_email', {

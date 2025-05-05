@@ -5,28 +5,29 @@ import { deactivateStudent, reactivateStudent } from '../../common/student/activ
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, ObjectType, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import {
     addInstructorScreening,
     addTutorScreening,
     cancelCoCReminders,
     scheduleCoCReminders,
+    requireStudentOnboarding,
     updateInstructorScreening,
     updateTutorScreening,
 } from '../../common/student/screening';
-import { becomeTutor, ProjectFieldWithGradeData, registerStudent } from '../../common/student/registration';
+import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
-    pupil_projectfields_enum as ProjectField,
     pupil_registrationsource_enum as RegistrationSource,
     student as Student,
     student_state_enum as State,
     student_languages_enum as Language,
+    student_screening_status_enum as StudentScreeningStatus,
+    gender_enum as Gender,
     PrismaClient,
     Prisma,
 } from '@prisma/client';
-import { setProjectFields } from '../../common/student/update';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { userForStudent } from '../../common/user';
@@ -61,6 +62,11 @@ export class ScreeningInput {
         nullable: true,
     })
     jobStatus?: screening_jobstatus_enum | undefined;
+
+    @Field((_type) => StudentScreeningStatus, {
+        nullable: true,
+    })
+    status: StudentScreeningStatus;
 
     @Field((_type) => String, {
         nullable: true,
@@ -110,16 +116,6 @@ class StudentRegisterPlusManyInput {
 }
 
 @InputType()
-export class ProjectFieldWithGradeInput implements ProjectFieldWithGradeData {
-    @Field((type) => ProjectField)
-    projectField: ProjectField;
-    @Field((type) => Int, { nullable: true })
-    min: number;
-    @Field((type) => Int, { nullable: true })
-    max: number;
-}
-
-@InputType()
 export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     firstname?: string;
@@ -133,9 +129,6 @@ export class StudentUpdateInput {
 
     @Field((type) => [Subject], { nullable: true })
     subjects?: Subject[];
-
-    @Field((type) => [ProjectFieldWithGradeInput], { nullable: true })
-    projectFields?: ProjectFieldWithGradeInput[];
 
     @Field((type) => RegistrationSource, { nullable: true })
     registrationSource?: RegistrationSource;
@@ -164,6 +157,17 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     zipCode?: string;
+    @Field((type) => Boolean, { nullable: true })
+    hasSpecialExperience?: boolean;
+
+    @Field((type) => Gender, { nullable: true })
+    gender?: Gender;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForMatch?: string;
+
+    @Field((type) => String, { nullable: true })
+    descriptionForScreening?: string;
 }
 
 const logger = getLogger('Student Mutations');
@@ -178,7 +182,6 @@ export async function updateStudent(
         firstname,
         lastname,
         email,
-        projectFields,
         subjects,
         registrationSource,
         state,
@@ -189,11 +192,11 @@ export async function updateStudent(
         university,
         hasDoneEthicsOnboarding,
         zipCode,
+        hasSpecialExperience,
+        gender,
+        descriptionForMatch,
+        descriptionForScreening,
     } = update;
-
-    if (projectFields && !student.isProjectCoach) {
-        throw new PrerequisiteError(`Only project coaches can set the project fields`);
-    }
 
     if (registrationSource != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
@@ -207,8 +210,20 @@ export async function updateStudent(
         throw new PrerequisiteError(`Only Admins may change the name without verification`);
     }
 
-    if (projectFields) {
-        await setProjectFields(student, projectFields);
+    if (hasSpecialExperience !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
+    }
+
+    if (gender !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('gender may only be changed by elevated users');
+    }
+
+    if (descriptionForMatch !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
+    }
+
+    if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
     const res = await prismaInstance.student.update({
@@ -226,6 +241,10 @@ export async function updateStudent(
             university: ensureNoNull(university),
             zipCode: ensureNoNull(zipCode),
             hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
+            hasSpecialExperience: ensureNoNull(hasSpecialExperience),
+            gender: ensureNoNull(gender),
+            descriptionForMatch,
+            descriptionForScreening,
         },
         where: { id: student.id },
     });
@@ -503,8 +522,7 @@ export class MutateStudentResolver {
     @Authorized(Role.STUDENT_SCREENER)
     async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
-
-        await updateStudent(context, student, { hasDoneEthicsOnboarding: false });
+        await requireStudentOnboarding(student.id);
         return true;
     }
 }

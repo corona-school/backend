@@ -7,6 +7,7 @@ import {
     Participation_certificate as ParticipationCertificate,
     Match,
     Pupil_screening as PupilScreening,
+    School,
 } from '../generated';
 import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -28,7 +29,7 @@ import { subcourseSearch } from '../../common/courses/search';
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
     @FieldResolver((type) => UserType)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.PUPIL_SCREENER)
     user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
     }
@@ -60,6 +61,13 @@ export class ExtendFieldsPupilResolver {
         return await prisma.subcourse.findMany({
             where: { AND: filters },
         });
+    }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async totalSubcoursesJoined(@Root() pupil: Required<Pupil>) {
+        const filters: Prisma.subcourseWhereInput[] = [joinedBy(pupil)];
+        return await prisma.subcourse.count({ where: { AND: filters } });
     }
 
     @FieldResolver((type) => [Subcourse])
@@ -163,6 +171,17 @@ export class ExtendFieldsPupilResolver {
                 active: true,
                 pupil_screening: { some: { invalidated: false, status: { in: onlyDisputed ? ['dispute'] : ['dispute', 'pending'] } } },
             },
+        });
+    }
+
+    @FieldResolver((returns) => School, { nullable: true })
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
+    async school(@Root() pupil: Required<Pupil>) {
+        if (!pupil.schoolId) {
+            return;
+        }
+        return await prisma.school.findFirst({
+            where: { id: pupil.schoolId },
         });
     }
 }

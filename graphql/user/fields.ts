@@ -16,7 +16,7 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
@@ -59,13 +59,13 @@ export class Contact {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER)
+    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
@@ -118,6 +118,20 @@ export class UserFieldsResolver {
         return await evaluateUserRoles(user);
     }
 
+    @FieldResolver((returns) => Int, { description: 'Number of referrals made by the user' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async referralCount(@Root() user: User): Promise<number> {
+        const count = await getReferredByIDCount(user.userID);
+        return count;
+    }
+
+    @FieldResolver((returns) => Int, { description: 'Total hours supported by referred students/pupils - 0 if less than 3 users were referred for privacy' })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async supportedHours(@Root() user: User): Promise<number> {
+        const totalHours = await getTotalSupportedHours(user.userID);
+        return totalHours;
+    }
+
     // -------- Notifications ---------------------
 
     @FieldResolver((returns) => [ConcreteNotification])
@@ -147,6 +161,22 @@ export class UserFieldsResolver {
             },
             take,
             skip,
+        });
+    }
+
+    @FieldResolver((returns) => [ConcreteNotification])
+    @Authorized(Role.SCREENER, Role.ADMIN)
+    async receivedScreeningSuggestions(@Root() user: User): Promise<ConcreteNotification[]> {
+        return await prisma.concrete_notification.findMany({
+            orderBy: [{ sentAt: 'desc' }],
+            where: {
+                userId: user.userID,
+                state: ConcreteNotificationState.SENT,
+                notification: {
+                    onActions: { has: 'screening_suggestion' },
+                },
+            },
+            include: { notification: true },
         });
     }
 
@@ -228,7 +258,7 @@ export class UserFieldsResolver {
                 where: {
                     ...pupilQuery,
                     active: true,
-                    verification: null,
+                    verifiedAt: { not: null },
                     OR: [
                         {
                             subcourse_participants_pupil: {
@@ -261,7 +291,7 @@ export class UserFieldsResolver {
                         studentQuery,
                         {
                             active: true,
-                            verification: null,
+                            verifiedAt: { not: null },
                         },
                         // For now we exclude unscreened helpers, as they wont be interested
                         // in most of our marketing campaigns anyways

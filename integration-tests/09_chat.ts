@@ -84,7 +84,7 @@ void test('Create Chat for Course', async () => {
     expectFetch({
         url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
         method: 'PUT',
-        body: `{"subject":"Wie schreibe ich Integrationstests","custom":{"start":"${courseDate}","groupType":"${ChatType.NORMAL}","subcourse":"[${subcourseId}]","createdBy":"student/${instructor.student.id}"},"participants":["pupil_${pupil.pupil.id}","pupil_${pupil2.pupil.id}","student_${instructor.student.id}"]}`,
+        body: `{"subject":"Wie schreibe ich Integrationstests","photoUrl":"","custom":{"start":"${courseDate}","groupType":"${ChatType.NORMAL}","subcourse":"[${subcourseId}]","createdBy":"student/${instructor.student.id}"},"participants":["pupil_${pupil.pupil.id}","pupil_${pupil2.pupil.id}","student_${instructor.student.id}"]}`,
         responseStatus: 200,
     });
 

@@ -1,7 +1,7 @@
 import { getLogger } from '../../../common/logger/logger';
 import express, { Request, Response, Router } from 'express';
 import { createRemissionRequestVerificationPage } from '../../../common/remission-request';
-import { DefaultLanguage, LANGUAGES, Language, getConfirmationPage, CertificateError } from '../../../common/certificate';
+import { CertificateError, CertificateType, CERTIFICATETYPES, DefaultLanguage, getConfirmationPage, Language, LANGUAGES } from '../../../common/certificate';
 
 const logger = getLogger();
 
@@ -12,9 +12,6 @@ certificateRouter.get('/:certificateId/confirmation', /* NO AUTH REQUIRED */ get
 // TODO: Make paths in certificates absolute
 certificateRouter.use('/:certificateId/public', express.static('./assets/public'));
 
-// certificate types
-const CERTIFICATETYPES = ['participation', 'remission'] as const;
-type CertificateType = (typeof CERTIFICATETYPES)[number];
 const DefaultCertificateType = 'participation';
 
 /**
@@ -64,8 +61,8 @@ async function getCertificateConfirmationEndpoint(req: Request, res: Response) {
         if (typeof certificateId !== 'string') {
             return res.status(400).send('Missing parameter certificateId');
         }
-        if (ctype === 'participation') {
-            const confirmation = await getConfirmationPage(certificateId, lang as Language);
+        if (ctype === 'participation' || ctype === 'instant') {
+            const confirmation = await getConfirmationPage(certificateId, lang as Language, ctype);
 
             return res.send(confirmation);
         } else {

@@ -254,9 +254,8 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         dissolved: false,
         dissolvedAt: null,
         dissolvedBy: null,
-        dissolveReason: null,
         dissolveReasons: [],
-        dissolveReasonEnum: null,
+        otherDissolveReason: null,
         didHaveMeeting: true,
         proposedTime: null,
         createdAt: new Date(),
@@ -265,12 +264,12 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         feedbackToStudentMail: false,
         followUpToPupilMail: false,
         followUpToStudentMail: false,
-        source: 'imported',
         studentFirstMatchRequest: null,
         pupilFirstMatchRequest: null,
         matchPool: null,
         studentId: null,
         pupilId: null,
+        matchPoolRunId: null,
     };
 }
 
@@ -292,6 +291,7 @@ function createLecture({ start }: { start: Date }): lecture {
         organizerIds: [],
         participantIds: [],
         declinedBy: [],
+        joinedBy: [],
         zoomMeetingId: null,
         zoomMeetingReport: [],
         instructorId: null,

@@ -23,13 +23,17 @@ import { strictUserSearch, userSearch } from '../../common/user/search';
 import { Instructor } from '../types/instructor';
 import { GraphQLContext } from '../context';
 import { predictedHookActionDate } from '../../common/notification';
-import { excludePastSubcourses, instructedBy } from '../../common/courses/filters';
+import { excludeCancelledSubcourses, excludePastSubcourses, instructedBy, isMentoredBy } from '../../common/courses/filters';
 import { Prisma } from '@prisma/client';
 import assert from 'assert';
 import { isSessionStudent } from '../authentication';
 import { subcourseSearch } from '../../common/courses/search';
 import * as CertificateOfConductCommon from '../../common/certificate-of-conduct/certificateOfConduct';
+import { addFile, getFileURL } from '../files';
+import { createInstantCertificate } from '../../common/certificate';
+import { getLogger } from '../../common/logger/logger';
 
+const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
     @Query((returns) => Student, { nullable: true })
@@ -56,7 +60,7 @@ export class ExtendFieldsStudentResolver {
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
-            verification: null,
+            verifiedAt: { not: null },
             instructor_screening: { is: { success: { equals: true } } },
             id: { not: { equals: context.user.studentId } },
         };
@@ -70,7 +74,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((type) => UserType)
-    @Authorized(Role.ADMIN, Role.OWNER)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.STUDENT_SCREENER)
     user(@Root() student: Required<Student>) {
         return userForStudent(student);
     }
@@ -161,6 +165,33 @@ export class ExtendFieldsStudentResolver {
         });
     }
 
+    @LimitEstimated(10)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SUBCOURSE_MENTOR)
+    @FieldResolver((type) => [Subcourse])
+    @ImpliesRoleOnResult(Role.SUBCOURSE_MENTOR, Role.OWNER)
+    async subcoursesMentoring(
+        @Root() student: Required<Student>,
+        @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('excludeCancelled', { nullable: true }) excludeCancelled?: boolean,
+        @Arg('search', { nullable: true }) search?: string
+    ) {
+        const filters: Prisma.subcourseWhereInput[] = [isMentoredBy(student)];
+
+        if (excludePast) {
+            filters.push(excludePastSubcourses());
+        }
+
+        if (excludeCancelled) {
+            filters.push(excludeCancelledSubcourses());
+        }
+
+        if (search) {
+            filters.push(await subcourseSearch(search));
+        }
+
+        return await prisma.subcourse.findMany({ where: { AND: filters } });
+    }
+
     @FieldResolver((type) => [Subcourse])
     @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER)
     @LimitEstimated(10)
@@ -168,12 +199,17 @@ export class ExtendFieldsStudentResolver {
     async subcoursesInstructing(
         @Root() student: Required<Student>,
         @Arg('excludePast', { nullable: true }) excludePast?: boolean,
+        @Arg('excludeCancelled', { nullable: true }) excludeCancelled?: boolean,
         @Arg('search', { nullable: true }) search?: string
     ) {
         const filters: Prisma.subcourseWhereInput[] = [instructedBy(student)];
 
         if (excludePast) {
             filters.push(excludePastSubcourses());
+        }
+
+        if (excludeCancelled) {
+            filters.push(excludeCancelledSubcourses());
         }
 
         if (search) {
@@ -189,6 +225,12 @@ export class ExtendFieldsStudentResolver {
     @ImpliesRoleOnResult(Role.OWNER, /* if we are */ Role.OWNER)
     async coursesInstructing(@Root() student: Student) {
         return await prisma.course.findMany({ where: { course_instructors_student: { some: { studentId: student.id } } } });
+    }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async totalLecturesOrganized(@Root() student: Required<Student>) {
+        return await prisma.lecture.count({ where: { organizerIds: { has: userForStudent(student).userID } } });
     }
 
     @Query((returns) => [Student])

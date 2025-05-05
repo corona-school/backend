@@ -1,5 +1,5 @@
 import { getAccessToken } from './authorization';
-import { ZoomUser } from './user';
+import type { ZoomUser } from './user';
 import { getLogger } from '../logger/logger';
 import zoomRetry from './retry';
 import { addHost, assureZoomFeatureActive, isZoomFeatureActive, removeHost } from './util';
@@ -7,6 +7,7 @@ import { lecture as Appointment } from '@prisma/client';
 import { prisma } from '../prisma';
 import moment from 'moment';
 import assert from 'assert';
+import { ZoomError } from '../util/error';
 
 const logger = getLogger('Zoom Meeting');
 
@@ -32,6 +33,7 @@ export type ZoomMeeting = {
     settings: {
         alternative_hosts: string;
     };
+    encrypted_password?: string;
 };
 
 export type ZoomMeetings = {
@@ -119,7 +121,8 @@ async function getZoomMeeting(appointment: Appointment): Promise<ZoomMeeting> {
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - failed to get meeting with ${response.status} ${await response.text()}`);
+        const error = await response.json();
+        throw new ZoomError(`Zoom - failed to get meeting with ${response.status} ${error.message}`, response.status, error.code);
     }
 
     const meeting = (await response.json()) as ZoomMeeting;

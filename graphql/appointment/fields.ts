@@ -1,6 +1,6 @@
 import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { Lecture as Appointment, lecture_appointmenttype_enum, Match, Subcourse } from '../generated';
+import { Lecture as Appointment, Match, Subcourse } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
 import { Deprecated, getMatch, getSubcourse } from '../util';
@@ -12,6 +12,7 @@ import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
 import { getZoomUrl } from '../../common/zoom/user';
 import { getLogger } from '../../common/logger/logger';
+import { getDisplayName } from '../../common/appointment/util';
 
 const logger = getLogger('Appointment Fields');
 
@@ -135,32 +136,18 @@ export class ExtendedFieldsLectureResolver {
 
     @FieldResolver((returns) => String)
     @Authorized(Role.USER, Role.ADMIN)
-    async displayName(@Ctx() context: GraphQLContext, @Root() appointment: Appointment): Promise<string> {
-        switch (appointment.appointmentType) {
-            case lecture_appointmenttype_enum.match: {
-                let isOrganizer;
-
-                if (!isElevated(context) && !isSessionStudent(context)) {
-                    isOrganizer = false;
-                } else {
-                    isOrganizer = (await prisma.lecture.count({ where: { id: appointment.id, organizerIds: { has: context.user.userID } } })) > 0;
-                }
-
-                if (isOrganizer) {
-                    const [tutee] = await getUsers(appointment.participantIds);
-                    return `${tutee.firstname} ${tutee.lastname}`;
-                } else {
-                    const [tutor] = await getUsers(appointment.organizerIds);
-                    return `${tutor.firstname} ${tutor.lastname}`;
-                }
-            }
-            case lecture_appointmenttype_enum.group: {
-                const { course } = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, select: { course: true } });
-                return course.name;
-            }
-            default:
-                return appointment.title || 'Kein Titel';
+    async displayName(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>): Promise<string> {
+        let isOrganizer = false;
+        if (isElevated(context) || isSessionStudent(context)) {
+            isOrganizer =
+                (await prisma.lecture.count({
+                    where: {
+                        id: appointment.id,
+                        organizerIds: { has: context.user.userID },
+                    },
+                })) > 0;
         }
+        return getDisplayName(appointment, isOrganizer);
     }
 
     @FieldResolver((returns) => GraphQLJSON, { nullable: true })
@@ -177,18 +164,28 @@ export class ExtendedFieldsLectureResolver {
     async zoomMeetingUrl(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
         const { user } = context;
         const isAdmin = user.roles.includes(Role.ADMIN);
-
         if (!appointment.zoomMeetingId) {
             logger.info(`No zoom meeting id exist for appointment id ${appointment.id}`);
             return null;
         }
-
         if (isAdmin) {
             const zoomMeeting = await getZoomMeeting(appointment);
             logger.info(`Admin requested zoom meeting url`);
             return zoomMeeting.join_url;
         }
         return await getZoomUrl(user, appointment);
+    }
+
+    // HOTFIX: During some time, many zoom meetings were created requiring a password
+    // For most meetings, this should not be the case and this should return null.
+    @FieldResolver((returns) => String, { nullable: true })
+    @Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)
+    async zoomMeetingPassword(@Ctx() context: GraphQLContext, @Root() appointment: Required<Appointment>) {
+        if (!appointment.zoomMeetingId) {
+            return null;
+        }
+        const zoomMeeting = await getZoomMeeting(appointment);
+        return zoomMeeting.encrypted_password ?? null;
     }
 
     @FieldResolver((returns) => Match, { nullable: true })

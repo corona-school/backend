@@ -1,4 +1,4 @@
-import { student as Student, screener as Screener, Prisma, PrismaClient } from '@prisma/client';
+import { student as Student, screener as Screener, Prisma, PrismaClient, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
 import { prisma } from '../prisma';
 import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
@@ -11,6 +11,7 @@ import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
     success: boolean;
+    status: ScreeningStatus;
     comment?: string;
     jobStatus?: screening_jobstatus_enum;
     knowsCoronaSchoolFrom?: string;
@@ -18,7 +19,19 @@ interface ScreeningInput {
 
 const logger = getLogger('Student Screening');
 
+export const requireStudentOnboarding = async (studentId: number, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) => {
+    const student = await prisma.student.findFirst({ where: { id: studentId }, include: { instructor_screening: true, screening: true } });
+    const hadSuccessfulScreening = student.screening?.success || student.instructor_screening?.success;
+    if (!hadSuccessfulScreening) {
+        await prismaInstance.student.update({ where: { id: studentId }, data: { hasDoneEthicsOnboarding: false } });
+    }
+};
+
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id);
+    }
+
     await prisma.instructor_screening.create({
         data: {
             ...screening,
@@ -52,6 +65,10 @@ export async function addTutorScreening(
     prismaInstance: Prisma.TransactionClient | PrismaClient = prisma,
     batchMode = false
 ) {
+    if (screening.success) {
+        await requireStudentOnboarding(student.id, prismaInstance);
+    }
+
     await prismaInstance.screening.create({
         data: {
             ...screening,

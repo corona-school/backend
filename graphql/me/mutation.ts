@@ -1,9 +1,9 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
+import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
-import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { MaxLength, ValidateNested } from 'class-validator';
 import { RateLimit } from '../rate-limit';
 import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } from '../../common/student/registration';
@@ -23,6 +23,8 @@ import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
 import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
+import { verifyEmail } from '../../common/secret';
+import { createIDPLogin } from '../../common/secret/idp';
 
 @InputType()
 class MeUpdateInput {
@@ -70,21 +72,34 @@ const logger = getLogger('Me Mutations');
 @Resolver((of) => UserType)
 export class MutateMeResolver {
     @Mutation((returns) => Student)
-    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN, Role.SSO_REGISTERING_USER)
     @RateLimit('RegisterStudent', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterStudent(
         @Ctx() context: GraphQLContext,
         @Arg('data') data: RegisterStudentInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
+        // User registered after trying to log in via IDP, pick up the IDP user info
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus students may only be registered by admins');
         }
 
-        const student = await registerStudent(data, noEmail);
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
+
+        const student = await registerStudent({ ...data, email: isSSO ? sessionUser.email : data.email }, noEmail);
         logger.info(`Student(${student.id}, firstname = ${student.firstname}, lastname = ${student.lastname}) registered`);
+        if (isSSO) {
+            const user = userForStudent(student);
+            // We assume here that the IDP already validated the email
+            await verifyEmail(user);
+            await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
+        }
 
         if (!byAdmin) {
             await loginAsUser(userForStudent(student), context, undefined);
@@ -99,21 +114,33 @@ export class MutateMeResolver {
     }
 
     @Mutation((returns) => Pupil)
-    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN)
+    @Authorized(Role.UNAUTHENTICATED, Role.ADMIN, Role.SSO_REGISTERING_USER)
     @RateLimit('RegisterPupil', 10 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
     async meRegisterPupil(
         @Ctx() context: GraphQLContext,
         @Arg('data') data: RegisterPupilInput,
         @Arg('noEmail', () => GraphQLBoolean, { nullable: true }) noEmail = false
     ) {
+        const sessionUser = context.user;
         const byAdmin = context.user.roles.includes(Role.ADMIN);
+        const isSSO = context.user.roles.includes(Role.SSO_REGISTERING_USER);
 
         if (data.registrationSource === RegistrationSource.plus && !byAdmin) {
             throw new UserInputError('Lern-Fair Plus pupils may only be registered by admins');
         }
 
-        const pupil = await registerPupil(data, noEmail);
+        if (isSSO && (!sessionUser.idpClientId || !sessionUser.idpSub)) {
+            throw new Error(`Cannot complete request without an IDP ClientID / IDP Sub`);
+        }
+
+        const pupil = await registerPupil({ ...data, email: isSSO ? sessionUser.email : data.email }, noEmail);
         logger.info(`Pupil(${pupil.id}, firstname = ${pupil.firstname}, lastname = ${pupil.lastname}) registered`);
+        if (isSSO) {
+            const user = userForPupil(pupil);
+            // We assume here that the IDP already validated the email
+            await verifyEmail(user);
+            await createIDPLogin(user.userID, sessionUser.idpSub, sessionUser.idpClientId);
+        }
 
         if (!byAdmin) {
             await loginAsUser(userForPupil(pupil), context, undefined);

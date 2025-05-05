@@ -3,12 +3,10 @@ import { prisma } from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import * as Notification from '../notification';
 import {
-    project_field_with_grade_restriction_projectfield_enum as ProjectField,
     student_registrationsource_enum as RegistrationSource,
     student as Student,
     student_languages_enum as Language,
     student_state_enum as State,
-    student_module_enum as TeacherModule,
     Prisma,
     PrismaClient,
 } from '@prisma/client';
@@ -30,6 +28,7 @@ export interface RegisterStudentData {
     redirectTo?: string;
     // Associates the student with a cooperation
     cooperationTag?: string;
+    referredById?: string;
 }
 
 export interface BecomeInstructorData {
@@ -43,12 +42,6 @@ export interface BecomeTutorData {
     subjects?: Subject[];
     languages?: Language[];
     supportsInDaZ?: boolean;
-}
-
-export interface ProjectFieldWithGradeData {
-    projectField: ProjectField;
-    min: number;
-    max: number;
 }
 
 export async function registerStudent(data: RegisterStudentData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
@@ -78,8 +71,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
             wix_id: 'Z-' + uuidv4(),
             wix_creation_date: new Date(),
 
-            // the authToken is used to verify the e-mail instead
-            verification: uuidv4(),
+            referredById: data.referredById,
 
             openMatchRequestCount: 0,
             notificationPreferences: data.newsletter ? ENABLED_NEWSLETTER : DISABLED_NEWSLETTER,

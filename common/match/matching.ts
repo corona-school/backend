@@ -1,4 +1,4 @@
-import { pupil as Pupil, pupil_state_enum, student as Student, student_state_enum } from '@prisma/client';
+import { pupil as Pupil, pupil_state_enum, student as Student, student_state_enum, gender_enum } from '@prisma/client';
 import { maxWeightAssign } from 'munkres-algorithm';
 import { getPupilGradeAsString } from '../pupil';
 import { gradeAsInt } from '../util/gradestrings';
@@ -20,6 +20,8 @@ export type MatchRequest = Readonly<{
     subjects: { name: string; mandatory?: boolean }[];
     state: pupil_state_enum;
     requestAt: Date;
+    onlyMatchWith?: gender_enum;
+    hasSpecialNeeds?: boolean;
 }>;
 
 export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
@@ -33,6 +35,8 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
             state: pupil.state,
             subjects: parseSubjectString(pupil.subjects),
             requestAt: pupil.firstMatchRequest,
+            onlyMatchWith: pupil.onlyMatchWith,
+            hasSpecialNeeds: pupil.hasSpecialNeeds,
         };
 
         for (let i = 0; i < pupil.openMatchRequestCount; i++) {
@@ -50,6 +54,8 @@ export type MatchOffer = Readonly<{
     subjects: { name: string; grade?: { min: number; max: number } }[];
     state: student_state_enum;
     requestAt: Date;
+    gender?: gender_enum;
+    hasSpecialExperience?: boolean;
 }>;
 
 export function studentsToOffers(students: Student[]): MatchOffer[] {
@@ -62,6 +68,8 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
             state: student.state,
             subjects: parseSubjectString(student.subjects),
             requestAt: student.firstMatchRequest,
+            gender: student.gender,
+            hasSpecialExperience: student.hasSpecialExperience,
         };
 
         for (let i = 0; i < student.openMatchRequestCount; i++) {
@@ -100,6 +108,17 @@ function sigmoid(value: number) {
 }
 
 export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate = new Date()): number {
+    // ---------- Constraints -----------
+    // If there is a gender constraint, only match helpers whose gender is known and matches
+    if (request.onlyMatchWith && (!offer.gender || request.onlyMatchWith !== offer.gender)) {
+        return NO_MATCH;
+    }
+
+    // Only match "special needs" with "special experience"
+    if (request.hasSpecialNeeds && !offer.hasSpecialExperience) {
+        return NO_MATCH;
+    }
+
     // ---------- Subjects --------------
 
     let matchingSubjects = 0;
@@ -143,7 +162,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
 
     // how good a match is in (0, 1)
-    const score = 0.97 * subjectBonus + 0.02 * stateBonus + 0.01 * offerWaitingBonus;
+    const score = 0.8 * subjectBonus /* + 0.02 * stateBonus + */ + 0.2 * offerWaitingBonus;
 
     // TODO: Fix retention for matches with only few subjects (e.g. both helper and helpee only have math as subject)
     // in that case the score is not so high, and thus they are retained for a long time, although the match is perfect

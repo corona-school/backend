@@ -3,6 +3,7 @@ import { prisma } from '../prisma';
 import { Role } from '../user/roles';
 import { getLogger } from '../logger/logger';
 import { getStudent, getPupil, getScreener, User } from '.';
+import { isSSOUser } from '../secret/idp';
 
 const logger = getLogger('Roles');
 
@@ -23,6 +24,10 @@ export async function evaluateUserRoles(user: User): Promise<Role[]> {
         evaluateScreenerRoles(screener, roles);
     }
 
+    if (await isSSOUser(user.userID)) {
+        roles.push(Role.SSO_USER);
+    }
+
     return roles;
 }
 
@@ -30,8 +35,7 @@ export async function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
     roles.push(Role.UNAUTHENTICATED, Role.USER, Role.PUPIL);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as a TUTEE)
-    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
-    if (!pupil.verifiedAt && pupil.verification) {
+    if (!pupil.verifiedAt) {
         logger.info(`Pupil(${pupil.id}) was not verified yet, they should re authenticate`);
         return;
     }
@@ -64,11 +68,6 @@ export async function evaluatePupilRoles(pupil: Pupil, roles: Role[]) {
         logger.info(`Pupil(${pupil.id}) has PARTICIPANT role`);
     }
 
-    if (pupil.isProjectCoachee) {
-        roles.push(Role.PROJECT_COACHEE);
-        logger.info(`Pupil(${pupil.id}) has PROJECT_COACHEE role`);
-    }
-
     if (pupil.teacherEmailAddress) {
         roles.push(Role.STATE_PUPIL);
         logger.info(`Pupil(${pupil.id}) has STATE_PUPIL role`);
@@ -79,8 +78,7 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
     roles.push(Role.UNAUTHENTICATED, Role.USER, Role.STUDENT);
 
     // In general we only trust users who have validated their email to perform advanced actions (e.g. as an INSTRUCTOR)
-    // NOTE: Due to historic reasons, there are users with both unset verifiedAt and verification
-    if (!student.verifiedAt && student.verification) {
+    if (!student.verifiedAt) {
         logger.info(`Student(${student.id}) was not verified yet, they should re authenticate`);
         return;
     }
@@ -90,22 +88,14 @@ export async function evaluateStudentRoles(student: Student, roles: Role[]) {
         return;
     }
 
-    if (student.isStudent || student.isProjectCoach) {
-        // the user wants to be a tutor or project coach, let's check if they were screened and are authorized to do so
+    if (student.isStudent) {
+        // the user wants to be a tutor, let's check if they were screened and are authorized to do so
         const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
         if (wasScreened) {
             logger.info(`Student(${student.id}) was screened and has TUTOR role`);
             roles.push(Role.TUTOR);
         } else {
             roles.push(Role.WANNABE_TUTOR);
-        }
-    }
-
-    if (student.isProjectCoach) {
-        const wasCoachScreened = (await prisma.project_coaching_screening.count({ where: { studentId: student.id, success: true } })) > 0;
-        if (wasCoachScreened) {
-            logger.info(`Student(${student.id}) was screened and has PROJECT_COACH role`);
-            roles.push(Role.PROJECT_COACH);
         }
     }
 
