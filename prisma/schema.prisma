@@ -1357,10 +1357,12 @@ enum important_information_recipients_enum {
 }
 
 enum pupil_screening_status_enum {
-  pending   @map("0")
-  success   @map("1")
-  rejection @map("2")
-  dispute   @map("3")
+  pending            @map("0")
+  success            @map("1")
+  rejection          @map("2")
+  dispute            @map("3")
+  recommendAcception @map("4")
+  recommendRejection @map("5")
 }
 
 enum lecture_appointmenttype_enum {
