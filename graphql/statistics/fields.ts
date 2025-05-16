@@ -1,7 +1,7 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { course_category_enum, dissolve_reason, pupil_screening_status_enum } from '@prisma/client';
+import { course_category_enum, dissolve_reason, pupil_screening_status_enum, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
 import { GraphQLString } from 'graphql';
 import moment from 'moment-timezone';
 
@@ -438,7 +438,7 @@ export class StatisticsResolver {
                 FROM
                     student
                 LEFT JOIN screening on screening."studentId" = student.id
-                WHERE screening.status = '1'
+                WHERE screening.status = ${ScreeningStatus.success}::student_screening_status_enum
                 GROUP BY student.id
             ),
             last_action AS (
@@ -704,7 +704,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "knowsCoronaSchoolFrom"               AS group
                                       FROM "screening"
-                                      WHERE "status" = '1'
+                                      WHERE "status" = ${ScreeningStatus.success}::student_screening_status_enum
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "knowsCoronaSchoolFrom"
