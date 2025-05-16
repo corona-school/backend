@@ -12,6 +12,7 @@ import deleteUnreachableAchievements from './periodic/delete-unreachable-achieve
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
+import { populateAppointmentStats } from './manual/populate_appointment_stats';
 
 export const allJobs = {
     cleanupSecrets,
@@ -29,6 +30,7 @@ export const allJobs = {
     deleteUnreachableAchievements,
 
     assignOriginalAchievement,
+    populateAppointmentStats,
 
     // For Integration Tests only:
     NOTHING_DO_NOT_USE: async () => {
