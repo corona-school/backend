@@ -264,7 +264,6 @@ model course_tags_course_tag {
 // Durinng the Screening we also collect some additional user information
 model instructor_screening {
   id                    Int                           @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
-  success               Boolean
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
   jobStatus             screening_jobstatus_enum?
@@ -712,7 +711,6 @@ model screener {
 // A Screening for Students that want to tutor pupils
 model screening {
   id                    Int                           @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
-  success               Boolean
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
   jobStatus             screening_jobstatus_enum?
