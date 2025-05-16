@@ -15,7 +15,7 @@ export { ConcreteNotification, Notification };
 
 interface Attachment {
     Filename: string;
-    ContentType: 'image/png' | 'image/jpg' | 'application/pdf' | string; // MIME Type, see https://www.iana.org/assignments/media-types/media-types.xhtml
+    ContentType: 'image/png' | 'image/jpg' | 'application/pdf' | 'text/calendar' | string; // MIME Type, see https://www.iana.org/assignments/media-types/media-types.xhtml
     Base64Content: string;
 }
 

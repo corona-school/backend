@@ -55,7 +55,7 @@ const getViableUsers = (toggles: string[]) => {
     /* On production we want to avoid that our testusers test+prod-...@lern-fair.de
     are accidentally matched to real users */
     if (!isDev) {
-        viableUsers.email = { not: { startsWith: 'test', endsWith: '@lern-fair.de' } };
+        viableUsers.NOT = [{ email: { startsWith: 'test', endsWith: '@lern-fair.de' } }];
     }
 
     return viableUsers;
