@@ -24,8 +24,8 @@ const sampleCourse = {
     subcourse: {
         url: `https://app.lern-fair.de/single-course/1`,
         id: '1',
-        minGrade: '1',
-        maxGrade: '12',
+        minGrade: '1. Klasse',
+        maxGrade: 'in Ausbildung',
     },
     firstLecture: {
         date: '20. Juli 1969',
