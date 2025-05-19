@@ -59,6 +59,21 @@ class MedianTimeToMatch {
 
 const ONE_DAY_MILLIS = 24 * 3600 * 1000;
 
+const getStudentScreeningStatusNumber = (status: ScreeningStatus) => {
+    switch (status) {
+        case ScreeningStatus.pending:
+            return '0';
+        case ScreeningStatus.success:
+            return '1';
+        case ScreeningStatus.rejection:
+            return '2';
+        case ScreeningStatus.missed:
+            return '3';
+        default:
+            throw new Error('Invalid screening status');
+    }
+};
+
 @Resolver((of) => Statistics)
 export class StatisticsResolver {
     @Query((returns) => Statistics)
@@ -438,7 +453,7 @@ export class StatisticsResolver {
                 FROM
                     student
                 LEFT JOIN screening on screening."studentId" = student.id
-                WHERE screening.status = ${ScreeningStatus.success}::student_screening_status_enum
+                WHERE screening.status = ${getStudentScreeningStatusNumber(ScreeningStatus.success)}::student_screening_status_enum
                 GROUP BY student.id
             ),
             last_action AS (
@@ -704,7 +719,7 @@ export class StatisticsResolver {
                                              date_part('month', "createdAt"::date) AS month,
                                              "knowsCoronaSchoolFrom"               AS group
                                       FROM "screening"
-                                      WHERE "status" = ${ScreeningStatus.success}::student_screening_status_enum
+                                      WHERE "status" = ${getStudentScreeningStatusNumber(ScreeningStatus.success)}::student_screening_status_enum
                                         AND "createdAt" > ${statistics.from}::timestamp
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", "knowsCoronaSchoolFrom"
