@@ -587,17 +587,26 @@ void (async function setupDevDB() {
     const a2 = await createCourseTag(null, 'A2', CourseCategory.language);
     await createCourseTag(null, 'B1', CourseCategory.language);
 
-    const course = await prisma.course.create({
-        data: {
-            name: 'Do not remove me',
-            outline: '',
-            description: "I'm here just to make sure course ids and subcourse ids are not equal This helps us to simulate a bit better how production works",
-            category: 'coaching',
-            courseState: 'created',
-            subject: 'Informatik',
-            allowContact: false,
-        },
-    });
+    const emptyCourseData = {
+        name: 'Do not remove me',
+        outline: '',
+        description: "I'm here just to make sure course ids and subcourse ids are not equal This helps us to simulate a bit better how production works",
+        category: 'coaching',
+        courseState: 'created',
+        subject: 'Informatik',
+        allowContact: false,
+    } as const;
+
+    const emptyCourses = Array.from({ length: 10 }).fill(emptyCourseData) as Array<typeof emptyCourseData>;
+
+    await Promise.all(
+        emptyCourses.map((course) => {
+            // eslint-disable-next-line lernfair-lint/prisma-laziness
+            return prisma.course.create({
+                data: course,
+            });
+        })
+    );
 
     const [course1, subcourse1] = await createCourse({
         name: 'Deutsch Grammatik für Anfänger 📚',
