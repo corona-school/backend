@@ -32,6 +32,13 @@ export async function getSubcourseParticipants(subcourse: Subcourse) {
     });
 }
 
+export const getGradeLabel = (grade: number) => {
+    if (grade === 14) {
+        return 'in Ausbildung';
+    }
+    return `${grade}. Klasse`;
+};
+
 export async function getCourseOfSubcourse(subcourse: Subcourse) {
     return await prisma.course.findUniqueOrThrow({
         where: { id: subcourse.courseId },
