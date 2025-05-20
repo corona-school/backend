@@ -5,6 +5,7 @@ import {
     course_coursestate_enum as CourseState,
     subcourse_promotion_type_enum as SubcoursePromotionType,
     Prisma,
+    course_category_enum,
 } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
@@ -310,8 +311,9 @@ export async function addCourseInstructor(user: User | null, course: Course, new
 
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
     await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
-
-    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor);
+    const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { category: true } });
+    const silent = course.category === course_category_enum.homework_help;
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor, silent);
 
     if (subcourse.conversationId) {
         const newInstructorUser = userForStudent(newInstructor);

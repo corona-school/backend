@@ -81,7 +81,7 @@ export async function removeGroupAppointmentsParticipant(subcourseId: number, us
     );
 }
 
-export async function addGroupAppointmentsOrganizer(subcourseId: number, organizer: Student) {
+export async function addGroupAppointmentsOrganizer(subcourseId: number, organizer: Student, silent = false) {
     const organizerId = userForStudent(organizer).userID;
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
@@ -108,12 +108,14 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
             await addOrganizerToZoomMeeting(lecture, zoomUser);
         }
 
-        await Notification.actionTakenAt(
-            new Date(lecture.start),
-            userForStudent(organizer),
-            'student_group_appointment_starts',
-            await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
-        );
+        if (!silent) {
+            await Notification.actionTakenAt(
+                new Date(lecture.start),
+                userForStudent(organizer),
+                'student_group_appointment_starts',
+                await getContextForGroupAppointmentReminder(lecture, subcourse, subcourse.course)
+            );
+        }
     }
 }
 
