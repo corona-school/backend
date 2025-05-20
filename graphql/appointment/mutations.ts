@@ -105,7 +105,9 @@ export class MutateAppointmentResolver {
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
-        await updateAppointment(context.user, appointment, appointmentToBeUpdated);
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+        const silent = subcourse.course.category === course_category_enum.homework_help;
+        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent);
 
         return true;
     }
