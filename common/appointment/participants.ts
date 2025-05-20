@@ -23,7 +23,7 @@ export async function isAppointmentParticipant(lecture: Appointment, user: User)
     }));
 }
 
-export async function addGroupAppointmentsParticipant(subcourseId: number, userId: string) {
+export async function addGroupAppointmentsParticipant(subcourseId: number, userId: string, silent = false) {
     const user = await getUser(userId);
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
@@ -44,7 +44,7 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
         await prisma.lecture.update({ where: { id: lecture.id }, data: { participantIds: { push: userId } } });
         logger.info(`User(${userId}) added as participant of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
 
-        if (user.pupilId) {
+        if (user.pupilId && !silent) {
             await Notification.actionTakenAt(
                 new Date(lecture.start),
                 user,
