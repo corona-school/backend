@@ -10,7 +10,7 @@ import { leaveSubcourse } from '../courses/participants';
 
 const logger = getLogger('Appointment');
 
-export async function declineAppointment(user: User, appointment: Appointment) {
+export async function declineAppointment(user: User, appointment: Appointment, silent = false) {
     if (appointment.declinedBy.includes(user.userID)) {
         throw new RedundantError(`Appointment was already declined by User`);
     }
@@ -29,22 +29,26 @@ export async function declineAppointment(user: User, appointment: Appointment) {
                 for (const organizerId of appointment.organizerIds) {
                     const user = await getUser(organizerId);
                     const organizer = await getStudent(user);
-                    await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_group', {
-                        appointment: getAppointmentForNotification(appointment),
-                        pupil,
-                        ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
-                    });
+                    if (!silent) {
+                        await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_group', {
+                            appointment: getAppointmentForNotification(appointment),
+                            pupil,
+                            ...(await getNotificationContextForSubcourse(subCourse.course, subCourse)),
+                        });
+                    }
                 }
                 break;
             }
             case AppointmentType.match:
-                for (const organizerId of appointment.organizerIds) {
-                    const user = await getUser(organizerId);
-                    const organizer = await getStudent(user);
-                    await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_match', {
-                        appointment: getAppointmentForNotification(appointment),
-                        pupil,
-                    });
+                if (!silent) {
+                    for (const organizerId of appointment.organizerIds) {
+                        const user = await getUser(organizerId);
+                        const organizer = await getStudent(user);
+                        await Notification.actionTaken(userForStudent(organizer), 'pupil_decline_appointment_match', {
+                            appointment: getAppointmentForNotification(appointment),
+                            pupil,
+                        });
+                    }
                 }
                 break;
 
