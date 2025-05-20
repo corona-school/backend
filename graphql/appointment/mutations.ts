@@ -26,6 +26,7 @@ import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracki
 import moment from 'moment';
 import { getAppointmentEnd } from '../../common/appointment/util';
 import { getZoomUrl } from '../../common/zoom/user';
+import { course_category_enum } from '@prisma/client';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -74,8 +75,8 @@ export class MutateAppointmentResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
         const organizer = await getStudent(context.user.studentId);
         await hasAccess(context, 'Subcourse', subcourse);
-        const skipReminders = subcourse.course.category === 'homework_help';
-        await createGroupAppointments(subcourse.id, [appointment], organizer, skipReminders);
+        const silent = subcourse.course.category === course_category_enum.homework_help;
+        await createGroupAppointments(subcourse.id, [appointment], organizer, silent);
 
         return true;
     }
@@ -94,8 +95,8 @@ export class MutateAppointmentResolver {
         if (!isAppointmentOneWeekLater(appointments[0].start)) {
             throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
         }
-        const skipReminders = subcourse.course.category === 'homework_help';
-        await createGroupAppointments(subcourseId, appointments, organizer, skipReminders);
+        const silent = subcourse.course.category === course_category_enum.homework_help;
+        await createGroupAppointments(subcourseId, appointments, organizer, silent);
         return true;
     }
 
@@ -125,7 +126,7 @@ export class MutateAppointmentResolver {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
-        const silent = subcourse.course.category === 'homework_help';
+        const silent = subcourse.course.category === course_category_enum.homework_help;
         await cancelAppointment(context.user, appointment, silent);
 
         return true;
