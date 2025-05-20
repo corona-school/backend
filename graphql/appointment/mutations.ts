@@ -124,8 +124,9 @@ export class MutateAppointmentResolver {
     async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-
-        await cancelAppointment(context.user, appointment, false);
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
+        const silent = subcourse.course.category === 'homework_help';
+        await cancelAppointment(context.user, appointment, silent);
 
         return true;
     }
