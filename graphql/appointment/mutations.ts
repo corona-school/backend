@@ -74,7 +74,8 @@ export class MutateAppointmentResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
         const organizer = await getStudent(context.user.studentId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await createGroupAppointments(subcourse.id, [appointment], organizer);
+        const skipReminders = subcourse.course.category === 'homework_help';
+        await createGroupAppointments(subcourse.id, [appointment], organizer, skipReminders);
 
         return true;
     }
@@ -93,8 +94,8 @@ export class MutateAppointmentResolver {
         if (!isAppointmentOneWeekLater(appointments[0].start)) {
             throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
         }
-
-        await createGroupAppointments(subcourseId, appointments, organizer);
+        const skipReminders = subcourse.course.category === 'homework_help';
+        await createGroupAppointments(subcourseId, appointments, organizer, skipReminders);
         return true;
     }
 
