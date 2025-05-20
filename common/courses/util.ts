@@ -32,11 +32,15 @@ export async function getSubcourseParticipants(subcourse: Subcourse) {
     });
 }
 
-export const getGradeLabel = (grade: number) => {
-    if (grade === 14) {
-        return 'in Ausbildung';
+export const getGradeRangeLabel = (minGrade: number, maxGrade: number) => {
+    const minGradeLabel = minGrade === 14 ? 'in Ausbildung' : `${minGrade}. Klasse`;
+    const maxGradeLabel = maxGrade === 14 ? 'in Ausbildung' : `${maxGrade}. Klasse`;
+
+    if (minGrade === maxGrade) {
+        return minGradeLabel;
     }
-    return `${grade}. Klasse`;
+
+    return `${minGradeLabel} - ${maxGradeLabel}`;
 };
 
 export async function getCourseOfSubcourse(subcourse: Subcourse) {
