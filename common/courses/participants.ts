@@ -13,7 +13,7 @@ import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } f
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
-import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
+import { getCourseOfSubcourse, getSubcourseInstructors, isSubcourseSilent, removeSubcourseProspect } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 import { getLastLecture } from './lectures';
 
@@ -216,7 +216,7 @@ export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Stude
 
     const user = userForStudent(student);
     await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
-    const silent = course.category === course_category_enum.homework_help;
+    const silent = await isSubcourseSilent(subcourse.id);
     await addGroupAppointmentsParticipant(subcourse.id, user.userID, silent);
 }
 
@@ -269,8 +269,7 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
         await logTransaction('participantJoinedCourse', userForPupil(pupil), { subcourseID: subcourse.id });
-        const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { category: true } });
-        const silent = course.category === course_category_enum.homework_help;
+        const silent = await isSubcourseSilent(subcourse.id);
         await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID, silent);
         if (isChatFeatureActive() && subcourse.conversationId) {
             await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);

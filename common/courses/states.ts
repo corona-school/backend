@@ -33,6 +33,7 @@ import * as Notification from '../../common/notification';
 import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
 import { ValidationError } from 'apollo-server-express';
 import { getContextForGroupAppointmentReminder } from '../appointment/util';
+import { isSubcourseSilent } from './util';
 
 const logger = getLogger('Course States');
 
@@ -311,8 +312,7 @@ export async function addCourseInstructor(user: User | null, course: Course, new
 
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
     await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
-    const course = await prisma.course.findUnique({ where: { id: subcourse.courseId }, select: { category: true } });
-    const silent = course.category === course_category_enum.homework_help;
+    const silent = await isSubcourseSilent(subcourse.id);
     await addGroupAppointmentsOrganizer(subcourse.id, newInstructor, silent);
 
     if (subcourse.conversationId) {
