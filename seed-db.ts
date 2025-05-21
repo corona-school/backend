@@ -598,15 +598,9 @@ void (async function setupDevDB() {
     } as const;
 
     const emptyCourses = Array.from({ length: 10 }).fill(emptyCourseData) as Array<typeof emptyCourseData>;
-
-    await Promise.all(
-        emptyCourses.map((course) => {
-            // eslint-disable-next-line lernfair-lint/prisma-laziness
-            return prisma.course.create({
-                data: course,
-            });
-        })
-    );
+    await prisma.course.createMany({
+        data: emptyCourses,
+    });
 
     const [course1, subcourse1] = await createCourse({
         name: 'Deutsch Grammatik für Anfänger 📚',
