@@ -741,9 +741,11 @@ void (async function setupDevDB() {
         category: CourseCategory.homework_help,
         state: CourseState.allowed,
         maxParticipants: 1000,
-        instructors: [student1, student2, student3, student5],
+        instructors: [student1, student2, student3],
         participants: [pupil1, pupil2, pupil3, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
         lectures: { amount: 15, intervalInDays: 7, startOffsetInDays: -14 },
+        allowContact: false,
+        joinAfterStart: true,
     });
 
     await importAchievements();

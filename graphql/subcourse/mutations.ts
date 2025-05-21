@@ -258,7 +258,7 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourseAsMentor(subcourse, student);
-        logger.info(`Student(${studentId}) joined Subcourse(${subcourseId}) as mentor`);
+        logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
         return true;
     }
 
