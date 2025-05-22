@@ -994,6 +994,9 @@ model pupil_screening {
   screening_appointment screening_appointment[]
 }
 
+// Users need to go through a screening process before they can use the app. 
+// For this they have to book an appointment in Calendly.
+// The appointment is then automatically stored here via a webhook.
 model screening_appointment {
   id                    Int                   @id() @default(autoincrement())
   createdAt             DateTime              @default(now()) @db.Timestamp(6)
