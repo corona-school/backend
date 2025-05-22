@@ -21,6 +21,11 @@ export default async function execute() {
             cancelled: false,
             course: {
                 courseState: 'allowed',
+                category: {
+                    not: {
+                        equals: 'homework_help',
+                    },
+                },
             },
             published: true,
         },

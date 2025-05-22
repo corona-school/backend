@@ -1,4 +1,4 @@
-import { Prisma, subcourse as Subcourse } from '@prisma/client';
+import { course_category_enum, Prisma, subcourse as Subcourse } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { join } from 'path';
 import { prisma } from '../prisma';
@@ -102,4 +102,13 @@ export async function removeSubcourseProspect(subcourseId: number, pupilId: numb
     });
     logger.info(`Removed Pupil(${pupilId}) from the prospects of Subcourse(${subcourseId})`);
     return true;
+}
+
+export async function isSubcourseSilent(subcourseId: number): Promise<boolean> {
+    const subcourse = await prisma.subcourse.findUnique({
+        where: { id: subcourseId },
+        include: { course: { select: { category: true } } },
+    });
+
+    return subcourse.course.category === course_category_enum.homework_help;
 }

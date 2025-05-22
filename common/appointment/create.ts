@@ -144,7 +144,12 @@ export function canCreateGroupAppointment(subcourse: Subcourse, hasInstructors: 
     return { allowed: true };
 }
 
-export const createGroupAppointments = async (subcourseId: number, appointmentsToBeCreated: AppointmentCreateGroupInput[], organizer: Student) => {
+export const createGroupAppointments = async (
+    subcourseId: number,
+    appointmentsToBeCreated: AppointmentCreateGroupInput[],
+    organizer: Student,
+    silent?: boolean
+) => {
     const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourseId }, select: { pupil: true } });
     const mentors = await prisma.subcourse_mentors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
@@ -188,32 +193,33 @@ export const createGroupAppointments = async (subcourseId: number, appointmentsT
 
     const icsForPupil: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, false), ContentType: 'text/calendar', Filename: 'termin.ics' };
     const icsForStudent: Attachment = { Base64Content: await getIcsFile(createdGroupAppointments, true), ContentType: 'text/calendar', Filename: 'termin.ics' };
-
-    // * send notification
-    for (const participant of participants) {
-        await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
-            student: organizer,
-            ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
-            attachments: [icsForPupil],
-        });
-
-        // Send out reminders 12 hours before the appointment start
-        for (const appointment of createdGroupAppointments) {
-            await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
-                ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+    if (!silent) {
+        // * send notification
+        for (const participant of participants) {
+            await Notification.actionTaken(userForPupil(participant.pupil), 'student_add_appointment_group', {
+                student: organizer,
+                ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
                 attachments: [icsForPupil],
             });
-        }
-    }
 
-    for (const instructor of instructors) {
-        for (const appointment of createdGroupAppointments) {
-            if (subcourse.published) {
-                // For unpublished courses, this is deferred to a later point
-                await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+            // Send out reminders 12 hours before the appointment start
+            for (const appointment of createdGroupAppointments) {
+                await Notification.actionTakenAt(new Date(appointment.start), userForPupil(participant.pupil), 'pupil_group_appointment_starts', {
                     ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
-                    attachments: [icsForStudent],
+                    attachments: [icsForPupil],
                 });
+            }
+        }
+
+        for (const instructor of instructors) {
+            for (const appointment of createdGroupAppointments) {
+                if (subcourse.published) {
+                    // For unpublished courses, this is deferred to a later point
+                    await Notification.actionTakenAt(new Date(appointment.start), userForStudent(instructor.student), 'student_group_appointment_starts', {
+                        ...(await getContextForGroupAppointmentReminder(appointment, subcourse, subcourse.course)),
+                        attachments: [icsForStudent],
+                    });
+                }
             }
         }
     }

@@ -1,4 +1,4 @@
-import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
+import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student, course_category_enum } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import moment from 'moment';
@@ -13,7 +13,7 @@ import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } f
 import { addParticipant } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
-import { getCourseOfSubcourse, getSubcourseInstructors, removeSubcourseProspect } from './util';
+import { getCourseOfSubcourse, getSubcourseInstructors, isSubcourseSilent, removeSubcourseProspect } from './util';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 import { getLastLecture } from './lectures';
 
@@ -216,7 +216,8 @@ export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Stude
 
     const user = userForStudent(student);
     await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
-    await addGroupAppointmentsParticipant(subcourse.id, user.userID);
+    const silent = await isSubcourseSilent(subcourse.id);
+    await addGroupAppointmentsParticipant(subcourse.id, user.userID, silent);
 }
 
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
@@ -268,8 +269,8 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
 
         logger.info(`Pupil(${pupil.id}) joined Subcourse(${subcourse.id}`);
         await logTransaction('participantJoinedCourse', userForPupil(pupil), { subcourseID: subcourse.id });
-
-        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID);
+        const silent = await isSubcourseSilent(subcourse.id);
+        await addGroupAppointmentsParticipant(subcourse.id, pupilUser.userID, silent);
         if (isChatFeatureActive() && subcourse.conversationId) {
             await addParticipant(pupilUser, subcourse.conversationId, subcourse.groupChatType as ChatType);
         }

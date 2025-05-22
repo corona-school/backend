@@ -13,7 +13,8 @@ const logger = getLogger('Appointment');
 export async function updateAppointment(
     user: User,
     appointment: Appointment,
-    appointmentUpdate: Partial<Pick<Appointment, 'description' | 'duration' | 'start' | 'title'>>
+    appointmentUpdate: Partial<Pick<Appointment, 'description' | 'duration' | 'start' | 'title'>>,
+    silent = false
 ) {
     const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link } = appointment;
     const { duration: newDuration, start: newStart } = appointmentUpdate;
@@ -44,68 +45,70 @@ export async function updateAppointment(
     let lastDate: Date;
 
     const student = await getStudent(user);
-    switch (appointmentType) {
-        case AppointmentType.group: {
-            const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
-            const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
-            const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
-            const subcourseAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
-            lastDate = subcourseAppointments[subcourseAppointments.length - 1].start;
+    if (!silent) {
+        // send notifications
+        switch (appointmentType) {
+            case AppointmentType.group: {
+                const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: updatedAppointment.subcourseId }, include: { course: true } });
+                const participants = await prisma.subcourse_participants_pupil.findMany({ where: { subcourseId: subcourse.id }, include: { pupil: true } });
+                const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourse.id }, include: { student: true } });
+                const subcourseAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
+                lastDate = subcourseAppointments[subcourseAppointments.length - 1].start;
 
-            // send notification if date has changed
-            for (const participant of participants) {
-                await Notification.actionTaken(userForPupil(participant.pupil), 'pupil_change_appointment_group', {
-                    student: student,
-                    appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
-                    ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
-                });
-                await Notification.actionTakenAt(
-                    new Date(updatedAppointment.start),
-                    userForPupil(participant.pupil),
-                    'pupil_group_appointment_starts',
-                    await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
-                );
-            }
-
-            for (const instructor of instructors) {
-                if (subcourse.published) {
-                    // For unpublished courses, this is deferred to a later point
+                // send notification if date has changed
+                for (const participant of participants) {
+                    await Notification.actionTaken(userForPupil(participant.pupil), 'pupil_change_appointment_group', {
+                        student: student,
+                        appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
+                        ...(await getNotificationContextForSubcourse(subcourse.course, subcourse)),
+                    });
                     await Notification.actionTakenAt(
                         new Date(updatedAppointment.start),
-                        userForStudent(instructor.student),
-                        'student_group_appointment_starts',
+                        userForPupil(participant.pupil),
+                        'pupil_group_appointment_starts',
                         await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
                     );
                 }
+                for (const instructor of instructors) {
+                    if (subcourse.published) {
+                        // For unpublished courses, this is deferred to a later point
+                        await Notification.actionTakenAt(
+                            new Date(updatedAppointment.start),
+                            userForStudent(instructor.student),
+                            'student_group_appointment_starts',
+                            await getContextForGroupAppointmentReminder(updatedAppointment, subcourse, subcourse.course, /* original: */ appointment)
+                        );
+                    }
+                }
+
+                break;
             }
-            break;
-        }
-        case AppointmentType.match: {
-            const match = await prisma.match.findUnique({ where: { id: updatedAppointment.matchId }, include: { pupil: true } });
-            const matchAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
-            lastDate = matchAppointments[matchAppointments.length - 1].start;
+            case AppointmentType.match: {
+                const match = await prisma.match.findUnique({ where: { id: updatedAppointment.matchId }, include: { pupil: true } });
+                const matchAppointments = await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId } });
+                lastDate = matchAppointments[matchAppointments.length - 1].start;
 
-            // send notification if date has changed
-            await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
-                student: student,
-                appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
-            });
-            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_starts', {
-                ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
-                student,
-            });
-            await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(student), 'student_match_appointment_starts', {
-                ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
-                pupil: match.pupil,
-            });
+                // send notification if date has changed
+                await Notification.actionTaken(userForPupil(match.pupil), 'pupil_change_appointment_match', {
+                    student: student,
+                    appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
+                });
+                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_starts', {
+                    ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
+                    student,
+                });
+                await Notification.actionTakenAt(new Date(updatedAppointment.start), userForStudent(student), 'student_match_appointment_starts', {
+                    ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
+                    pupil: match.pupil,
+                });
 
-            break;
+                break;
+            }
+            case AppointmentType.internal:
+            case AppointmentType.legacy:
+                break;
         }
-        case AppointmentType.internal:
-        case AppointmentType.legacy:
-            break;
     }
-
     const zoomUpdate = {
         start: newStart,
         duration: newDuration,

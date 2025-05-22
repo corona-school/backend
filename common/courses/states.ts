@@ -5,6 +5,7 @@ import {
     course_coursestate_enum as CourseState,
     subcourse_promotion_type_enum as SubcoursePromotionType,
     Prisma,
+    course_category_enum,
 } from '@prisma/client';
 import { Decision } from '../util/decision';
 import { prisma } from '../prisma';
@@ -32,6 +33,7 @@ import * as Notification from '../../common/notification';
 import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
 import { ValidationError } from 'apollo-server-express';
 import { getContextForGroupAppointmentReminder } from '../appointment/util';
+import { isSubcourseSilent } from './util';
 
 const logger = getLogger('Course States');
 
@@ -310,8 +312,8 @@ export async function addCourseInstructor(user: User | null, course: Course, new
 
 export async function addSubcourseInstructor(user: User | null, subcourse: Subcourse, newInstructor: Student) {
     await prisma.subcourse_instructors_student.create({ data: { subcourseId: subcourse.id, studentId: newInstructor.id } });
-
-    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor);
+    const silent = await isSubcourseSilent(subcourse.id);
+    await addGroupAppointmentsOrganizer(subcourse.id, newInstructor, silent);
 
     if (subcourse.conversationId) {
         const newInstructorUser = userForStudent(newInstructor);
