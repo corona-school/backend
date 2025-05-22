@@ -1,8 +1,7 @@
 import { Field, InputType, Int } from 'type-graphql';
 import { prisma } from '../prisma';
-import assert from 'assert';
 import { Lecture, lecture_appointmenttype_enum, Subcourse } from '../../graphql/generated';
-import { createZoomMeeting, getZoomMeetingReport } from '../zoom/scheduled-meeting';
+import { createZoomMeeting } from '../zoom/scheduled-meeting';
 import { getOrCreateZoomUser, getZoomUrl, ZoomUser } from '../zoom/user';
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType, student as Student } from '@prisma/client';
 import moment from 'moment';
@@ -263,19 +262,33 @@ const createZoomMeetingForAppointmentWithHosts = async (
     }
 };
 
-export const saveZoomMeetingReport = async (appointment: Lecture) => {
-    const result = await getZoomMeetingReport(appointment.zoomMeetingId);
+type ZoomMeetingReport = {
+    participants: {
+        id: string;
+        name: string;
+        join_time: string;
+        leave_time: string;
+    }[];
+};
 
-    if (!result) {
-        logger.info(`Meeting report could not be saved for appointment (${appointment.id})`);
-        return;
-    }
+export const saveAppointmentStats = async (report: ZoomMeetingReport, appointment: Pick<Lecture, 'id'>) => {
+    const earliestJoinTime = report.participants.reduce((acc, p) => {
+        const joinTime = new Date(p.join_time);
+        return joinTime < acc ? joinTime : acc;
+    }, new Date('2100-01-01'));
+    const latestLeaveTime = report.participants.reduce((acc, p) => {
+        const leaveTime = new Date(p.leave_time);
+        return leaveTime > acc ? leaveTime : acc;
+    }, new Date(0));
+    const duration = Math.max(0, latestLeaveTime.getTime() - earliestJoinTime.getTime());
 
     await prisma.lecture.update({
         where: { id: appointment.id },
-        data: { zoomMeetingReport: { push: result } },
+        data: {
+            actualDuration: duration,
+        },
     });
-    logger.info(`Zoom meeting report was saved for appointment (${appointment.id})`);
+    logger.info(`Stats saved for Lecture (${appointment.id})`);
 };
 
 export async function createAdHocMeeting(matchId: number, user: User) {

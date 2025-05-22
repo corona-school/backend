@@ -8,7 +8,7 @@ import {
     createMatchAppointments,
     createZoomMeetingForAppointment,
     isAppointmentOneWeekLater,
-    saveZoomMeetingReport,
+    saveAppointmentStats,
 } from '../../common/appointment/create';
 import { GraphQLContext } from '../context';
 import { AuthorizedDeferred, hasAccess } from '../authorizations';
@@ -16,7 +16,7 @@ import { prisma } from '../../common/prisma';
 import { LectureWhereInput } from '../generated';
 import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
-import { deleteZoomMeeting, getZoomMeeting } from '../../common/zoom/scheduled-meeting';
+import { deleteZoomMeeting, getZoomMeeting, getZoomMeetingReport } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
 import { updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
@@ -139,7 +139,14 @@ export class MutateAppointmentResolver {
     async appointmentSaveMeetingReport(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        await saveZoomMeetingReport(appointment);
+
+        const report = await getZoomMeetingReport(appointment.zoomMeetingId);
+        if (!report) {
+            logger.info(`Meeting report could not be saved for appointment (${appointment.id})`);
+            return;
+        }
+
+        await saveAppointmentStats(report, appointment);
 
         return true;
     }
