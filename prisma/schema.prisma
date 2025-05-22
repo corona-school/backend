@@ -1004,7 +1004,10 @@ model screening_appointment {
   startAt               DateTime              @db.Timestamp(6)
   cancelledAt           DateTime?             @db.Timestamp(6)
   cancellationReason    String?               @db.VarChar
+  // Where the appointment takes place, e.g. 'Zoom', 'Google Meets', etc...
   joinUrl               String?               @db.VarChar
+  // Calendly Event URL, we can use this go get additional information about the appointment
+  // For calendly, it's also kind of an id
   eventUrl              String?               @db.VarChar
   pupilScreeningId      Int?
   pupilScreening        pupil_screening?      @relation(fields: [pupilScreeningId], references: [id], onDelete: NoAction, onUpdate: NoAction)
