@@ -1,7 +1,8 @@
-import { Router } from 'express';
+import { Request, Router } from 'express';
 import { getLogger } from '../../../common/logger/logger';
 import { CalendlyEvent, onEvent } from '../../../common/calendly';
 import crypto from 'crypto';
+import { WithRawBody } from '../chatNotificationController/types';
 
 const logger = getLogger('CalendlyWebhook');
 
@@ -9,7 +10,7 @@ const webhookSigningKey = process.env.CALENDLY_WEBHOOK_SIGNING_KEY;
 
 export const calendlyRouter = Router();
 
-calendlyRouter.post('/event', async (req, res) => {
+calendlyRouter.post('/event', async (req: WithRawBody<Request>, res) => {
     logger.info('Request at /calendly/event');
     try {
         const calendlySignature = req.get('Calendly-Webhook-Signature');
@@ -26,7 +27,7 @@ calendlyRouter.post('/event', async (req, res) => {
             res.status(401).send({ error: 'Unauthorized' });
             return;
         }
-        const data = t + '.' + JSON.stringify(req.body);
+        const data = t + '.' + req.rawBody;
         const expectedSignature = crypto.createHmac('sha256', webhookSigningKey).update(data, 'utf8').digest('hex');
         if (expectedSignature !== signature) {
             logger.error('Invalid Signature');
