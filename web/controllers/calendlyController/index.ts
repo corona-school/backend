@@ -19,25 +19,8 @@ calendlyRouter.post('/event', async (req, res) => {
             return;
         }
         // Calendly Signatures documentation https://developer.calendly.com/api-docs/4c305798a61d3-webhook-signatures
-        const { t, signature } = calendlySignature.split(',').reduce(
-            (acc, currentValue) => {
-                const [key, value] = currentValue.split('=');
+        const { t, v1: signature } = Object.fromEntries(calendlySignature.split(',').map((kv) => kv.split('=')));
 
-                if (key === 't') {
-                    acc.t = value;
-                }
-
-                if (key === 'v1') {
-                    acc.signature = value;
-                }
-
-                return acc;
-            },
-            {
-                t: '',
-                signature: '',
-            }
-        );
         if (!t || !signature) {
             logger.error('Invalid Signature');
             res.status(401).send({ error: 'Unauthorized' });
