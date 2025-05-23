@@ -353,6 +353,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_assignment: allAdmin,
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
+    Screening_appointment: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -627,6 +628,11 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Pupil_screening: {
         fields: {
             comment: onlyAdminOrScreener,
+        },
+    },
+    Screening_appointment: {
+        fields: {
+            eventUrl: onlyAdminOrScreener,
         },
     },
 };
