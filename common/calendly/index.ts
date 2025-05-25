@@ -53,6 +53,7 @@ export interface ScheduledEvent {
         join_url: string;
         type: 'zoom' | string;
     };
+    event_memberships?: { user_email: string }[];
 }
 
 export const getCalendlyScheduledEvent = async (eventUrl: string) => {
@@ -78,8 +79,20 @@ export const getCalendlyScheduledEvent = async (eventUrl: string) => {
     };
 };
 
+const getEventOrganizer = async (event: CalendlyEvent) => {
+    const [membership] = event.payload.scheduled_event.event_memberships;
+    try {
+        const user = await getUserByEmail(membership.user_email);
+        return user;
+    } catch (error) {
+        logger.error(`Failed to get screener from calendly event: ${membership.user_email}`, error);
+        return null;
+    }
+};
+
 const onEventInviteeCreated = async (event: CalendlyEvent) => {
     const user = await getUserByEmail(event.payload.email);
+    const screener = await getEventOrganizer(event);
     const newAppointmentComment = `[System]: Der Termin wurde am ${moment(event.payload.created_at).format('D.M.YYYY, HH:mm')} erstellt und findet am ${moment(
         event.payload.scheduled_event.start_time
     ).format('D.M.YYYY, HH:mm')} statt.`;
@@ -106,12 +119,17 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             const pupil = await getPupil(user);
             screening = await addPupilScreening(pupil, { comment: newAppointmentComment, status: 'pending' }, true);
         }
-        const appointment = await prisma.screening_appointment.create({
+        const appointment = await prisma.lecture.create({
             data: {
+                duration: 60,
+                appointmentType: 'screening',
+                title: 'Willkommensgespräch',
                 eventUrl: event.payload.scheduled_event.uri,
-                joinUrl: event.payload.scheduled_event.location?.join_url,
-                startAt: new Date(event.payload.scheduled_event.start_time),
+                override_meeting_link: event.payload.scheduled_event.location?.join_url,
+                start: new Date(event.payload.scheduled_event.start_time),
                 pupilScreeningId: screening.id,
+                participantIds: [user.userID],
+                organizerIds: screener ? [screener.userID] : [],
             },
         });
         logger.info(`Created ScreeningAppointment(${appointment.id}) for Screening(${screening.id})`);
@@ -163,13 +181,18 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             update: {},
         });
 
-        const appointment = await prisma.screening_appointment.create({
+        const appointment = await prisma.lecture.create({
             data: {
+                duration: 60,
+                appointmentType: 'screening',
+                title: 'Willkommensgespräch',
                 eventUrl: event.payload.scheduled_event.uri,
-                joinUrl: event.payload.scheduled_event.location?.join_url,
-                startAt: new Date(event.payload.scheduled_event.start_time),
+                override_meeting_link: event.payload.scheduled_event.location?.join_url,
+                start: new Date(event.payload.scheduled_event.start_time),
                 instructorScreeningId: !hadInstructorScreening ? instructorScreening.id : undefined,
                 tutorScreeningId: !hadTutorScreening ? tutorScreening.id : undefined,
+                participantIds: [user.userID],
+                organizerIds: screener ? [screener.userID] : [],
             },
         });
         logger.info(`Created ScreeningAppointment(${appointment.id}) for Student(${user.studentId})`);
@@ -178,7 +201,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
 };
 
 const onEventInviteeCanceled = async (event: CalendlyEvent) => {
-    const appointment = await prisma.screening_appointment.findFirst({
+    const appointment = await prisma.lecture.findFirst({
         where: {
             eventUrl: event.payload.scheduled_event.uri,
         },
@@ -193,11 +216,11 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         return;
     }
 
-    await prisma.screening_appointment.update({
+    await prisma.lecture.update({
         where: { id: appointment.id },
         data: {
-            cancelledAt: new Date(event.payload.scheduled_event.cancellation?.created_at),
-            cancellationReason: event.payload.scheduled_event.cancellation?.reason,
+            isCanceled: true,
+            // TODO: declinedBy
         },
     });
 

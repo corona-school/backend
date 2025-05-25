@@ -1,5 +1,5 @@
 import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
-import { Pupil, Pupil_screening as PupilScreening, Screener, Screening_appointment as ScreeningAppointment } from '../generated';
+import { Pupil, Pupil_screening as PupilScreening, Screener, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
 import { prisma } from '../../common/prisma';
 
@@ -17,7 +17,7 @@ export class ExtendedFieldsPupil_screeningResolver {
         return await prisma.screener.findMany({ where: { id: { in: screening.screenerIds } } });
     }
 
-    @FieldResolver((returns) => ScreeningAppointment, { nullable: true })
+    @FieldResolver((returns) => Lecture, { nullable: true })
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
     async appointment(@Root() screening: PupilScreening) {
         const currentScreening = await prisma.pupil_screening.findFirst({
@@ -27,10 +27,10 @@ export class ExtendedFieldsPupil_screeningResolver {
                 status: { in: ['pending'] },
             },
         });
-        const appointment = await prisma.screening_appointment.findFirst({
+        const appointment = await prisma.lecture.findFirst({
             where: {
                 pupilScreeningId: currentScreening.id,
-                cancelledAt: { equals: null },
+                isCanceled: false,
             },
         });
 

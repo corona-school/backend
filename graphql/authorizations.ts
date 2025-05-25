@@ -353,7 +353,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_assignment: allAdmin,
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
-    Screening_appointment: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -580,7 +579,20 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Lecture: {
         fields: withPublicFields<
             Lecture,
-            'id' | 'start' | 'duration' | 'createdAt' | 'updatedAt' | 'title' | 'description' | 'appointmentType' | 'isCanceled' | 'matchId' | 'subcourseId'
+            | 'id'
+            | 'start'
+            | 'duration'
+            | 'createdAt'
+            | 'updatedAt'
+            | 'title'
+            | 'description'
+            | 'appointmentType'
+            | 'isCanceled'
+            | 'matchId'
+            | 'subcourseId'
+            | 'pupilScreeningId'
+            | 'tutorScreeningId'
+            | 'instructorScreeningId'
         >({
             course_attendance_log: nobody,
             // subcourseId: nobody,
@@ -589,6 +601,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             instructorId: nobody,
             _count: nobody,
             match: adminOrOwner,
+            pupilScreening: adminOrOwner,
+            tutorScreening: adminOrOwner,
+            instructorScreening: adminOrOwner,
             // matchId: participantOrOwnerOrAdmin,
             participantIds: adminOrOwner,
             organizerIds: adminOrOwner,
@@ -597,6 +612,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomMeetingId: participantOrOwnerOrAdmin,
             zoomMeetingReport: adminOrOwner,
             override_meeting_link: participantOrOwnerOrAdmin,
+            eventUrl: adminOrOwner,
         }),
     },
     Participation_certificate: {
@@ -628,11 +644,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Pupil_screening: {
         fields: {
             comment: onlyAdminOrScreener,
-        },
-    },
-    Screening_appointment: {
-        fields: {
-            eventUrl: onlyAdminOrScreener,
         },
     },
 };
