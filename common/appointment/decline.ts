@@ -54,6 +54,7 @@ export async function declineAppointment(user: User, appointment: Appointment, s
 
             case AppointmentType.internal:
             case AppointmentType.legacy:
+            case AppointmentType.screening:
                 break;
         }
     }
