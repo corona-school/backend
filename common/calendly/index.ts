@@ -123,7 +123,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             data: {
                 duration: 60,
                 appointmentType: 'screening',
-                title: 'Willkommensgespräch',
+                title: event.payload.scheduled_event.name,
                 eventUrl: event.payload.scheduled_event.uri,
                 override_meeting_link: event.payload.scheduled_event.location?.join_url,
                 start: new Date(event.payload.scheduled_event.start_time),
@@ -185,7 +185,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             data: {
                 duration: 60,
                 appointmentType: 'screening',
-                title: 'Willkommensgespräch',
+                title: event.payload.scheduled_event.name,
                 eventUrl: event.payload.scheduled_event.uri,
                 override_meeting_link: event.payload.scheduled_event.location?.join_url,
                 start: new Date(event.payload.scheduled_event.start_time),
@@ -220,7 +220,6 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         where: { id: appointment.id },
         data: {
             isCanceled: true,
-            // TODO: declinedBy
         },
     });
 
