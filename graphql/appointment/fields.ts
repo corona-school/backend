@@ -13,8 +13,17 @@ import { UserType } from '../types/user';
 import { getZoomUrl } from '../../common/zoom/user';
 import { getLogger } from '../../common/logger/logger';
 import { getDisplayName } from '../../common/appointment/util';
+import { getCalendlyInviteeEvent } from '../../common/calendly';
 
 const logger = getLogger('Appointment Fields');
+
+@ObjectType()
+class AppointmentActionsUrls {
+    @Field((_type) => String, { nullable: true })
+    cancelUrl: string;
+    @Field((_type) => String, { nullable: true })
+    rescheduleUrl: string;
+}
 
 @ObjectType()
 class AppointmentParticipant {
@@ -206,6 +215,20 @@ export class ExtendedFieldsLectureResolver {
         }
 
         return await getSubcourse(appointment.subcourseId);
+    }
+
+    @FieldResolver((returns) => AppointmentActionsUrls, { nullable: true })
+    @Authorized(Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async actionUrls(@Ctx() context: GraphQLContext, @Root() appointment: Appointment) {
+        const { user } = context;
+        if (!appointment.eventUrl) {
+            return null;
+        }
+        const inviteeEvent = await getCalendlyInviteeEvent(appointment.eventUrl, user.email);
+        return {
+            cancelUrl: inviteeEvent.cancel_url ?? null,
+            rescheduleUrl: inviteeEvent.reschedule_url ?? null,
+        };
     }
 }
 

@@ -56,6 +56,12 @@ export interface ScheduledEvent {
     event_memberships?: { user_email: string }[];
 }
 
+export interface InviteeEvent {
+    email: string;
+    cancel_url: string;
+    reschedule_url: string;
+}
+
 export const getCalendlyScheduledEvent = async (eventUrl: string) => {
     const response = await fetch(eventUrl, {
         method: 'GET',
@@ -77,6 +83,29 @@ export const getCalendlyScheduledEvent = async (eventUrl: string) => {
         ...scheduledEvent,
         join_url: scheduledEvent?.location?.join_url,
     };
+};
+
+export const getCalendlyInviteeEvent = async (eventUrl: string, inviteeEmail: string) => {
+    const response = await fetch(`${eventUrl}/invitees`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${process.env.CALENDLY_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+        },
+    });
+    if (!response.ok) {
+        const errorText = `Failed to fetch Calendly event for invitee: ${response.statusText}`;
+        logger.error(errorText);
+        throw new Error(errorText);
+    }
+    const envelope = await response.json();
+    const collection = envelope.collection as InviteeEvent[];
+    const inviteeEvent = collection.find((e) => e.email === inviteeEmail);
+    if (!inviteeEvent) {
+        logger.warn(`No invitee found for email ${inviteeEmail} in event ${eventUrl}`);
+        return null;
+    }
+    return inviteeEvent;
 };
 
 const getEventOrganizer = async (event: CalendlyEvent) => {
