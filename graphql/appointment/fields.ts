@@ -143,14 +143,8 @@ export class ExtendedFieldsLectureResolver {
         if (appointment.matchId) {
             return await prisma.lecture.count({ where: { matchId: appointment.matchId, isCanceled: false } });
         }
-        if (appointment.pupilScreeningId) {
-            return await prisma.lecture.count({ where: { pupilScreeningId: appointment.pupilScreeningId, isCanceled: false } });
-        }
-        if (appointment.instructorScreeningId) {
-            return await prisma.lecture.count({ where: { instructorScreeningId: appointment.instructorScreeningId, isCanceled: false } });
-        }
-        if (appointment.tutorScreeningId) {
-            return await prisma.lecture.count({ where: { tutorScreeningId: appointment.tutorScreeningId, isCanceled: false } });
+        if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
+            1;
         }
         throw new Error('Cannot determine total of loose appointment');
     }
