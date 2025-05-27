@@ -93,6 +93,7 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
         }
         case AppointmentType.internal:
         case AppointmentType.legacy:
+        case AppointmentType.screening:
             break;
     }
 

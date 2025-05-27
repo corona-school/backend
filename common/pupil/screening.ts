@@ -25,13 +25,14 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
         throw new PrerequisiteError(`Pupil ${pupil.id} does not have a verified email`);
     }
 
-    await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
+    const pupilScreening = await prisma.pupil_screening.create({ data: { ...screening, pupilId: pupil.id } });
 
     if (!silent) {
         await Notification.actionTaken(userForPupil(pupil), 'pupil_screening_add', {});
     }
 
     logger.info(`Added ${screening.status || 'pending'} screening for pupil ${pupil.id}`, screening);
+    return pupilScreening;
 }
 
 interface PupilScreeningUpdate {

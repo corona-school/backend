@@ -48,4 +48,7 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
         (note.assignmentId &&
             (await isOwnedBy['Learning_assignment'](user, await prisma.learning_assignment.findUniqueOrThrow({ where: { id: note.assignmentId } })))) ||
         (note.topicId && (await isOwnedBy['Learning_topic'](user, await prisma.learning_topic.findUniqueOrThrow({ where: { id: note.topicId } })))),
+    Screening: (user, screening) => user.studentId === screening.studentId,
+    Instructor_screening: (user, screening) => user.studentId === screening.studentId,
+    Pupil_screening: (user, screening) => user.pupilId === screening.pupilId,
 };

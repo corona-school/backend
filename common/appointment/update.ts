@@ -106,6 +106,7 @@ export async function updateAppointment(
             }
             case AppointmentType.internal:
             case AppointmentType.legacy:
+            case AppointmentType.screening:
                 break;
         }
     }
