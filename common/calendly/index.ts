@@ -212,7 +212,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
 
         const appointment = await prisma.lecture.create({
             data: {
-                duration: 15,
+                duration: 30,
                 appointmentType: 'screening',
                 title: event.payload.scheduled_event.name,
                 eventUrl: event.payload.scheduled_event.uri,
