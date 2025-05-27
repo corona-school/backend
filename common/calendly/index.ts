@@ -188,7 +188,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
                 studentId: user.studentId,
             },
             create: {
-                screenerId: screener.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
+                screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
                 comment: newAppointmentComment,
                 status: 'pending',
@@ -201,7 +201,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
                 studentId: user.studentId,
             },
             create: {
-                screenerId: screener.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
+                screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
                 comment: newAppointmentComment,
                 status: 'pending',
