@@ -46,8 +46,10 @@ registerStudentHook(
 
 import { deletePupilMatchRequest } from '../match/request';
 import { deactivatePupil } from '../pupil/activation';
+import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
     await deletePupilMatchRequest(pupil);
+    await invalidateAllScreeningsOfPupil(pupil.id);
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {
