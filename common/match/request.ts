@@ -76,8 +76,6 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         },
     });
 
-    await invalidateAllScreeningsOfPupil(pupil.id);
-
     if (result.openMatchRequestCount === 0) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }

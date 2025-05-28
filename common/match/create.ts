@@ -8,7 +8,6 @@ import { getJitsiTutoringLink, getMatchHash, getOverlappingSubjects } from './ut
 import { getLogger } from '../../common/logger/logger';
 import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool } from './pool';
-import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { userForPupil, userForStudent } from '../user';
 import { DAZ } from '../util/subjectsutils';
 
@@ -56,7 +55,6 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         },
     });
 
-    await invalidateAllScreeningsOfPupil(pupil.id);
     await removeInterest(pupil);
 
     const callURL = getJitsiTutoringLink(match);
