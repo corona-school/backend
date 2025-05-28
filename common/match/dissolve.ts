@@ -84,7 +84,7 @@ export async function dissolveMatch(
     }
 
     // If the student dissolved the match for personal issues or ghosting, invalidate all screenings of the pupil
-    if ((dissolvedBy === dissolved_by_enum.student && dissolveReasons.includes('personalIssues')) || dissolveReasons.includes('ghosted')) {
+    if (dissolvedBy === dissolved_by_enum.student && (dissolveReasons.includes('personalIssues') || dissolveReasons.includes('ghosted'))) {
         await invalidateAllScreeningsOfPupil(pupil.id);
     }
 
