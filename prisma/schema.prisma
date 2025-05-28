@@ -988,7 +988,7 @@ model pupil_screening {
   createdAt   DateTime                    @default(now()) @db.Timestamp(6)
   updatedAt   DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
   status      pupil_screening_status_enum @default(pending)
-  // invalidated when a Match is created or the Match Request is revoked
+  // invalidated when a student dissolves a match due to Ghosting / Personal Issues, OR if the last successful screening is older than 4 months (calculated at time of requesting a new match)
   invalidated Boolean                     @default(false)
   comment     String?                     @db.VarChar
   pupilId     Int?
