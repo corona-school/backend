@@ -67,6 +67,7 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
         where: {
             pupilId: pupil.id,
             status: 'success',
+            invalidated: false,
             createdAt: {
                 gte: moment().subtract(4, 'months').toDate(),
             },
