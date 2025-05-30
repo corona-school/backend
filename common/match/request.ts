@@ -6,6 +6,7 @@ import { RedundantError } from '../util/error';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import * as Notification from '../notification';
 import { userForPupil, userForStudent } from '../user';
+import moment from 'moment';
 
 const logger = getLogger('Match');
 
@@ -61,6 +62,24 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
 
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_requested', {});
 
+    // If the last successful screening, wasn't in the last four months, then invalidate all the screenings.
+    const screening = await prisma.pupil_screening.findFirst({
+        where: {
+            pupilId: pupil.id,
+            status: 'success',
+            invalidated: false,
+            createdAt: {
+                gte: moment().subtract(4, 'months').toDate(),
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+    });
+    if (!screening) {
+        await invalidateAllScreeningsOfPupil(pupil.id);
+    }
+
     logger.info(`Created match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
 
@@ -75,8 +94,6 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
             openMatchRequestCount: { decrement: 1 },
         },
     });
-
-    await invalidateAllScreeningsOfPupil(pupil.id);
 
     if (result.openMatchRequestCount === 0) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
