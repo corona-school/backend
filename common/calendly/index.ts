@@ -306,6 +306,13 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
 };
 
 export const onEvent = (event: CalendlyEvent) => {
+    const validEventTypes = (process.env.CALENDLY_WEBHOOK_EVENT_TYPES ?? '').split(',').map((uuid) => `https://api.calendly.com/event_types/${uuid}`);
+    // Discard event if it's not configured
+    if (!validEventTypes.includes(event.payload.scheduled_event.event_type)) {
+        logger.debug(`Discarding event type: ${event.payload.scheduled_event.event_type}`);
+        return;
+    }
+
     logger.info(`Handling Calendly Event(${event.event})`, event);
     switch (event.event) {
         case 'invitee.created':
