@@ -416,7 +416,7 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async deleteStudentScreening(@Ctx() context: GraphQLContext, @Arg('type') type: 'instructor' | 'tutor', @Arg('screeningId') screeningId: number) {
+    async studentScreeningDelete(@Ctx() context: GraphQLContext, @Arg('type') type: 'instructor' | 'tutor', @Arg('screeningId') screeningId: number) {
         const screener = await getSessionScreener(context);
         const screening =
             type === 'instructor'
