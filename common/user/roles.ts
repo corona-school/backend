@@ -21,6 +21,9 @@ export enum Role {
     UNAUTHENTICATED = 'UNAUTHENTICATED',
     /* User owns the entity as defined in graphql/ownership */
     OWNER = 'OWNER',
+    /* Same as OWNER, but allows temporary users (i.e. without the USER Role) to hold it */
+    TEMPORARY_OWNER = 'TEMPORARY_OWNER',
+
     /* No one should have access */
     NOBODY = 'NOBODY',
 
