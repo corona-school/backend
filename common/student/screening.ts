@@ -14,6 +14,7 @@ interface ScreeningInput {
     comment?: string;
     jobStatus?: screening_jobstatus_enum;
     knowsCoronaSchoolFrom?: string;
+    skipCoC?: boolean;
 }
 
 const logger = getLogger('Student Screening');
@@ -110,28 +111,71 @@ export async function cancelCoCReminders(student: Student) {
     await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
 }
 
-export async function updateTutorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
-    const screening = await prisma.screening.update({
-        where: {
-            id: screeningId,
-        },
+export async function updateStudentScreening(type: 'instructor' | 'tutor', screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
+    const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
+    const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
+    const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
+
+    if (screening === null) {
+        logger.error(`cannot find ${screeningModelLabel}`, new Error(`cannot find ${screeningModelLabel}`), { screeningId: screening.id });
+        throw new Error(`${screeningModelLabel} not found`);
+    }
+
+    const basicUpdate = {
+        where: { id: screeningId },
         data: {
             comment: data.comment,
+            jobStatus: data.jobStatus,
+            knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
         },
-        include: { student: true },
-    });
-    logger.info(`Screener(${screenerId}) updated tutor screening of Student(${screening.studentId})`, data);
+    };
+
+    type === 'instructor' ? await prisma.instructor_screening.update(basicUpdate) : await prisma.screening.update(basicUpdate);
+
+    // For now we don't support change status from success/rejection
+    if (screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection) {
+        const { status, skipCoC, ...rest } = data;
+        logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, rest);
+        return;
+    }
+
+    const statusUpdate = {
+        where: { id: screeningId },
+        data: { status: data.status },
+    };
+    type === 'instructor' ? await prisma.instructor_screening.update(statusUpdate) : await prisma.screening.update(statusUpdate);
+    logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
+
+    if (data.status === ScreeningStatus.success) {
+        await requireStudentOnboarding(screening.studentId);
+        const asUser = userForStudent(screening.student);
+        await updateSessionRolesOfUser(asUser.userID);
+        if (!data.skipCoC) {
+            await scheduleCoCReminders(screening.student);
+        } else {
+            await logTransaction('skippedCoC', userForStudent(screening.student), { screenerId: screenerId });
+            logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
+        }
+        await Notification.actionTaken(
+            userForStudent(screening.student),
+            type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success',
+            {}
+        );
+    } else if (data.status === ScreeningStatus.rejection) {
+        await Notification.actionTaken(
+            userForStudent(screening.student),
+            type === 'instructor' ? 'instructor_screening_rejection' : 'tutor_screening_rejection',
+            {}
+        );
+    }
+
+    logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
 }
 
-export async function updateInstructorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
-    const screening = await prisma.instructor_screening.update({
-        where: {
-            id: screeningId,
-        },
-        data: {
-            comment: data.comment,
-        },
-        include: { student: true },
-    });
-    logger.info(`Screener(${screenerId}) updated instructor screening of Student(${screening.studentId})`, data);
+export async function updateTutorScreening(screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
+    await updateStudentScreening('tutor', screeningId, data, screenerId);
+}
+
+export async function updateInstructorScreening(screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
+    await updateStudentScreening('instructor', screeningId, data, screenerId);
 }
