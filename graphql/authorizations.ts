@@ -128,6 +128,17 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
         return true;
     }
 
+    // Do not allow access by unauthenticated users unless Role.UNAUTHENTICATED is explicitly in the authorized roles
+    if (context.user === UNAUTHENTICATED_USER) {
+        throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);
+    }
+
+    // Do not allow access by e.g. SSO registering users unless the temporary user is explicitly allowed, or temporary ownership
+    // is used
+    if (!context.user.roles.includes(Role.USER) && !requiredRoles.includes(Role.TEMPORARY_OWNER)) {
+        throw new AuthenticationError(`Temporary user has no permission to perform this query`);
+    }
+
     // If access is not granted by a fixed role of the user, they might have access through an 'entity role',
     // i.e. they are the owner of the accessed course or a participant in a course
 
@@ -157,10 +168,6 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
                 return true;
             }
         }
-    }
-
-    if (context.user === UNAUTHENTICATED_USER) {
-        throw new AuthenticationError(`Missing Roles as an unauthenticated user, did you forget to log in?`);
     }
 
     throw new ForbiddenError(`Requiring one of the following roles: ${requiredRoles}`);
@@ -199,18 +206,24 @@ function storeDeterminedEntityRole(context: GraphQLContext, role: Role, root: an
     authLogger.debug(`Stored role ${role} on entity: ${hasRole}`);
 }
 
+async function hasOwnershipRole(context: GraphQLContext, modelName: ResolverModelNames, root: any) {
+    const ownershipCheck = isOwnedBy[modelName];
+    assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
+
+    const isOwner = await ownershipCheck(context.user, root);
+    authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
+
+    return isOwner;
+}
+
 const entityRoles: EntityRole[] = [
     {
         role: Role.OWNER,
-        async hasRole(context, modelName, root) {
-            const ownershipCheck = isOwnedBy[modelName];
-            assert(!!ownershipCheck, `Entity ${modelName} must have ownership definition if Role.OWNER is used`);
-
-            const isOwner = await ownershipCheck(context.user, root);
-            authLogger.debug(`Ownership check, result: ${isOwner} for ${modelName}`, { root, user: context.user });
-
-            return isOwner;
-        },
+        hasRole: hasOwnershipRole,
+    },
+    {
+        role: Role.TEMPORARY_OWNER,
+        hasRole: hasOwnershipRole,
     },
 
     {
