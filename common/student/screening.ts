@@ -117,33 +117,28 @@ export async function updateStudentScreening(type: 'instructor' | 'tutor', scree
     const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
 
     if (screening === null) {
-        logger.error(`cannot find ${screeningModelLabel}`, new Error(`cannot find ${screeningModelLabel}`), { screeningId: screening.id });
-        throw new Error(`${screeningModelLabel} not found`);
+        throw new Error(`${screeningModelLabel}(${screening.id}) not found`);
     }
 
-    const basicUpdate = {
+    // We don't allow status change from success/rejection
+    const decisionTaken = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
+    const statusChanges = data.status && screening.status !== data.status;
+    if (decisionTaken && statusChanges) {
+        throw new Error('The status of Approved/Rejected screenings cannot be changed');
+    }
+
+    const update = {
         where: { id: screeningId },
         data: {
             comment: data.comment,
             jobStatus: data.jobStatus,
             knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
+            status: data.status,
         },
     };
 
-    type === 'instructor' ? await prisma.instructor_screening.update(basicUpdate) : await prisma.screening.update(basicUpdate);
-
-    // For now we don't support change status from success/rejection
-    if (screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection) {
-        const { status, skipCoC, ...rest } = data;
-        logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, rest);
-        return;
-    }
-
-    const statusUpdate = {
-        where: { id: screeningId },
-        data: { status: data.status },
-    };
-    type === 'instructor' ? await prisma.instructor_screening.update(statusUpdate) : await prisma.screening.update(statusUpdate);
+    // @ts-expect-error For some reason Typescript doesn't treat the update the same way it does with the find. This should work fine
+    await screeningModel.update(update);
     logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
 
     if (data.status === ScreeningStatus.success) {
