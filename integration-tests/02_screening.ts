@@ -200,7 +200,7 @@ export const screenedInstructorOne = test('Screen Instructor One successfully', 
         mutation ScreenInstructorOne {
             studentScreeningCreate(
                 studentId: ${instructor.student.id}
-                type: "instructor"
+                type: instructor
                 screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
@@ -224,7 +224,7 @@ export const screenedInstructorTwo = test('Screen Instructor Two successfully', 
         mutation ScreenInstructorOne {
             studentScreeningCreate(
                 studentId: ${instructor.student.id}
-                type: "instructor"
+                type: instructor
                 screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
@@ -248,7 +248,7 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
         mutation ScreenInstructorOne {
             studentScreeningCreate(
                 studentId: ${student.student.id}
-                type: "tutor"
+                type: tutor
                 screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }

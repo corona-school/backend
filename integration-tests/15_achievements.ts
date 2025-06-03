@@ -59,7 +59,7 @@ void test('Reward student onboarding achievement sequence', async () => {
         mutation ScreenInstructorOne {
             studentScreeningCreate(
                 studentId: ${student.student.id}
-                type: "tutor"
+                type: tutor
                 screening: {status: success comment: "" knowsCoronaSchoolFrom: ""}
             )
         }

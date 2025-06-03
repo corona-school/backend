@@ -13,8 +13,8 @@ import {
     cancelCoCReminders,
     scheduleCoCReminders,
     requireStudentOnboarding,
-    updateInstructorScreening,
-    updateTutorScreening,
+    updateStudentScreening,
+    StudentScreeningType,
 } from '../../common/student/screening';
 import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
@@ -369,7 +369,7 @@ export class MutateStudentResolver {
     async studentScreeningCreate(
         @Ctx() context: GraphQLContext,
         @Arg('studentId') studentId: number,
-        @Arg('type') type: 'instructor' | 'tutor',
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
         @Arg('screening') screening: ScreeningInput,
         @Arg('skipCoC', { nullable: true }) skipCoC?: boolean
     ) {
@@ -380,7 +380,7 @@ export class MutateStudentResolver {
             throw new ForbiddenError(`Requiring admin role to skip CoC`);
         }
 
-        if (type === 'tutor') {
+        if (type === StudentScreeningType.tutor) {
             if (!student.isStudent) {
                 await prisma.student.update({ data: { isStudent: true }, where: { id: student.id } });
                 log.info(`Student(${student.id}) was screened as a tutor, so we assume they also want to be tutor`);
@@ -402,33 +402,33 @@ export class MutateStudentResolver {
     async studentScreeningUpdate(
         @Ctx() context: GraphQLContext,
         @Arg('screeningId') screeningId: number,
-        @Arg('type') type: 'instructor' | 'tutor',
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
         @Arg('data') data: ScreeningUpdateInput
     ) {
         const screener = await getSessionScreener(context);
-        if (type === 'instructor') {
-            await updateInstructorScreening(screeningId, data, screener.id);
-        } else {
-            await updateTutorScreening(screeningId, data, screener.id);
-        }
+        await updateStudentScreening(type, screeningId, data, screener.id);
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async studentScreeningDelete(@Ctx() context: GraphQLContext, @Arg('type') type: 'instructor' | 'tutor', @Arg('screeningId') screeningId: number) {
+    async studentScreeningDelete(
+        @Ctx() context: GraphQLContext,
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
+        @Arg('screeningId') screeningId: number
+    ) {
         const screener = await getSessionScreener(context);
         const screening =
-            type === 'instructor'
+            type === StudentScreeningType.instructor
                 ? await prisma.instructor_screening.findUnique({ where: { id: screeningId } })
                 : await prisma.screening.findUnique({ where: { id: screeningId } });
         if (screening.status !== StudentScreeningStatus.pending) {
             throw new PrerequisiteError(`Only pending screenings can be deleted`);
         }
-        type === 'instructor'
+        type === StudentScreeningType.instructor
             ? await prisma.instructor_screening.delete({ where: { id: screeningId } })
             : await prisma.screening.delete({ where: { id: screeningId } });
-        log.info(`Deleted ${type === 'instructor' ? 'InstructorScreening' : 'TutorScreening'}(${screeningId}) by Screener(${screener.id})`);
+        log.info(`Deleted ${type === StudentScreeningType.instructor ? 'InstructorScreening' : 'TutorScreening'}(${screeningId}) by Screener(${screener.id})`);
         return true;
     }
 

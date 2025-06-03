@@ -17,6 +17,11 @@ interface ScreeningInput {
     skipCoC?: boolean;
 }
 
+export enum StudentScreeningType {
+    tutor = 'tutor',
+    instructor = 'instructor',
+}
+
 const logger = getLogger('Student Screening');
 
 export const requireStudentOnboarding = async (studentId: number, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) => {
@@ -111,7 +116,7 @@ export async function cancelCoCReminders(student: Student) {
     await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
 }
 
-export async function updateStudentScreening(type: 'instructor' | 'tutor', screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
+export async function updateStudentScreening(type: StudentScreeningType, screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
     const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
     const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
     const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
@@ -165,12 +170,4 @@ export async function updateStudentScreening(type: 'instructor' | 'tutor', scree
     }
 
     logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
-}
-
-export async function updateTutorScreening(screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
-    await updateStudentScreening('tutor', screeningId, data, screenerId);
-}
-
-export async function updateInstructorScreening(screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
-    await updateStudentScreening('instructor', screeningId, data, screenerId);
 }
