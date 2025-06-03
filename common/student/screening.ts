@@ -4,7 +4,7 @@ import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
@@ -129,7 +129,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
     const decisionTaken = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     const statusChanges = data.status && screening.status !== data.status;
     if (decisionTaken && statusChanges) {
-        throw new Error('The status of Approved/Rejected screenings cannot be changed');
+        throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
     }
 
     const update = {
