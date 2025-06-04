@@ -144,7 +144,7 @@ export class ExtendedFieldsLectureResolver {
             return await prisma.lecture.count({ where: { matchId: appointment.matchId, isCanceled: false } });
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
-            1;
+            return 1;
         }
         throw new Error('Cannot determine total of loose appointment');
     }
