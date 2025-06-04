@@ -13,8 +13,8 @@ import {
     cancelCoCReminders,
     scheduleCoCReminders,
     requireStudentOnboarding,
-    updateInstructorScreening,
-    updateTutorScreening,
+    updateStudentScreening,
+    StudentScreeningType,
 } from '../../common/student/screening';
 import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
@@ -71,10 +71,16 @@ export class ScreeningInput {
 
 @InputType()
 class ScreeningUpdateInput {
-    @Field((_type) => String, {
-        nullable: true,
-    })
+    @Field((_type) => String, { nullable: true })
     comment?: string | undefined;
+    @Field(() => String, { nullable: true })
+    knowsCoronaSchoolFrom?: string;
+    @Field((_type) => screening_jobstatus_enum, { nullable: true })
+    jobStatus?: screening_jobstatus_enum | undefined;
+    @Field((_type) => StudentScreeningStatus, { nullable: true })
+    status?: StudentScreeningStatus;
+    @Field((_type) => Boolean, { nullable: true })
+    skipCoC?: boolean;
 }
 
 @ObjectType()
@@ -360,56 +366,69 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async studentInstructorScreeningCreate(
+    async studentScreeningCreate(
         @Ctx() context: GraphQLContext,
         @Arg('studentId') studentId: number,
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
         @Arg('screening') screening: ScreeningInput,
         @Arg('skipCoC', { nullable: true }) skipCoC?: boolean
     ) {
         const student = await getStudent(studentId);
-
-        if (!student.isInstructor) {
-            await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
-            log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
-        }
         const screener = await getSessionScreener(context);
         if (!!skipCoC && !context.user.roles.includes(Role.ADMIN)) {
-            log.warn(`Screener (${screener.id}) tried to skip CoC on Student (${student.id}) even though they're not an admin`);
+            log.warn(`Screener(${screener.id}) tried to skip CoC on Student(${student.id}) even though they're not an admin`);
             throw new ForbiddenError(`Requiring admin role to skip CoC`);
         }
 
-        await addInstructorScreening(screener, student, screening, !!skipCoC);
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async studentTutorScreeningCreate(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('screening') screening: ScreeningInput) {
-        const student = await getStudent(studentId);
-
-        if (!student.isStudent) {
-            await prisma.student.update({ data: { isStudent: true }, where: { id: student.id } });
-            log.info(`Student(${student.id}) was screened as a tutor, so we assume they also want to be tutor`);
+        if (type === StudentScreeningType.tutor) {
+            if (!student.isStudent) {
+                await prisma.student.update({ data: { isStudent: true }, where: { id: student.id } });
+                log.info(`Student(${student.id}) was screened as a tutor, so we assume they also want to be tutor`);
+            }
+            await addTutorScreening(screener, student, screening);
+        } else {
+            if (!student.isInstructor) {
+                await prisma.student.update({ data: { isInstructor: true }, where: { id: student.id } });
+                log.info(`Student(${student.id}) was screened as an instructor, so we assume they also want to be an instructor`);
+            }
+            await addInstructorScreening(screener, student, screening, !!skipCoC);
         }
 
-        const screener = await getSessionScreener(context);
-        await addTutorScreening(screener, student, screening);
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async studentTutorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+    async studentScreeningUpdate(
+        @Ctx() context: GraphQLContext,
+        @Arg('screeningId') screeningId: number,
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
+        @Arg('data') data: ScreeningUpdateInput
+    ) {
         const screener = await getSessionScreener(context);
-        await updateTutorScreening(screeningId, data, screener.id);
+        await updateStudentScreening(type, screeningId, data, screener.id);
         return true;
     }
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
-    async studentInstructorScreeningUpdate(@Ctx() context: GraphQLContext, @Arg('screeningId') screeningId: number, @Arg('data') data: ScreeningUpdateInput) {
+    async studentScreeningDelete(
+        @Ctx() context: GraphQLContext,
+        @Arg('type', () => StudentScreeningType) type: StudentScreeningType,
+        @Arg('screeningId') screeningId: number
+    ) {
         const screener = await getSessionScreener(context);
-        await updateInstructorScreening(screeningId, data, screener.id);
+        const screening =
+            type === StudentScreeningType.instructor
+                ? await prisma.instructor_screening.findUnique({ where: { id: screeningId } })
+                : await prisma.screening.findUnique({ where: { id: screeningId } });
+        if (screening.status !== StudentScreeningStatus.pending) {
+            throw new PrerequisiteError(`Only pending screenings can be deleted`);
+        }
+        type === StudentScreeningType.instructor
+            ? await prisma.instructor_screening.delete({ where: { id: screeningId } })
+            : await prisma.screening.delete({ where: { id: screeningId } });
+        log.info(`Deleted ${type === StudentScreeningType.instructor ? 'InstructorScreening' : 'TutorScreening'}(${screeningId}) by Screener(${screener.id})`);
         return true;
     }
 

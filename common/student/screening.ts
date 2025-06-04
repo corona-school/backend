@@ -4,7 +4,7 @@ import * as Notification from '../notification';
 import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
@@ -14,6 +14,12 @@ interface ScreeningInput {
     comment?: string;
     jobStatus?: screening_jobstatus_enum;
     knowsCoronaSchoolFrom?: string;
+    skipCoC?: boolean;
+}
+
+export enum StudentScreeningType {
+    tutor = 'tutor',
+    instructor = 'instructor',
 }
 
 const logger = getLogger('Student Screening');
@@ -110,28 +116,58 @@ export async function cancelCoCReminders(student: Student) {
     await logTransaction('cocCancel', userForStudent(student), { studentId: student.id });
 }
 
-export async function updateTutorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
-    const screening = await prisma.screening.update({
-        where: {
-            id: screeningId,
-        },
-        data: {
-            comment: data.comment,
-        },
-        include: { student: true },
-    });
-    logger.info(`Screener(${screenerId}) updated tutor screening of Student(${screening.studentId})`, data);
-}
+export async function updateStudentScreening(type: StudentScreeningType, screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
+    const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
+    const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
+    const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
 
-export async function updateInstructorScreening(screeningId: number, data: Pick<ScreeningInput, 'comment'>, screenerId?: number) {
-    const screening = await prisma.instructor_screening.update({
-        where: {
-            id: screeningId,
-        },
+    if (screening === null) {
+        throw new Error(`${screeningModelLabel}(${screening.id}) not found`);
+    }
+
+    // We don't allow status change from success/rejection
+    const decisionTaken = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
+    const statusChanges = data.status && screening.status !== data.status;
+    if (decisionTaken && statusChanges) {
+        throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
+    }
+
+    const update = {
+        where: { id: screeningId },
         data: {
             comment: data.comment,
+            jobStatus: data.jobStatus,
+            knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
+            status: data.status,
         },
-        include: { student: true },
-    });
-    logger.info(`Screener(${screenerId}) updated instructor screening of Student(${screening.studentId})`, data);
+    };
+
+    // @ts-expect-error For some reason Typescript doesn't treat the update the same way it does with the find. This should work fine
+    await screeningModel.update(update);
+    logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
+
+    if (data.status === ScreeningStatus.success) {
+        await requireStudentOnboarding(screening.studentId);
+        const asUser = userForStudent(screening.student);
+        await updateSessionRolesOfUser(asUser.userID);
+        if (!data.skipCoC) {
+            await scheduleCoCReminders(screening.student);
+        } else {
+            await logTransaction('skippedCoC', userForStudent(screening.student), { screenerId: screenerId });
+            logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
+        }
+        await Notification.actionTaken(
+            userForStudent(screening.student),
+            type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success',
+            {}
+        );
+    } else if (data.status === ScreeningStatus.rejection) {
+        await Notification.actionTaken(
+            userForStudent(screening.student),
+            type === 'instructor' ? 'instructor_screening_rejection' : 'tutor_screening_rejection',
+            {}
+        );
+    }
+
+    logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
 }

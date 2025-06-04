@@ -19,6 +19,7 @@ import {
     student_screening_status_enum as StudentScreeningStatus,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
+import { StudentScreeningType } from '../../common/student/screening';
 
 registerEnumType(PupilEmailOwner, {
     name: 'PupilEmailOwner',
@@ -84,3 +85,4 @@ registerEnumType(school_schooltype_enum, {
 });
 
 registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });
+registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
