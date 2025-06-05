@@ -15,9 +15,9 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
     const appointmentsCount = await prisma.lecture.count({
         where: {
             isCanceled: false,
+            appointmentType: { not: 'screening' },
             NOT: {
                 declinedBy: { has: user.userID },
-                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -47,9 +47,9 @@ export const getEdgeAppointmentId = async (user: User, edge: Edge): Promise<numb
     const edgeAppointment = await prisma.lecture.findFirst({
         where: {
             isCanceled: false,
+            appointmentType: { not: 'screening' },
             NOT: {
                 declinedBy: { has: user.userID },
-                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -92,9 +92,9 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
     const appointments = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            appointmentType: { not: 'screening' },
             NOT: {
                 declinedBy: { has: userId },
-                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -129,12 +129,12 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
     const appointmentsFromNow = await prisma.lecture.findMany({
         where: {
             isCanceled: false,
+            appointmentType: { not: 'screening' },
             start: {
                 gte: moment().subtract(MAXIMUM_APPOINTMENT_DURATION, 'hours').toDate(),
             },
             NOT: {
                 declinedBy: { has: userId },
-                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
