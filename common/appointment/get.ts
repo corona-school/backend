@@ -17,6 +17,7 @@ export const hasAppointmentsForUser = async (user: User): Promise<boolean> => {
             isCanceled: false,
             NOT: {
                 declinedBy: { has: user.userID },
+                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -48,6 +49,7 @@ export const getEdgeAppointmentId = async (user: User, edge: Edge): Promise<numb
             isCanceled: false,
             NOT: {
                 declinedBy: { has: user.userID },
+                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -92,6 +94,7 @@ const getAppointmentsForUserFromCursor = async (userId: User['userID'], take: nu
             isCanceled: false,
             NOT: {
                 declinedBy: { has: userId },
+                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
@@ -131,6 +134,7 @@ const getAppointmentsForUserFromNow = async (userId: User['userID'], take: numbe
             },
             NOT: {
                 declinedBy: { has: userId },
+                appointmentType: { equals: 'screening' },
             },
             AND: [
                 { OR: [{ subcourseId: null }, { subcourse: { published: true } }] },
