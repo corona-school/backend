@@ -32,14 +32,23 @@ export function getOverlappingSubjects(pupil: Pupil, student: Student) {
 
     const tuteeGrade = pupil.grade === null ? null : gradeAsInt(pupil.grade);
 
-    return pupilSubjects.filter((pupilSubject) =>
-        studentSubjects.some(
-            (studentSubject) =>
-                studentSubject.name === pupilSubject.name &&
-                (studentSubject.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade &&
-                tuteeGrade <= (studentSubject.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)
-        )
-    );
+    return pupilSubjects
+        .map((pupilSubject) => {
+            const matchingStudentSubject = studentSubjects.find(
+                (studentSubject) =>
+                    studentSubject.name === pupilSubject.name &&
+                    (studentSubject.grade?.min ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MIN) <= tuteeGrade &&
+                    tuteeGrade <= (studentSubject.grade?.max ?? DEFAULT_TUTORING_GRADERESTRICTIONS.MAX)
+            );
+            if (matchingStudentSubject) {
+                return {
+                    ...pupilSubject,
+                    grade: matchingStudentSubject.grade,
+                };
+            }
+            return null;
+        })
+        .filter((subject) => !!subject);
 }
 
 // Used for showing Questionnaires to users and associate the ones of a match
