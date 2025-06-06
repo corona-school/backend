@@ -270,6 +270,7 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         studentId: null,
         pupilId: null,
         matchPoolRunId: null,
+        subjectsAtMatchingTime: [],
     };
 }
 

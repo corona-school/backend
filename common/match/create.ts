@@ -10,6 +10,7 @@ import { PrerequisiteError } from '../util/error';
 import type { ConcreteMatchPool } from './pool';
 import { userForPupil, userForStudent } from '../user';
 import { DAZ } from '../util/subjectsutils';
+import { gradeAsInt } from '../util/gradestrings';
 
 const logger = getLogger('Match');
 
@@ -29,6 +30,9 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
         throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
     }
 
+    const overlappingSubjects = getOverlappingSubjects(pupil, student);
+    const pupilGrade = pupil.grade ?? gradeAsInt(pupil.grade);
+
     const match = await prisma.match.create({
         data: {
             uuid,
@@ -38,6 +42,13 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
             studentFirstMatchRequest: student.firstMatchRequest,
             matchPool: pool.name,
             matchPoolRunId: null,
+            subjectsAtMatchingTime: overlappingSubjects.map((subject) => ({
+                name: subject.name,
+                minGrade: subject.grade?.min,
+                maxGrade: subject.grade?.max,
+                pupilGrade: pupilGrade,
+                mandatory: !!subject.mandatory,
+            })),
         },
     });
 
@@ -58,7 +69,7 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await removeInterest(pupil);
 
     const callURL = getJitsiTutoringLink(match);
-    const subjects = getOverlappingSubjects(pupil, student).map((it) => it.name);
+    const subjects = overlappingSubjects.map((it) => it.name);
 
     const matchSubjects = subjects.join('/');
 
