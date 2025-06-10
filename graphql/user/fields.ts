@@ -59,13 +59,13 @@ export class Contact {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.TEMPORARY_OWNER)
+    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.TEMPORARY_OWNER)
+    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
