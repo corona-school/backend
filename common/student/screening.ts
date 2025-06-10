@@ -142,11 +142,13 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         },
     };
 
+    if (data.status === ScreeningStatus.success) {
+        await requireStudentOnboarding(screening.studentId);
+    }
     // @ts-expect-error For some reason Typescript doesn't treat the update the same way it does with the find. This should work fine
     await screeningModel.update(update);
     logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
     if (data.status === ScreeningStatus.success) {
-        await requireStudentOnboarding(screening.studentId);
         const roleUpdate = type === StudentScreeningType.tutor ? { isStudent: true } : { isInstructor: true };
         await prisma.student.update({ data: roleUpdate, where: { id: screening.studentId } });
         const asUser = userForStudent(screening.student);
