@@ -454,15 +454,16 @@ model match {
   // has only one match request at a time anyways
   studentFirstMatchRequest DateTime? @db.Timestamp(6)
   pupilFirstMatchRequest   DateTime? @db.Timestamp(6)
-
+  // JSON with the format: [{ name: "Deutsch", minGrade: 1, maxGrade: 10, pupilGrade: 5, mandatory: true }]
+  subjectsAtMatchingTime   Json[]    @default([]) @db.Json
   // Since the introduction of Match Pools we also track whether a match was created for Lern-Fair Now or Lern-Fair Plus.
   // Previously one could not distinguish plus and now matches
-  matchPool String?   @db.VarChar
-  studentId Int?
-  pupilId   Int?
-  pupil     pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
-  student   student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
-  lecture   lecture[]
+  matchPool                String?   @db.VarChar
+  studentId                Int?
+  pupilId                  Int?
+  pupil                    pupil?    @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_38770d911dab69557a913812f3f")
+  student                  student?  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_89d8d61ff2bcae46513788416e4")
+  lecture                  lecture[]
 
   learning_topics learning_topic[]
 
