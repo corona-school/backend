@@ -280,7 +280,7 @@ async function getZoomUrl(user: User, appointment: Appointment) {
         if (zoomError.status !== 404) {
             throw error;
         }
-        logger.info(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+        logger.warn(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
     }
 
     // The start_url always includes the ZAK from the host, who created the meeting and so every host and alternativHost would use the same identity

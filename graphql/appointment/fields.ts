@@ -208,7 +208,7 @@ export class ExtendedFieldsLectureResolver {
             if (zoomError.status !== 404) {
                 throw error;
             }
-            logger.info(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+            logger.warn(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
             return null;
         }
     }
