@@ -219,7 +219,7 @@ export class MutateAppointmentResolver {
             // If for some reason this meeting is now expired/deleted according to zoom (which shouldn't be the case)
             // We just try to recreate it.
             if (zoomError?.status === 404 && zoomError?.code === 3001) {
-                logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+                logger.info(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
                 await deleteZoomMeeting(appointment);
                 await createZoomMeetingForAppointment(await getLecture(appointment.id));
             } else {

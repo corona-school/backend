@@ -10,6 +10,7 @@ import { ZoomUserResponse, ZoomUserType } from './type';
 import { User } from '../user';
 import { Lecture as Appointment } from '../../graphql/generated';
 import { getZoomMeeting } from './scheduled-meeting';
+import { ZoomError } from '../util/error';
 
 const logger = getLogger('Zoom User');
 
@@ -267,8 +268,20 @@ async function getZoomUrl(user: User, appointment: Appointment) {
     const basicJoinUrl = 'https://lern-fair.zoom.us/j';
     const isAppointmentOrganizer = appointment.organizerIds.includes(user.userID);
     const isAppointmentParticipant = appointment.participantIds.includes(user.userID);
-    const zoomMeeting = await getZoomMeeting(appointment as any);
-    const password = zoomMeeting.encrypted_password;
+    // We shouldn't let this fail in this case. Almost none of the appointments have a password
+    // And this only fails with 404 due to https://github.com/corona-school/project-user/issues/1395
+    // Which is also fixed by https://github.com/corona-school/backend/pull/1179
+    let password;
+    try {
+        const zoomMeeting = await getZoomMeeting(appointment as any);
+        password = zoomMeeting.encrypted_password;
+    } catch (error) {
+        const zoomError = error as ZoomError;
+        if (zoomError.status !== 404) {
+            throw error;
+        }
+        logger.info(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+    }
 
     // The start_url always includes the ZAK from the host, who created the meeting and so every host and alternativHost would use the same identity
     // The workaround with creating own start_urls with the ZAK is an undocumented feature of zoom
