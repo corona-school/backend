@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { getLogger } from '../logger/logger';
 import { addPupilScreening } from '../pupil/screening';
-import { getPupil, getUserByEmail } from '../user';
+import { getPupil, getUserByEmail, User } from '../user';
 import { prisma } from '../prisma';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../util/screening';
 
@@ -120,7 +120,15 @@ const getEventOrganizer = async (event: CalendlyEvent) => {
 };
 
 const onEventInviteeCreated = async (event: CalendlyEvent) => {
-    const user = await getUserByEmail(event.payload.email);
+    let user: User;
+    try {
+        user = await getUserByEmail(event.payload.email);
+    } catch (error) {
+        // If user wasn't found we can just "fail silently" here as probably the user entered a different email
+        // which we can't prevent from calendly ...
+        logger.warn('Error getting user from Calendly event');
+        return;
+    }
     const screener = await getEventOrganizer(event);
     const newAppointmentComment = `[System]: Der Termin wurde am ${moment(event.payload.created_at).format('D.M.YYYY, HH:mm')} erstellt und findet am ${moment(
         event.payload.scheduled_event.start_time
