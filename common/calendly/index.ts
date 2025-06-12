@@ -139,7 +139,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
         let screening = await prisma.pupil_screening.findFirst({
             where: {
                 pupilId: user.pupilId,
-                status: 'pending',
+                status: { in: ['pending', 'dispute'] },
                 invalidated: false,
             },
         });
