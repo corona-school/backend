@@ -14,6 +14,7 @@ import { getZoomUrl } from '../../common/zoom/user';
 import { getLogger } from '../../common/logger/logger';
 import { getDisplayName } from '../../common/appointment/util';
 import { getCalendlyInviteeEvent } from '../../common/calendly';
+import { ZoomError } from '../../common/util/error';
 
 const logger = getLogger('Appointment Fields');
 
@@ -199,8 +200,17 @@ export class ExtendedFieldsLectureResolver {
         if (!appointment.zoomMeetingId) {
             return null;
         }
-        const zoomMeeting = await getZoomMeeting(appointment);
-        return zoomMeeting.encrypted_password ?? null;
+        try {
+            const zoomMeeting = await getZoomMeeting(appointment);
+            return zoomMeeting.encrypted_password ?? null;
+        } catch (error) {
+            const zoomError = error as ZoomError;
+            if (zoomError.status !== 404) {
+                throw error;
+            }
+            logger.info(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+            return null;
+        }
     }
 
     @FieldResolver((returns) => Match, { nullable: true })
