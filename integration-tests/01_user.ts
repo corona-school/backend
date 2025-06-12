@@ -45,6 +45,11 @@ export async function createNewPupil() {
             }) {
                 id
             }
+            meUpdate(update: { 
+                pupil: { 
+                    subjects: [ { name: "Mathematik", mandatory: true}]
+                }
+            })
         }
     `);
 
@@ -142,6 +147,11 @@ export const pupilTwo = test('Register Pupil', async () => {
             }) {
                 id
             }
+            meUpdate(update: { 
+                pupil: { 
+                    subjects: [ { name: "Mathematik", mandatory: true}]
+                }
+            })
         }
     `);
 
