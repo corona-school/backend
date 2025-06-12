@@ -126,7 +126,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     } catch (error) {
         // If user wasn't found we can just "fail silently" here as probably the user entered a different email
         // which we can't prevent from calendly ...
-        logger.warn('Error getting user from Calendly event');
+        logger.warn(`Error getting user from Calendly Event(${event.payload.scheduled_event.uri})`);
         return;
     }
     const screener = await getEventOrganizer(event);
