@@ -49,7 +49,8 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
 export async function createPupilMatchRequest(pupil: Pupil, adminOverride = false) {
     if (!adminOverride) {
         assertAllowed(await canPupilRequestMatch(pupil));
-    } else if (!parseSubjectString(pupil.subjects).length) {
+    }
+    if (!parseSubjectString(pupil.subjects).length) {
         throw new PrerequisiteError('Subjects must be selected before creating a match request');
     }
 
