@@ -10,6 +10,7 @@ import { GraphQLContext } from '../context';
 import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
 import { getAppointmentsForMatch, getEdgeMatchAppointmentId } from '../../common/appointment/get';
+import { parseSubjectString } from '../../common/util/subjectsutils';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -45,9 +46,11 @@ export class ExtendedFieldsMatchResolver {
     @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
     @LimitEstimated(1)
     async subjectsFormatted(@Root() match: Match) {
+        if (match.subjectsAtMatchingTime.length) {
+            return parseSubjectString(JSON.stringify(match.subjectsAtMatchingTime));
+        }
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
-
         return getOverlappingSubjects(pupil, student);
     }
 
