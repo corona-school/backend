@@ -2,11 +2,12 @@ import { pupil as Pupil, student as Student, pupil_registrationsource_enum as Re
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import * as Notification from '../notification';
 import { userForPupil, userForStudent } from '../user';
 import moment from 'moment';
+import { parseSubjectString } from '../util/subjectsutils';
 
 const logger = getLogger('Match');
 
@@ -14,7 +15,7 @@ const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
 const PUPIL_MAX_MATCHES = 2;
 
-type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
+type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'no-subjects-selected' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
@@ -25,6 +26,10 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
 
     if (pupil.openMatchRequestCount >= PUPIL_MAX_REQUESTS) {
         return { allowed: false, reason: 'max-requests', limit: PUPIL_MAX_REQUESTS };
+    }
+
+    if (!parseSubjectString(pupil.subjects).length) {
+        return { allowed: false, reason: 'no-subjects-selected' };
     }
 
     if (pupil.registrationSource === '' + RegistrationSource.cooperation) {
@@ -44,6 +49,9 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
 export async function createPupilMatchRequest(pupil: Pupil, adminOverride = false) {
     if (!adminOverride) {
         assertAllowed(await canPupilRequestMatch(pupil));
+    }
+    if (!parseSubjectString(pupil.subjects).length) {
+        throw new PrerequisiteError('Subjects must be selected before creating a match request');
     }
 
     const result = await prisma.pupil.update({
