@@ -629,6 +629,9 @@ model pupil {
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
   referredById                                 String?                                        @db.VarChar
 
+  // Stores a structure like { weeklyAvailability: { monday: [{ from: "08:00", to: "10:00" }, ...], friday: [{ from: "17:00", to: "22:00" }], ... } }
+  calendarPreferences Json? @db.Json
+
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
   emailOwner pupil_email_owner_enum @default(unknown)
@@ -824,7 +827,10 @@ model student {
   gender                  gender_enum?
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
-  referredById              String?                     @db.VarChar
+  referredById String? @db.VarChar
+
+  // Stores a structure like { weeklyAvailability: { monday: [{ from: "08:00", to: "10:00" }, ...], friday: [{ from: "17:00", to: "22:00" }], ... } }
+  calendarPreferences       Json?                       @db.Json
   subcourse_mentors_student subcourse_mentors_student[]
 }
 

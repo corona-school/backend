@@ -43,6 +43,7 @@ import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
 import { ForbiddenError } from '../error';
+import { CalendarPreferences } from '../types/calendarPreferences';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -167,6 +168,9 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     descriptionForScreening?: string;
+
+    @Field((type) => CalendarPreferences, { nullable: true })
+    calendarPreferences?: CalendarPreferences;
 }
 
 const logger = getLogger('Student Mutations');
@@ -194,6 +198,7 @@ export async function updateStudent(
         gender,
         descriptionForMatch,
         descriptionForScreening,
+        calendarPreferences,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -242,6 +247,7 @@ export async function updateStudent(
             gender: ensureNoNull(gender),
             descriptionForMatch,
             descriptionForScreening,
+            calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
         },
         where: { id: student.id },
     });

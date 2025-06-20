@@ -431,6 +431,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             onlyMatchWith: onlyAdminOrScreener,
             referredById: adminOrOwner,
             emailOwner: adminOrOwnerOrScreener,
+            calendarPreferences: adminOrOwnerOrScreener,
         }),
     },
 
@@ -498,6 +499,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             gender: onlyAdminOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
+            calendarPreferences: adminOrOwnerOrScreener,
         }),
     },
 

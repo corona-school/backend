@@ -25,6 +25,7 @@ import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudent
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
 import { verifyEmail } from '../../common/secret';
 import { createIDPLogin } from '../../common/secret/idp';
+import { CalendarPreferences } from '../types/calendarPreferences';
 
 @InputType()
 class MeUpdateInput {
@@ -41,6 +42,9 @@ class MeUpdateInput {
 
     @Field((type) => NotificationPreferences, { nullable: true })
     notificationPreferences?: NotificationPreferences;
+
+    @Field((type) => CalendarPreferences, { nullable: true })
+    calendarPreferences?: CalendarPreferences;
 
     @Field((type) => PupilUpdateInput, { nullable: true })
     @ValidateNested()
