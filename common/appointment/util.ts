@@ -2,7 +2,7 @@ import { lecture as Appointment, lecture_appointmenttype_enum, subcourse as Subc
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 import * as ics from 'ics';
 import { EventAttributes } from 'ics';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { prisma } from '../prisma';
 import { getUsers } from '../user';
 import { getLogger } from '../logger/logger';
@@ -89,7 +89,9 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
     );
 
     const events: EventAttributes[] = appointments.map((appointment, index) => {
-        const start = moment(appointment.start)
+        const start = moment
+            .tz(appointment.start, 'Europe/Berlin')
+            .utc()
             .format('YYYY-M-D-H-m')
             .split('-')
             .map((a) => parseInt(a)) as [number, number, number, number, number];
@@ -99,6 +101,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
 
         return {
             start,
+            startInputType: 'utc',
             duration: { hours: durationHours, minutes: durationMinutes },
             title: displayName,
             description: appointment.description ?? undefined,

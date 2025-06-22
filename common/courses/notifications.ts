@@ -5,7 +5,7 @@ import { userForPupil } from '../user';
 import * as Prisma from '@prisma/client';
 import { getFirstLecture } from './lectures';
 import { parseSubjectString } from '../util/subjectsutils';
-import { getCourseCapacity, getCourseImageURL } from './util';
+import { getCourseCapacity, getCourseImageURL, getGradeRangeLabel } from './util';
 import { getCourse } from '../../graphql/util';
 import { NotificationContext } from '../notification/types';
 import moment from 'moment';
@@ -58,6 +58,7 @@ export async function getNotificationContextForSubcourse(course: { name: string;
         subcourse: {
             url: `https://app.lern-fair.de/single-course/${subcourse.id}`,
             id: '' + subcourse.id,
+            gradeRange: getGradeRangeLabel(subcourse.minGrade, subcourse.maxGrade),
         },
         firstLecture: {
             date,

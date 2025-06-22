@@ -258,7 +258,7 @@ export class MutateSubcourseResolver {
         const student = await getSessionStudent(context, studentId);
         const subcourse = await getSubcourse(subcourseId);
         await joinSubcourseAsMentor(subcourse, student);
-        logger.info(`Student(${studentId}) joined Subcourse(${subcourseId}) as mentor`);
+        logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
         return true;
     }
 
@@ -327,7 +327,8 @@ export class MutateSubcourseResolver {
         }
 
         // Joining the subcourse will automatically remove the pupil from the waitinglist
-        await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
+        // Not strict: Allow Subcourse Owners to add users regardless of the course settings (they could edit the settings anyways)
+        await joinSubcourse(subcourse, pupil, /* strict */ false, /* notifyIfFull */ false);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from waitinglist`);
         return true;
     }
@@ -358,7 +359,9 @@ export class MutateSubcourseResolver {
                 include: { lecture: true, subcourse_instructors_student: false },
             });
         }
-        await joinSubcourse(subcourse, pupil, true, /* notifyIfFull */ false);
+
+        // Not strict: Allow Subcourse Owners to add users regardless of the course settings (they could edit the settings anyways)
+        await joinSubcourse(subcourse, pupil, /* strict */ false, /* notifyIfFull */ false);
         logger.info(`Pupil(${pupilId}) joined Subcourse(${subcourseId}) from prospects`);
         return true;
     }

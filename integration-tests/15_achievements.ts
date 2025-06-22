@@ -57,9 +57,10 @@ void test('Reward student onboarding achievement sequence', async () => {
     const { client: screenerClient } = await screenerOne;
     await screenerClient.request(`
         mutation ScreenInstructorOne {
-            studentTutorScreeningCreate(
+            studentScreeningCreate(
                 studentId: ${student.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                type: tutor
+                screening: {status: success comment: "" knowsCoronaSchoolFrom: ""}
             )
         }
     `);

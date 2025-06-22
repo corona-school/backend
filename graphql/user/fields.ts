@@ -59,25 +59,29 @@ export class Contact {
 @Resolver((of) => UserType)
 export class UserFieldsResolver {
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
+    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
     firstname(@Root() user: User): string {
         return user.firstname;
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.SSO_REGISTERING_USER)
+    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
     lastname(@Root() user: User): string {
         return user.lastname;
     }
 
+    // NOTE: In the following we use TEMPORARY_OWNER instead of OWNER,
+    // as the frontend uses a global "GetUser" query for all users, regardless whether it is just a temporary user
+    // such as SSO_REGISTERING_USER or a real user, thus we allow this query, although it returns mostly nulls
+
     @FieldResolver((returns) => String)
-    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.TEMPORARY_OWNER, Role.ADMIN, Role.SCREENER)
     email(@Root() user: User): string {
         return user.email;
     }
 
     @FieldResolver((returns) => Pupil)
-    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.TEMPORARY_OWNER, Role.ADMIN, Role.SCREENER)
     async pupil(@Root() user: User): Promise<Pupil> {
         if (!user.pupilId) {
             return null;
@@ -87,7 +91,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Student)
-    @Authorized(Role.OWNER, Role.ADMIN, Role.SCREENER)
+    @Authorized(Role.TEMPORARY_OWNER, Role.ADMIN, Role.SCREENER)
     async student(@Root() user: User): Promise<Student> {
         if (!user.studentId) {
             return null;
@@ -97,7 +101,7 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => Screener)
-    @Authorized(Role.OWNER, Role.ADMIN)
+    @Authorized(Role.TEMPORARY_OWNER, Role.ADMIN)
     async screener(@Root() user: User): Promise<Screener> {
         if (!user.screenerId) {
             return null;
@@ -296,7 +300,7 @@ export class UserFieldsResolver {
                         // For now we exclude unscreened helpers, as they wont be interested
                         // in most of our marketing campaigns anyways
                         {
-                            OR: [{ screening: { success: true } }, { instructor_screening: { success: true } }],
+                            OR: [{ screening: { status: 'success' } }, { instructor_screening: { status: 'success' } }],
                         },
                     ],
                 },

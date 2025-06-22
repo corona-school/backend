@@ -1,4 +1,4 @@
-import { Prisma, subcourse as Subcourse } from '@prisma/client';
+import { course_category_enum, Prisma, subcourse as Subcourse } from '@prisma/client';
 import { accessURLForKey } from '../file-bucket';
 import { join } from 'path';
 import { prisma } from '../prisma';
@@ -31,6 +31,17 @@ export async function getSubcourseParticipants(subcourse: Subcourse) {
         where: { subcourse_participants_pupil: { some: { subcourseId: subcourse.id } } },
     });
 }
+
+export const getGradeRangeLabel = (minGrade: number, maxGrade: number) => {
+    const minGradeLabel = minGrade === 14 ? 'in Ausbildung' : `${minGrade}. Klasse`;
+    const maxGradeLabel = maxGrade === 14 ? 'in Ausbildung' : `${maxGrade}. Klasse`;
+
+    if (minGrade === maxGrade) {
+        return minGradeLabel;
+    }
+
+    return `${minGradeLabel} - ${maxGradeLabel}`;
+};
 
 export async function getCourseOfSubcourse(subcourse: Subcourse) {
     return await prisma.course.findUniqueOrThrow({
@@ -91,4 +102,13 @@ export async function removeSubcourseProspect(subcourseId: number, pupilId: numb
     });
     logger.info(`Removed Pupil(${pupilId}) from the prospects of Subcourse(${subcourseId})`);
     return true;
+}
+
+export async function isSubcourseSilent(subcourseId: number): Promise<boolean> {
+    const subcourse = await prisma.subcourse.findUnique({
+        where: { id: subcourseId },
+        include: { course: { select: { category: true } } },
+    });
+
+    return subcourse.course.category === course_category_enum.homework_help;
 }

@@ -26,6 +26,8 @@ import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracki
 import moment from 'moment';
 import { getAppointmentEnd } from '../../common/appointment/util';
 import { getZoomUrl } from '../../common/zoom/user';
+import { course_category_enum, lecture_appointmenttype_enum } from '@prisma/client';
+import { isSubcourseSilent } from '../../common/courses/util';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
@@ -74,7 +76,8 @@ export class MutateAppointmentResolver {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: appointment.subcourseId }, include: { course: true } });
         const organizer = await getStudent(context.user.studentId);
         await hasAccess(context, 'Subcourse', subcourse);
-        await createGroupAppointments(subcourse.id, [appointment], organizer);
+        const silent = await isSubcourseSilent(subcourse.id);
+        await createGroupAppointments(subcourse.id, [appointment], organizer, silent);
 
         return true;
     }
@@ -93,8 +96,8 @@ export class MutateAppointmentResolver {
         if (!isAppointmentOneWeekLater(appointments[0].start)) {
             throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
         }
-
-        await createGroupAppointments(subcourseId, appointments, organizer);
+        const silent = await isSubcourseSilent(subcourse.id);
+        await createGroupAppointments(subcourseId, appointments, organizer, silent);
         return true;
     }
 
@@ -103,7 +106,8 @@ export class MutateAppointmentResolver {
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
-        await updateAppointment(context.user, appointment, appointmentToBeUpdated);
+        const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
+        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent);
 
         return true;
     }
@@ -113,7 +117,8 @@ export class MutateAppointmentResolver {
     async appointmentDecline(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        await declineAppointment(context.user, appointment);
+        const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
+        await declineAppointment(context.user, appointment, silent);
 
         return true;
     }
@@ -123,8 +128,8 @@ export class MutateAppointmentResolver {
     async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-
-        await cancelAppointment(context.user, appointment, false);
+        const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
+        await cancelAppointment(context.user, appointment, silent);
 
         return true;
     }
@@ -214,7 +219,7 @@ export class MutateAppointmentResolver {
             // If for some reason this meeting is now expired/deleted according to zoom (which shouldn't be the case)
             // We just try to recreate it.
             if (zoomError?.status === 404 && zoomError?.code === 3001) {
-                logger.error(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
+                logger.warn(`Zoom Meeting Id (${appointment.zoomMeetingId}) expired or deleted`);
                 await deleteZoomMeeting(appointment);
                 await createZoomMeetingForAppointment(await getLecture(appointment.id));
             } else {

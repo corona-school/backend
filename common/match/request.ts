@@ -2,10 +2,12 @@ import { pupil as Pupil, student as Student, pupil_registrationsource_enum as Re
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
-import { RedundantError } from '../util/error';
+import { PrerequisiteError, RedundantError } from '../util/error';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import * as Notification from '../notification';
 import { userForPupil, userForStudent } from '../user';
+import moment from 'moment';
+import { parseSubjectString } from '../util/subjectsutils';
 
 const logger = getLogger('Match');
 
@@ -13,7 +15,7 @@ const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
 const PUPIL_MAX_MATCHES = 2;
 
-type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
+type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'no-subjects-selected' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
@@ -24,6 +26,10 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
 
     if (pupil.openMatchRequestCount >= PUPIL_MAX_REQUESTS) {
         return { allowed: false, reason: 'max-requests', limit: PUPIL_MAX_REQUESTS };
+    }
+
+    if (!parseSubjectString(pupil.subjects).length) {
+        return { allowed: false, reason: 'no-subjects-selected' };
     }
 
     if (pupil.registrationSource === '' + RegistrationSource.cooperation) {
@@ -44,6 +50,9 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
     if (!adminOverride) {
         assertAllowed(await canPupilRequestMatch(pupil));
     }
+    if (!parseSubjectString(pupil.subjects).length) {
+        throw new PrerequisiteError('Subjects must be selected before creating a match request');
+    }
 
     const result = await prisma.pupil.update({
         where: { id: pupil.id },
@@ -61,6 +70,24 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
 
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_requested', {});
 
+    // If the last successful screening, wasn't in the last four months, then invalidate all the screenings.
+    const screening = await prisma.pupil_screening.findFirst({
+        where: {
+            pupilId: pupil.id,
+            status: 'success',
+            invalidated: false,
+            createdAt: {
+                gte: moment().subtract(4, 'months').toDate(),
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
+    });
+    if (!screening) {
+        await invalidateAllScreeningsOfPupil(pupil.id);
+    }
+
     logger.info(`Created match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
 }
 
@@ -76,8 +103,6 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         },
     });
 
-    await invalidateAllScreeningsOfPupil(pupil.id);
-
     if (result.openMatchRequestCount === 0) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }
@@ -90,7 +115,7 @@ export async function canStudentRequestMatch(student: Student): Promise<Decision
         return { allowed: false, reason: 'not-tutor' };
     }
 
-    const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, success: true } })) > 0;
+    const wasScreened = (await prisma.screening.count({ where: { studentId: student.id, status: 'success' } })) > 0;
     if (!wasScreened) {
         return { allowed: false, reason: 'not-screened' };
     }

@@ -46,6 +46,7 @@ registerStudentHook(
 
 import { deletePupilMatchRequest } from '../match/request';
 import { deactivatePupil } from '../pupil/activation';
+
 registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
     await deletePupilMatchRequest(pupil);
 });

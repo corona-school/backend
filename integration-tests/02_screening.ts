@@ -110,7 +110,7 @@ void test('Screener can Query Users to Screen', async () => {
                   }
 
                   tutorScreenings {
-                    success
+                    status
                     comment
                     jobStatus
                     knowsCoronaSchoolFrom
@@ -119,7 +119,7 @@ void test('Screener can Query Users to Screen', async () => {
                   }
 
                   instructorScreenings {
-                    success
+                    status
                     comment
                     jobStatus
                     knowsCoronaSchoolFrom
@@ -198,9 +198,10 @@ export const screenedInstructorOne = test('Screen Instructor One successfully', 
 
     await screenerClient.request(`
         mutation ScreenInstructorOne {
-            studentInstructorScreeningCreate(
+            studentScreeningCreate(
                 studentId: ${instructor.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                type: instructor
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);
@@ -221,9 +222,10 @@ export const screenedInstructorTwo = test('Screen Instructor Two successfully', 
 
     await screenerClient.request(`
         mutation ScreenInstructorOne {
-            studentInstructorScreeningCreate(
+            studentScreeningCreate(
                 studentId: ${instructor.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                type: instructor
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);
@@ -244,9 +246,10 @@ export const screenedTutorOne = test('Screen Tutor One successfully', async () =
 
     await screenerClient.request(`
         mutation ScreenInstructorOne {
-            studentTutorScreeningCreate(
+            studentScreeningCreate(
                 studentId: ${student.student.id}
-                screening: {success: true comment: "" knowsCoronaSchoolFrom: ""}
+                type: tutor
+                screening: {status: success, comment: "", knowsCoronaSchoolFrom: ""}
             )
         }
     `);

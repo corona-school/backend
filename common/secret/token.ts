@@ -165,12 +165,12 @@ export async function verifyEmail(user: User) {
             select: { verifiedAt: true },
         });
         if (!verifiedAt) {
-            await prisma.student.update({
+            const updatedStudent = await prisma.student.update({
                 data: { verifiedAt: new Date() },
                 where: { id: user.studentId },
             });
             await Notification.actionTaken(user, 'student_registration_verified_email', {
-                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                date: moment(updatedStudent.verifiedAt).format('DD. MMMM YYYY'),
                 email: user.email,
             });
 
@@ -184,12 +184,12 @@ export async function verifyEmail(user: User) {
             select: { verifiedAt: true },
         });
         if (!verifiedAt) {
-            await prisma.pupil.update({
+            const updatedPupil = await prisma.pupil.update({
                 data: { verifiedAt: new Date() },
                 where: { id: user.pupilId },
             });
             await Notification.actionTaken(user, 'pupil_registration_verified_email', {
-                date: moment(verifiedAt).format('DD. MMMM YYYY'),
+                date: moment(updatedPupil.verifiedAt).format('DD. MMMM YYYY'),
                 email: user.email,
             });
             logger.info(`Pupil(${user.pupilId}) verified their e-mail by logging in with an e-mail token`);

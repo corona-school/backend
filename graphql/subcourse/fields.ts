@@ -528,19 +528,19 @@ export class ExtendedFieldsSubcourseResolver {
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.SUBCOURSE_MENTOR, Role.COURSE_SCREENER)
     async canContactInstructor(@Root() subcourse: Required<Subcourse>) {
         return await canContactInstructors(subcourse);
     }
 
     @FieldResolver((returns) => Decision)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.SUBCOURSE_MENTOR, Role.COURSE_SCREENER)
     async canContactParticipants(@Root() subcourse: Required<Subcourse>) {
         return await canContactParticipants(subcourse);
     }
 
     @FieldResolver((returns) => Number)
-    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.COURSE_SCREENER)
+    @Authorized(Role.PARTICIPANT, Role.INSTRUCTOR, Role.SUBCOURSE_MENTOR, Role.COURSE_SCREENER)
     async capacity(@Root() subcourse: Required<Subcourse>) {
         return await getCourseCapacity(subcourse);
     }

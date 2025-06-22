@@ -9,6 +9,7 @@ import { canRemoveZoomLicense, getMatchHash } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { deleteZoomUser } from '../zoom/user';
 import moment from 'moment';
+import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 
 const logger = getLogger('Match');
 
@@ -80,6 +81,11 @@ export async function dissolveMatch(
     } else {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_mature', { pupil, matchHash, matchDate, uniqueId });
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_mature', { student, matchHash, matchDate, uniqueId });
+    }
+
+    // If the student dissolved the match for personal issues or ghosting, invalidate all screenings of the pupil
+    if (dissolvedBy === dissolved_by_enum.student && (dissolveReasons.includes('personalIssues') || dissolveReasons.includes('ghosted'))) {
+        await invalidateAllScreeningsOfPupil(pupil.id);
     }
 
     if (dissolver && dissolver.email === student.email) {
