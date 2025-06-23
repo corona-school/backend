@@ -160,7 +160,7 @@ export class MutateMeResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
     async meUpdate(@Ctx() context: GraphQLContext, @Arg('update') update: MeUpdateInput) {
-        const { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, pupil, student } = update;
+        const { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, calendarPreferences, pupil, student } = update;
 
         if (isSessionPupil(context)) {
             const prevPupil = await getSessionPupil(context);
@@ -169,7 +169,14 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update student data on a pupil`);
             }
 
-            await updatePupil(context, prevPupil, { firstname, lastname, lastTimeCheckedNotifications, notificationPreferences, ...pupil });
+            await updatePupil(context, prevPupil, {
+                firstname,
+                lastname,
+                lastTimeCheckedNotifications,
+                notificationPreferences,
+                calendarPreferences,
+                ...pupil,
+            });
             return true;
         }
 
@@ -180,7 +187,7 @@ export class MutateMeResolver {
                 throw new PrerequisiteError(`Tried to update pupil data on student`);
             }
 
-            await updateStudent(context, prevStudent, { lastTimeCheckedNotifications, notificationPreferences, ...student });
+            await updateStudent(context, prevStudent, { lastTimeCheckedNotifications, notificationPreferences, calendarPreferences, ...student });
 
             return true;
         }
