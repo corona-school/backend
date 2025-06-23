@@ -196,6 +196,12 @@ export class UserFieldsResolver {
         return await getUserNotificationPreferences(user, false);
     }
 
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.OWNER, Role.ADMIN)
+    async calendarPreferences(@Root() user: User) {
+        return (await queryUser(user, { calendarPreferences: true })).calendarPreferences;
+    }
+
     // ------------- Web Push ----------------
 
     @FieldResolver((returns) => [PushSubscription])
