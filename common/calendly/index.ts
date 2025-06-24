@@ -112,6 +112,10 @@ const getEventOrganizer = async (event: CalendlyEvent) => {
     const [membership] = event.payload.scheduled_event.event_memberships;
     try {
         const user = await getUserByEmail(membership.user_email);
+        if (!user.screenerId) {
+            logger.warn(`User with email ${membership.user_email} does not have a screener ID.`);
+            return null;
+        }
         return user;
     } catch (error) {
         logger.warn(`Failed to get screener from calendly event: ${membership.user_email}`, error);
