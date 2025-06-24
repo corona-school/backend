@@ -11,6 +11,9 @@ import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
 import { getAppointmentsForMatch, getEdgeMatchAppointmentId } from '../../common/appointment/get';
 import { parseSubjectString } from '../../common/util/subjectsutils';
+import { CalendarPreferences, WeeklyAvailability } from '../types/calendarPreferences';
+import { getSharedWeeklyAvailability } from '../../common/util/calendarPreferences';
+import { JSONResolver } from 'graphql-scalars';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -52,6 +55,20 @@ export class ExtendedFieldsMatchResolver {
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
         return getOverlappingSubjects(pupil, student);
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
+    async sharedWeeklyAvailability(@Root() match: Match) {
+        const student = await getStudent(match.studentId);
+        const pupil = await getPupil(match.pupilId);
+
+        if (!student.calendarPreferences || !pupil.calendarPreferences) {
+            return null;
+        }
+        const studentPreferences = student.calendarPreferences as Record<string, any> as CalendarPreferences;
+        const pupilPreferences = pupil.calendarPreferences as Record<string, any> as CalendarPreferences;
+        return getSharedWeeklyAvailability(studentPreferences.weeklyAvailability, pupilPreferences.weeklyAvailability);
     }
 
     @FieldResolver((returns) => [Appointment])
