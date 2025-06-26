@@ -10,10 +10,10 @@ export type IWeeklyAvailability = {
 @InputType('DayAvailabilitySlot')
 @ObjectType()
 export class DayAvailabilitySlot {
-    @Field(() => String)
-    from: string;
-    @Field(() => String)
-    to: string;
+    @Field(() => Number, { description: 'In minutes of the day' })
+    from: number;
+    @Field(() => Number, { description: 'In minutes of the day' })
+    to: number;
 }
 
 @InputType('WeeklyAvailability')

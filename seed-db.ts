@@ -41,10 +41,17 @@ interface CreatePupilArgs extends Partial<RegisterPupilData>, BecomeTuteeData {
     calendarPreferences: CalendarPreferences;
 }
 
-const createSimpleCalendarPreferences = (weekdays: Day[], slots: DayAvailabilitySlot[]): CalendarPreferences => {
+const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string; to: string }[]): CalendarPreferences => {
+    function toMinutes(time: string) {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
     return {
         weeklyAvailability: weekdays.reduce((acc, weekday) => {
-            acc[weekday] = slots;
+            acc[weekday] = slots.map(({ from, to }) => ({
+                from: toMinutes(from),
+                to: toMinutes(to),
+            }));
             return acc;
         }, {} as WeeklyAvailability),
     };

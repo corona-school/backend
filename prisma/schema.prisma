@@ -829,7 +829,7 @@ model student {
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
   referredById String? @db.VarChar
 
-  // Stores a structure like { weeklyAvailability: { monday: [{ from: "08:00", to: "10:00" }, ...], friday: [{ from: "17:00", to: "22:00" }], ... } }
+  // Stores a structure like { weeklyAvailability: { monday: [{ from: 600 (minutes of the day), to: 660 }, ...], friday: [{ from: 780, to: 840 }], ... } }
   calendarPreferences       Json?                       @db.Json
   subcourse_mentors_student subcourse_mentors_student[]
 }
