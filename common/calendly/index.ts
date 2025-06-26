@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { getLogger } from '../logger/logger';
 import { addPupilScreening } from '../pupil/screening';
 import { getPupil, getUserByEmail, User } from '../user';
@@ -62,6 +62,26 @@ export interface InviteeEvent {
     reschedule_url: string;
 }
 
+export const cancelCalendlyEvent = async (eventUrl: string, reason: string) => {
+    const parts = eventUrl.split('/');
+    const uuid = parts[parts.length - 1];
+    const response = await fetch(`https://api.calendly.com/scheduled_events/${uuid}/cancellation`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${process.env.CALENDLY_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+    });
+
+    if (!response.ok) {
+        const errorText = `Failed to cancel Calendly Event(${eventUrl}): ${response.statusText}`;
+        logger.error(errorText);
+        throw new Error(errorText);
+    }
+    logger.info(`Automatically cancelled Calendly Event(${eventUrl})`);
+};
+
 export const getCalendlyScheduledEvent = async (eventUrl: string) => {
     const response = await fetch(eventUrl, {
         method: 'GET',
@@ -123,6 +143,10 @@ const getEventOrganizer = async (event: CalendlyEvent) => {
     }
 };
 
+const formatAppointmentDate = (date: string) => {
+    return moment.tz(date, 'Europe/Berlin').utc().format('dddd DD. MMM, HH:mm');
+};
+
 const onEventInviteeCreated = async (event: CalendlyEvent) => {
     let user: User;
     try {
@@ -134,9 +158,32 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
         return;
     }
     const screener = await getEventOrganizer(event);
-    const newAppointmentComment = `[System]: Der Termin wurde am ${moment(event.payload.created_at).format('D.M.YYYY, HH:mm')} erstellt und findet am ${moment(
-        event.payload.scheduled_event.start_time
-    ).format('D.M.YYYY, HH:mm')} statt.`;
+    const newAppointmentComment = `[System]: Ein Termin wurde am ${formatAppointmentDate(
+        event.payload.created_at
+    )} erstellt und findet am ${formatAppointmentDate(event.payload.scheduled_event.start_time)} statt.`;
+
+    if (user.pupilId || user.studentId) {
+        // Check if there is already a valid appointment
+        const existingAppointment = await prisma.lecture.findFirst({
+            where: {
+                participantIds: { has: user.userID },
+                appointmentType: 'screening',
+                isCanceled: false,
+                start: { gte: new Date() },
+            },
+        });
+        // If there is already a valid appointment, it means the user is trying to book a second appointment (this is not a reschedule!)
+        // In this case, we just cancel the event we just received and let the user know they already have an appointment
+        // and how they can properly reschedule it
+        if (existingAppointment) {
+            const appointmentDate = formatAppointmentDate(existingAppointment.start.toISOString());
+            await cancelCalendlyEvent(
+                event.payload.scheduled_event.uri,
+                `Du hast bereits einen Termin bei uns am ${appointmentDate}. Falls du ihn verschieben musst, logge dich bitte in deinen Lern-Fair-Account ein`
+            );
+            return;
+        }
+    }
 
     if (user.pupilId) {
         // Check if there is already a valid screening
@@ -274,8 +321,8 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.pupil_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Der Termin wurde am ${moment(event.payload.scheduled_event.cancellation?.created_at).format(
-                    'D.M.YYYY, HH:mm'
+                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
+                    event.payload.scheduled_event.cancellation?.created_at
                 )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
             },
         });
@@ -291,8 +338,8 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Der Termin wurde am ${moment(event.payload.scheduled_event.cancellation?.created_at).format(
-                    'D.M.YYYY, HH:mm'
+                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
+                    event.payload.scheduled_event.cancellation?.created_at
                 )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
             },
         });
@@ -308,8 +355,8 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.instructor_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Der Termin wurde am ${moment(event.payload.scheduled_event.cancellation?.created_at).format(
-                    'D.M.YYYY, HH:mm'
+                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
+                    event.payload.scheduled_event.cancellation?.created_at
                 )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
             },
         });
