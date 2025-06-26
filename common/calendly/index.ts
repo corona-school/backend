@@ -1,4 +1,5 @@
 import moment from 'moment-timezone';
+import 'moment/locale/de';
 import { getLogger } from '../logger/logger';
 import { addPupilScreening } from '../pupil/screening';
 import { getPupil, getUserByEmail, User } from '../user';
@@ -144,7 +145,7 @@ const getEventOrganizer = async (event: CalendlyEvent) => {
 };
 
 const formatAppointmentDate = (date: string) => {
-    return moment.tz(date, 'Europe/Berlin').utc().format('dddd DD. MMM, HH:mm');
+    return moment.tz(date, 'Europe/Berlin').format('dddd DD. MMM, HH:mm');
 };
 
 const onEventInviteeCreated = async (event: CalendlyEvent) => {
