@@ -1,7 +1,7 @@
-import { Day, WeeklyAvailability } from '../../graphql/types/calendarPreferences';
+import { Day, DayAvailabilitySlot, WeeklyAvailability } from '../../graphql/types/calendarPreferences';
 
-export const getSharedWeeklyAvailability = (availabilityA: WeeklyAvailability, availabilityB: WeeklyAvailability) => {
-    const sharedAvailability: WeeklyAvailability = {
+export const getMatchAvailabilityFromPerspective = (myAvailability: WeeklyAvailability, learningPartnerAvailability: WeeklyAvailability) => {
+    const matchAvailability: WeeklyAvailability = {
         monday: [],
         tuesday: [],
         wednesday: [],
@@ -10,20 +10,23 @@ export const getSharedWeeklyAvailability = (availabilityA: WeeklyAvailability, a
         saturday: [],
         sunday: [],
     };
-    Object.keys(sharedAvailability).forEach((day: Day) => {
-        const slotsA = availabilityA[day] || [];
-        const slotsB = availabilityB[day] || [];
-        const tempSharedSlots = {};
+
+    Object.keys(matchAvailability).forEach((day: Day) => {
+        const slotsA = learningPartnerAvailability[day] || [];
+        const slotsB = myAvailability[day] || [];
+        const tempMatchSlots = {};
         slotsA.forEach((slot) => {
             const slotKey = `${slot.from}-${slot.to}`;
-            tempSharedSlots[slotKey] = slot;
+            tempMatchSlots[slotKey] = { ...slot, isShared: false };
         });
         slotsB.forEach((slot) => {
             const slotKey = `${slot.from}-${slot.to}`;
-            if (tempSharedSlots[slotKey]) {
-                sharedAvailability[day].push(tempSharedSlots[slotKey]);
+            if (tempMatchSlots[slotKey]) {
+                tempMatchSlots[slotKey] = { ...slot, isShared: !!tempMatchSlots[slotKey] };
             }
         });
+        const sortedSlots = (Object.values(tempMatchSlots) as DayAvailabilitySlot[]).sort((a, b) => a.from - b.from);
+        matchAvailability[day].push(...sortedSlots);
     });
-    return sharedAvailability;
+    return matchAvailability;
 };
