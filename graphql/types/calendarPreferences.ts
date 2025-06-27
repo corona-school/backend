@@ -14,6 +14,8 @@ export class DayAvailabilitySlot {
     from: number;
     @Field(() => Number, { description: 'In minutes of the day' })
     to: number;
+    @Field(() => Boolean, { description: 'Computed Property only available for matches.', nullable: true })
+    isShared?: boolean;
 }
 
 @InputType('WeeklyAvailability')
