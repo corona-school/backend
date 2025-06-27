@@ -11,6 +11,11 @@ import { Chat } from '../chat/fields';
 import { getMatcheeConversation } from '../../common/chat';
 import { getAppointmentsForMatch, getEdgeMatchAppointmentId } from '../../common/appointment/get';
 import { parseSubjectString } from '../../common/util/subjectsutils';
+import { CalendarPreferences, WeeklyAvailability } from '../types/calendarPreferences';
+import { getMatchAvailabilityFromPerspective } from '../../common/util/calendarPreferences';
+import { JSONResolver } from 'graphql-scalars';
+import { isElevated } from '../authentication';
+import { PrerequisiteError } from '../../common/util/error';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -52,6 +57,32 @@ export class ExtendedFieldsMatchResolver {
         const student = await getStudent(match.studentId);
         const pupil = await getPupil(match.pupilId);
         return getOverlappingSubjects(pupil, student);
+    }
+
+    @FieldResolver((returns) => JSONResolver, { nullable: true })
+    @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER)
+    async matchWeeklyAvailability(
+        @Root() match: Match,
+        @Ctx() context: GraphQLContext,
+        @Arg('fromPerspective', { nullable: true }) fromPerspective?: 'pupil' | 'student'
+    ) {
+        if (fromPerspective && !isElevated(context)) {
+            throw new PrerequisiteError(`FromPerspective option is only available for elevated users`);
+        }
+        const student = await getStudent(match.studentId);
+        const pupil = await getPupil(match.pupilId);
+
+        if (!student.calendarPreferences || !pupil.calendarPreferences) {
+            return null;
+        }
+        const studentPreferences = student.calendarPreferences as Record<string, any> as CalendarPreferences;
+        const pupilPreferences = pupil.calendarPreferences as Record<string, any> as CalendarPreferences;
+        if (context.user.pupilId || fromPerspective === 'pupil') {
+            return getMatchAvailabilityFromPerspective(pupilPreferences.weeklyAvailability, studentPreferences.weeklyAvailability);
+        } else if (context.user.studentId || fromPerspective === 'student') {
+            return getMatchAvailabilityFromPerspective(studentPreferences.weeklyAvailability, pupilPreferences.weeklyAvailability);
+        }
+        return null;
     }
 
     @FieldResolver((returns) => [Appointment])

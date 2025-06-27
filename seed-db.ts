@@ -32,14 +32,32 @@ import {
     pupil_email_owner_enum,
 } from '@prisma/client';
 import { importAchievements } from './seed-achievements';
+import { CalendarPreferences, Day, DayAvailabilitySlot, WeeklyAvailability } from './graphql/types/calendarPreferences';
 
 const logger = getLogger('DevSetup');
 
 interface CreatePupilArgs extends Partial<RegisterPupilData>, BecomeTuteeData {
     includePassword?: boolean;
+    calendarPreferences: CalendarPreferences;
 }
 
-const createPupil = async ({ includePassword = true, ...data }: CreatePupilArgs) => {
+const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string; to: string }[]): CalendarPreferences => {
+    function toMinutes(time: string) {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+    return {
+        weeklyAvailability: weekdays.reduce((acc, weekday) => {
+            acc[weekday] = slots.map(({ from, to }) => ({
+                from: toMinutes(from),
+                to: toMinutes(to),
+            }));
+            return acc;
+        }, {} as WeeklyAvailability),
+    };
+};
+
+const createPupil = async ({ includePassword = true, calendarPreferences, ...data }: CreatePupilArgs) => {
     const pupil = await registerPupil({
         firstname: data.firstname,
         lastname: data.lastname,
@@ -68,15 +86,17 @@ const createPupil = async ({ includePassword = true, ...data }: CreatePupilArgs)
             subjects: JSON.stringify(data.subjects),
             learningGermanSince: data.learningGermanSince,
             grade: `${data.gradeAsInt}. Klasse`,
+            calendarPreferences: calendarPreferences as Record<string, any>,
         },
     });
 };
 
 interface CreateStudentArgs extends Partial<RegisterStudentData>, BecomeTutorData {
     isInstructor?: boolean;
+    calendarPreferences: CalendarPreferences;
 }
 
-const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs, screener: Screener) => {
+const createStudent = async ({ isInstructor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
     const student = await registerStudent({
         firstname: data.firstname,
         lastname: data.lastname,
@@ -94,7 +114,10 @@ const createStudent = async ({ isInstructor = true, ...data }: CreateStudentArgs
         subjects: data.subjects,
     });
     await addTutorScreening(screener, student, { status: 'success' });
-    await prisma.student.update({ where: { id: student.id }, data: { hasDoneEthicsOnboarding: true } });
+    await prisma.student.update({
+        where: { id: student.id },
+        data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any> },
+    });
     if (isInstructor) {
         await becomeInstructor(student, {});
         await addInstructorScreening(
@@ -277,6 +300,22 @@ void (async function setupDevDB() {
         languages: ['Deutsch', 'Italienisch'],
         subjects: [{ name: 'Englisch' }, { name: 'Französisch' }, { name: 'Mathematik', mandatory: true }],
         gradeAsInt: 6,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil2 = await createPupil({
@@ -288,6 +327,20 @@ void (async function setupDevDB() {
         subjects: [{ name: 'Deutsch als Zweitsprache', mandatory: true }],
         gradeAsInt: 6,
         learningGermanSince: 'one_to_two',
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+            [
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil3 = await createPupil({
@@ -298,6 +351,13 @@ void (async function setupDevDB() {
         languages: ['Deutsch', 'Franz_sisch'],
         subjects: [{ name: 'Mathematik', mandatory: true }, { name: 'Biologie' }, { name: 'Französisch' }, { name: 'Englisch' }],
         gradeAsInt: 6,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+            ]
+        ),
     });
 
     const pupil4 = await createPupil({
@@ -309,6 +369,16 @@ void (async function setupDevDB() {
         subjects: [{ name: 'Deutsch als Zweitsprache', mandatory: true }],
         learningGermanSince: 'one_to_two',
         gradeAsInt: 7,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'friday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+            ]
+        ),
     });
 
     const pupil5 = await createPupil({
@@ -323,6 +393,22 @@ void (async function setupDevDB() {
         ],
         learningGermanSince: 'two_to_four',
         gradeAsInt: 5,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil6 = await createPupil({
@@ -333,6 +419,22 @@ void (async function setupDevDB() {
         languages: ['T_rkisch', 'Englisch', 'Deutsch'],
         subjects: [{ name: 'Mathematik', mandatory: true }, { name: 'Chemie' }],
         gradeAsInt: 10,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil7 = await createPupil({
@@ -343,6 +445,22 @@ void (async function setupDevDB() {
         languages: ['Deutsch'],
         subjects: [{ name: 'Mathematik', mandatory: true }, { name: 'Englisch' }],
         gradeAsInt: 4,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil8 = await createPupil({
@@ -354,6 +472,22 @@ void (async function setupDevDB() {
         subjects: [{ name: 'Deutsch als Zweitsprache', mandatory: true }, { name: 'Mathematik' }, { name: 'Englisch' }],
         learningGermanSince: 'two_to_four',
         gradeAsInt: 6,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil9 = await createPupil({
@@ -364,6 +498,22 @@ void (async function setupDevDB() {
         languages: ['Deutsch', 'Englisch'],
         subjects: [{ name: 'Mathematik', mandatory: true }, { name: 'Biologie' }, { name: 'Englisch' }],
         gradeAsInt: 10,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const pupil10 = await createPupil({
@@ -379,6 +529,22 @@ void (async function setupDevDB() {
         learningGermanSince: 'two_to_four',
         gradeAsInt: 4,
         includePassword: false,
+        calendarPreferences: createSimpleCalendarPreferences(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+            [
+                { from: '10:00', to: '11:00' },
+                { from: '11:00', to: '12:00' },
+                { from: '12:00', to: '13:00' },
+                { from: '13:00', to: '14:00' },
+                { from: '14:00', to: '15:00' },
+                { from: '15:00', to: '16:00' },
+                { from: '16:00', to: '17:00' },
+                { from: '17:00', to: '18:00' },
+                { from: '18:00', to: '19:00' },
+                { from: '19:00', to: '20:00' },
+                { from: '20:00', to: '21:00' },
+            ]
+        ),
     });
 
     const screener1 = await prisma.screener.create({
@@ -464,6 +630,22 @@ void (async function setupDevDB() {
                 { name: 'Deutsch', grade: { min: 4, max: 10 } },
                 { name: 'Mathematik', grade: { min: 4, max: 10 } },
             ],
+            calendarPreferences: createSimpleCalendarPreferences(
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+                [
+                    { from: '10:00', to: '11:00' },
+                    { from: '11:00', to: '12:00' },
+                    { from: '12:00', to: '13:00' },
+                    { from: '13:00', to: '14:00' },
+                    { from: '14:00', to: '15:00' },
+                    { from: '15:00', to: '16:00' },
+                    { from: '16:00', to: '17:00' },
+                    { from: '17:00', to: '18:00' },
+                    { from: '18:00', to: '19:00' },
+                    { from: '19:00', to: '20:00' },
+                    { from: '20:00', to: '21:00' },
+                ]
+            ),
         },
         screener1
     );
@@ -483,6 +665,22 @@ void (async function setupDevDB() {
                 { name: 'Mathematik', grade: { min: 1, max: 14 } },
                 { name: 'Englisch', grade: { min: 1, max: 14 } },
             ],
+            calendarPreferences: createSimpleCalendarPreferences(
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                [
+                    { from: '10:00', to: '11:00' },
+                    { from: '11:00', to: '12:00' },
+                    { from: '12:00', to: '13:00' },
+                    { from: '13:00', to: '14:00' },
+                    { from: '14:00', to: '15:00' },
+                    { from: '15:00', to: '16:00' },
+                    { from: '16:00', to: '17:00' },
+                    { from: '17:00', to: '18:00' },
+                    { from: '18:00', to: '19:00' },
+                    { from: '19:00', to: '20:00' },
+                    { from: '20:00', to: '21:00' },
+                ]
+            ),
         },
         screener2
     );
@@ -504,6 +702,22 @@ void (async function setupDevDB() {
                 { name: 'Französisch', grade: { min: 4, max: 10 } },
                 { name: 'Englisch', grade: { min: 1, max: 14 } },
             ],
+            calendarPreferences: createSimpleCalendarPreferences(
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                [
+                    { from: '10:00', to: '11:00' },
+                    { from: '11:00', to: '12:00' },
+                    { from: '12:00', to: '13:00' },
+                    { from: '13:00', to: '14:00' },
+                    { from: '14:00', to: '15:00' },
+                    { from: '15:00', to: '16:00' },
+                    { from: '16:00', to: '17:00' },
+                    { from: '17:00', to: '18:00' },
+                    { from: '18:00', to: '19:00' },
+                    { from: '19:00', to: '20:00' },
+                    { from: '20:00', to: '21:00' },
+                ]
+            ),
         },
         screener1
     );
@@ -521,6 +735,22 @@ void (async function setupDevDB() {
                 { name: 'Französisch', grade: { min: 1, max: 14 } },
                 { name: 'Mathematik', grade: { min: 1, max: 10 } },
             ],
+            calendarPreferences: createSimpleCalendarPreferences(
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                [
+                    { from: '10:00', to: '11:00' },
+                    { from: '11:00', to: '12:00' },
+                    { from: '12:00', to: '13:00' },
+                    { from: '13:00', to: '14:00' },
+                    { from: '14:00', to: '15:00' },
+                    { from: '15:00', to: '16:00' },
+                    { from: '16:00', to: '17:00' },
+                    { from: '17:00', to: '18:00' },
+                    { from: '18:00', to: '19:00' },
+                    { from: '19:00', to: '20:00' },
+                    { from: '20:00', to: '21:00' },
+                ]
+            ),
         },
         screener1
     );
@@ -540,6 +770,22 @@ void (async function setupDevDB() {
                 { name: 'Biologie', grade: { min: 1, max: 10 } },
             ],
             isInstructor: false,
+            calendarPreferences: createSimpleCalendarPreferences(
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                [
+                    { from: '10:00', to: '11:00' },
+                    { from: '11:00', to: '12:00' },
+                    { from: '12:00', to: '13:00' },
+                    { from: '13:00', to: '14:00' },
+                    { from: '14:00', to: '15:00' },
+                    { from: '15:00', to: '16:00' },
+                    { from: '16:00', to: '17:00' },
+                    { from: '17:00', to: '18:00' },
+                    { from: '18:00', to: '19:00' },
+                    { from: '19:00', to: '20:00' },
+                    { from: '20:00', to: '21:00' },
+                ]
+            ),
         },
         screener1
     );

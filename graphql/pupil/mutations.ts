@@ -35,6 +35,7 @@ import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../typ
 import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 import { findOrCreateSchool } from '../../common/school/create';
+import { CalendarPreferences } from '../types/calendarPreferences';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -96,6 +97,9 @@ export class PupilUpdateInput {
 
     @Field((type) => RegistrationSchool, { nullable: true })
     school?: RegistrationSchool;
+
+    @Field((type) => CalendarPreferences, { nullable: true })
+    calendarPreferences?: CalendarPreferences;
 }
 
 @InputType()
@@ -171,6 +175,7 @@ export async function updatePupil(
         descriptionForMatch,
         descriptionForScreening,
         school,
+        calendarPreferences,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -226,6 +231,7 @@ export async function updatePupil(
             descriptionForMatch,
             descriptionForScreening,
             schoolId: dbSchool?.id,
+            calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
         },
         where: { id: pupil.id },
     });
