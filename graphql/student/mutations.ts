@@ -158,6 +158,7 @@ export class StudentUpdateInput {
 
     @Field((type) => String, { nullable: true })
     zipCode?: string;
+
     @Field((type) => Boolean, { nullable: true })
     hasSpecialExperience?: boolean;
 

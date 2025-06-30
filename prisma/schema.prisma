@@ -747,7 +747,7 @@ model student {
   lastname                                  String?                  @db.VarChar
   active                                    Boolean                  @default(true)
   email                                     String                   @unique(map: "IDX_a56c051c91dbe1068ad683f536") @db.VarChar
-  zipCode                                   String?
+  zipCode                                   String?                  @db.VarChar
   // If set, the user email was verified:
   verifiedAt                                DateTime?                @db.Timestamp(6)
   // The account was anonymized, and all personal data was replaced with placeholders
