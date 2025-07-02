@@ -113,6 +113,11 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             matchId: matchId.toString(),
             attachments: [icsForPupil],
         });
+        await Notification.actionTaken(userForStudent(student), 'student_add_appointment_match_self', {
+            pupil,
+            matchId: matchId.toString(),
+            attachments: [icsForStudent],
+        });
 
         // Send out reminders 12 hours before the appointment starts
         for (const appointment of createdMatchAppointments) {

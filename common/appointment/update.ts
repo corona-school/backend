@@ -93,6 +93,10 @@ export async function updateAppointment(
                     student: student,
                     appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
                 });
+                await Notification.actionTaken(userForStudent(student), 'student_change_appointment_match', {
+                    pupil: match.pupil,
+                    appointment: getAppointmentForNotification(updatedAppointment, /* original: */ appointment),
+                });
                 await Notification.actionTakenAt(new Date(updatedAppointment.start), userForPupil(match.pupil), 'pupil_match_appointment_starts', {
                     ...(await getContextForMatchAppointmentReminder(updatedAppointment, /* original: */ appointment)),
                     student,
