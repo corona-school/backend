@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Field, InputType, ObjectType } from 'type-graphql';
 
 export type Day = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
