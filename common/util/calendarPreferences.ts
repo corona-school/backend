@@ -33,7 +33,7 @@ export const getOverlappingHoursCount = (availabilityA: WeeklyAvailability, avai
                 const overlapDuration = overlapEnd - overlapStart;
 
                 if (overlapDuration >= 60) {
-                    count += 1;
+                    count += overlapDuration / 60;
                 }
             }
         }
