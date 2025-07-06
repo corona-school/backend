@@ -2,6 +2,8 @@ import { Authorized, FieldResolver, Resolver, Root } from 'type-graphql';
 import { Pupil, Pupil_screening as PupilScreening, Screener, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
 import { prisma } from '../../common/prisma';
+import moment from 'moment';
+import { getAppointmentEnd } from '../../common/appointment/util';
 
 @Resolver((of) => PupilScreening)
 export class ExtendedFieldsPupil_screeningResolver {
@@ -24,16 +26,23 @@ export class ExtendedFieldsPupil_screeningResolver {
             where: {
                 invalidated: false,
                 id: screening.id,
-                status: { in: ['pending'] },
+                status: { in: ['pending', 'dispute'] },
             },
         });
-        const appointment = await prisma.lecture.findFirst({
+
+        if (!currentScreening) {
+            return;
+        }
+
+        const appointments = await prisma.lecture.findMany({
             where: {
                 pupilScreeningId: currentScreening.id,
                 isCanceled: false,
             },
         });
 
-        return appointment;
+        const currentAppointment = appointments.find((appointment) => moment().isSameOrBefore(getAppointmentEnd(appointment)));
+
+        return currentAppointment;
     }
 }

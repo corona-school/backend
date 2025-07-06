@@ -602,6 +602,13 @@ const _notificationActions = {
             matchId: '1',
         },
     },
+    student_add_appointment_match_self: {
+        description: 'Tutor / Tutor added Match Appointment',
+        sampleContext: {
+            pupil: sampleUser,
+            matchId: '1',
+        },
+    },
     pupil_decline_appointment_group: {
         description: 'Instructor / Group Appointment declined by Participant',
         sampleContext: {
@@ -644,6 +651,13 @@ const _notificationActions = {
         description: 'Tutee / Match Appointment updated by Student',
         sampleContext: {
             student: sampleUser,
+            appointment: sampleAppointment,
+        },
+    },
+    student_change_appointment_match: {
+        description: 'Tutor / Match Appointment updated by Student',
+        sampleContext: {
+            pupil: sampleUser,
             appointment: sampleAppointment,
         },
     },

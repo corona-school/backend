@@ -381,7 +381,18 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Pupil: {
         fields: withPublicFields<
             Pupil,
-            'id' | 'firstname' | 'lastname' | 'active' | 'grade' | 'isParticipant' | 'isPupil' | 'languages' | 'aboutMe' | 'schooltype' | 'state'
+            | 'id'
+            | 'firstname'
+            | 'lastname'
+            | 'active'
+            | 'grade'
+            | 'isParticipant'
+            | 'isPupil'
+            | 'languages'
+            | 'aboutMe'
+            | 'schooltype'
+            | 'state'
+            | 'calendarPreferences'
         >({
             matchReason: everyone,
 
@@ -438,7 +449,17 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
     Student: {
         fields: withPublicFields<
             Student,
-            'id' | 'firstname' | 'lastname' | 'active' | 'isStudent' | 'isInstructor' | 'isUniversityStudent' | 'languages' | 'aboutMe' | 'state'
+            | 'id'
+            | 'firstname'
+            | 'lastname'
+            | 'active'
+            | 'isStudent'
+            | 'isInstructor'
+            | 'isUniversityStudent'
+            | 'languages'
+            | 'aboutMe'
+            | 'state'
+            | 'calendarPreferences'
         >({
             email: adminOrOwnerOrScreener,
             phone: adminOrOwner,
