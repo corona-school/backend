@@ -157,6 +157,9 @@ export class StudentUpdateInput {
     @Field((type) => Boolean, { nullable: true })
     hasDoneEthicsOnboarding?: boolean;
 
+    @Field((type) => String, { nullable: true })
+    zipCode?: string;
+
     @Field((type) => Boolean, { nullable: true })
     hasSpecialExperience?: boolean;
 
@@ -194,6 +197,7 @@ export async function updateStudent(
         notificationPreferences,
         university,
         hasDoneEthicsOnboarding,
+        zipCode,
         hasSpecialExperience,
         gender,
         descriptionForMatch,
@@ -242,6 +246,7 @@ export async function updateStudent(
             notificationPreferences: ensureNoNull(notificationPreferences),
             languages: ensureNoNull(languages),
             university: ensureNoNull(university),
+            zipCode: ensureNoNull(zipCode),
             hasDoneEthicsOnboarding: ensureNoNull(hasDoneEthicsOnboarding),
             hasSpecialExperience: ensureNoNull(hasSpecialExperience),
             gender: ensureNoNull(gender),

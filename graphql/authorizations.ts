@@ -474,6 +474,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             registrationSource: adminOrOwnerOrScreener,
             lastTimeCheckedNotifications: adminOrOwner,
             notificationPreferences: adminOrOwner,
+            zipCode: adminOrOwnerOrScreener,
 
             // these have cleaner variants in the data model:
             subjects: nobody, // -> subjectsFormatted
