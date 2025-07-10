@@ -58,6 +58,17 @@ const requestFive = {
         { name: 'Deutsch', mandatory: false },
     ],
     requestAt: new Date(0),
+    calendarPreferences: {
+        weeklyAvailability: {
+            monday: [{ from: 600, to: 660 }],
+            tuesday: [],
+            wednesday: [],
+            thursday: [],
+            friday: [],
+            saturday: [],
+            sunday: [],
+        },
+    },
 };
 
 const requestSix = {
@@ -76,6 +87,29 @@ const requestSeven = {
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
     requestAt: new Date(0),
     hasSpecialNeeds: true,
+};
+
+const requestEight = {
+    grade: 10,
+    pupilId: 8,
+    state: 'at' as const,
+    subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+    requestAt: new Date(0),
+    calendarPreferences: {
+        weeklyAvailability: {
+            monday: [
+                { from: 1080, to: 1140 },
+                { from: 1140, to: 1200 },
+                { from: 1200, to: 1260 },
+            ],
+            tuesday: [],
+            wednesday: [],
+            thursday: [],
+            friday: [],
+            saturday: [],
+            sunday: [],
+        },
+    },
 };
 
 const offerOne = {
@@ -121,6 +155,31 @@ const offerFive = {
     requestAt: new Date(0),
     gender: 'female' as const,
     hasSpecialExperience: true,
+};
+
+const offerSix = {
+    studentId: 6,
+    state: 'bw' as const,
+    subjects: [
+        { name: 'Deutsch', grade: { min: 1, max: 10 } },
+        { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+    ],
+    requestAt: new Date(0),
+    calendarPreferences: {
+        weeklyAvailability: {
+            monday: [
+                { from: 1080, to: 1140 },
+                { from: 1140, to: 1200 },
+                { from: 1200, to: 1260 },
+            ],
+            tuesday: [],
+            wednesday: [],
+            thursday: [],
+            friday: [],
+            saturday: [],
+            sunday: [],
+        },
+    },
 };
 
 describe('Matching Score Basics', () => {
@@ -189,4 +248,14 @@ describe('Special Needs Constraint', () => {
     test('', [requestSeven], [offerFour], []);
     // Offer experience -> Match
     test('', [requestSeven], [offerFive], [{ request: requestSeven, offer: offerFive }]);
+});
+
+describe('Weekly Availability Constraint', () => {
+    // For now if only one has availability set, then it's not a constraint to create the match
+    test('', [requestFive], [offerFive], [{ request: requestFive, offer: offerFive }]);
+
+    // Availability mismatch (both set) -> No Match
+    test('', [requestFive], [offerSix], []);
+    // // Availability match (both set) -> Match
+    test('', [requestEight], [offerSix], [{ request: requestEight, offer: offerSix }]);
 });

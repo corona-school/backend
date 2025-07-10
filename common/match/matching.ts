@@ -5,6 +5,8 @@ import { gradeAsInt } from '../util/gradestrings';
 import { parseSubjectString } from '../util/subjectsutils';
 import assert from 'assert';
 import { prisma } from '../prisma';
+import { CalendarPreferences } from '../../graphql/types/calendarPreferences';
+import { getOverlappingHoursCount } from '../util/calendarPreferences';
 
 // ------- The Matching Algorithm ------------
 // For a series of match requests and match offers computes
@@ -22,6 +24,7 @@ export type MatchRequest = Readonly<{
     requestAt: Date;
     onlyMatchWith?: gender_enum;
     hasSpecialNeeds?: boolean;
+    calendarPreferences?: CalendarPreferences;
 }>;
 
 export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
@@ -37,6 +40,7 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
             requestAt: pupil.firstMatchRequest,
             onlyMatchWith: pupil.onlyMatchWith,
             hasSpecialNeeds: pupil.hasSpecialNeeds,
+            calendarPreferences: pupil.calendarPreferences as Record<string, any> as CalendarPreferences,
         };
 
         for (let i = 0; i < pupil.openMatchRequestCount; i++) {
@@ -56,6 +60,7 @@ export type MatchOffer = Readonly<{
     requestAt: Date;
     gender?: gender_enum;
     hasSpecialExperience?: boolean;
+    calendarPreferences?: CalendarPreferences;
 }>;
 
 export function studentsToOffers(students: Student[]): MatchOffer[] {
@@ -70,6 +75,7 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
             requestAt: student.firstMatchRequest,
             gender: student.gender,
             hasSpecialExperience: student.hasSpecialExperience,
+            calendarPreferences: student.calendarPreferences as Record<string, any> as CalendarPreferences,
         };
 
         for (let i = 0; i < student.openMatchRequestCount; i++) {
@@ -117,6 +123,15 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     // Only match "special needs" with "special experience"
     if (request.hasSpecialNeeds && !offer.hasSpecialExperience) {
         return NO_MATCH;
+    }
+
+    // Only match two calendar preferences set if they have at least one hour in common
+    let overlappingHoursCount = 0;
+    if (!!request.calendarPreferences && !!offer.calendarPreferences) {
+        overlappingHoursCount = getOverlappingHoursCount(request.calendarPreferences.weeklyAvailability, offer.calendarPreferences.weeklyAvailability);
+        if (!overlappingHoursCount) {
+            return NO_MATCH;
+        }
     }
 
     // ---------- Subjects --------------
