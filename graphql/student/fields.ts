@@ -36,6 +36,16 @@ import { getLogger } from '../../common/logger/logger';
 const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
 export class ExtendFieldsStudentResolver {
+    @Query((returns) => Student, { nullable: true })
+    @Authorized(Role.STUDENT_SCREENER)
+    async student(@Arg('studentId', (type) => Int) studentId: number) {
+        return await prisma.student.findFirst({
+            where: {
+                id: studentId,
+            },
+        });
+    }
+
     @Query((returns) => [Instructor])
     @Authorized(Role.INSTRUCTOR)
     @LimitedQuery()
