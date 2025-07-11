@@ -1338,6 +1338,7 @@ enum course_subject_enum {
   Wirtschaft
   Lernen_lernen            @map("Lernen lernen")
   Steuerlehre
+  Rechnungswesen
 }
 
 enum message_translation_language_enum {

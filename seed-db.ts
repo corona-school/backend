@@ -47,13 +47,24 @@ const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string;
         return hours * 60 + minutes;
     }
     return {
-        weeklyAvailability: weekdays.reduce((acc, weekday) => {
-            acc[weekday] = slots.map(({ from, to }) => ({
-                from: toMinutes(from),
-                to: toMinutes(to),
-            }));
-            return acc;
-        }, {} as WeeklyAvailability),
+        weeklyAvailability: weekdays.reduce(
+            (acc, weekday) => {
+                acc[weekday] = slots.map(({ from, to }) => ({
+                    from: toMinutes(from),
+                    to: toMinutes(to),
+                }));
+                return acc;
+            },
+            {
+                monday: [],
+                tuesday: [],
+                wednesday: [],
+                thursday: [],
+                friday: [],
+                saturday: [],
+                sunday: [],
+            } as WeeklyAvailability
+        ),
     };
 };
 
@@ -701,6 +712,7 @@ void (async function setupDevDB() {
             subjects: [
                 { name: 'Französisch', grade: { min: 4, max: 10 } },
                 { name: 'Englisch', grade: { min: 1, max: 14 } },
+                { name: 'Rechnungswesen', grade: { min: 14, max: 14 } },
             ],
             calendarPreferences: createSimpleCalendarPreferences(
                 ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
