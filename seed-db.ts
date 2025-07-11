@@ -47,13 +47,24 @@ const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string;
         return hours * 60 + minutes;
     }
     return {
-        weeklyAvailability: weekdays.reduce((acc, weekday) => {
-            acc[weekday] = slots.map(({ from, to }) => ({
-                from: toMinutes(from),
-                to: toMinutes(to),
-            }));
-            return acc;
-        }, {} as WeeklyAvailability),
+        weeklyAvailability: weekdays.reduce(
+            (acc, weekday) => {
+                acc[weekday] = slots.map(({ from, to }) => ({
+                    from: toMinutes(from),
+                    to: toMinutes(to),
+                }));
+                return acc;
+            },
+            {
+                monday: [],
+                tuesday: [],
+                wednesday: [],
+                thursday: [],
+                friday: [],
+                saturday: [],
+                sunday: [],
+            } as WeeklyAvailability
+        ),
     };
 };
 
