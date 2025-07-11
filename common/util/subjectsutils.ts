@@ -47,6 +47,7 @@ export const SUBJECTS = [
     'Wirtschaft',
     'Lernen lernen',
     'Steuerlehre',
+    'Rechnungswesen',
 ] as const;
 
 export const isValidSubjectName = (subject: string) => SUBJECTS.includes(subject as any);

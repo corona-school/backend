@@ -712,6 +712,7 @@ void (async function setupDevDB() {
             subjects: [
                 { name: 'Französisch', grade: { min: 4, max: 10 } },
                 { name: 'Englisch', grade: { min: 1, max: 14 } },
+                { name: 'Rechnungswesen', grade: { min: 14, max: 14 } },
             ],
             calendarPreferences: createSimpleCalendarPreferences(
                 ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
