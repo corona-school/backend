@@ -228,6 +228,15 @@ export class ExtendedFieldsSubcourseResolver {
         });
     }
 
+    @FieldResolver((returns) => [Instructor])
+    @Authorized(Role.UNAUTHENTICATED)
+    async mentors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
+        return await prisma.student.findMany({
+            select: { firstname: true, lastname: true, id: true, aboutMe: true },
+            where: { subcourse_mentors_student: { some: { subcourseId: subcourse.id } } },
+        });
+    }
+
     @FieldResolver((returns) => Course)
     @Authorized(Role.UNAUTHENTICATED)
     @LimitEstimated(1)
