@@ -101,7 +101,7 @@ export class PupilUpdateInput {
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
 
-    @Field((type) => Int)
+    @Field((type) => Int, { nullable: true })
     age?: number;
 }
 
