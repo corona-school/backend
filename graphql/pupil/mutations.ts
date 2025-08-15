@@ -100,6 +100,9 @@ export class PupilUpdateInput {
 
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
+
+    @Field((type) => Int)
+    age?: number;
 }
 
 @InputType()
@@ -176,6 +179,7 @@ export async function updatePupil(
         descriptionForScreening,
         school,
         calendarPreferences,
+        age,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -232,6 +236,7 @@ export async function updatePupil(
             descriptionForScreening,
             schoolId: dbSchool?.id,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
+            age: ensureNoNull(age),
         },
         where: { id: pupil.id },
     });

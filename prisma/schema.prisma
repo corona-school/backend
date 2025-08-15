@@ -559,6 +559,7 @@ model pupil {
   updatedAt                    DateTime              @default(now()) @updatedAt @db.Timestamp(6)
   firstname                    String?               @db.VarChar
   lastname                     String?               @db.VarChar
+  age                          Int?
   active                       Boolean               @default(true)
   email                        String                @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
   // If set, the user email was verified:
@@ -1097,6 +1098,8 @@ enum log_logtype_enum {
 
 enum pupil_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1105,18 +1108,40 @@ enum pupil_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum pupil_learninggermansince_enum {
@@ -1203,6 +1228,8 @@ enum school_state_enum {
 
 enum student_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1211,18 +1238,40 @@ enum student_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum student_module_enum {
