@@ -1083,7 +1083,8 @@ enum log_logtype_enum {
   bbbMeeting
   participantJoinedCourse
   participantLeftCourse
-  mentorJoinedCourse
+  mentorJoinedCourse // when mentor joined course by themselves
+  mentorAddedToCourse  // when mentor got added to course by instructor
   mentorLeftCourse
   participantJoinedWaitingList
   participantLeftWaitingList

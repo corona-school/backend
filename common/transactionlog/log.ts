@@ -37,6 +37,7 @@ type LogData<Type extends LogType> = {
     participantJoinedCourse: { subcourseID: number };
     participantLeftCourse: { subcourseID: number };
     mentorJoinedCourse: { subcourseID: number };
+    mentorAddedToCourse: { subcourseID: number };
     mentorLeftCourse: { subcourseID: number };
     participantJoinedWaitingList: { courseID: number };
     participantLeftWaitingList: { courseID: number };

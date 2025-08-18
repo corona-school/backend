@@ -178,14 +178,14 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
-    async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
+    async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string | null) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
         const file = getFile(fileId);
 
-        if (file.mimetype !== 'image/jpeg') {
-            throw new UserInputError(`File must be image/jpeg, was '${file.mimetype}' instead`);
+        if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+            throw new UserInputError(`File must be image/jpeg or image/png, was '${file.mimetype}' instead`);
         }
 
         const imageKey = getCourseImageKey(course, file.mimetype);
