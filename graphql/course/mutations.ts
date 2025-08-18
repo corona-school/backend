@@ -184,8 +184,8 @@ export class MutateCourseResolver {
 
         const file = getFile(fileId);
 
-        if (file.mimetype !== 'image/jpeg') {
-            throw new UserInputError(`File must be image/jpeg, was '${file.mimetype}' instead`);
+        if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+            throw new UserInputError(`File must be image/jpeg or image/png, was '${file.mimetype}' instead`);
         }
 
         const imageKey = getCourseImageKey(course, file.mimetype);
