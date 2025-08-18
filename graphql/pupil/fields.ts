@@ -137,9 +137,12 @@ export class ExtendFieldsPupilResolver {
         });
     }
 
-    @FieldResolver((type) => Int, { nullable: true })
+    @FieldResolver((type) => Int)
     @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER, Role.TUTOR, Role.INSTRUCTOR)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
+        if (!pupil.grade) {
+            return;
+        }
         return gradeAsInt(pupil.grade);
     }
 
