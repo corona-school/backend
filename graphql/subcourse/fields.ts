@@ -557,33 +557,23 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
     async appointments(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
-        const authenticatedQueries = {};
-        if (context.user.studentId) {
-            const isSubcourseInstructor = await prisma.subcourse_instructors_student.count({
-                where: {
-                    studentId: context.user.studentId,
-                    subcourseId: subcourse.id,
-                },
-            });
-            if (isSubcourseInstructor > 0) {
-                authenticatedQueries['organizerIds'] = { has: context.user.userID };
-            }
-        } else if (context.user.pupilId) {
-            const isSubcoursePupil = await prisma.subcourse_participants_pupil.count({
-                where: {
-                    pupilId: context.user.pupilId,
-                    subcourseId: subcourse.id,
-                },
-            });
-            if (isSubcoursePupil > 0) {
-                authenticatedQueries['participantIds'] = { has: context.user.userID };
-            }
-        }
         return await prisma.lecture.findMany({
             where: {
                 subcourseId: subcourse.id,
                 isCanceled: false,
-                ...authenticatedQueries,
+            },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => [Lecture])
+    @Authorized(Role.USER)
+    async joinedAppointments(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
+        return await prisma.lecture.findMany({
+            where: {
+                subcourseId: subcourse.id,
+                isCanceled: false,
+                OR: [{ participantIds: { has: context.user.userID } }, { organizerIds: { has: context.user.userID } }],
             },
             orderBy: { start: 'asc' },
         });
