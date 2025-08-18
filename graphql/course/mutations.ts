@@ -178,7 +178,7 @@ export class MutateCourseResolver {
 
     @Mutation((returns) => Boolean)
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
-    async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string | null) {
+    async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
