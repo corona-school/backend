@@ -267,7 +267,7 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseAddMentor(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
