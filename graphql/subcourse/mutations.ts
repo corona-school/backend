@@ -259,7 +259,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
         if (course.category !== 'homework_help') {
-            throw new Error('Only homework_help courses allow mentors to join by themselves');
+            throw new PrerequisiteError('Only homework_help courses allow mentors to join by themselves');
         }
         await joinSubcourseAsMentor(subcourse, student, false);
         logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
