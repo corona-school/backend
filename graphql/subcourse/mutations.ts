@@ -257,8 +257,23 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const student = await getSessionStudent(context, studentId);
         const subcourse = await getSubcourse(subcourseId);
-        await joinSubcourseAsMentor(subcourse, student);
+        const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
+        if (course.category !== 'homework_help') {
+            throw new PrerequisiteError('Only homework_help courses allow mentors to join by themselves');
+        }
+        await joinSubcourseAsMentor(subcourse, student, false);
         logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
+    async subcourseAddMentor(@Ctx() context: GraphQLContext, @Arg('subcourseId') subcourseId: number, @Arg('studentId') studentId: number): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+        const newMentor = await getStudent(studentId);
+        await joinSubcourseAsMentor(subcourse, newMentor, true);
+        logger.info(`Student(${studentId}) was added as mentor to Subcourse(${subcourseId}) by User(${context.user.userID})`);
         return true;
     }
 

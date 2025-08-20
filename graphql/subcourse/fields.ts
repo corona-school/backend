@@ -556,11 +556,24 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => [Lecture])
     @Authorized(Role.UNAUTHENTICATED)
-    async appointments(@Root() subcourse: Subcourse) {
+    async appointments(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
         return await prisma.lecture.findMany({
             where: {
                 subcourseId: subcourse.id,
                 isCanceled: false,
+            },
+            orderBy: { start: 'asc' },
+        });
+    }
+
+    @FieldResolver((returns) => [Lecture])
+    @Authorized(Role.USER)
+    async joinedAppointments(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
+        return await prisma.lecture.findMany({
+            where: {
+                subcourseId: subcourse.id,
+                isCanceled: false,
+                OR: [{ participantIds: { has: context.user.userID } }, { organizerIds: { has: context.user.userID } }],
             },
             orderBy: { start: 'asc' },
         });

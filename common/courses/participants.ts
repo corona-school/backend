@@ -202,11 +202,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Student) {
-    const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
-    if (course.category !== 'homework_help') {
-        throw new Error('Only homework_help courses allow mentors');
-    }
+export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Student, addedByInstructor: boolean) {
     await prisma.subcourse_mentors_student.create({
         data: {
             studentId: student.id,
@@ -215,7 +211,12 @@ export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Stude
     });
 
     const user = userForStudent(student);
-    await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
+    if (addedByInstructor) {
+        await logTransaction('mentorAddedToCourse', user, { subcourseID: subcourse.id });
+    } else {
+        await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
+    }
+
     const silent = await isSubcourseSilent(subcourse.id);
     await addGroupAppointmentsParticipant(subcourse.id, user.userID, silent);
 }
