@@ -131,3 +131,8 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
 
     return Buffer.from(file).toString('base64');
 }
+
+export enum AppointmentRole {
+    organizer = 'organizer',
+    participant = 'participant',
+}
