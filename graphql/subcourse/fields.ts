@@ -572,7 +572,7 @@ export class ExtendedFieldsSubcourseResolver {
     async joinedAppointments(
         @Root() subcourse: Subcourse,
         @Ctx() context: GraphQLContext,
-        @Arg('as', () => AppointmentRole, { nullable: true }) asRole: AppointmentRole = AppointmentRole.participant
+        @Arg('as', () => AppointmentRole, { nullable: true, defaultValue: AppointmentRole.participant }) asRole: AppointmentRole
     ) {
         return await prisma.lecture.findMany({
             where: {
