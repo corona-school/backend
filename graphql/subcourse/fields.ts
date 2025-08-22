@@ -28,6 +28,7 @@ import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/u
 import { Chat, getChat } from '../chat/fields';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
 import { getParticipants } from '../../common/pupil';
+import { AppointmentRole } from '../../common/appointment/util';
 
 @ObjectType()
 class Participant {
@@ -568,12 +569,18 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => [Lecture])
     @Authorized(Role.USER)
-    async joinedAppointments(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
+    async joinedAppointments(
+        @Root() subcourse: Subcourse,
+        @Ctx() context: GraphQLContext,
+        @Arg('as', () => AppointmentRole, { nullable: true, defaultValue: AppointmentRole.participant }) asRole: AppointmentRole
+    ) {
         return await prisma.lecture.findMany({
             where: {
                 subcourseId: subcourse.id,
                 isCanceled: false,
-                OR: [{ participantIds: { has: context.user.userID } }, { organizerIds: { has: context.user.userID } }],
+                [asRole === AppointmentRole.organizer ? 'organizerIds' : 'participantIds']: {
+                    has: context.user.userID,
+                },
             },
             orderBy: { start: 'asc' },
         });

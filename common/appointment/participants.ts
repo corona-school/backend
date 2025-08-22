@@ -86,22 +86,20 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
     const subcourse = await prisma.subcourse.findUniqueOrThrow({ where: { id: subcourseId }, include: { course: true } });
 
     for (const lecture of await prisma.lecture.findMany({ where: { subcourseId } })) {
-        if (lecture.participantIds.includes(organizerId)) {
-            throw new Error(
-                `User(${organizerId}) is already a participant of Appointment(${lecture.id}) of Subcourse(${subcourseId}), cannot add as organizer`
-            );
-        }
-
-        if (lecture.organizerIds.includes(organizerId)) {
-            logger.info(`User(${organizerId}) is already an organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
-            continue;
-        }
-
         if (getAppointmentEnd(lecture) < new Date()) {
             continue;
         }
 
-        await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
+        if (lecture.participantIds.includes(organizerId)) {
+            // If it was already a participant, we just remove it from that array and add it to the organizers one
+            await prisma.$executeRaw`UPDATE lecture SET "participantIds" = array_remove("participantIds", ${organizerId}), "organizerIds" = array_append("organizerIds", ${organizerId}) WHERE id = ${lecture.id}`;
+        } else if (lecture.organizerIds.includes(organizerId)) {
+            logger.info(`User(${organizerId}) is already an organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
+            continue;
+        } else {
+            await prisma.lecture.update({ where: { id: lecture.id }, data: { organizerIds: { push: organizerId } } });
+        }
+
         logger.info(`User(${organizerId}) added as organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
         if (lecture.zoomMeetingId) {
             const zoomUser = await getOrCreateZoomUser(organizer);
