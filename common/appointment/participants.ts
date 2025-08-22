@@ -92,10 +92,7 @@ export async function addGroupAppointmentsOrganizer(subcourseId: number, organiz
 
         if (lecture.participantIds.includes(organizerId)) {
             // If it was already a participant, we just remove it from that array and add it to the organizers one
-            await prisma.lecture.update({
-                where: { id: lecture.id },
-                data: { organizerIds: { push: organizerId }, participantIds: { set: lecture.participantIds.filter((id) => id !== organizerId) } },
-            });
+            await prisma.$executeRaw`UPDATE lecture SET "participantIds" = array_remove("participantIds", ${organizerId}), "organizerIds" = array_append("organizerIds", ${organizerId}) WHERE id = ${lecture.id}`;
         } else if (lecture.organizerIds.includes(organizerId)) {
             logger.info(`User(${organizerId}) is already an organizer of Appointment(${lecture.id}) of Subcourse(${subcourseId})`);
             continue;
