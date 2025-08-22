@@ -578,7 +578,7 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourseId: subcourse.id,
                 isCanceled: false,
-                [asRole === AppointmentRole.participant ? 'participantIds' : 'organizerIds']: {
+                [asRole === AppointmentRole.organizer ? 'organizerIds' : 'participantIds']: {
                     has: context.user.userID,
                 },
             },
