@@ -20,6 +20,7 @@ import {
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 import { StudentScreeningType } from '../../common/student/screening';
+import { AppointmentRole } from '../../common/appointment/util';
 
 registerEnumType(PupilEmailOwner, {
     name: 'PupilEmailOwner',
@@ -86,3 +87,4 @@ registerEnumType(school_schooltype_enum, {
 
 registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });
 registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
+registerEnumType(AppointmentRole, { name: 'AppointmentRole' });
