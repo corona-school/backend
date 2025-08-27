@@ -49,7 +49,7 @@ const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean): Promise<ZoomMeeting> => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, name: string): Promise<ZoomMeeting> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -71,7 +71,8 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    agenda: 'My Meeting',
+                    topic: name,
+                    agenda: name,
                     default_password: false,
                     duration: duration,
                     start_time: start,
