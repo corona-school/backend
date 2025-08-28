@@ -143,7 +143,7 @@ export async function createSubcourse({ name, lectures, joinAfterStart = true, m
         expectFetch({
             url: 'https://api.zoom.us/v2/users/123/meetings',
             method: 'POST',
-            body: '{"agenda":"My Meeting","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}',
+            body: `{"topic":"${lectureName}","agenda":"${lectureName}","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}`,
             responseStatus: 201,
             response: { id: 10 },
         });
