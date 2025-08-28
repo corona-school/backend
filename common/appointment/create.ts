@@ -174,7 +174,11 @@ export const createGroupAppointments = async (
             let zoomMeetingId: string | null;
 
             if (hosts != null) {
-                const videoChat = await createZoomMeetingForAppointmentWithHosts(hosts, appointmentToBeCreated, true);
+                const videoChat = await createZoomMeetingForAppointmentWithHosts(
+                    hosts,
+                    { ...appointmentToBeCreated, title: appointmentToBeCreated.title || subcourse.course.name },
+                    true
+                );
                 logger.info(`Zoom - Created meeting ${videoChat.id} for subcourse ${subcourseId}`);
                 zoomMeetingId = videoChat.id.toString();
             }
@@ -261,7 +265,7 @@ const createZoomMeetingForAppointmentWithHosts = async (
     isCourse: boolean
 ) => {
     try {
-        const newVideoChat = await createZoomMeeting(hosts, appointment.start, appointment.duration, isCourse);
+        const newVideoChat = await createZoomMeeting(hosts, appointment.start, appointment.duration, isCourse, appointment.title || 'Lern-Fair Termin');
         return newVideoChat;
     } catch (error) {
         throw new Error(`Zoom - Error while creating zoom meeting: ${error}`);
