@@ -6,10 +6,10 @@ import { logTransaction } from '../transactionlog/log';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { canRemoveZoomLicense, getMatchHash } from './util';
-import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { deleteZoomUser } from '../zoom/user';
 import moment from 'moment';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
+import { cancelAppointment } from '../appointment/cancel';
 
 const logger = getLogger('Match');
 
@@ -28,6 +28,9 @@ export async function dissolveMatch(
         throw new PrerequisiteError('Must specify at least one dissolve reason');
     }
 
+    const student = await prisma.student.findUnique({ where: { id: match.studentId } });
+    const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
+
     await prisma.match.update({
         where: { id: match.id },
         data: {
@@ -45,7 +48,7 @@ export async function dissolveMatch(
     });
     for (const lecture of matchLectures) {
         if (lecture.zoomMeetingId) {
-            await deleteZoomMeeting(lecture);
+            await cancelAppointment(userForStudent(student), lecture, true);
         }
     }
     // by default, assume null is passed
@@ -63,8 +66,6 @@ export async function dissolveMatch(
 
     logger.info(`Match(${match.id}) was dissolved by ${dissolver?.firstname ?? 'an admin'}`);
 
-    const student = await prisma.student.findUnique({ where: { id: match.studentId } });
-    const pupil = await prisma.pupil.findUnique({ where: { id: match.pupilId } });
     const matchHash = getMatchHash(match);
     const matchDate = '' + +match.createdAt;
     const uniqueId = '' + match.id;
