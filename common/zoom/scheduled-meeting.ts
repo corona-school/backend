@@ -235,7 +235,7 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
     if (update.duration) {
         body.duration = update.duration;
     }
-    if (update.organizers) {
+    if (update.organizers !== undefined) {
         body.settings = {
             alternative_hosts: update.organizers,
         };
