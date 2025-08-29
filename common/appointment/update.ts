@@ -115,7 +115,7 @@ export async function updateAppointment(
         }
     }
     const zoomUpdate = {
-        start: newStart,
+        startTime: newStart,
         duration: newDuration,
         endDate: lastDate,
     };

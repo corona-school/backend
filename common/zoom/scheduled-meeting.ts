@@ -49,7 +49,7 @@ const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
-const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean): Promise<ZoomMeeting> => {
+const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, name: string): Promise<ZoomMeeting> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
@@ -71,7 +71,8 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    agenda: 'My Meeting',
+                    topic: name,
+                    agenda: name,
                     default_password: false,
                     duration: duration,
                     start_time: start,
@@ -209,21 +210,36 @@ const getZoomMeetingReport = async (meetingId: string) => {
     return response.json();
 };
 
+interface PatchZoomMeetingBody {
+    start_time?: string;
+    duration?: number;
+    timezone?: string;
+    settings?: {
+        alternative_hosts?: string;
+    };
+}
+
 const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; duration?: number; endTime?: Date; organizers?: string }): Promise<void> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
     const tz = 'Europe/Berlin';
-    const start = moment(update.startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
 
-    const body = JSON.stringify({
-        start_time: start,
-        duration: update.duration,
+    const body: PatchZoomMeetingBody = {
         timezone: tz,
-        settings: {
+    };
+
+    if (update.startTime) {
+        body.start_time = moment(update.startTime).tz(tz).format('YYYY-MM-DDTHH:mm:ss');
+    }
+    if (update.duration) {
+        body.duration = update.duration;
+    }
+    if (update.organizers !== undefined) {
+        body.settings = {
             alternative_hosts: update.organizers,
-        },
-    });
+        };
+    }
 
     const response = await zoomRetry(
         () =>
@@ -233,7 +249,7 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
                     Authorization: `Bearer ${access_token}`,
                     'Content-Type': 'application/json',
                 },
-                body: body,
+                body: JSON.stringify(body),
             }),
         3,
         1000
