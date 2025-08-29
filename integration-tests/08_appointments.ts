@@ -39,7 +39,7 @@ const firstAppointment = test('Create an appointment for a subcourse', async () 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: `{"topic":"${appointmentTitle}","agenda":"${appointmentTitle}","default_password":false,"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}`,
+        body: `{"topic":"${appointmentTitle}","agenda":"${appointmentTitle}","default_password":false,"duration":*,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false,"email_notification":false}}`,
         responseStatus: 201,
         response: { id: 10 },
     });
@@ -91,7 +91,7 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: `{"topic":"${appointmentTitle2}","agenda":"${appointmentTitle2}","default_password":false,"duration":30,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}`,
+        body: `{"topic":"${appointmentTitle2}","agenda":"${appointmentTitle2}","default_password":false,"duration":30,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false,"email_notification":false}}`,
         responseStatus: 201,
         response: { id: 11 },
     });
@@ -99,7 +99,7 @@ const moreAppointments = test('Create more appointments for a subcourse', async 
     expectFetch({
         url: 'https://api.zoom.us/v2/users/123/meetings',
         method: 'POST',
-        body: `{"topic":"${appointmentTitle3}","agenda":"${appointmentTitle3}","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false}}`,
+        body: `{"topic":"${appointmentTitle3}","agenda":"${appointmentTitle3}","default_password":false,"duration":60,"start_time":"*","timezone":"Europe/Berlin","type":2,"mute_upon_entry":true,"join_before_host":true,"waiting_room":true,"breakout_room":true,"settings":{"alternative_hosts":"","alternative_hosts_email_notification":false,"email_notification":false}}`,
         responseStatus: 200,
         response: { id: 12 },
     });
@@ -222,7 +222,7 @@ void test('Cancel an appointment as a organizer', async () => {
     const appointmentId = clientAppointments[0].id;
 
     expectFetch({
-        url: 'https://api.zoom.us/v2/meetings/10?action=delete',
+        url: 'https://api.zoom.us/v2/meetings/10?action=delete&schedule_for_reminder=false',
         method: 'DELETE',
         responseStatus: 200,
         response: '{}',
