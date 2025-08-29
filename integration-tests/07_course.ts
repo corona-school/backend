@@ -479,7 +479,7 @@ void test('Add / Remove another instructor', async () => {
     expectFetch({
         url: 'https://api.zoom.us/v2/meetings/10',
         method: 'PATCH',
-        body: `{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":"${instructor2.email.toLowerCase()}"}}`,
+        body: `{"timezone":"Europe/Berlin","settings":{"alternative_hosts":"${instructor2.email.toLowerCase()}"}}`,
         responseStatus: 200,
         response: '{}',
     });
@@ -518,7 +518,7 @@ void test('Add / Remove another instructor', async () => {
     expectFetch({
         url: 'https://api.zoom.us/v2/meetings/10',
         method: 'PATCH',
-        body: '{"start_time":"*","timezone":"Europe/Berlin","settings":{"alternative_hosts":""}}',
+        body: '{"timezone":"Europe/Berlin","settings":{"alternative_hosts":""}}',
         responseStatus: 200,
         response: '{}',
     });

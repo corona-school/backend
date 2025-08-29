@@ -179,7 +179,7 @@ const updatedAppointments = test('Update an appointment', async () => {
     expectFetch({
         url: 'https://api.zoom.us/v2/meetings/10',
         method: 'PATCH',
-        body: '{"start_time":"*","duration":120,"timezone":"Europe/Berlin","settings":{}}',
+        body: '{"timezone":"Europe/Berlin","start_time":"*","duration":120}',
         responseStatus: 200,
         response: {},
     });
