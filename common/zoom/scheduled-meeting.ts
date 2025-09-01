@@ -85,6 +85,7 @@ const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duratio
                     settings: {
                         alternative_hosts: combinedAlternativeHosts,
                         alternative_hosts_email_notification: false,
+                        email_notification: false,
                     },
                 }),
             }),
@@ -158,7 +159,7 @@ const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken();
-    const constructedUrl = `${zoomMeetingUrl}/${appointment.zoomMeetingId}?action=delete`;
+    const constructedUrl = `${zoomMeetingUrl}/${appointment.zoomMeetingId}?action=delete&schedule_for_reminder=false`;
 
     const response = await zoomRetry(
         () =>
