@@ -95,6 +95,9 @@ export class PupilUpdateInput {
     @Field((type) => String, { nullable: true })
     descriptionForScreening?: string;
 
+    @Field((type) => String, { nullable: true })
+    systemMessageForScreening?: string;
+
     @Field((type) => RegistrationSchool, { nullable: true })
     school?: RegistrationSchool;
 
@@ -174,6 +177,7 @@ export async function updatePupil(
         hasSpecialNeeds,
         descriptionForMatch,
         descriptionForScreening,
+        systemMessageForScreening,
         school,
         calendarPreferences,
     } = update;
@@ -199,6 +203,10 @@ export async function updatePupil(
     }
 
     if (descriptionForScreening !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    if (systemMessageForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
@@ -230,6 +238,7 @@ export async function updatePupil(
             hasSpecialNeeds,
             descriptionForMatch,
             descriptionForScreening,
+            systemMessageForScreening,
             schoolId: dbSchool?.id,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
         },
