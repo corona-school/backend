@@ -172,8 +172,8 @@ export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     descriptionForScreening?: string;
 
-    @Field((type) => String, { nullable: true })
-    systemMessageForScreening?: string;
+    @Field(() => [String], { nullable: true })
+    systemMessagesForScreening?: string[];
 
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
@@ -205,7 +205,7 @@ export async function updateStudent(
         gender,
         descriptionForMatch,
         descriptionForScreening,
-        systemMessageForScreening,
+        systemMessagesForScreening,
         calendarPreferences,
     } = update;
 
@@ -237,7 +237,7 @@ export async function updateStudent(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
-    if (systemMessageForScreening !== undefined && !isElevated(context)) {
+    if (systemMessagesForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
@@ -260,7 +260,7 @@ export async function updateStudent(
             gender: ensureNoNull(gender),
             descriptionForMatch,
             descriptionForScreening,
-            systemMessageForScreening,
+            systemMessagesForScreening,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
         },
         where: { id: student.id },

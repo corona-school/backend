@@ -438,7 +438,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             learning_topics: adminOrOwner,
             descriptionForMatch: onlyAdminOrScreener,
             descriptionForScreening: onlyAdminOrScreener,
-            systemMessageForScreening: onlyAdminOrScreener,
+            systemMessagesForScreening: onlyAdminOrScreener,
             hasSpecialNeeds: onlyAdminOrScreener,
             onlyMatchWith: onlyAdminOrScreener,
             referredById: adminOrOwner,
@@ -521,7 +521,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             gender: onlyAdminOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
-            systemMessageForScreening: onlyAdminOrScreener,
+            systemMessagesForScreening: onlyAdminOrScreener,
         }),
     },
 
