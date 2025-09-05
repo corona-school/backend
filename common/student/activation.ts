@@ -10,6 +10,7 @@ import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
 import { CertificateState } from '../certificate';
 import { removeAllPushSubcriptions } from '../notification/channels/push';
+import { cancelSubcourse } from '../courses/states';
 
 export async function deactivateStudent(
     student: Student,
@@ -57,6 +58,7 @@ export async function deactivateStudent(
         },
         include: {
             course_instructors_student: true,
+            subcourse: true,
         },
     });
 
@@ -80,18 +82,11 @@ export async function deactivateStudent(
                     id: courses[i].id,
                 },
                 data: {
-                    subcourse: {
-                        updateMany: {
-                            where: {},
-                            data: {
-                                cancelled: true,
-                            },
-                        },
-                    },
                     courseState: course_coursestate_enum.cancelled,
                 },
             });
-            // TODO Notify participants
+            const cancellations = courses[i].subcourse.map((subcourse) => cancelSubcourse(userForStudent(student), subcourse));
+            await Promise.all(cancellations);
         }
     }
 
