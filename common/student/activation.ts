@@ -33,6 +33,8 @@ export async function deactivateStudent(
         where: { id: student.id },
     });
 
+    await removeAllPushSubcriptions(userForStudent(student));
+
     // Dissolve matches for the student.
     const matches = await prisma.match.findMany({
         where: {
