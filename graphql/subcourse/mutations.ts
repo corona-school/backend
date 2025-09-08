@@ -11,7 +11,14 @@ import {
     leaveSubcourseWaitinglist,
     mentorLeaveSubcourse,
 } from '../../common/courses/participants';
-import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import {
+    addSubcourseInstructor,
+    cancelSubcourse,
+    deleteSubcourse,
+    deleteSubcourseInstructor,
+    editSubcourse,
+    publishSubcourse,
+} from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
@@ -155,15 +162,7 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
-        const instructorUser = userForStudent(instructorToBeRemoved);
-        await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
-        if (subcourse.conversationId) {
-            await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
-        }
-        logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
-
-        await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
+        await deleteSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
 
         return true;
     }

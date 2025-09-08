@@ -10,7 +10,7 @@ import { isZoomFeatureActive } from '../zoom/util';
 import { userForStudent } from '../user';
 import { CertificateState } from '../certificate';
 import { removeAllPushSubcriptions } from '../notification/channels/push';
-import { cancelSubcourse } from '../courses/states';
+import { cancelSubcourse, deleteSubcourseInstructor, subcourseOver } from '../courses/states';
 
 export async function deactivateStudent(
     student: Student,
@@ -28,7 +28,10 @@ export async function deactivateStudent(
 
     await Notification.cancelRemindersFor(userForStudent(student));
     // Setting 'active' to false will not send out any notifications during deactivation
-    student.active = false;
+    const updatedStudent = await prisma.student.update({
+        data: { active: false },
+        where: { id: student.id },
+    });
 
     // Dissolve matches for the student.
     const matches = await prisma.match.findMany({
@@ -47,59 +50,33 @@ export async function deactivateStudent(
         data: { state: CertificateState.manual },
     });
 
-    //Delete course records for the student.
-    const courses = await prisma.course.findMany({
+    // Cancel subcourses
+    const subcourses = await prisma.subcourse.findMany({
         where: {
-            course_instructors_student: {
+            cancelled: false,
+            subcourse_instructors_student: {
                 some: {
                     studentId: student.id,
                 },
             },
         },
         include: {
-            course_instructors_student: true,
-            subcourse: true,
+            subcourse_instructors_student: true,
         },
     });
 
-    for (let i = 0; i < courses.length; i++) {
-        if (courses[i].course_instructors_student.length > 1) {
-            await prisma.course.update({
-                where: {
-                    id: courses[i].id,
-                },
-                data: {
-                    course_instructors_student: {
-                        deleteMany: {
-                            studentId: student.id,
-                        },
-                    },
-                },
-            });
-        } else {
-            await prisma.course.update({
-                where: {
-                    id: courses[i].id,
-                },
-                data: {
-                    courseState: course_coursestate_enum.cancelled,
-                },
-            });
-            const cancellations = courses[i].subcourse.map((subcourse) => cancelSubcourse(userForStudent(student), subcourse));
-            await Promise.all(cancellations);
+    for (const subcourse of subcourses) {
+        // There are multiple instructors, so just remove the student from the subcourse
+        if (subcourse.subcourse_instructors_student.length > 1) {
+            await deleteSubcourseInstructor(userForStudent(student), subcourse, student);
+        } else if (!(await subcourseOver(subcourse))) {
+            await cancelSubcourse(userForStudent(student), subcourse, true);
         }
     }
 
     if (isZoomFeatureActive() && student.zoomUserId) {
         await deleteZoomUser(student);
     }
-
-    await removeAllPushSubcriptions(userForStudent(student));
-
-    const updatedStudent = await prisma.student.update({
-        data: { active: false },
-        where: { id: student.id },
-    });
 
     await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason });
 
