@@ -36,6 +36,7 @@ import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 import { findOrCreateSchool } from '../../common/school/create';
 import { CalendarPreferences } from '../types/calendarPreferences';
+import redactUsers from '../../common/user/redaction';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -323,6 +324,17 @@ export class MutatePupilResolver {
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
         await deactivatePupil(pupil, false, 'deactivated by admin', true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilRedact(@Arg('pupilId') pupilId: number): Promise<boolean> {
+        const pupil = await getPupil(pupilId);
+        if (pupil.active) {
+            throw new PrerequisiteError('Cannot redact active pupil');
+        }
+        await redactUsers({ pupils: [pupil], students: [], screener: [] });
         return true;
     }
 
