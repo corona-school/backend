@@ -1,4 +1,3 @@
-// These two constants are used to replace the names of redacted accounts.
 import { pupil as Pupil, student as Student, screener as Screener } from '@prisma/client';
 import { deleteAttachment } from '../attachments';
 import { getLogger } from '../logger/logger';
@@ -8,6 +7,7 @@ import { userForPupil, userForStudent } from '.';
 
 const logger = getLogger();
 
+// These two constants are used to replace the names of redacted accounts.
 // We are using more descriptive names to make it easier to identify them by our users in case the names are still shown somewhere.
 const REDACTED_FIRST_NAME = 'Account';
 const REDACTED_LAST_NAME = 'gelöscht';
