@@ -521,6 +521,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             gender: onlyAdminOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
+            isAdult: adminOrOwnerOrScreener,
         }),
     },
 

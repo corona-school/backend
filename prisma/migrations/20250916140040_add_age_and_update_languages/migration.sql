@@ -66,3 +66,6 @@ ALTER TYPE "student_languages_enum" ADD VALUE 'Urdu';
 
 -- AlterTable
 ALTER TABLE "pupil" ADD COLUMN     "age" INTEGER;
+
+-- AlterTable
+ALTER TABLE "student" ADD COLUMN     "isAdult" BOOLEAN NOT NULL DEFAULT true;

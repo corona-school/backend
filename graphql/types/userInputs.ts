@@ -106,6 +106,9 @@ export class RegisterStudentInput implements RegisterStudentData {
     @Field((type) => Boolean)
     newsletter: boolean;
 
+    @Field((type) => Boolean)
+    isAdult: boolean;
+
     @Field((type) => RegistrationSource)
     registrationSource: RegistrationSource;
 

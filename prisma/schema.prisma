@@ -827,6 +827,7 @@ model student {
   descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender                  gender_enum?
+  isAdult                 Boolean      @default(true)
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
   referredById String? @db.VarChar
