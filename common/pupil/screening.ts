@@ -41,15 +41,36 @@ interface PupilScreeningUpdate {
     knowsCoronaSchoolFrom?: string;
 }
 
-export async function updatePupilScreening(screener: Screener, pupilScreeningId: number, screeningUpdate: PupilScreeningUpdate) {
+export async function updatePupilScreening(
+    screener: Screener,
+    pupilScreeningId: number,
+    screeningUpdate: PupilScreeningUpdate,
+    systemMessageForScreening?: string
+) {
     const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
     if (screening === null) {
         logger.error('cannot find PupilScreening', new Error('cannot find PupilScreening'), { pupilScreeningId });
         throw new NotFoundError('pupil screening not found');
     }
 
-    await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
-    logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate });
+    await prisma.pupil_screening.update({
+        where: { id: pupilScreeningId },
+        data: {
+            ...screeningUpdate,
+            updatedAt: new Date(),
+        },
+    });
+
+    if (systemMessageForScreening) {
+        await prisma.pupil.update({
+            where: { id: screening.pupilId },
+            data: {
+                systemMessagesForScreening: { push: systemMessageForScreening },
+            },
+        });
+    }
+
+    logger.debug(`successfully updated PupilScreening(${pupilScreeningId})`, { pupilScreeningId, screeningUpdate, systemMessageForScreening });
 
     if (!screening.screenerIds.includes(screener.id)) {
         await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { screenerIds: { push: screener.id } } });
