@@ -100,6 +100,10 @@ const _notificationActions = {
         description: 'Pupil / Screening was rejected',
         sampleContext: {},
     },
+    pupil_screening_with_active_match_rejected: {
+        description: 'Pupil / Screening was rejected while having an active match',
+        sampleContext: {},
+    },
     pupil_screening_succeeded: {
         description: 'Pupil / Screening was successful',
         sampleContext: {},

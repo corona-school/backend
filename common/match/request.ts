@@ -70,17 +70,11 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
 
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_requested', {});
 
-    const isFirstScreening =
-        (await prisma.pupil_screening.count({
-            where: {
-                pupilId: pupil.id,
-            },
-        })) === 1;
+    // Invalidation doesn't apply when admins/screeners are creating the match request
+    if (!adminOverride) {
+        const hasActiveMatch = (await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } })) > 0;
 
-    // Invalidation for match request doesn't apply when there is only one screening.
-    if (!isFirstScreening) {
-        // If the last successful screening, wasn't in the last four months, then invalidate all the screenings.
-        const screening = await prisma.pupil_screening.findFirst({
+        const screeningInTheLastFourMonths = await prisma.pupil_screening.findFirst({
             where: {
                 pupilId: pupil.id,
                 status: 'success',
@@ -93,7 +87,9 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
                 createdAt: 'desc',
             },
         });
-        if (!screening) {
+        // If the last successful screening, wasn't in the last four months.
+        // OR if the user is requesting a second match, then invalidate all the screenings.
+        if (!screeningInTheLastFourMonths || hasActiveMatch) {
             await invalidateAllScreeningsOfPupil(pupil.id);
         }
     }

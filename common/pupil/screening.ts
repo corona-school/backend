@@ -69,7 +69,8 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             if (isFirstScreening) {
                 await Notification.actionTaken(asUser, 'pupil_screening_after_registration_rejected', {});
             } else {
-                await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
+                const hasActiveMatch = await prisma.match.count({ where: { pupilId: screening.pupilId, dissolved: false } });
+                await Notification.actionTaken(asUser, hasActiveMatch > 0 ? 'pupil_screening_with_active_match_rejected' : 'pupil_screening_rejected', {});
             }
             break;
         case PupilScreeningStatus.success:
