@@ -196,3 +196,14 @@ export async function verifyEmail(user: User) {
         }
     }
 }
+
+export async function isImpersonationToken(token: string) {
+    const secret = await prisma.secret.findFirst({
+        where: {
+            secret: hashToken(token),
+            type: { in: [SecretType.TOKEN] },
+            OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
+        },
+    });
+    return /^Support.*Week Access$/.test(secret?.description);
+}
