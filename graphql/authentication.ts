@@ -232,8 +232,7 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId', { nullable: true }) deviceId: string | null) {
         try {
-            const user = await loginToken(token, deviceId);
-            const isImpersonation = await isImpersonationToken(token);
+            const [user, isImpersonation] = await loginToken(token, deviceId);
             await loginAsUser(user, context, deviceId, isImpersonation);
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
