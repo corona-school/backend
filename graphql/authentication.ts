@@ -8,7 +8,7 @@ import { verifyPassword } from '../common/util/hashing';
 import { getLogger } from '../common/logger/logger';
 import { AuthenticationError, ForbiddenError } from './error';
 import { getUser, getUserByEmail, updateLastLogin, User, userForScreener } from '../common/user';
-import { determinePreferredLoginOption, LoginOption, loginPassword, loginToken, verifyEmail } from '../common/secret';
+import { determinePreferredLoginOption, isImpersonationToken, LoginOption, loginPassword, loginToken, verifyEmail } from '../common/secret';
 import { UserType } from './types/user';
 import { GraphQLUser, suggestToken, userSessions } from '../common/user/session';
 import { validateEmail } from './validators';
@@ -117,14 +117,16 @@ function ensureSession(context: GraphQLContext) {
     }
 }
 
-export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string | null) {
+export async function loginAsUser(user: User, context: GraphQLContext, deviceId: string | null, isImpersonation?: boolean) {
     ensureSession(context);
     const roles = await evaluateUserRoles(user);
     context.user = { ...user, deviceId, roles };
 
     await userSessions.set(context.sessionToken, context.user);
     logger.info(`[${context.sessionToken}] User(${user.userID}) successfully logged in`);
-    await updateLastLogin(user);
+    if (!isImpersonation) {
+        await updateLastLogin(user);
+    }
 }
 
 enum SSOAuthStatus {
@@ -230,8 +232,8 @@ export class AuthenticationResolver {
     @Mutation((returns) => Boolean)
     async loginToken(@Ctx() context: GraphQLContext, @Arg('token') token: string, @Arg('deviceId', { nullable: true }) deviceId: string | null) {
         try {
-            const user = await loginToken(token, deviceId);
-            await loginAsUser(user, context, deviceId);
+            const [user, isImpersonation] = await loginToken(token, deviceId);
+            await loginAsUser(user, context, deviceId, isImpersonation);
             if (user.studentId) {
                 await actionTaken(user, 'student_login', {});
             } else if (user.pupilId) {
