@@ -199,7 +199,7 @@ export async function verifyEmail(user: User) {
 }
 
 export function isImpersonationToken(tokenDescription: string) {
-    return tokenDescription.startsWith('Support');
+    return tokenDescription === SUPPORT_MARKER;
 }
 
 export const SUPPORT_MARKER = 'Support Week Access';
