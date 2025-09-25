@@ -115,6 +115,7 @@ const createStudent = async ({ isInstructor = true, calendarPreferences, ...data
         aboutMe: data.aboutMe,
         newsletter: data.newsletter ?? true,
         registrationSource: 'normal',
+        isAdult: true,
     });
     await verifyEmail(userForStudent(student));
     await _createFixedToken(userForStudent(student), `authtokenS${student.id}`);

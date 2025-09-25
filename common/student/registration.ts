@@ -29,6 +29,7 @@ export interface RegisterStudentData {
     // Associates the student with a cooperation
     cooperationTag?: string;
     referredById?: string;
+    isAdult: boolean;
 }
 
 export interface BecomeInstructorData {
@@ -66,6 +67,7 @@ export async function registerStudent(data: RegisterStudentData, noEmail = false
             newsletter: data.newsletter,
             registrationSource: data.registrationSource as any,
             aboutMe: data.aboutMe,
+            isAdult: data.isAdult,
 
             // Compatibility with legacy foreign keys
             wix_id: 'Z-' + uuidv4(),

@@ -240,6 +240,7 @@ export async function createNewStudent() {
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
@@ -255,6 +256,7 @@ export async function createNewStudent() {
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
@@ -341,6 +343,7 @@ export const instructorOne = test('Register Instructor', async () => {
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
                 cooperationTag: "${cooperationTag}"
             }) {
                 id
@@ -357,6 +360,7 @@ export const instructorOne = test('Register Instructor', async () => {
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
@@ -419,6 +423,7 @@ export const instructorTwo = test('Register Instructor Two', async () => {
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
@@ -434,6 +439,7 @@ export const instructorTwo = test('Register Instructor Two', async () => {
                 email: "TEST+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
