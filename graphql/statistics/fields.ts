@@ -1146,7 +1146,7 @@ export class StatisticsResolver {
         SELECT
             EXTRACT(YEAR FROM l."start")::int AS year,
             EXTRACT(MONTH FROM l."start")::int AS month,
-            COUNT(DISTINCT m."id") AS value
+            COUNT(DISTINCT m."id")::int AS value
         FROM match m
         JOIN lecture l 
         ON l."matchId" = m."id"
