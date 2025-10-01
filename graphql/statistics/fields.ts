@@ -1071,7 +1071,7 @@ export class StatisticsResolver {
                             WHEN l."appointmentType" = 'match' THEN 1
                             ELSE COALESCE(array_length(l."participantIds", 1), 0)
                         END
-                    ) AS total_minutes
+                    )::float AS total_minutes
                 FROM lecture l
                 LEFT JOIN subcourse sc ON l."subcourseId" = sc."id"
                 LEFT JOIN course c ON sc."courseId" = c."id"
