@@ -2,7 +2,7 @@ import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { course_category_enum, dissolve_reason, pupil_screening_status_enum, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
-import { GraphQLString } from 'graphql';
+import { GraphQLInt, GraphQLString } from 'graphql';
 import moment from 'moment-timezone';
 
 @ObjectType()
@@ -1102,7 +1102,7 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [ByMonth])
     @Authorized(Role.ADMIN)
-    async matchSuccessRate(@Root() statistics: Statistics, @Arg('minCompletedLectures') minCompletedLectures: number) {
+    async matchSuccessRate(@Root() statistics: Statistics, @Arg('minCompletedLectures', () => GraphQLInt) minCompletedLectures: number) {
         return await prisma.$queryRaw`
             WITH monthly_stats AS (
                 SELECT
