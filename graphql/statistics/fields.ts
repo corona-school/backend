@@ -2,7 +2,7 @@ import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { course_category_enum, dissolve_reason, pupil_screening_status_enum, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
-import { GraphQLString } from 'graphql';
+import { GraphQLInt, GraphQLString } from 'graphql';
 import moment from 'moment-timezone';
 
 @ObjectType()
@@ -1056,5 +1056,105 @@ export class StatisticsResolver {
                                         AND "createdAt" < ${statistics.to}::timestamp
                                       GROUP BY "year", "month", (data::json)->>'deactivationReason'
                                       ORDER BY "year" ASC, "month" ASC, (data::json)->>'deactivationReason' ASC;`;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async pupilsHoursSupported(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+            WITH lecture_hours AS (
+                SELECT
+                    EXTRACT(YEAR FROM l."start")::int AS year,
+                    EXTRACT(MONTH FROM l."start")::int AS month,
+                    SUM(
+                        l."duration" * CASE 
+                            WHEN l."appointmentType" = 'match' THEN 1
+                            ELSE COALESCE(array_length(l."participantIds", 1), 0)
+                        END
+                    ) AS total_minutes
+                FROM lecture l
+                LEFT JOIN subcourse sc ON l."subcourseId" = sc."id"
+                LEFT JOIN course c ON sc."courseId" = c."id"
+                WHERE
+                    (l."isCanceled" IS NULL OR l."isCanceled" = FALSE)
+                    AND l."start" >= ${statistics.from}::timestamp
+                    AND l."start" < ${statistics.to}::timestamp
+                    AND l."appointmentType" IN ('group', 'match')
+                    AND (
+                        c."id" IS NULL
+                        OR (
+                            c."courseState" = 'allowed'
+                            AND sc."cancelled" = FALSE
+                            AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
+                            AND c."name" <> 'Mathematiksprechstunde'
+                        )
+                    )
+                GROUP BY year, month
+            )
+            SELECT
+                year,
+                month,
+                total_minutes / 60 AS value
+            FROM lecture_hours
+            ORDER BY year, month;
+    `;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async matchSuccessRate(@Root() statistics: Statistics, @Arg('minCompletedLectures', () => GraphQLInt) minCompletedLectures: number) {
+        return await prisma.$queryRaw`
+            WITH monthly_stats AS (
+                SELECT
+                    DATE_TRUNC('month', m."createdAt") AS cohort_month,
+                    COUNT(m.id) AS total_matches,
+                    COUNT(CASE WHEN l_count >= ${minCompletedLectures} THEN m.id END) AS successful_matches
+                FROM match m
+                LEFT JOIN (
+                    SELECT 
+                        l."matchId",
+                        COUNT(*) AS l_count
+                    FROM lecture l
+                    WHERE l."appointmentType" = 'match'
+                    AND l."isCanceled" = FALSE
+                    GROUP BY l."matchId"
+                ) l ON l."matchId" = m.id
+                WHERE m."createdAt" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+                GROUP BY cohort_month
+            ),
+            rates AS (
+                SELECT
+                    cohort_month,
+                    EXTRACT(YEAR FROM cohort_month) AS year,
+                    EXTRACT(MONTH FROM cohort_month)::int AS month,
+                    ROUND((successful_matches::numeric / NULLIF(total_matches, 0)) * 100, 2) AS success_rate
+                FROM monthly_stats
+            )
+            SELECT
+                year,
+                month,
+                success_rate AS value
+            FROM rates
+            ORDER BY year, month;
+    `;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async activeMatchesByMonth(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+        SELECT
+            EXTRACT(YEAR FROM l."start")::int AS year,
+            EXTRACT(MONTH FROM l."start")::int AS month,
+            COUNT(DISTINCT m."id") AS value
+        FROM match m
+        JOIN lecture l 
+        ON l."matchId" = m."id"
+        WHERE l."start" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+        AND l."isCanceled" = FALSE
+        AND l."appointmentType" = 'match'
+        GROUP BY year, month
+        ORDER BY year, month;
+    `;
     }
 }
