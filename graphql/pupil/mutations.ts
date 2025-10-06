@@ -212,7 +212,6 @@ export async function updatePupil(
         dbSchool = await findOrCreateSchool(school);
     } catch (error) {
         logger.error('School could not be created', error);
-        throw new PrerequisiteError('School could not be created');
     }
 
     const res = await prismaInstance.pupil.update({
