@@ -21,16 +21,17 @@ import {
     ConversationInfos,
     markConversationAsReadOnlyForPupils,
     markConversationAsWriteable,
+    removeParticipantFromCourseChat,
     sendSystemMessage,
     updateConversation,
 } from '../chat';
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
-import { addGroupAppointmentsOrganizer } from '../appointment/participants';
+import { addGroupAppointmentsOrganizer, removeGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
-import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
+import { deleteAchievementsForSubcourse, deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 import { ValidationError } from 'apollo-server-express';
 import { getContextForGroupAppointmentReminder } from '../appointment/util';
 import { isSubcourseSilent } from './util';
@@ -225,9 +226,9 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(user: User, subcourse: Subcourse) {
+export async function cancelSubcourse(user: User, subcourse: Subcourse, force?: boolean) {
     const can = await canCancel(subcourse);
-    if (!can.allowed) {
+    if (!can.allowed && !force) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
 
@@ -327,4 +328,20 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
         relation: `subcourse/${subcourse.id}`,
     });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
+}
+
+export async function deleteSubcourseInstructor(user: User | null, subcourse: Subcourse, instructorToBeRemoved: Student) {
+    const subcourseId = subcourse.id;
+    const studentId = instructorToBeRemoved.id;
+    const instructorUser = userForStudent(instructorToBeRemoved);
+    await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
+    await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
+    if (subcourse.conversationId) {
+        await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
+    }
+    logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${user?.userID})`);
+
+    await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
+
+    return true;
 }
