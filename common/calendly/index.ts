@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 import 'moment/locale/de';
 import { getLogger } from '../logger/logger';
 import { addPupilScreening } from '../pupil/screening';
-import { getPupil, getUserByEmail, User, userForPupil } from '../user';
+import { getPupil, getUserByEmail, User } from '../user';
 import { prisma } from '../prisma';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../util/screening';
 import * as Notification from '../notification';
