@@ -2,9 +2,10 @@ import moment from 'moment-timezone';
 import 'moment/locale/de';
 import { getLogger } from '../logger/logger';
 import { addPupilScreening } from '../pupil/screening';
-import { getPupil, getUserByEmail, User } from '../user';
+import { getPupil, getUserByEmail, User, userForPupil } from '../user';
 import { prisma } from '../prisma';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../util/screening';
+import * as Notification from '../notification';
 
 const logger = getLogger('Calendly');
 
@@ -187,6 +188,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     }
 
     if (user.pupilId) {
+        await Notification.actionTaken(user, 'pupil_calendly_appointment_booked', {});
         // Check if there is already a valid screening
         let screening = await prisma.pupil_screening.findFirst({
             where: {
@@ -226,6 +228,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     }
 
     if (user.studentId) {
+        await Notification.actionTaken(user, 'student_calendly_appointment_booked', {});
         // If the student already completed a screening, we won't attach the screening appointment to it
         const hadTutorScreening =
             (await prisma.screening.count({
