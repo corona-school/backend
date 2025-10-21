@@ -769,13 +769,13 @@ const _notificationActions = {
             },
         },
     },
-    student_calendly_appointment_booked: {
-        description: 'Student booked appointment via calendly ',
+    student_screening_appointment_booked: {
+        description: 'Student / Appointment for Screening booked',
         sampleContext: {},
     },
 
-    pupil_calendly_appointment_booked: {
-        description: 'Pupil booked appointment via calendly ',
+    pupil_screening_appointment_booked: {
+        description: 'Pupil / Appointment for Screening booked',
         sampleContext: {},
     },
 
