@@ -9,8 +9,9 @@ import { getLastLecture } from '../courses/lectures';
 
 const logger = getLogger('Chat Deactivation');
 
-// one to one chats (if match) whose match was dissolved 30 days ago should be "disabled" (readonly).
-// This will allow users to continue writing for another 30 days after match disolving.
+// one to one chats (if match) whose match was dissolved 3 days ago should be "disabled" (readonly).
+// if the match was dissolved because a deactivated student due to no CoC, we keep it open for 14 days
+// if the match was dissolved due to personal issues we disable the chat ASAP
 async function isActiveMatch(id: number): Promise<boolean> {
     const match = await prisma.match.findUniqueOrThrow({ where: { id } });
 
@@ -18,9 +19,18 @@ async function isActiveMatch(id: number): Promise<boolean> {
         return true;
     }
 
+    if (match.dissolveReasons.includes('personalIssues')) {
+        return false;
+    }
+
     const today = moment().endOf('day');
-    const dissolvedAtPlus30Days = moment(match.dissolvedAt).add(30, 'days');
-    return !dissolvedAtPlus30Days.isBefore(today);
+    if (match.dissolveReasons.includes('accountDeactivatedNoCoC')) {
+        const dissolvedAtPlus14Days = moment(match.dissolvedAt).add(14, 'days');
+        return !dissolvedAtPlus14Days.isBefore(today);
+    }
+
+    const dissolvedAtPlus3Days = moment(match.dissolvedAt).add(3, 'days');
+    return !dissolvedAtPlus3Days.isBefore(today);
 }
 
 async function isActiveSubcourse(id: number): Promise<boolean> {
