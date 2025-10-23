@@ -12,7 +12,7 @@ const logger = getLogger('Chat Deactivation');
 // one to one chats (if match) whose match was dissolved 3 days ago should be "disabled" (readonly).
 // if the match was dissolved because a deactivated student due to no CoC, we keep it open for 14 days
 // if the match was dissolved due to personal issues we disable the chat ASAP
-async function isActiveMatch(id: number): Promise<boolean> {
+export async function isActiveMatch(id: number): Promise<boolean> {
     const match = await prisma.match.findUniqueOrThrow({ where: { id } });
 
     if (!match.dissolved) {
