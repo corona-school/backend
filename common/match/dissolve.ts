@@ -10,6 +10,9 @@ import { deleteZoomUser } from '../zoom/user';
 import moment from 'moment';
 import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import { cancelAppointment } from '../appointment/cancel';
+import { deactivateConversation } from '../chat/deactivation';
+import { getMatcheeConversation } from '../chat';
+import type { TJConversation } from '../chat/types';
 
 const logger = getLogger('Match');
 
@@ -93,6 +96,11 @@ export async function dissolveMatch(
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_dissolved_other', { student, matchHash, matchDate, uniqueId });
     } else if (dissolver && dissolver.email === pupil.email) {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_dissolved_other', { pupil, matchHash, matchDate, uniqueId });
+    }
+
+    if (dissolveReasons.includes('personalIssues')) {
+        const { conversation } = await getMatcheeConversation({ pupilId: pupil.id, studentId: student.id });
+        await deactivateConversation(conversation as TJConversation);
     }
 }
 
