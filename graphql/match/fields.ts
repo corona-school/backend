@@ -16,7 +16,7 @@ import { getMatchAvailabilityFromPerspective } from '../../common/util/calendarP
 import { JSONResolver } from 'graphql-scalars';
 import { isElevated } from '../authentication';
 import { PrerequisiteError } from '../../common/util/error';
-import { isActiveMatch } from '../../common/chat/deactivation';
+import { isMatchChatActive } from '../../common/chat/deactivation';
 
 @Resolver((of) => Match)
 export class ExtendedFieldsMatchResolver {
@@ -137,7 +137,7 @@ export class ExtendedFieldsMatchResolver {
     @FieldResolver((returns) => Boolean, { nullable: true })
     @Authorized(Role.ADMIN, Role.OWNER)
     async isChatActive(@Root() match: Required<Match>) {
-        return await isActiveMatch(match.id);
+        return await isMatchChatActive(match.id);
     }
 
     @FieldResolver((returns) => [LearningTopic])
