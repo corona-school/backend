@@ -48,7 +48,10 @@ We utilize custom metadata during the creation of chats to provide additional co
 The chats are only deacticated rather than deleting chats permanently. Chats are deactivated to allow for reactivation at a later stage if needed. An automated process was implemented to deactivate chats using a cron job called `flagInactiveConversationsAsReadonly`. The deactivation occurs after 30 days when there is no longer a valid reason for the chat to remain active. The 30-day period for deactivation allows participants to continue using the chat for the initial 30 days after its last relevant activity. Once deactivated, the chat becomes access to `none` for all participants, preventing any further modifications or interactions.
 The reasons for chat deactivation include:
 
--   **Match Dissolution**: If a match between chat participants was dissolved more than 30 days ago, the chat is no longer considered relevant and is deactivated.
+-   **Match Dissolution**:
+    -   If a match is dissolved due to personal issues, it becomes inactive immediately.
+    -   If it is dissolved due to missing CoC, the chat remains active for 14 days.
+    -   For all other reasons, the chat remains active for 3 days after dissolved before being deactivated.
 -   **Subcourse Completion**: If the associated subcourse for the chat has ended more than 30 days ago, the chat serves no further purpose and is deactivated.
 
 ### ⚓️ Webhook for missed messages
