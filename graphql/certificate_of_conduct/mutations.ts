@@ -41,4 +41,12 @@ export class MutateCertificateOfConductResolver {
         await CertificateOfConduct.create(dateOfInspection, dateOfIssue, criminalRecords, studentId);
         return true;
     }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    // eslint-disable-next-line camelcase
+    async certificateOfConductDelete(@Arg('studentId') studentId: number) {
+        await CertificateOfConduct.attemptDeleteStaleCoC(studentId);
+        return true;
+    }
 }
