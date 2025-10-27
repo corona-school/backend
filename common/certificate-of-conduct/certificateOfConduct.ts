@@ -21,7 +21,8 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
     });
     logger.info(`Certificate of Conduct(${result.id}) created\n`);
     await Notification.actionTaken(userForStudent(student), 'student_coc_updated', {
-        date: dateOfIssue.toString(),
+        date: moment(dateOfIssue).format('DD.MM.YYYY'),
+        expirationDate: moment(dateOfIssue).add(3, 'years').format('DD.MM.YYYY'),
     });
     if (criminalRecords) {
         await deactivateStudent(student);

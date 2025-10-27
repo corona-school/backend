@@ -503,7 +503,8 @@ const _notificationActions = {
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
         sampleContext: {
-            date: '20. Juli 1969',
+            date: 'DD.MM.YYYY',
+            expirationDate: 'DD.MM.YYYY',
         },
     },
     coc_reminder: {
