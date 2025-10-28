@@ -202,8 +202,10 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
         if (screening) {
             await prisma.pupil_screening.update({
                 where: { id: screening.id },
-                systemMessages: {
-                    push: newAppointmentComment,
+                data: {
+                    systemMessages: {
+                        push: newAppointmentComment,
+                    },
                 },
             });
         } else {
