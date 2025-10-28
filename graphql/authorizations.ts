@@ -395,7 +395,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'calendarPreferences'
         >({
             matchReason: everyone,
-
             email: adminOrOwnerOrScreener,
             verifiedAt: adminOrOwnerOrScreener,
             wix_id: adminOrOwner,
