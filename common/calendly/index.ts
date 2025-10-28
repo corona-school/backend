@@ -6,7 +6,6 @@ import { getPupil, getUserByEmail, User } from '../user';
 import { prisma } from '../prisma';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../util/screening';
 import * as Notification from '../notification';
-import systemMessages from '../chat/localization';
 
 const logger = getLogger('Calendly');
 
@@ -209,7 +208,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             });
         } else {
             const pupil = await getPupil(user);
-            screening = await addPupilScreening(pupil, { comment: newAppointmentComment, status: 'pending' }, true); // TBD
+            screening = await addPupilScreening(pupil, { systemMessages: [newAppointmentComment], status: 'pending' }, true);
         }
         const appointment = await prisma.lecture.create({
             data: {
@@ -254,7 +253,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                systemMessages: { push: newAppointmentComment },
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
@@ -267,7 +266,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                systemMessages: { push: newAppointmentComment },
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
