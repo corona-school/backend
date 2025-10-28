@@ -37,6 +37,7 @@ import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 import { findOrCreateSchool } from '../../common/school/create';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
+import { updateSessionRolesOfUser } from '../../common/user/session';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -104,6 +105,12 @@ export class PupilUpdateInput {
 
     @Field((type) => Int, { nullable: true })
     age?: number;
+
+    @Field((type) => Boolean, { nullable: true })
+    isPupil?: boolean;
+
+    @Field((type) => Boolean, { nullable: true })
+    isParticipant?: boolean;
 }
 
 @InputType()
@@ -181,6 +188,8 @@ export async function updatePupil(
         school,
         calendarPreferences,
         age,
+        isPupil,
+        isParticipant,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -205,6 +214,14 @@ export async function updatePupil(
 
     if (descriptionForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    if (isPupil != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('isPupil may only be changed by elevated users');
+    }
+
+    if (isParticipant != undefined && !isElevated(context)) {
+        throw new PrerequisiteError('isParticipant may only be changed by elevated users');
     }
 
     let dbSchool: School | undefined;
@@ -237,6 +254,8 @@ export async function updatePupil(
             schoolId: dbSchool?.id,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
             age: ensureNoNull(age),
+            isPupil,
+            isParticipant,
         },
         where: { id: pupil.id },
     });
@@ -247,6 +266,10 @@ export async function updatePupil(
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
+    // In case screeners change the roles of the user
+    if (isParticipant !== pupil.isParticipant || isPupil !== pupil.isPupil) {
+        await updateSessionRolesOfUser(userForPupil(res).userID);
+    }
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
