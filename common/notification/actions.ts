@@ -106,7 +106,12 @@ const _notificationActions = {
     },
     pupil_screening_succeeded: {
         description: 'Pupil / Screening was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: true,
+                matching: true,
+            },
+        },
     },
     pupil_screening_invalidated: {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
@@ -122,7 +127,12 @@ const _notificationActions = {
     },
     pupil_screening_after_registration_succeeded: {
         description: 'Pupil / Screening after registration was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: true,
+                matching: true,
+            },
+        },
     },
     pupil_screening_after_registration_rejected: {
         description: 'Pupil / Screening after registration was rejected',

@@ -1,4 +1,4 @@
-import { BecomeTuteeData, RegisterPupilData } from '../../common/pupil/registration';
+import { RegisterPupilData } from '../../common/pupil/registration';
 import { InputType, Field, Int } from 'type-graphql';
 import { Subject } from './subject';
 import { MaxLength } from 'class-validator';
@@ -13,21 +13,6 @@ import {
 } from '@prisma/client';
 import { ValidateEmail } from '../validators';
 import { BecomeTutorData, RegisterStudentData } from '../../common/student/registration';
-
-@InputType()
-export class BecomeTuteeInput implements BecomeTuteeData {
-    @Field((type) => [Subject])
-    subjects: Subject[];
-
-    @Field((type) => [Language])
-    languages: Language[];
-
-    @Field((type) => LearningGermanSince, { nullable: true })
-    learningGermanSince?: LearningGermanSince;
-
-    @Field((type) => Int)
-    gradeAsInt: number;
-}
 
 @InputType()
 export class RegistrationSchool {
