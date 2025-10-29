@@ -185,11 +185,11 @@ export async function updatePupil(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
-    if (isPupil != undefined && !isElevated(context)) {
+    if (isPupil !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('isPupil may only be changed by elevated users');
     }
 
-    if (isParticipant != undefined && !isElevated(context)) {
+    if (isParticipant !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('isParticipant may only be changed by elevated users');
     }
 
