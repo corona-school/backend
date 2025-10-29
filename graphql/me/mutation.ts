@@ -7,7 +7,7 @@ import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { MaxLength, ValidateNested } from 'class-validator';
 import { RateLimit } from '../rate-limit';
 import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } from '../../common/student/registration';
-import { becomeStatePupil, BecomeStatePupilData, becomeTutee, becomeParticipant, registerPupil } from '../../common/pupil/registration';
+import { registerPupil } from '../../common/pupil/registration';
 import '../types/enums';
 import { PrerequisiteError } from '../../common/util/error';
 import { userForStudent, userForPupil } from '../../common/user';
@@ -21,7 +21,7 @@ import { deactivateStudent } from '../../common/student/activation';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { GraphQLBoolean } from 'graphql';
-import { BecomeTuteeInput, BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
+import { BecomeTutorInput, RegisterPupilInput, RegisterStudentInput } from '../types/userInputs';
 import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/evaluate_roles';
 import { verifyEmail } from '../../common/secret';
 import { createIDPLogin } from '../../common/secret/idp';
@@ -60,15 +60,6 @@ class BecomeInstructorInput implements BecomeInstructorData {
     @Field((type) => String, { nullable: true })
     @MaxLength(3000)
     message?: string;
-}
-
-@InputType()
-class BecomeStatePupilInput implements BecomeStatePupilData {
-    @Field((type) => String)
-    @ValidateEmail()
-    teacherEmail: string;
-    @Field((type) => Int, { nullable: true })
-    gradeAsInt?: number;
 }
 
 const logger = getLogger('Me Mutations');
@@ -282,54 +273,6 @@ export class MutateMeResolver {
         await updateSessionUser(context, userForStudent(student), getSessionUser(context).deviceId);
 
         // After successful screening and re authentication, the user will receive the TUTOR role
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
-    async meBecomeTutee(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeTuteeInput, @Arg('pupilId', { nullable: true }) pupilId: number) {
-        const byAdmin = context.user.roles.includes(Role.ADMIN);
-
-        const pupil = await getSessionPupil(context, pupilId);
-        const updatedPupil = await becomeTutee(pupil, data);
-        if (!byAdmin) {
-            const roles: Role[] = [];
-            await evaluatePupilRoles(updatedPupil, roles);
-            context.user = { ...context.user, roles };
-        }
-
-        logger.info(byAdmin ? `An admin upgraded the account of pupil(${pupil.id}) to a TUTEE` : `Pupil(${pupil.id}) upgraded their account to a TUTEE`);
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
-    async meBecomeStatePupil(@Ctx() context: GraphQLContext, @Arg('data') data: BecomeStatePupilInput, @Arg('pupilId', { nullable: true }) pupilId: number) {
-        const pupil = await getSessionPupil(context, pupilId);
-
-        const updatedPupil = await becomeStatePupil(pupil, data);
-        const roles: Role[] = [];
-        await evaluatePupilRoles(updatedPupil, roles);
-        context.user = { ...context.user, roles };
-
-        logger.info(`Pupil(${pupil.id}) upgraded their account to become a STATE_PUPIL`);
-
-        return true;
-    }
-
-    @Mutation((returns) => Boolean)
-    @Authorized(Role.PUPIL, Role.ADMIN)
-    async meBecomeParticipant(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId: number) {
-        const pupil = await getSessionPupil(context, pupilId);
-
-        const updatedPupil = await becomeParticipant(pupil);
-        const roles: Role[] = [];
-        await evaluatePupilRoles(updatedPupil, roles);
-        context.user = { ...context.user, roles };
-
-        logger.info(`Pupil(${pupil.id}) upgraded their account to become a PARTICIPANT`);
 
         return true;
     }
