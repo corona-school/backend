@@ -29,7 +29,6 @@ import './07_course';
 import './08_appointments';
 import './09_chat';
 import './10_admin';
-import './11_registerPlusMany';
 import './12_notifications';
 /* Account Deactivation - Independent, but needs to be last */
 import './13_deactivation';

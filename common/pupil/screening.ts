@@ -18,9 +18,6 @@ export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningI
     if (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, invalidated: false } })) {
         throw new RedundantError(`There already is a valid pupil screening for pupil ${pupil.id}`);
     }
-    if (!pupil.isPupil) {
-        throw new PrerequisiteError(`Pupil ${pupil.id} has isPupil = false`);
-    }
     if (!pupil.verifiedAt) {
         throw new PrerequisiteError(`Pupil ${pupil.id} does not have a verified email`);
     }
@@ -75,9 +72,19 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             break;
         case PupilScreeningStatus.success:
             if (isFirstScreening) {
-                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {});
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {
+                    approvedFor: {
+                        courses: screening.pupil.isParticipant,
+                        matching: screening.pupil.isPupil,
+                    },
+                });
             } else {
-                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {
+                    approvedFor: {
+                        courses: screening.pupil.isParticipant,
+                        matching: screening.pupil.isPupil,
+                    },
+                });
             }
             await updateSessionRolesOfUser(asUser.userID);
             break;
