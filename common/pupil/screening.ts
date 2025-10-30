@@ -11,6 +11,7 @@ const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
     status?: PupilScreeningStatus;
     comment?: string;
+    systemMessages?: string[];
     invalidated?: boolean;
 }
 

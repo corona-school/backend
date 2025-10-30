@@ -203,12 +203,14 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             await prisma.pupil_screening.update({
                 where: { id: screening.id },
                 data: {
-                    comment: `${screening.comment}\n${newAppointmentComment}`,
+                    systemMessages: {
+                        push: newAppointmentComment,
+                    },
                 },
             });
         } else {
             const pupil = await getPupil(user);
-            screening = await addPupilScreening(pupil, { comment: newAppointmentComment, status: 'pending' }, true);
+            screening = await addPupilScreening(pupil, { systemMessages: [newAppointmentComment], status: 'pending' }, true);
         }
         const appointment = await prisma.lecture.create({
             data: {
@@ -253,7 +255,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                comment: newAppointmentComment,
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
@@ -266,7 +268,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                comment: newAppointmentComment,
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
@@ -325,9 +327,11 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.pupil_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Pupil(${screening.pupilId}) after screening appointment was canceled`);
@@ -342,9 +346,11 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Student(${screening.studentId}) after screening appointment was canceled`);
@@ -359,9 +365,11 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.instructor_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Student(${screening.studentId}) after screening appointment was canceled`);

@@ -266,6 +266,7 @@ model instructor_screening {
   id                    Int                           @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
@@ -729,6 +730,7 @@ model screening {
   id                    Int                           @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
@@ -994,15 +996,16 @@ model important_information {
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
 model pupil_screening {
-  id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
-  createdAt   DateTime                    @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
-  status      pupil_screening_status_enum @default(pending)
+  id             Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
+  createdAt      DateTime                    @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
+  status         pupil_screening_status_enum @default(pending)
   // invalidated when a student dissolves a match due to Ghosting / Personal Issues, OR if the last successful screening is older than 4 months (calculated at time of requesting a new match)
-  invalidated Boolean                     @default(false)
-  comment     String?                     @db.VarChar
-  pupilId     Int?
-  pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+  invalidated    Boolean                     @default(false)
+  comment        String?                     @db.VarChar
+  systemMessages String[]                    @default([])
+  pupilId        Int?
+  pupil          pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 
   // During the Pupil Screening, various screeners are involved ('four eye principle')
   // This was not tracked before September 23
@@ -1086,7 +1089,7 @@ enum log_logtype_enum {
   participantJoinedCourse
   participantLeftCourse
   mentorJoinedCourse // when mentor joined course by themselves
-  mentorAddedToCourse  // when mentor got added to course by instructor
+  mentorAddedToCourse // when mentor got added to course by instructor
   mentorLeftCourse
   participantJoinedWaitingList
   participantLeftWaitingList
