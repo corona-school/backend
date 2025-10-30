@@ -194,11 +194,10 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
         if (sharedLanguages.length) {
             // Give a higher bonus if they share a language other than English
             const shareEnglish = sharedLanguages.some((lang) => lang.toLowerCase() === Language.en.toLowerCase());
-            if (shareEnglish) {
-                languageBonus += 0.5;
-            }
             if (sharedLanguages.some((lang) => lang.toLowerCase() !== Language.en.toLowerCase())) {
                 languageBonus += 1;
+            } else if (shareEnglish) {
+                languageBonus += 0.5;
             }
         }
     }
