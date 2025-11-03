@@ -1365,6 +1365,7 @@ enum course_subject_enum {
   Arbeitslehre
   Biologie
   Chemie
+  Chinesisch
   Deutsch
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Englisch
