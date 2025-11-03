@@ -11,6 +11,7 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import deleteUnreachableAchievements from './periodic/delete-unreachable-achievements';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
+import processExpiredCoC from './periodic/process-expired-coc';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
 
 export const allJobs = {
@@ -27,6 +28,7 @@ export const allJobs = {
     notificationsEndedYesterday,
     checkReminders,
     deleteUnreachableAchievements,
+    processExpiredCoC,
 
     assignOriginalAchievement,
 
@@ -44,6 +46,8 @@ export type ScheduledJob = { cronTime: string; name: JobName };
 export const regularJobs: ScheduledJob[] = [
     // every morning, quite early
     { cronTime: '00 55 07 * * *', name: 'runInterestConfirmations' },
+    // every morning at 5 am
+    { cronTime: '00 00 05 * * *', name: 'processExpiredCoC' },
     // every morning, but a little bit later
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', name: 'checkReminders' },
