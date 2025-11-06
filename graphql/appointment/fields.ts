@@ -241,6 +241,8 @@ export class ExtendedFieldsLectureResolver {
             return null;
         }
         const inviteeEvent = await getCalendlyInviteeEvent(appointment.eventUrl, user.email);
+        if (!inviteeEvent) return null;
+
         return {
             cancelUrl: inviteeEvent.cancel_url ?? null,
             rescheduleUrl: inviteeEvent.reschedule_url ?? null,
