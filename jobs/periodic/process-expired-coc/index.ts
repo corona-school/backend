@@ -34,7 +34,7 @@ export default async function execute() {
     });
     logger.info(`Deleted ${studentsWithStaleCoC.length} stale CoCs and their associated remission requests.`);
     for (const student of studentsWithStaleCoC) {
-        await scheduleCoCReminders(student);
+        await scheduleCoCReminders(student, /** ignoreAccCreationDate: */ false, /** isRenewal: */ true);
     }
     logger.info(`Scheduled CoC reminders for ${studentsWithStaleCoC.length} students.`);
 }

@@ -519,7 +519,9 @@ const _notificationActions = {
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
-        sampleContext: {},
+        sampleContext: {
+            isRenewal: false,
+        },
     },
     coc_cancelled: {
         description: 'Student / Certificate of Conduct Cancelled',
