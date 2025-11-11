@@ -96,7 +96,7 @@ export async function addTutorScreening(
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
 }
 
-export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false) {
+export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false, isRenewal = false) {
     if (student.createdAt < new Date('2022-01-01') && !ignoreAccCreationDate) {
         return;
     }
@@ -108,7 +108,9 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 
     await cancelCoCReminders(student);
     await createRemissionRequest(student);
-    await Notification.actionTaken(userForStudent(student), 'coc_reminder', {});
+    await Notification.actionTaken(userForStudent(student), 'coc_reminder', {
+        isRenewal: isRenewal,
+    });
 }
 
 export async function cancelCoCReminders(student: Student) {

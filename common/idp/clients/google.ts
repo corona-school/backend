@@ -11,11 +11,15 @@ export const authenticateWithGoogle = async (code: string): Promise<Authenticate
         audience: oAuth2Client._clientId,
     });
     const payload = loginTicket.getPayload();
+    if (!payload.email) {
+        throw new Error('Missing Email in Google OAuth Response');
+    }
+
     return {
         email: payload.email,
-        firstname: payload.given_name,
+        firstname: payload.given_name ?? '',
         clientId: oAuth2Client._clientId,
-        lastname: payload.family_name,
+        lastname: payload.family_name ?? '',
         sub: payload.sub,
     };
 };
