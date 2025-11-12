@@ -287,11 +287,12 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
             } else {
                 await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined_directly', context);
             }
-
-            await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
-                ...context,
-                skipAchievementBucketsBefore: new Date().toISOString(),
-            });
+            if (!silent) {
+                await Notification.actionTaken(userForPupil(pupil), 'participant_course_joined', {
+                    ...context,
+                    skipAchievementBucketsBefore: new Date().toISOString(),
+                });
+            }
         } catch (error) {
             logger.error(`Failed to send confirmation mail for Subcourse(${subcourse.id}) however the Pupil(${pupil.id}) still joined the course`, error);
         }
