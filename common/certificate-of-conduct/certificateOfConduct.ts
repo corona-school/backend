@@ -26,6 +26,8 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
     });
     if (criminalRecords) {
         await deactivateStudent(student);
+    } else {
+        await Notification.actionTaken(userForStudent(student), 'student_coc_approved', {});
     }
 }
 

@@ -517,6 +517,10 @@ const _notificationActions = {
             expirationDate: 'DD.MM.YYYY',
         },
     },
+    student_coc_approved: {
+        description: 'Student / Certificate of Conduct approved',
+        sampleContext: {},
+    },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
         sampleContext: {

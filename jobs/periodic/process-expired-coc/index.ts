@@ -6,7 +6,7 @@ import { scheduleCoCReminders } from '../../../common/student/screening';
 const logger = getLogger();
 
 export default async function execute() {
-    const threeYearsAgo = moment().subtract(3, 'years').toDate();
+    const thirtyThreeMonthsAgo = moment().subtract(33, 'months').toDate();
     const twoMonthsAgo = moment().subtract(2, 'months').toDate();
     const studentsWithStaleCoC = await prisma.student.findMany({
         where: {
@@ -16,7 +16,7 @@ export default async function execute() {
             },
             certificate_of_conduct: {
                 dateOfIssue: {
-                    lt: threeYearsAgo,
+                    lt: thirtyThreeMonthsAgo,
                 },
             },
         },
