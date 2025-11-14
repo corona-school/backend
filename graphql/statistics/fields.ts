@@ -1157,4 +1157,62 @@ export class StatisticsResolver {
         ORDER BY year, month;
     `;
     }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async uniquePupilsByMonth(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+        SELECT
+            EXTRACT(YEAR FROM l."start")::int AS year,
+            EXTRACT(MONTH FROM l."start")::int AS month,
+            COUNT(DISTINCT split_part(p_id, '/', 2)::int) AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc 
+            ON sc."id" = l."subcourseId"
+        LEFT JOIN course c 
+            ON c."id" = sc."courseId"
+        CROSS JOIN UNNEST(l."participantIds") AS t(p_id)
+        WHERE l."isCanceled" = FALSE
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" < ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
+            )
+        GROUP BY year, month
+        ORDER BY year, month;
+        `;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async uniqueStudentsByMonth(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+        SELECT
+            EXTRACT(YEAR FROM l."start")::int AS year,
+            EXTRACT(MONTH FROM l."start")::int AS month,
+            COUNT(DISTINCT split_part(s_id, '/', 2)::int) AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
+        LEFT JOIN course c  ON c."id" = sc."courseId"
+        CROSS JOIN UNNEST(l."organizerIds") AS t(s_id)
+        WHERE l."isCanceled" = FALSE
+        AND l."start" >= ${statistics.from}::timestamp
+        AND l."start" < ${statistics.to}::timestamp
+        AND l."appointmentType" IN ('group', 'match')
+        AND (
+            c."id" IS NULL
+            OR (
+                c."courseState" = 'allowed'
+                AND sc."cancelled" = FALSE
+            )
+        )
+        GROUP BY year, month
+        ORDER BY year, month;
+        `;
+    }
 }
