@@ -1165,7 +1165,7 @@ export class StatisticsResolver {
         SELECT
             EXTRACT(YEAR FROM l."start")::int AS year,
             EXTRACT(MONTH FROM l."start")::int AS month,
-            COUNT(DISTINCT split_part(p_id, '/', 2)::int) AS value
+            COUNT(DISTINCT p_id) AS value
         FROM lecture l
         LEFT JOIN subcourse sc 
             ON sc."id" = l."subcourseId"
@@ -1197,7 +1197,7 @@ export class StatisticsResolver {
         SELECT
             EXTRACT(YEAR FROM l."start")::int AS year,
             EXTRACT(MONTH FROM l."start")::int AS month,
-            COUNT(DISTINCT split_part(s_id, '/', 2)::int) AS value
+            COUNT(DISTINCT s_id) AS value
         FROM lecture l
         LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
         LEFT JOIN course c  ON c."id" = sc."courseId"
