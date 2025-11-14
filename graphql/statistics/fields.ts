@@ -1160,7 +1160,7 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [ByMonth])
     @Authorized(Role.ADMIN)
-    async uniquePupilsByMonth(@Root() statistics: Statistics) {
+    async uniqueActivePupilsByMonth(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`
         SELECT
             EXTRACT(YEAR FROM l."start")::int AS year,
@@ -1176,11 +1176,13 @@ export class StatisticsResolver {
             AND l."start" >= ${statistics.from}::timestamp
             AND l."start" < ${statistics.to}::timestamp
             AND l."appointmentType" IN ('group', 'match')
+            AND p_id LIKE 'pupil/%'
             AND (
                 c."id" IS NULL
                 OR (
                     c."courseState" = 'allowed'
                     AND sc."cancelled" = FALSE
+                    AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
                 )
             )
         GROUP BY year, month
@@ -1190,7 +1192,7 @@ export class StatisticsResolver {
 
     @FieldResolver(() => [ByMonth])
     @Authorized(Role.ADMIN)
-    async uniqueStudentsByMonth(@Root() statistics: Statistics) {
+    async uniqueActiveStudentsByMonth(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`
         SELECT
             EXTRACT(YEAR FROM l."start")::int AS year,
@@ -1204,11 +1206,13 @@ export class StatisticsResolver {
         AND l."start" >= ${statistics.from}::timestamp
         AND l."start" < ${statistics.to}::timestamp
         AND l."appointmentType" IN ('group', 'match')
+        AND s_id LIKE 'student/%'
         AND (
             c."id" IS NULL
             OR (
                 c."courseState" = 'allowed'
                 AND sc."cancelled" = FALSE
+                AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
             )
         )
         GROUP BY year, month
