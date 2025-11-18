@@ -18,6 +18,7 @@ import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
 import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
+import { isElevated } from '../authentication';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { findUsers } from '../../common/user/search';
@@ -66,8 +67,14 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => String)
     @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
-    lastname(@Root() user: User): string {
-        return user.lastname;
+    lastname(@Root() user: User, @Ctx() context: GraphQLContext): string {
+        const isOwnerOrElevated = isElevated(context) || context.user.roles.includes(Role.OWNER);
+
+        if (isOwnerOrElevated || (user.pupilId && user.age >= 18)) {
+            return user.lastname;
+        } else {
+            return `${user.lastname.charAt(0)}.`;
+        }
     }
 
     // NOTE: In the following we use TEMPORARY_OWNER instead of OWNER,
