@@ -1488,7 +1488,8 @@ enum dissolve_reason {
 enum gender_enum {
   male
   female
-  other
+  diverse
+  other // "Sonstiges" / No Comment
 }
 
 enum pupil_email_owner_enum {
