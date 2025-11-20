@@ -21,16 +21,17 @@ import {
     ConversationInfos,
     markConversationAsReadOnlyForPupils,
     markConversationAsWriteable,
+    removeParticipantFromCourseChat,
     sendSystemMessage,
     updateConversation,
 } from '../chat';
 import systemMessages from '../chat/localization';
 import { cancelAppointment } from '../appointment/cancel';
 import { User, userForStudent } from '../user';
-import { addGroupAppointmentsOrganizer } from '../appointment/participants';
+import { addGroupAppointmentsOrganizer, removeGroupAppointmentsOrganizer } from '../appointment/participants';
 import { sendPupilCoursePromotion, sendSubcourseCancelNotifications } from './notifications';
 import * as Notification from '../../common/notification';
-import { deleteAchievementsForSubcourse } from '../../common/achievement/delete';
+import { deleteAchievementsForSubcourse, deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 import { ValidationError } from 'apollo-server-express';
 import { getContextForGroupAppointmentReminder } from '../appointment/util';
 import { isSubcourseSilent } from './util';
@@ -327,4 +328,16 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
         relation: `subcourse/${subcourse.id}`,
     });
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
+}
+
+export async function removeSubcourseInstructor(blame: User | null, subcourse: Subcourse, toBeRemoved: Student) {
+    const instructorUser = userForStudent(toBeRemoved);
+    await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId: subcourse.id, studentId: toBeRemoved.id } } });
+    await removeGroupAppointmentsOrganizer(subcourse.id, instructorUser.userID, instructorUser.email);
+    if (subcourse.conversationId) {
+        await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
+    }
+    await deleteCourseAchievementsForStudents(subcourse.id, [instructorUser.userID]);
+
+    logger.info(`Student(${toBeRemoved.id}) was deleted as instructor from Subcourse(${subcourse.id}) by User(${blame?.userID})`);
 }

@@ -47,7 +47,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @Query((returns) => [Instructor])
-    @Authorized(Role.INSTRUCTOR)
+    @Authorized(Role.INSTRUCTOR, Role.COURSE_SCREENER, Role.ADMIN)
     @LimitedQuery()
     async otherInstructors(
         @Ctx() context: GraphQLContext,
@@ -55,15 +55,16 @@ export class ExtendFieldsStudentResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ): Promise<Instructor[]> {
-        assert.ok(isSessionStudent(context));
-
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
             verifiedAt: { not: null },
             instructor_screening: { is: { status: { equals: 'success' } } },
-            id: { not: { equals: context.user.studentId } },
         };
+
+        if (context.user.studentId) {
+            query.id = { not: { equals: context.user.studentId } };
+        }
 
         return await prisma.student.findMany({
             where: { AND: [query, strictUserSearch(search)] },
