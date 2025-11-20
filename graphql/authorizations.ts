@@ -517,7 +517,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
-            gender: onlyAdminOrScreener,
+            gender: adminOrOwnerOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
             isAdult: adminOrOwnerOrScreener,
