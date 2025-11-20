@@ -1,17 +1,24 @@
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
-import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
+import { removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import {
     fillSubcourse,
     joinSubcourse,
-    joinSubcourseAsMentor,
+    addSubcourseMentor,
     joinSubcourseWaitinglist,
     leaveSubcourse,
     leaveSubcourseWaitinglist,
-    mentorLeaveSubcourse,
+    removeSubcourseMentor,
 } from '../../common/courses/participants';
-import { addSubcourseInstructor, cancelSubcourse, deleteSubcourse, editSubcourse, publishSubcourse } from '../../common/courses/states';
+import {
+    addSubcourseInstructor,
+    cancelSubcourse,
+    deleteSubcourse,
+    editSubcourse,
+    publishSubcourse,
+    removeSubcourseInstructor,
+} from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
 import { userForPupil, userForStudent } from '../../common/user';
@@ -155,15 +162,8 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
-        const instructorUser = userForStudent(instructorToBeRemoved);
-        await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-        await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
-        if (subcourse.conversationId) {
-            await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
-        }
-        logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${context.user.userID})`);
 
-        await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
+        await removeSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
 
         return true;
     }
@@ -261,7 +261,7 @@ export class MutateSubcourseResolver {
         if (course.category !== 'homework_help') {
             throw new PrerequisiteError('Only homework_help courses allow mentors to join by themselves');
         }
-        await joinSubcourseAsMentor(subcourse, student, false);
+        await addSubcourseMentor(context.user, subcourse, student, false);
         logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
         return true;
     }
@@ -272,13 +272,12 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const newMentor = await getStudent(studentId);
-        await joinSubcourseAsMentor(subcourse, newMentor, true);
-        logger.info(`Student(${studentId}) was added as mentor to Subcourse(${subcourseId}) by User(${context.user.userID})`);
+        await addSubcourseMentor(context.user, subcourse, newMentor, true);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseMentorLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -289,13 +288,45 @@ export class MutateSubcourseResolver {
         // Make sure that only Admins/Owners can remove other mentors from the course
         const isOwner = studentId && (await prisma.subcourse_instructors_student.count({ where: { subcourseId, studentId: context.user.studentId } })) > 0;
         const student = await (isOwner ? getStudent(studentId) : getSessionStudent(context, studentId));
-        const studentUser = userForStudent(student);
-        await mentorLeaveSubcourse(subcourse, student);
-        await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
-        if (subcourse.conversationId) {
-            await removeParticipantFromCourseChat(studentUser, subcourse.conversationId);
+        await removeSubcourseMentor(context.user, subcourse, student);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.INSTRUCTOR, Role.OWNER, Role.COURSE_SCREENER)
+    async subcourseBulkMutateInstructorsMentors(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('addInstructors', () => [Number], { defaultValue: [] }) addInstructors: number[],
+        @Arg('addMentors', () => [Number], { defaultValue: [] }) addMentors: number[],
+        @Arg('removeInstructors', () => [Number], { defaultValue: [] }) removeInstructors: number[],
+        @Arg('removeMentors', () => [Number], { defaultValue: [] }) removeMentors: number[]
+    ): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        for (const studentId of removeInstructors) {
+            const student = await prisma.subcourse_instructors_student.findUnique({
+                where: { subcourseId_studentId: { subcourseId: subcourseId, studentId } },
+                select: { student: true },
+            });
+            await removeSubcourseInstructor(context.user, subcourse, student.student);
         }
-        logger.info(`Student(${studentId}) left Subcourse(${subcourseId})`);
+        for (const studentId of removeMentors) {
+            const student = await prisma.subcourse_mentors_student.findUnique({
+                where: { subcourseId_studentId: { subcourseId: subcourseId, studentId } },
+                select: { student: true },
+            });
+            await removeSubcourseMentor(context.user, subcourse, student.student);
+        }
+        for (const studentId of addInstructors) {
+            const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+            await addSubcourseInstructor(context.user, subcourse, student);
+        }
+        for (const studentId of addMentors) {
+            const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+            await addSubcourseMentor(context.user, subcourse, student, true);
+        }
         return true;
     }
 

@@ -32,7 +32,7 @@ import { isSubcourseSilent } from '../../common/courses/util';
 const logger = getLogger('MutateAppointmentsResolver');
 
 @InputType()
-class AppointmentUpdateInput {
+export class AppointmentUpdateInput {
     @Field(() => Int)
     id: number;
     @Field(() => String, { nullable: true })
@@ -43,6 +43,8 @@ class AppointmentUpdateInput {
     start?: Date;
     @Field(() => Int, { nullable: true })
     duration?: number;
+    @Field(() => String, { nullable: true })
+    override_meeting_link?: string;
 }
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
@@ -108,6 +110,41 @@ export class MutateAppointmentResolver {
         await hasAccess(context, 'Lecture', appointment);
         const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
         await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER)
+    async appointmentSubcourseBulkMutate(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('createAppointments', () => [AppointmentCreateGroupInput]) createAppointments: AppointmentCreateGroupInput[],
+        @Arg('updateAppointments', () => [AppointmentUpdateInput]) updateAppointments: AppointmentUpdateInput[],
+        @Arg('cancelAppointments', () => [Number]) cancelAppointments: number[]
+    ) {
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+        const organizer = await getStudent(context.user.studentId);
+
+        await hasAccess(context, 'Subcourse', subcourse);
+        const silent = await isSubcourseSilent(subcourse.id);
+
+        if (createAppointments.length > 0) {
+            createAppointments.sort((a, b) => a.start.getTime() - b.start.getTime());
+            if (!isAppointmentOneWeekLater(createAppointments[0].start)) {
+                throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
+            }
+            await createGroupAppointments(subcourseId, createAppointments, organizer, silent);
+        }
+        for (const appointment of updateAppointments) {
+            const fullAppointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointment.id } });
+            await updateAppointment(context.user, fullAppointment, appointment, silent);
+        }
+
+        for (const appointmentId of cancelAppointments) {
+            const fullAppointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointmentId } });
+            await cancelAppointment(context.user, fullAppointment, silent);
+        }
 
         return true;
     }
