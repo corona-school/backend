@@ -7,7 +7,22 @@ import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentRem
 import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
-import { AppointmentUpdateInput } from '../../graphql/appointment/mutations';
+import { Field, InputType, Int } from 'type-graphql';
+@InputType()
+export class AppointmentUpdateInput {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String, { nullable: true })
+    title?: string;
+    @Field(() => String, { nullable: true })
+    description?: string;
+    @Field(() => Date, { nullable: true })
+    start?: Date;
+    @Field(() => Int, { nullable: true })
+    duration?: number;
+    @Field(() => String, { nullable: true })
+    override_meeting_link?: string;
+}
 
 const logger = getLogger('Appointment');
 

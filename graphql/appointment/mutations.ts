@@ -18,7 +18,7 @@ import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting, getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
-import { updateAppointment } from '../../common/appointment/update';
+import { AppointmentUpdateInput, updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
 import { PrerequisiteError, RedundantError, ZoomError } from '../../common/util/error';
 import { GraphQLInt } from 'graphql';
@@ -26,26 +26,11 @@ import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracki
 import moment from 'moment';
 import { getAppointmentEnd } from '../../common/appointment/util';
 import { getZoomUrl } from '../../common/zoom/user';
-import { course_category_enum, lecture_appointmenttype_enum } from '@prisma/client';
+import { lecture_appointmenttype_enum } from '@prisma/client';
 import { isSubcourseSilent } from '../../common/courses/util';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
-@InputType()
-export class AppointmentUpdateInput {
-    @Field(() => Int)
-    id: number;
-    @Field(() => String, { nullable: true })
-    title?: string;
-    @Field(() => String, { nullable: true })
-    description?: string;
-    @Field(() => Date, { nullable: true })
-    start?: Date;
-    @Field(() => Int, { nullable: true })
-    duration?: number;
-    @Field(() => String, { nullable: true })
-    override_meeting_link?: string;
-}
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
