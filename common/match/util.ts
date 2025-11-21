@@ -6,6 +6,7 @@ import { prisma } from '../prisma';
 import { parseSubjectString, Subject } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
 import { hashToken } from '../util/hashing';
+import { MatchChatMetrics } from './types';
 
 export const DEFAULT_TUTORING_GRADERESTRICTIONS = {
     MIN: 1,
@@ -81,4 +82,24 @@ export async function canRemoveZoomLicense(studentId: any): Promise<boolean> {
     }
 
     return false;
+}
+
+export async function getMatchChatMetrics(matchId: number): Promise<MatchChatMetrics> {
+    const match = await prisma.match.findFirst({
+        where: { id: matchId },
+    });
+
+    if (match?.chatMetrics) {
+        return match.chatMetrics as unknown as MatchChatMetrics;
+    }
+    return {
+        pupil: {
+            firstMessageSentAt: null,
+            lastMessageSentAt: null,
+        },
+        student: {
+            firstMessageSentAt: null,
+            lastMessageSentAt: null,
+        },
+    };
 }

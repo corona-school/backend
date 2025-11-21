@@ -471,6 +471,8 @@ model match {
   // For "automatic matches", stores the Match Run that created this match (since 01/2025)
   matchPoolRunId Int?
   matchPoolRun   match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  // JSON with the format: { pupil: { firstMessageSentAt, lastMessageSentAt }, student: { firstMessageSentAt, lastMessageSentAt } }
+  chatMetrics    Json?           @db.Json
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
