@@ -271,7 +271,10 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         pupilId: null,
         matchPoolRunId: null,
         subjectsAtMatchingTime: [],
-        chatMetrics: {},
+        pupilFirstMessageSentAt: null,
+        pupilLastMessageSentAt: null,
+        studentFirstMessageSentAt: null,
+        studentLastMessageSentAt: null,
     };
 }
 

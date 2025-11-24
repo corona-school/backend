@@ -6,7 +6,6 @@ import { getUser } from '../../../common/user';
 import * as Notification from '../../../common/notification';
 import { ChatType, InvalidSignatureError, getChatType, getNotificationContext, verifyChatUser } from './util';
 import { createHmac } from 'crypto';
-import { getMatchChatMetrics } from '../../../common/match/util';
 import { prisma } from '../../../common/prisma';
 
 const logger = getLogger('ChatNotification');
@@ -54,17 +53,27 @@ async function handleChatNotification(req: WithRawBody<Request>, res: Response):
             const message = data.messages[0];
             const userType = senderUser.pupilId ? 'pupil' : 'student';
             if (chatType === ChatType.ONE_ON_ONE && !!match?.matchId && (senderUser?.pupilId || senderUser?.studentId)) {
-                const chatMetrics = await getMatchChatMetrics(match.matchId);
-                if (!chatMetrics[userType].firstMessageSentAt) {
-                    chatMetrics[userType].firstMessageSentAt = new Date(message.createdAt).toISOString();
-                }
-                chatMetrics[userType].lastMessageSentAt = new Date(message.createdAt).toISOString();
-                await prisma.match.update({
+                const matchRecord = await prisma.match.findFirst({
                     where: { id: match.matchId },
-                    data: {
-                        chatMetrics: { ...chatMetrics },
-                    },
                 });
+                const messageDate = new Date(message.createdAt).toISOString();
+                if (userType === 'student') {
+                    await prisma.match.update({
+                        where: { id: match.matchId },
+                        data: {
+                            studentLastMessageSentAt: messageDate,
+                            studentFirstMessageSentAt: matchRecord?.studentFirstMessageSentAt ? matchRecord.studentFirstMessageSentAt : messageDate,
+                        },
+                    });
+                } else if (userType === 'pupil') {
+                    await prisma.match.update({
+                        where: { id: match.matchId },
+                        data: {
+                            pupilLastMessageSentAt: messageDate,
+                            pupilFirstMessageSentAt: matchRecord?.pupilFirstMessageSentAt ? matchRecord.pupilFirstMessageSentAt : messageDate,
+                        },
+                    });
+                }
             }
         }
         res.status(200).send({ status: 'ok' });
