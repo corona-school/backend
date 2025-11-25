@@ -47,6 +47,8 @@ export async function dissolveMatch(
     const matchLectures = await prisma.lecture.findMany({
         where: {
             matchId: match.id,
+            start: { gte: new Date() },
+            isCanceled: false,
         },
     });
     for (const lecture of matchLectures) {
