@@ -68,7 +68,7 @@ export class UserFieldsResolver {
     @FieldResolver((returns) => String)
     @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
     lastname(@Root() user: User, @Ctx() context: GraphQLContext): string {
-        const isOwnerOrElevated = isElevated(context) || context.user.roles.includes(Role.OWNER);
+        const isOwnerOrElevated = isElevated(context) || context.user.roles.includes(Role.TEMPORARY_OWNER) || context.user.userID == user.userID;
 
         if (isOwnerOrElevated || (user.pupilId && user.age >= 18)) {
             return user.lastname;
