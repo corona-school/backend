@@ -1158,6 +1158,22 @@ export class StatisticsResolver {
     `;
     }
 
+    @FieldResolver(() => Int)
+    @Authorized(Role.ADMIN)
+    async activeMatchesInRange(@Root() statistics: Statistics) {
+        const result = await prisma.$queryRaw`
+        SELECT
+            COUNT(DISTINCT m."id")::int AS value
+        FROM match m
+        JOIN lecture l 
+        ON l."matchId" = m."id"
+        WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
+        AND l."isCanceled" = FALSE
+        AND l."appointmentType" = 'match'
+    `;
+        return result[0]?.value ?? 0;
+    }
+
     @FieldResolver(() => [ByMonth])
     @Authorized(Role.ADMIN)
     async uniqueActivePupilsByMonth(@Root() statistics: Statistics) {
