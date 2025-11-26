@@ -475,6 +475,8 @@ model match {
   studentLastMessageSentAt  DateTime?       @db.Timestamp(6)
   pupilFirstMessageSentAt   DateTime?       @db.Timestamp(6)
   pupilLastMessageSentAt    DateTime?       @db.Timestamp(6)
+  pupilMessageCount         Int             @default(0)
+  studentMessageCount       Int             @default(0)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
