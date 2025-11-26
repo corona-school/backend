@@ -682,6 +682,18 @@ const _notificationActions = {
             appointment: sampleAppointment,
         },
     },
+    student_first_chat_message_sent: {
+        description: 'Student / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    pupil_first_chat_message_sent: {
+        description: 'Pupil / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
     missed_one_on_one_chat_message: {
         description: 'Missed message in 1:1 chat',
         sampleContext: sampleMissedOneOnOneMessage,

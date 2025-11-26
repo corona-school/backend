@@ -92,6 +92,10 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
             });
             const messageDate = new Date(message.createdAt).toISOString();
             if (userType === 'student') {
+                if (!matchRecord.studentFirstMessageSentAt) {
+                    const senderUser = await getUser(senderUserId);
+                    await Notification.actionTaken(senderUser, 'student_first_chat_message_sent', { matchId: match.matchId });
+                }
                 await prisma.match.update({
                     where: { id: match.matchId },
                     data: {
@@ -101,6 +105,10 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
                     },
                 });
             } else if (userType === 'pupil') {
+                if (!matchRecord.pupilFirstMessageSentAt) {
+                    const senderUser = await getUser(senderUserId);
+                    await Notification.actionTaken(senderUser, 'pupil_first_chat_message_sent', { matchId: match.matchId });
+                }
                 await prisma.match.update({
                     where: { id: match.matchId },
                     data: {
