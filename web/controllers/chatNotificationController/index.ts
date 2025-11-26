@@ -38,7 +38,8 @@ async function handleChatEvent(req: WithRawBody<Request>, res: Response) {
         if (error instanceof InvalidSignatureError) {
             logger.info('Invalid Signature');
             res.status(401).send({ error: 'Unauthorized' });
-            return;
+        } else {
+            res.status(500).send({ error: 'Internal Server Error' });
         }
     }
 }
