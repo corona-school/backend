@@ -34,6 +34,7 @@ async function handleChatEvent(req: WithRawBody<Request>, res: Response) {
         } else if (notificationBody.type === 'message.sent') {
             await handleMessageSentEvent(req, res);
         }
+        res.status(200).send({ status: 'ok' });
     } catch (error) {
         if (error instanceof InvalidSignatureError) {
             logger.info('Invalid Signature');
