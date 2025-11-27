@@ -355,7 +355,6 @@ export async function removeSubcourseMentor(blame: User | null, subcourse: Subco
     if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Student is not a mentor`);
     }
-    await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
     if (subcourse.conversationId) {
         await removeParticipantFromCourseChat(studentUser, subcourse.conversationId);
     }

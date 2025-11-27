@@ -33,7 +33,7 @@ export async function updateAppointment(user: User, appointment: Appointment, ap
     let override_meeting_link = existing_override_meeting_link;
     // important difference: undefined means "don't change", null means "set to null", i.e. delete
     if (appointmentUpdate.override_meeting_link !== undefined) {
-        if (appointmentUpdate.override_meeting_link.length > 0) {
+        if (appointmentUpdate.override_meeting_link && appointmentUpdate.override_meeting_link.length > 0) {
             override_meeting_link = appointmentUpdate.override_meeting_link;
         } else {
             override_meeting_link = null;

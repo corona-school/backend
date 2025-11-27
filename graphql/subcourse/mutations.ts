@@ -33,8 +33,8 @@ import { chat_type, subcourse_promotion_type_enum as SubcoursePromotionType } fr
 import { removeParticipantFromCourseChat } from '../../common/chat';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
-import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 import { getSubcourseProspects } from '../../common/courses/util';
+import { GraphQLInt } from 'graphql';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -293,14 +293,14 @@ export class MutateSubcourseResolver {
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.INSTRUCTOR, Role.OWNER, Role.COURSE_SCREENER)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseBulkMutateInstructorsMentors(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
-        @Arg('addInstructors', () => [Number], { defaultValue: [] }) addInstructors: number[],
-        @Arg('addMentors', () => [Number], { defaultValue: [] }) addMentors: number[],
-        @Arg('removeInstructors', () => [Number], { defaultValue: [] }) removeInstructors: number[],
-        @Arg('removeMentors', () => [Number], { defaultValue: [] }) removeMentors: number[]
+        @Arg('addInstructors', () => [GraphQLInt], { defaultValue: [] }) addInstructors: number[],
+        @Arg('addMentors', () => [GraphQLInt], { defaultValue: [] }) addMentors: number[],
+        @Arg('removeInstructors', () => [GraphQLInt], { defaultValue: [] }) removeInstructors: number[],
+        @Arg('removeMentors', () => [GraphQLInt], { defaultValue: [] }) removeMentors: number[]
     ): Promise<boolean> {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);

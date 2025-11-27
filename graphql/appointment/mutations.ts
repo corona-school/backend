@@ -106,7 +106,7 @@ export class MutateAppointmentResolver {
         @Arg('subcourseId') subcourseId: number,
         @Arg('createAppointments', () => [AppointmentCreateGroupInput]) createAppointments: AppointmentCreateGroupInput[],
         @Arg('updateAppointments', () => [AppointmentUpdateInput]) updateAppointments: AppointmentUpdateInput[],
-        @Arg('cancelAppointments', () => [Number]) cancelAppointments: number[]
+        @Arg('cancelAppointments', () => [GraphQLInt]) cancelAppointments: number[]
     ) {
         const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
         const organizer = await getStudent(context.user.studentId);
