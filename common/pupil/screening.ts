@@ -60,7 +60,9 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
     }
 
     const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId } });
+    const succeededScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId, status: 'success' } });
     const isFirstScreening = validScreeningCount === 1;
+    const isFirstSucceededScreening = succeededScreeningCount === 1;
     const asUser = userForPupil(screening.pupil);
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
@@ -72,7 +74,7 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             }
             break;
         case PupilScreeningStatus.success:
-            if (isFirstScreening) {
+            if (isFirstScreening || isFirstSucceededScreening) {
                 await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {
                     approvedFor: {
                         courses: screening.pupil.isParticipant.toString(),
