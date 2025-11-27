@@ -275,6 +275,8 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         pupilLastMessageSentAt: null,
         studentFirstMessageSentAt: null,
         studentLastMessageSentAt: null,
+        pupilMessageCount: 0,
+        studentMessageCount: 0,
     };
 }
 
