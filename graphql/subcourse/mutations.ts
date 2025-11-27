@@ -296,7 +296,7 @@ export class MutateSubcourseResolver {
     @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseBulkMutateInstructorsMentors(
         @Ctx() context: GraphQLContext,
-        @Arg('subcourseId') subcourseId: number,
+        @Arg('subcourseId', () => GraphQLInt) subcourseId: number,
         @Arg('addInstructors', () => [GraphQLInt], { defaultValue: [] }) addInstructors: number[],
         @Arg('addMentors', () => [GraphQLInt], { defaultValue: [] }) addMentors: number[],
         @Arg('removeInstructors', () => [GraphQLInt], { defaultValue: [] }) removeInstructors: number[],

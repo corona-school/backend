@@ -103,7 +103,7 @@ export class MutateAppointmentResolver {
     @AuthorizedDeferred(Role.OWNER)
     async appointmentSubcourseBulkMutate(
         @Ctx() context: GraphQLContext,
-        @Arg('subcourseId') subcourseId: number,
+        @Arg('subcourseId', () => GraphQLInt) subcourseId: number,
         @Arg('createAppointments', () => [AppointmentCreateGroupInput]) createAppointments: AppointmentCreateGroupInput[],
         @Arg('updateAppointments', () => [AppointmentUpdateInput]) updateAppointments: AppointmentUpdateInput[],
         @Arg('cancelAppointments', () => [GraphQLInt]) cancelAppointments: number[]
