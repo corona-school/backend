@@ -85,6 +85,10 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
         const notificationBody: MessageSentEvent = req.body;
         const { data } = notificationBody;
         const { sender, conversation, message } = data;
+        if (!sender?.id) {
+            // System message
+            return;
+        }
         const senderUserId = talkJsIdToUserId(sender.id);
         const match = conversation.custom.match ? JSON.parse(conversation.custom.match) : undefined;
         const userType = senderUserId.startsWith('pupil') ? 'pupil' : 'student';
