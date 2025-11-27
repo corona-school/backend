@@ -108,8 +108,8 @@ const _notificationActions = {
         description: 'Pupil / Screening was successful',
         sampleContext: {
             approvedFor: {
-                courses: true,
-                matching: true,
+                courses: 'true',
+                matching: 'true',
             },
         },
     },
@@ -129,8 +129,8 @@ const _notificationActions = {
         description: 'Pupil / Screening after registration was successful',
         sampleContext: {
             approvedFor: {
-                courses: true,
-                matching: true,
+                courses: 'true',
+                matching: 'true',
             },
         },
     },

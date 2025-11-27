@@ -75,15 +75,15 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
             if (isFirstScreening) {
                 await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {
                     approvedFor: {
-                        courses: screening.pupil.isParticipant,
-                        matching: screening.pupil.isPupil,
+                        courses: screening.pupil.isParticipant.toString(),
+                        matching: screening.pupil.isPupil.toString(),
                     },
                 });
             } else {
                 await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {
                     approvedFor: {
-                        courses: screening.pupil.isParticipant,
-                        matching: screening.pupil.isPupil,
+                        courses: screening.pupil.isParticipant.toString(),
+                        matching: screening.pupil.isPupil.toString(),
                     },
                 });
             }
