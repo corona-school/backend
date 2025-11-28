@@ -162,7 +162,7 @@ export const createGroupAppointments = async (
     assertAllowed(decision);
 
     let hosts: ZoomUser[] | null = null;
-    if (isZoomFeatureActive()) {
+    if (isZoomFeatureActive() && appointmentsToBeCreated.some((a) => !a.meetingLink)) {
         hosts = await hostsForStudents(instructors.map((i) => i.student));
     }
 
