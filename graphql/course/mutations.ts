@@ -182,6 +182,19 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
 
+        if (fileId === '') {
+            await prisma.course.update({
+                data: {
+                    imageKey: null,
+                },
+                where: {
+                    id: course.id,
+                },
+            });
+            logger.info(`User(${context.user.userID}) removed course image for Course(${course.id})`);
+            return true;
+        }
+
         const file = getFile(fileId);
 
         if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
