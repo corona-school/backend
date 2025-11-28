@@ -10,7 +10,7 @@ import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
 import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
-import { putFile, DEFAULT_BUCKET } from '../../common/file-bucket';
+import { putS3File, DEFAULT_BUCKET, deleteS3File } from '../../common/file-bucket';
 import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
@@ -185,7 +185,7 @@ export class MutateCourseResolver {
         if (fileId === '') {
             const { imageKey: oldImage } = await prisma.course.findUnique({ where: { id: course.id }, select: { imageKey: true } });
             if (oldImage) {
-                removeFile(oldImage);
+                await deleteS3File(oldImage, DEFAULT_BUCKET);
             }
             await prisma.course.update({
                 data: {
@@ -206,7 +206,7 @@ export class MutateCourseResolver {
         }
 
         const imageKey = getCourseImageKey(course, file.mimetype);
-        await putFile(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
+        await putS3File(file.buffer, imageKey, DEFAULT_BUCKET, true, file.mimetype);
         removeFile(fileId);
 
         await prisma.course.update({
