@@ -183,6 +183,10 @@ export class MutateCourseResolver {
         await hasAccess(context, 'Course', course);
 
         if (fileId === '') {
+            const { imageKey: oldImage } = await prisma.course.findUnique({ where: { id: course.id }, select: { imageKey: true } });
+            if (oldImage) {
+                removeFile(oldImage);
+            }
             await prisma.course.update({
                 data: {
                     imageKey: null,
