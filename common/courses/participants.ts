@@ -1,16 +1,14 @@
-import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student, course_category_enum } from '@prisma/client';
+import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
-import moment from 'moment';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
 import { RedundantError, CapacityReachedError, PrerequisiteError } from '../util/error';
 import { Decision } from '../util/decision';
 import { gradeAsInt } from '../util/gradestrings';
-import { createSecretEmailToken } from '../secret';
-import { userForPupil, userForStudent } from '../user';
+import { User, userForPupil, userForStudent } from '../user';
 import { addGroupAppointmentsParticipant, removeGroupAppointmentsParticipant } from '../appointment/participants';
-import { addParticipant } from '../chat';
+import { addParticipant, removeParticipantFromCourseChat } from '../chat';
 import { ChatType } from '../chat/types';
 import { isChatFeatureActive } from '../chat/util';
 import { getCourseOfSubcourse, getSubcourseInstructors, isSubcourseSilent, removeSubcourseProspect } from './util';
@@ -202,7 +200,7 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     return { allowed: true };
 }
 
-export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Student, addedByInstructor: boolean) {
+export async function addSubcourseMentor(blame: User | null, subcourse: Subcourse, student: Student, addedByInstructor: boolean) {
     await prisma.subcourse_mentors_student.create({
         data: {
             studentId: student.id,
@@ -210,15 +208,16 @@ export async function joinSubcourseAsMentor(subcourse: Subcourse, student: Stude
         },
     });
 
-    const user = userForStudent(student);
+    const mentorUser = userForStudent(student);
     if (addedByInstructor) {
-        await logTransaction('mentorAddedToCourse', user, { subcourseID: subcourse.id });
+        await logTransaction('mentorAddedToCourse', mentorUser, { subcourseID: subcourse.id });
     } else {
-        await logTransaction('mentorJoinedCourse', user, { subcourseID: subcourse.id });
+        await logTransaction('mentorJoinedCourse', mentorUser, { subcourseID: subcourse.id });
     }
 
     const silent = await isSubcourseSilent(subcourse.id);
-    await addGroupAppointmentsParticipant(subcourse.id, user.userID, silent);
+    await addGroupAppointmentsParticipant(subcourse.id, mentorUser.userID, silent);
+    logger.info(`Student(${student.id}) was added as mentor to Subcourse(${subcourse.id}) by User(${blame.userID})`);
 }
 
 export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: boolean, notifyIfFull = true): Promise<void> {
@@ -344,7 +343,7 @@ export async function leaveSubcourse(subcourse: Subcourse, pupil: Pupil) {
     }
 }
 
-export async function mentorLeaveSubcourse(subcourse: Subcourse, student: Student) {
+export async function removeSubcourseMentor(blame: User | null, subcourse: Subcourse, student: Student) {
     const deletion = await prisma.subcourse_mentors_student.deleteMany({
         where: {
             subcourseId: subcourse.id,
@@ -356,7 +355,10 @@ export async function mentorLeaveSubcourse(subcourse: Subcourse, student: Studen
     if (deletion.count === 0) {
         throw new RedundantError(`Failed to leave Subcourse as the Student is not a mentor`);
     }
-    logger.info(`Student(${student.id}) left Subcourse(${subcourse.id})`);
+    if (subcourse.conversationId) {
+        await removeParticipantFromCourseChat(studentUser, subcourse.conversationId);
+    }
+    logger.info(`Student(${student.id}) was deleted as mentor from Subcourse(${subcourse.id}) by User(${blame?.userID})`);
     await logTransaction('mentorLeftCourse', studentUser, { subcourseID: subcourse.id });
 }
 
