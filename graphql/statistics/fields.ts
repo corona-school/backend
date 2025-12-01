@@ -1195,11 +1195,11 @@ export class StatisticsResolver {
             END
         ) AS t(p_id)
         WHERE l."isCanceled" = FALSE
-        AND l."start" >= ${statistics.from}::timestamp
-        AND l."start" <= ${statistics.to}::timestamp
-        AND l."appointmentType" IN ('group', 'match')
-        AND p_id LIKE 'pupil/%'
-        AND (
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND p_id LIKE 'pupil/%'
+            AND (
                 c."id" IS NULL
                 OR (
                     c."courseState" = 'allowed'
@@ -1230,11 +1230,11 @@ export class StatisticsResolver {
             END
         ) AS t(s_id)
         WHERE l."isCanceled" = FALSE
-        AND l."start" >= ${statistics.from}::timestamp
-        AND l."start" <= ${statistics.to}::timestamp
-        AND l."appointmentType" IN ('group', 'match')
-        AND s_id LIKE 'student/%'
-        AND (
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND s_id LIKE 'student/%'
+            AND (
                 c."id" IS NULL
                 OR (
                     c."courseState" = 'allowed'
@@ -1265,11 +1265,11 @@ export class StatisticsResolver {
             END
         ) AS t(p_id)
         WHERE l."isCanceled" = FALSE
-        AND l."start" >= ${statistics.from}::timestamp
-        AND l."start" <= ${statistics.to}::timestamp
-        AND l."appointmentType" IN ('group', 'match')
-        AND p_id LIKE 'pupil/%'
-        AND (
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND p_id LIKE 'pupil/%'
+            AND (
                 c."id" IS NULL
                 OR (
                     c."courseState" = 'allowed'
@@ -1299,11 +1299,11 @@ export class StatisticsResolver {
             END
         ) AS t(s_id)
         WHERE l."isCanceled" = FALSE
-        AND l."start" >= ${statistics.from}::timestamp
-        AND l."start" <= ${statistics.to}::timestamp
-        AND l."appointmentType" IN ('group', 'match')
-        AND s_id LIKE 'student/%'
-        AND (
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND s_id LIKE 'student/%'
+            AND (
                 c."id" IS NULL
                 OR (
                     c."courseState" = 'allowed'
