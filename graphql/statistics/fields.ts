@@ -1187,7 +1187,13 @@ export class StatisticsResolver {
             ON sc."id" = l."subcourseId"
         LEFT JOIN course c 
             ON c."id" = sc."courseId"
-        CROSS JOIN UNNEST(l."participantIds") AS t(p_id)
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."participantIds"
+            END
+        ) AS t(p_id)
         WHERE l."isCanceled" = FALSE
             AND l."start" >= ${statistics.from}::timestamp
             AND l."start" <= ${statistics.to}::timestamp
@@ -1198,7 +1204,6 @@ export class StatisticsResolver {
                 OR (
                     c."courseState" = 'allowed'
                     AND sc."cancelled" = FALSE
-                    AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
                 )
             )
         GROUP BY year, month
@@ -1217,20 +1222,25 @@ export class StatisticsResolver {
         FROM lecture l
         LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
         LEFT JOIN course c  ON c."id" = sc."courseId"
-        CROSS JOIN UNNEST(l."organizerIds") AS t(s_id)
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."organizerIds"
+            END
+        ) AS t(s_id)
         WHERE l."isCanceled" = FALSE
-        AND l."start" >= ${statistics.from}::timestamp
-        AND l."start" <= ${statistics.to}::timestamp
-        AND l."appointmentType" IN ('group', 'match')
-        AND s_id LIKE 'student/%'
-        AND (
-            c."id" IS NULL
-            OR (
-                c."courseState" = 'allowed'
-                AND sc."cancelled" = FALSE
-                AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND s_id LIKE 'student/%'
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
             )
-        )
         GROUP BY year, month
         ORDER BY year, month;
         `;
@@ -1247,7 +1257,13 @@ export class StatisticsResolver {
             ON sc."id" = l."subcourseId"
         LEFT JOIN course c 
             ON c."id" = sc."courseId"
-        CROSS JOIN UNNEST(l."participantIds") AS t(p_id)
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
+                    THEN l."joinedBy"
+                ELSE l."participantIds"
+            END
+        ) AS t(p_id)
         WHERE l."isCanceled" = FALSE
             AND l."start" >= ${statistics.from}::timestamp
             AND l."start" <= ${statistics.to}::timestamp
@@ -1258,9 +1274,8 @@ export class StatisticsResolver {
                 OR (
                     c."courseState" = 'allowed'
                     AND sc."cancelled" = FALSE
-                    AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
                 )
-            )
+            );
         `;
         return result[0]?.value ?? 0;
     }
@@ -1276,7 +1291,13 @@ export class StatisticsResolver {
             ON sc."id" = l."subcourseId"
         LEFT JOIN course c 
             ON c."id" = sc."courseId"
-        CROSS JOIN UNNEST(l."organizerIds") AS t(s_id)
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."organizerIds"
+            END
+        ) AS t(s_id)
         WHERE l."isCanceled" = FALSE
             AND l."start" >= ${statistics.from}::timestamp
             AND l."start" <= ${statistics.to}::timestamp
@@ -1287,9 +1308,8 @@ export class StatisticsResolver {
                 OR (
                     c."courseState" = 'allowed'
                     AND sc."cancelled" = FALSE
-                    AND c."name" NOT LIKE '%Hausaufgabenhilfe%'
                 )
-            )
+            );
         `;
         return result[0]?.value ?? 0;
     }
