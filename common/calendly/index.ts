@@ -385,19 +385,23 @@ export const onEvent = (event: CalendlyEvent) => {
     }
 
     logger.info(`Handling Calendly Event(${event.event})`, event);
-    switch (event.event) {
-        case 'invitee.created':
-            return onEventInviteeCreated(event);
-        case 'invitee.canceled':
-            return onEventInviteeCanceled(event);
-        case 'invitee_no_show.created':
-            // We don't handle this for now
-            break;
-        case 'invitee_no_show.deleted':
-            // We don't handle this for now
-            break;
-        default:
-            logger.warn(`Unknown Calendly event type: ${event.event}`, event);
-            break;
+    try {
+        switch (event.event) {
+            case 'invitee.created':
+                return onEventInviteeCreated(event);
+            case 'invitee.canceled':
+                return onEventInviteeCanceled(event);
+            case 'invitee_no_show.created':
+                // We don't handle this for now
+                break;
+            case 'invitee_no_show.deleted':
+                // We don't handle this for now
+                break;
+            default:
+                logger.warn(`Unknown Calendly event type: ${event.event}`, event);
+                break;
+        }
+    } catch (error) {
+        logger.error(`Error handling Calendly Event(${event.event})`, error);
     }
 };
