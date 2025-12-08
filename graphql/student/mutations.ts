@@ -222,10 +222,6 @@ export async function updateStudent(
         throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
     }
 
-    if (gender !== undefined && !isElevated(context)) {
-        throw new PrerequisiteError('gender may only be changed by elevated users');
-    }
-
     if (descriptionForMatch !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
     }

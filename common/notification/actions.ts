@@ -108,8 +108,8 @@ const _notificationActions = {
         description: 'Pupil / Screening was successful',
         sampleContext: {
             approvedFor: {
-                courses: true,
-                matching: true,
+                courses: 'true',
+                matching: 'true',
             },
         },
     },
@@ -129,8 +129,8 @@ const _notificationActions = {
         description: 'Pupil / Screening after registration was successful',
         sampleContext: {
             approvedFor: {
-                courses: true,
-                matching: true,
+                courses: 'true',
+                matching: 'true',
             },
         },
     },
@@ -517,10 +517,14 @@ const _notificationActions = {
             expirationDate: 'DD.MM.YYYY',
         },
     },
+    student_coc_approved: {
+        description: 'Student / Certificate of Conduct approved',
+        sampleContext: {},
+    },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
         sampleContext: {
-            isRenewal: false,
+            isRenewal: 'false',
         },
     },
     coc_cancelled: {
@@ -676,6 +680,18 @@ const _notificationActions = {
         sampleContext: {
             pupil: sampleUser,
             appointment: sampleAppointment,
+        },
+    },
+    student_first_chat_message_sent: {
+        description: 'Student / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    pupil_first_chat_message_sent: {
+        description: 'Pupil / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
         },
     },
     missed_one_on_one_chat_message: {

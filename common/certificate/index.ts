@@ -87,7 +87,7 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
     const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
-    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { match: { studentId: requester.id }, start: { lt: new Date() } } });
+    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { isCanceled: false, match: { studentId: requester.id }, start: { lt: new Date() } } });
     const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
         where: {
@@ -109,6 +109,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
     });
     const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
         where: {
+            isCanceled: false,
             start: { lt: new Date() },
             OR: [
                 {

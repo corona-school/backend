@@ -1078,7 +1078,7 @@ export class StatisticsResolver {
                 WHERE
                     (l."isCanceled" IS NULL OR l."isCanceled" = FALSE)
                     AND l."start" >= ${statistics.from}::timestamp
-                    AND l."start" < ${statistics.to}::timestamp
+                    AND l."start" <= ${statistics.to}::timestamp
                     AND l."appointmentType" IN ('group', 'match')
                     AND (
                         c."id" IS NULL
@@ -1119,7 +1119,7 @@ export class StatisticsResolver {
                     AND l."isCanceled" = FALSE
                     GROUP BY l."matchId"
                 ) l ON l."matchId" = m.id
-                WHERE m."createdAt" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+                WHERE m."createdAt" >= ${statistics.from}::timestamp AND m."createdAt" <= ${statistics.to}::timestamp
                 GROUP BY cohort_month
             ),
             rates AS (
@@ -1150,11 +1150,167 @@ export class StatisticsResolver {
         FROM match m
         JOIN lecture l 
         ON l."matchId" = m."id"
-        WHERE l."start" BETWEEN ${statistics.from}::timestamp AND ${statistics.to}::timestamp
+        WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
         AND l."isCanceled" = FALSE
         AND l."appointmentType" = 'match'
         GROUP BY year, month
         ORDER BY year, month;
     `;
+    }
+
+    @FieldResolver(() => Int)
+    @Authorized(Role.ADMIN)
+    async activeMatchesInRange(@Root() statistics: Statistics) {
+        const result = await prisma.$queryRaw`
+        SELECT
+            COUNT(DISTINCT m."id")::int AS value
+        FROM match m
+        JOIN lecture l 
+        ON l."matchId" = m."id"
+        WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
+        AND l."isCanceled" = FALSE
+        AND l."appointmentType" = 'match'
+    `;
+        return result[0]?.value ?? 0;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async uniqueActivePupilsByMonth(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+        SELECT
+            EXTRACT(YEAR FROM l."start")::int AS year,
+            EXTRACT(MONTH FROM l."start")::int AS month,
+            COUNT(DISTINCT p_id)::int AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc 
+            ON sc."id" = l."subcourseId"
+        LEFT JOIN course c 
+            ON c."id" = sc."courseId"
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."participantIds"
+            END
+        ) AS t(p_id)
+        WHERE l."isCanceled" = FALSE
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND p_id LIKE 'pupil/%'
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
+            )
+        GROUP BY year, month
+        ORDER BY year, month;
+        `;
+    }
+
+    @FieldResolver(() => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async uniqueActiveStudentsByMonth(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`
+        SELECT
+            EXTRACT(YEAR FROM l."start")::int AS year,
+            EXTRACT(MONTH FROM l."start")::int AS month,
+            COUNT(DISTINCT s_id)::int AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
+        LEFT JOIN course c  ON c."id" = sc."courseId"
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."organizerIds"
+            END
+        ) AS t(s_id)
+        WHERE l."isCanceled" = FALSE
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND s_id LIKE 'student/%'
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
+            )
+        GROUP BY year, month
+        ORDER BY year, month;
+        `;
+    }
+
+    @FieldResolver(() => Int)
+    @Authorized(Role.ADMIN)
+    async uniqueActivePupilsInRange(@Root() statistics: Statistics) {
+        const result = await prisma.$queryRaw`
+        SELECT
+            COUNT(DISTINCT p_id)::int AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc 
+            ON sc."id" = l."subcourseId"
+        LEFT JOIN course c 
+            ON c."id" = sc."courseId"
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
+                    THEN l."joinedBy"
+                ELSE l."participantIds"
+            END
+        ) AS t(p_id)
+        WHERE l."isCanceled" = FALSE
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND p_id LIKE 'pupil/%'
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
+            );
+        `;
+        return result[0]?.value ?? 0;
+    }
+
+    @FieldResolver(() => Int)
+    @Authorized(Role.ADMIN)
+    async uniqueActiveStudentsInRange(@Root() statistics: Statistics) {
+        const result = await prisma.$queryRaw`
+        SELECT
+            COUNT(DISTINCT s_id)::int AS value
+        FROM lecture l
+        LEFT JOIN subcourse sc 
+            ON sc."id" = l."subcourseId"
+        LEFT JOIN course c 
+            ON c."id" = sc."courseId"
+        CROSS JOIN LATERAL UNNEST(
+            CASE 
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+                    THEN l."joinedBy"
+                ELSE l."organizerIds"
+            END
+        ) AS t(s_id)
+        WHERE l."isCanceled" = FALSE
+            AND l."start" >= ${statistics.from}::timestamp
+            AND l."start" <= ${statistics.to}::timestamp
+            AND l."appointmentType" IN ('group', 'match')
+            AND s_id LIKE 'student/%'
+            AND (
+                c."id" IS NULL
+                OR (
+                    c."courseState" = 'allowed'
+                    AND sc."cancelled" = FALSE
+                )
+            );
+        `;
+        return result[0]?.value ?? 0;
     }
 }

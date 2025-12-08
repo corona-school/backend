@@ -109,7 +109,7 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
     await cancelCoCReminders(student);
     await createRemissionRequest(student);
     await Notification.actionTaken(userForStudent(student), 'coc_reminder', {
-        isRenewal: isRenewal,
+        isRenewal: isRenewal.toString(),
     });
 }
 
