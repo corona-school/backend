@@ -3,7 +3,7 @@
     "version": "0.3.0",
     "description": "The Corona School Backend",
     "engines": {
-        "node": "18.x"
+        "node": "24.x"
     },
     "main": "index.js",
     "scripts": {
