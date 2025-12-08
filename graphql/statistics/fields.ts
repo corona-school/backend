@@ -432,7 +432,10 @@ export class StatisticsResolver {
 
     @FieldResolver(() => Int)
     @Authorized(Role.ADMIN)
-    async numCourseAppointments(@Root() statistics: Statistics, @Arg('category', { nullable: true }) category?: course_category_enum) {
+    async numCourseAppointments(
+        @Root() statistics: Statistics,
+        @Arg('category', () => course_category_enum, { nullable: true }) category?: course_category_enum
+    ) {
         return await prisma.lecture.count({
             where: {
                 appointmentType: 'group',

@@ -105,7 +105,7 @@ class AchievementTemplateUpdateInput implements AchievementTemplateUpdate {
 export class MutateAchievementTemplateResolver {
     @Mutation((returns) => GraphQLInt)
     @Authorized(Role.ADMIN)
-    async achievementTemplateCreate(@Arg('data') inputData: AchievementTemplateCreateInput) {
+    async achievementTemplateCreate(@Arg('data', () => AchievementTemplateCreateInput) inputData: AchievementTemplateCreateInput) {
         const data: AchievementTemplateCreate = {
             ...inputData,
             conditionDataAggregations: JSON.parse(inputData.conditionDataAggregations),
