@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { computeMatchings, Matching, MatchOffer, MatchRequest } from './matching';
 import { parseSubjectString } from '../util/subjectsutils';
-import { pupil_state_enum, student_state_enum } from '@prisma/client';
+import { pupil_languages_enum, pupil_state_enum, student_languages_enum, student_state_enum } from '@prisma/client';
 import assert from 'assert';
 import { formattedSubjectToSubjectWithGradeRestriction } from './util';
 import { gradeAsInt } from '../util/gradestrings';
@@ -25,6 +25,7 @@ interface HistoryEntry {
     subjects: string;
     state: pupil_state_enum | student_state_enum;
     grade?: string;
+    languages: pupil_languages_enum | student_languages_enum[];
 }
 
 const pupils = JSON.parse(readFileSync(__dirname + '/matching.perf.pupil.json', { encoding: 'utf-8' })) as HistoryEntry[];
@@ -318,6 +319,7 @@ describe('Real World Matching Performance', () => {
                     state: pupil.state,
                     subjects: parseSubjectString(pupil.subjects),
                     requestAt: new Date(pupil.requestAt),
+                    languages: pupil.languages as pupil_languages_enum[],
                 });
                 pupilIdx += 1;
                 // log += `  + ${pupil.requestAt} - add pupil\n`;
@@ -329,6 +331,7 @@ describe('Real World Matching Performance', () => {
                     state: student.state,
                     subjects: parseSubjectString(student.subjects),
                     requestAt: new Date(student.requestAt),
+                    languages: student.languages as student_languages_enum[],
                 });
                 studentIdx += 1;
                 // log += `  + ${student.requestAt} - add student\n`;

@@ -1,4 +1,12 @@
-import { pupil as Pupil, pupil_state_enum, student as Student, student_state_enum, gender_enum } from '@prisma/client';
+import {
+    pupil as Pupil,
+    pupil_state_enum,
+    student as Student,
+    student_state_enum,
+    gender_enum,
+    pupil_languages_enum as PupilLanguage,
+    student_languages_enum as StudentLanguage,
+} from '@prisma/client';
 import { maxWeightAssign } from 'munkres-algorithm';
 import { getPupilGradeAsString } from '../pupil';
 import { gradeAsInt } from '../util/gradestrings';
@@ -7,6 +15,7 @@ import assert from 'assert';
 import { prisma } from '../prisma';
 import { CalendarPreferences } from '../../graphql/types/calendarPreferences';
 import { getOverlappingHoursCount } from '../util/calendarPreferences';
+import { Language } from '../daz/language';
 
 // ------- The Matching Algorithm ------------
 // For a series of match requests and match offers computes
@@ -20,6 +29,7 @@ export type MatchRequest = Readonly<{
     // from the user representation
     grade: number;
     subjects: { name: string; mandatory?: boolean }[];
+    languages: PupilLanguage[];
     state: pupil_state_enum;
     requestAt: Date;
     onlyMatchWith?: gender_enum;
@@ -41,6 +51,7 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
             onlyMatchWith: pupil.onlyMatchWith,
             hasSpecialNeeds: pupil.hasSpecialNeeds,
             calendarPreferences: pupil.calendarPreferences as Record<string, any> as CalendarPreferences,
+            languages: pupil.languages,
         };
 
         for (let i = 0; i < pupil.openMatchRequestCount; i++) {
@@ -56,6 +67,7 @@ export type MatchOffer = Readonly<{
     studentId: number;
 
     subjects: { name: string; grade?: { min: number; max: number } }[];
+    languages: StudentLanguage[];
     state: student_state_enum;
     requestAt: Date;
     gender?: gender_enum;
@@ -76,6 +88,7 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
             gender: student.gender,
             hasSpecialExperience: student.hasSpecialExperience,
             calendarPreferences: student.calendarPreferences as Record<string, any> as CalendarPreferences,
+            languages: student.languages,
         };
 
         for (let i = 0; i < student.openMatchRequestCount; i++) {
@@ -172,12 +185,28 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     // As the probability of a state match is relatively high (about 1/16),
     //  just adding a small bonus is enough to achieve this for 30% of matches
     const stateBonus = offer.state === request.state ? 1 : 0;
+    let languageBonus = 0;
+    if (request.languages?.length && offer.languages?.length) {
+        const sharedLanguages = request.languages.filter((requestLang) => {
+            return offer.languages.map((offerLang) => offerLang.toLowerCase()).includes(requestLang.toLowerCase());
+        });
+
+        if (sharedLanguages.length) {
+            // Give a higher bonus if they share a language other than English
+            const shareEnglish = sharedLanguages.some((lang) => lang.toLowerCase() === Language.en.toLowerCase());
+            if (sharedLanguages.some((lang) => lang.toLowerCase() !== Language.en.toLowerCase())) {
+                languageBonus += 1;
+            } else if (shareEnglish) {
+                languageBonus += 0.5;
+            }
+        }
+    }
 
     const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
     const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
 
     // how good a match is in (0, 1)
-    const score = 0.8 * subjectBonus /* + 0.02 * stateBonus + */ + 0.2 * offerWaitingBonus;
+    const score = 0.8 * subjectBonus + 0.05 * languageBonus /* + 0.02 * stateBonus + */ + 0.2 * offerWaitingBonus;
 
     // TODO: Fix retention for matches with only few subjects (e.g. both helper and helpee only have math as subject)
     // in that case the score is not so high, and thus they are retained for a long time, although the match is perfect
