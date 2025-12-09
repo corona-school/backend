@@ -877,6 +877,7 @@ model subcourse {
   waiting_list_enrollment          waiting_list_enrollment[]
   subcourse_promotions             subcourse_promotion[]
   subcourse_mentors_student        subcourse_mentors_student[]
+  allowMentoring                   Boolean                            @default(false)
 }
 
 model subcourse_promotion {

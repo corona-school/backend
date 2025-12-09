@@ -257,9 +257,8 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const student = await getSessionStudent(context, studentId);
         const subcourse = await getSubcourse(subcourseId);
-        const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
-        if (course.category !== 'homework_help') {
-            throw new PrerequisiteError('Only homework_help courses allow mentors to join by themselves');
+        if (!subcourse.allowMentoring) {
+            throw new PrerequisiteError('Subcourse does not allow mentoring');
         }
         await addSubcourseMentor(context.user, subcourse, student, false);
         logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
@@ -272,6 +271,9 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const newMentor = await getStudent(studentId);
+        if (!subcourse.allowMentoring) {
+            throw new PrerequisiteError('Subcourse does not allow mentoring');
+        }
         await addSubcourseMentor(context.user, subcourse, newMentor, true);
         return true;
     }
@@ -325,6 +327,9 @@ export class MutateSubcourseResolver {
         }
         for (const studentId of addMentors) {
             const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+            if (!subcourse.allowMentoring) {
+                throw new PrerequisiteError('Subcourse does not allow mentoring');
+            }
             await addSubcourseMentor(context.user, subcourse, student, true);
         }
         return true;

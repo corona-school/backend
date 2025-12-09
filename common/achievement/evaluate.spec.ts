@@ -222,7 +222,6 @@ type SubcourseWithLectures = Prisma.subcourseGetPayload<{ include: { lecture: tr
 function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLectures {
     return {
         lecture: lectures,
-
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -240,6 +239,7 @@ function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLe
         groupChatType: 'NORMAL',
         courseId: 1,
         prospectChats: [],
+        allowMentoring: false,
     };
 }
 

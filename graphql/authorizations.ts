@@ -570,6 +570,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'allowChatContactParticipants'
             | 'allowChatContactProspects'
             | 'groupChatType'
+            | 'allowMentoring'
         >({
             course_participation_certificate: nobody,
             lecture: nobody,

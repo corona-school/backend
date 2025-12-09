@@ -215,6 +215,7 @@ interface CreateCourseArgs {
     instructors: Student[];
     participants: Pupil[];
     lectures: Omit<CreateLecturesArgs, 'subcourseId'>;
+    allowMentoring?: boolean;
 }
 
 interface CreateLecturesArgs {
@@ -268,6 +269,7 @@ const createCourse = async (data: CreateCourseArgs) => {
             maxGrade: data.maxGrade ?? 14,
             maxParticipants: data.maxParticipants ?? 10,
             published: data.published ?? true,
+            allowMentoring: data.allowMentoring,
         },
     });
 
@@ -1007,6 +1009,7 @@ void (async function setupDevDB() {
         lectures: { amount: 15, intervalInDays: 7, startOffsetInDays: -14 },
         allowContact: false,
         joinAfterStart: true,
+        allowMentoring: true,
     });
 
     await importAchievements();
