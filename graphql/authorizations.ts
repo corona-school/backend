@@ -136,7 +136,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     // Do not allow access by e.g. SSO registering users unless the temporary user is explicitly allowed, or temporary ownership
     // is used
     if (!context.user.roles.includes(Role.USER) && !requiredRoles.includes(Role.TEMPORARY_OWNER)) {
-        throw new AuthenticationError(`Temporary user has no permission to perform this query`);
+        throw new AuthenticationError(`Temporary user / Admin has no permission to perform this query`);
     }
 
     // If access is not granted by a fixed role of the user, they might have access through an 'entity role',
@@ -395,7 +395,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'calendarPreferences'
         >({
             matchReason: everyone,
-
             email: adminOrOwnerOrScreener,
             verifiedAt: adminOrOwnerOrScreener,
             wix_id: adminOrOwner,
@@ -442,6 +441,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             onlyMatchWith: onlyAdminOrScreener,
             referredById: adminOrOwner,
             emailOwner: adminOrOwnerOrScreener,
+            age: adminOrOwnerOrScreener,
         }),
     },
 
@@ -517,9 +517,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
-            gender: onlyAdminOrScreener,
+            gender: adminOrOwnerOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
+            isAdult: adminOrOwnerOrScreener,
         }),
     },
 

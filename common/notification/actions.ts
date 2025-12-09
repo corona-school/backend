@@ -100,9 +100,18 @@ const _notificationActions = {
         description: 'Pupil / Screening was rejected',
         sampleContext: {},
     },
+    pupil_screening_with_active_match_rejected: {
+        description: 'Pupil / Screening was rejected while having an active match',
+        sampleContext: {},
+    },
     pupil_screening_succeeded: {
         description: 'Pupil / Screening was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: 'true',
+                matching: 'true',
+            },
+        },
     },
     pupil_screening_invalidated: {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
@@ -118,7 +127,12 @@ const _notificationActions = {
     },
     pupil_screening_after_registration_succeeded: {
         description: 'Pupil / Screening after registration was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: 'true',
+                matching: 'true',
+            },
+        },
     },
     pupil_screening_after_registration_rejected: {
         description: 'Pupil / Screening after registration was rejected',
@@ -499,12 +513,19 @@ const _notificationActions = {
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
         sampleContext: {
-            date: '20. Juli 1969',
+            date: 'DD.MM.YYYY',
+            expirationDate: 'DD.MM.YYYY',
         },
+    },
+    student_coc_approved: {
+        description: 'Student / Certificate of Conduct approved',
+        sampleContext: {},
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
-        sampleContext: {},
+        sampleContext: {
+            isRenewal: 'false',
+        },
     },
     coc_cancelled: {
         description: 'Student / Certificate of Conduct Cancelled',
@@ -661,6 +682,18 @@ const _notificationActions = {
             appointment: sampleAppointment,
         },
     },
+    student_first_chat_message_sent: {
+        description: 'Student / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    pupil_first_chat_message_sent: {
+        description: 'Pupil / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
     missed_one_on_one_chat_message: {
         description: 'Missed message in 1:1 chat',
         sampleContext: sampleMissedOneOnOneMessage,
@@ -765,13 +798,13 @@ const _notificationActions = {
             },
         },
     },
-    student_calendly_appointment_booked: {
-        description: 'Student booked appointment via calendly ',
+    student_screening_appointment_booked: {
+        description: 'Student / Appointment for Screening booked',
         sampleContext: {},
     },
 
-    pupil_calendly_appointment_booked: {
-        description: 'Pupil booked appointment via calendly ',
+    pupil_screening_appointment_booked: {
+        description: 'Pupil / Appointment for Screening booked',
         sampleContext: {},
     },
 

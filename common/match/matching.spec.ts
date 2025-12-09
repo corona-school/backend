@@ -1,3 +1,4 @@
+import { pupil_languages_enum, student_languages_enum } from '@prisma/client';
 import { computeMatchings, Matching, MatchOffer, MatchRequest, matchScore, NO_MATCH } from './matching';
 
 function testScore(name: string, request: MatchRequest, offer: MatchOffer, expected: number) {
@@ -20,6 +21,7 @@ const requestOne = {
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', mandatory: false }],
     requestAt: new Date(0),
+    languages: [pupil_languages_enum.Englisch, pupil_languages_enum.Spanisch],
 };
 
 const requestTwo = {
@@ -28,6 +30,7 @@ const requestTwo = {
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', mandatory: false }],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const requestThree = {
@@ -36,6 +39,7 @@ const requestThree = {
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', mandatory: false }],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const requestFour = {
@@ -47,6 +51,7 @@ const requestFour = {
         { name: 'Deutsch', mandatory: false },
     ],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const requestFive = {
@@ -69,6 +74,7 @@ const requestFive = {
             sunday: [],
         },
     },
+    languages: [],
 };
 
 const requestSix = {
@@ -78,6 +84,7 @@ const requestSix = {
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
     requestAt: new Date(0),
     onlyMatchWith: 'female' as const,
+    languages: [],
 };
 
 const requestSeven = {
@@ -87,6 +94,7 @@ const requestSeven = {
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
     requestAt: new Date(0),
     hasSpecialNeeds: true,
+    languages: [],
 };
 
 const requestEight = {
@@ -110,6 +118,7 @@ const requestEight = {
             sunday: [],
         },
     },
+    languages: [],
 };
 
 const offerOne = {
@@ -117,6 +126,7 @@ const offerOne = {
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', grade: { min: 1, max: 10 } }],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const offerTwo = {
@@ -124,6 +134,7 @@ const offerTwo = {
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', grade: { min: 1, max: 10 } }],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const offerThree = {
@@ -131,6 +142,7 @@ const offerThree = {
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', grade: { min: 1, max: 10 } }],
     requestAt: new Date(0),
+    languages: [],
 };
 
 const offerFour = {
@@ -143,6 +155,7 @@ const offerFour = {
     requestAt: new Date(0),
     gender: 'male' as const,
     hasSpecialExperience: false,
+    languages: [],
 };
 
 const offerFive = {
@@ -155,6 +168,7 @@ const offerFive = {
     requestAt: new Date(0),
     gender: 'female' as const,
     hasSpecialExperience: true,
+    languages: [student_languages_enum.Deutsch, student_languages_enum.Spanisch],
 };
 
 const offerSix = {
@@ -180,6 +194,7 @@ const offerSix = {
             sunday: [],
         },
     },
+    languages: [student_languages_enum.Englisch],
 };
 
 describe('Matching Score Basics', () => {
@@ -189,6 +204,8 @@ describe('Matching Score Basics', () => {
     testScore('two requested one offered', requestFour, offerOne, 0.6000000000000001);
     testScore('one requested two offered', requestOne, offerFour, 0.6000000000000001);
     // testScore('one requested two offered - different state', requestOne, offerFive, 0.495);
+    testScore('one requested two offered - share english', requestOne, offerSix, 0.625);
+    testScore('one requested two offered - share spanish', requestOne, offerFive, 0.65);
 });
 
 describe('Matching Score Mandatory', () => {

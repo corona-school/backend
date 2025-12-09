@@ -105,7 +105,7 @@ export async function requestToken(
     await Notification.actionTaken(user, action, { token, redirectTo: redirectTo ?? '', overrideReceiverEmail: newEmail as Email });
 }
 
-export async function loginToken(token: string, deviceId: string | null): Promise<User | never> {
+export async function loginToken(token: string, deviceId: string | null) {
     const secret = await prisma.secret.findFirst({
         where: {
             secret: hashToken(token),
@@ -154,8 +154,9 @@ export async function loginToken(token: string, deviceId: string | null): Promis
     if (secret.type === SecretType.EMAIL_TOKEN) {
         await verifyEmail(user);
     }
+    const isImpersonation = isImpersonationToken(secret.description);
 
-    return user;
+    return [user, isImpersonation] as const;
 }
 
 export async function verifyEmail(user: User) {
@@ -196,3 +197,9 @@ export async function verifyEmail(user: User) {
         }
     }
 }
+
+export function isImpersonationToken(tokenDescription: string) {
+    return tokenDescription === SUPPORT_MARKER;
+}
+
+export const SUPPORT_MARKER = 'Support Week Access';

@@ -536,7 +536,7 @@ export function getPoolStatistics(pool: MatchPool): Promise<MatchPoolStatistics>
         const lastMonth = matchesByMonth.slice(-2)[0];
         const subjectDemand = Object.entries(lastMonth?.subjects ?? {}).map(([subject, { fulfilled, offered, requested, requestedMandatory }]) => ({
             subject,
-            demand: requested / offered,
+            demand: offered > 0 ? requested / offered : 0,
             offered: offered,
             requested: requested,
             requestedMandatory: isNaN(requestedMandatory) ? null : requestedMandatory,

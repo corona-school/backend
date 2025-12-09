@@ -266,6 +266,7 @@ model instructor_screening {
   id                    Int                           @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
@@ -468,8 +469,14 @@ model match {
   learning_topics learning_topic[]
 
   // For "automatic matches", stores the Match Run that created this match (since 01/2025)
-  matchPoolRunId Int?
-  matchPoolRun   match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  matchPoolRunId            Int?
+  matchPoolRun              match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studentFirstMessageSentAt DateTime?       @db.Timestamp(6)
+  studentLastMessageSentAt  DateTime?       @db.Timestamp(6)
+  pupilFirstMessageSentAt   DateTime?       @db.Timestamp(6)
+  pupilLastMessageSentAt    DateTime?       @db.Timestamp(6)
+  pupilMessageCount         Int             @default(0)
+  studentMessageCount       Int             @default(0)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -559,6 +566,7 @@ model pupil {
   updatedAt                    DateTime              @default(now()) @updatedAt @db.Timestamp(6)
   firstname                    String?               @db.VarChar
   lastname                     String?               @db.VarChar
+  age                          Int?
   active                       Boolean               @default(true)
   email                        String                @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
   // If set, the user email was verified:
@@ -728,6 +736,7 @@ model screening {
   id                    Int                           @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
@@ -826,6 +835,7 @@ model student {
   descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender                  gender_enum?
+  isAdult                 Boolean      @default(true)
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
   referredById String? @db.VarChar
@@ -992,15 +1002,16 @@ model important_information {
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
 model pupil_screening {
-  id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
-  createdAt   DateTime                    @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
-  status      pupil_screening_status_enum @default(pending)
+  id             Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
+  createdAt      DateTime                    @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
+  status         pupil_screening_status_enum @default(pending)
   // invalidated when a student dissolves a match due to Ghosting / Personal Issues, OR if the last successful screening is older than 4 months (calculated at time of requesting a new match)
-  invalidated Boolean                     @default(false)
-  comment     String?                     @db.VarChar
-  pupilId     Int?
-  pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+  invalidated    Boolean                     @default(false)
+  comment        String?                     @db.VarChar
+  systemMessages String[]                    @default([])
+  pupilId        Int?
+  pupil          pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 
   // During the Pupil Screening, various screeners are involved ('four eye principle')
   // This was not tracked before September 23
@@ -1084,7 +1095,7 @@ enum log_logtype_enum {
   participantJoinedCourse
   participantLeftCourse
   mentorJoinedCourse // when mentor joined course by themselves
-  mentorAddedToCourse  // when mentor got added to course by instructor
+  mentorAddedToCourse // when mentor got added to course by instructor
   mentorLeftCourse
   participantJoinedWaitingList
   participantLeftWaitingList
@@ -1098,6 +1109,8 @@ enum log_logtype_enum {
 
 enum pupil_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1106,18 +1119,40 @@ enum pupil_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum pupil_learninggermansince_enum {
@@ -1204,6 +1239,8 @@ enum school_state_enum {
 
 enum student_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1212,18 +1249,40 @@ enum student_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum student_module_enum {
@@ -1312,6 +1371,7 @@ enum course_subject_enum {
   Arbeitslehre
   Biologie
   Chemie
+  Chinesisch
   Deutsch
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Englisch
@@ -1434,7 +1494,8 @@ enum dissolve_reason {
 enum gender_enum {
   male
   female
-  other
+  diverse
+  other // "Sonstiges" / No Comment
 }
 
 enum pupil_email_owner_enum {

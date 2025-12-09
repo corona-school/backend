@@ -5,7 +5,7 @@ import { getNotifications, importMessageTranslations, importNotifications } from
 import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
 import { userForStudent, userForPupil, refetchPupil, refetchStudent, userForScreener } from './common/user';
 import { getLogger } from './common/logger/logger';
-import { BecomeTuteeData, registerPupil, RegisterPupilData } from './common/pupil/registration';
+import { registerPupil, RegisterPupilData } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
 import { prisma } from './common/prisma';
 import { becomeInstructor, becomeTutor, BecomeTutorData, registerStudent, RegisterStudentData } from './common/student/registration';
@@ -30,15 +30,23 @@ import {
     course_subject_enum,
     learning_assignment_status,
     pupil_email_owner_enum,
+    pupil_learninggermansince_enum as LearningGermanSince,
+    pupil_languages_enum as Language,
 } from '@prisma/client';
 import { importAchievements } from './seed-achievements';
-import { CalendarPreferences, Day, DayAvailabilitySlot, WeeklyAvailability } from './graphql/types/calendarPreferences';
+import { CalendarPreferences, Day, WeeklyAvailability } from './graphql/types/calendarPreferences';
+import { PupilUpdateInput } from './graphql/pupil/mutations';
+import { Subject } from './common/util/subjectsutils';
 
 const logger = getLogger('DevSetup');
 
-interface CreatePupilArgs extends Partial<RegisterPupilData>, BecomeTuteeData {
+interface CreatePupilArgs extends Partial<RegisterPupilData> {
     includePassword?: boolean;
     calendarPreferences: CalendarPreferences;
+    subjects: Subject[];
+    languages: Language[];
+    learningGermanSince?: LearningGermanSince;
+    gradeAsInt: number;
 }
 
 const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string; to: string }[]): CalendarPreferences => {
@@ -115,6 +123,7 @@ const createStudent = async ({ isInstructor = true, calendarPreferences, ...data
         aboutMe: data.aboutMe,
         newsletter: data.newsletter ?? true,
         registrationSource: 'normal',
+        isAdult: true,
     });
     await verifyEmail(userForStudent(student));
     await _createFixedToken(userForStudent(student), `authtokenS${student.id}`);

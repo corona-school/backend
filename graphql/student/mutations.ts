@@ -44,6 +44,7 @@ import { GraphQLJSON } from 'graphql-scalars';
 import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
 import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
+import redactUsers from '../../common/user/redaction';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -221,10 +222,6 @@ export async function updateStudent(
         throw new PrerequisiteError('hasSpecialExperience may only be changed by elevated users');
     }
 
-    if (gender !== undefined && !isElevated(context)) {
-        throw new PrerequisiteError('gender may only be changed by elevated users');
-    }
-
     if (descriptionForMatch !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForMatch may only be changed by elevated users');
     }
@@ -345,6 +342,17 @@ export class MutateStudentResolver {
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
         await deactivateStudent(student);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async studentRedact(@Arg('studentId') studentId: number): Promise<boolean> {
+        const student = await getStudent(studentId);
+        if (student.active) {
+            throw new PrerequisiteError('Cannot redact active student');
+        }
+        await redactUsers({ pupils: [], students: [student], screener: [] });
         return true;
     }
 

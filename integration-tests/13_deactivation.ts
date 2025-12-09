@@ -274,6 +274,7 @@ void test('User should not receive notifications after being unverified for 30 d
                 email: "test+${userRandom}@lern-fair.de"
                 newsletter: false
                 registrationSource: normal
+                isAdult: true
             }) {
                 id
             }
