@@ -134,7 +134,7 @@ function courseToDTO(logger: Logger, subcourse: WebflowSubcourse, lectureIds: DB
     // make sure that the weekday can be properly translated
     startDate.locale('de');
 
-    const image = getCourseImageURL(subcourse.course);
+    const image = getCourseImageURL(subcourse.course).url;
     return {
         ...emptyMetadata,
 

@@ -73,7 +73,7 @@ export class MutateChatResolver {
             include: { subcourse_participants_pupil: true, subcourse_instructors_student: true, lecture: true, course: true },
         });
         await hasAccess(context, 'Subcourse', subcourse);
-        const courseImage = getCourseImageURL(subcourse.course);
+        const courseImage = getCourseImageURL(subcourse.course).url;
 
         const conversationInfos: ConversationInfos = {
             subject: subcourse.course.name,

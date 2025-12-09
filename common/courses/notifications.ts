@@ -53,7 +53,7 @@ export async function getNotificationContextForSubcourse(course: { name: string;
         course: {
             name: course.name,
             description: course.description,
-            image: getCourseImageURL(course),
+            image: getCourseImageURL(course).url,
         },
         subcourse: {
             url: `https://app.lern-fair.de/single-course/${subcourse.id}`,
