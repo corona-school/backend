@@ -838,11 +838,11 @@ void (async function setupDevDB() {
         ],
     });
 
-    await createTutoringMatch({ pupil: pupil1, student: student3 });
+    // await createTutoringMatch({ pupil: pupil1, student: student3 });
     await createTutoringMatch({ pupil: pupil2, student: student1 });
     await createTutoringMatch({ pupil: pupil3, student: student1 });
     await createTutoringMatch({ pupil: pupil6, student: student1 });
-    await createTutoringMatch({ pupil: pupil3, student: student3 });
+    // await createTutoringMatch({ pupil: pupil3, student: student3 });
     await createTutoringMatch({ pupil: pupil4, student: student2 });
     await createTutoringMatch({ pupil: pupil5, student: student2 });
     await createTutoringMatch({ pupil: pupil8, student: student2 });
