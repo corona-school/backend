@@ -116,7 +116,7 @@ export async function getIcsFile(appointments: Appointment[], isOrganizer: boole
             ],
             busyStatus: 'BUSY',
             transp: 'OPAQUE',
-        } satisfies EventAttributes;
+        } as EventAttributes;
     });
 
     const file: string = await new Promise((resolve, reject) => {
