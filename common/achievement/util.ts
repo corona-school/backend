@@ -27,7 +27,7 @@ export async function getAchievementImageURL(template: achievement_template, sta
         if (subcourseId && template.templateFor === achievement_template_for_enum.Course) {
             const subcourse = await prisma.subcourse.findUnique({ where: { id: Number(subcourseId) }, select: { course: true } });
             if (subcourse) {
-                return getCourseImageURL(subcourse.course).url;
+                return getCourseImageURL(subcourse.course);
             }
         }
     }
