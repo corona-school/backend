@@ -168,8 +168,8 @@ interface CreateTutoringMatchArgs {
 
 const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
     const { topics = [] } = data;
-    await createPupilMatchRequest(data.pupil);
-    await createStudentMatchRequest(data.student);
+    await createPupilMatchRequest(data.pupil, true);
+    await createStudentMatchRequest(data.student, true);
     const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL);
     if (topics.length) {
         for (const topic of topics) {
@@ -838,11 +838,11 @@ void (async function setupDevDB() {
         ],
     });
 
-    // await createTutoringMatch({ pupil: pupil1, student: student3 });
+    await createTutoringMatch({ pupil: pupil1, student: student3 });
     await createTutoringMatch({ pupil: pupil2, student: student1 });
     await createTutoringMatch({ pupil: pupil3, student: student1 });
     await createTutoringMatch({ pupil: pupil6, student: student1 });
-    // await createTutoringMatch({ pupil: pupil3, student: student3 });
+    await createTutoringMatch({ pupil: pupil3, student: student3 });
     await createTutoringMatch({ pupil: pupil4, student: student2 });
     await createTutoringMatch({ pupil: pupil5, student: student2 });
     await createTutoringMatch({ pupil: pupil8, student: student2 });
