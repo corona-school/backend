@@ -6,6 +6,7 @@ import { NotificationCreateInput, NotificationUpdateInput, message_translation_l
 import { runBulkAction } from '../../common/notification/bulk';
 import { setMessageTranslation } from '../../common/notification/messages';
 import { MessageTemplateType } from '../types/notificationMessage';
+import { Prisma } from '@prisma/client';
 
 /* import { notification_sender_enum } from '@prisma/client';
 import { JSONResolver } from 'graphql-scalars';
@@ -45,7 +46,9 @@ class NotificationInput {
 export class MutateNotificationResolver {
     @Mutation((returns) => GraphQLModel.Notification)
     @Authorized(Role.ADMIN)
-    async notificationCreate(@Arg('notification') notification: NotificationCreateInput): Promise<GraphQLModel.Notification> {
+    async notificationCreate(
+        @Arg('notification', () => NotificationCreateInput) notification: Prisma.notificationCreateInput
+    ): Promise<GraphQLModel.Notification> {
         if (
             notification.sample_context &&
             (typeof notification.sample_context !== 'object' || Object.values(notification.sample_context).some((it) => typeof it !== 'string'))
