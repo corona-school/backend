@@ -267,7 +267,7 @@ const onlyAdminOrScreener = [Authorized(Role.ADMIN, Role.SCREENER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
-const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER, Role.SCREENER)];
 const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.SUBCOURSE_MENTOR, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */

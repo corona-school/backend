@@ -59,7 +59,7 @@ class Organizer {
 @Resolver((of) => Appointment)
 export class ExtendedFieldsLectureResolver {
     @Query((returns) => Appointment)
-    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN, Role.COURSE_SCREENER)
+    @AuthorizedDeferred(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
     async appointment(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
         const appointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointmentId } });
         await hasAccess(context, 'Lecture', appointment);
