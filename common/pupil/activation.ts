@@ -4,7 +4,7 @@ import { dissolveMatch } from '../match/dissolve';
 import { RedundantError } from '../util/error';
 import * as Notification from '../notification';
 import { logTransaction } from '../transactionlog/log';
-import { userForPupil } from '../user';
+import { DeactivationReason, userForPupil } from '../user';
 import { dissolved_by_enum } from '../../graphql/generated';
 import { leaveSubcourse } from '../courses/participants';
 import { getLogger } from '../logger/logger';
@@ -28,13 +28,18 @@ export async function activatePupil(pupil: Pupil) {
     return updatedPupil;
 }
 
-export async function deactivatePupil(pupil: Pupil, silent = false, reason?: string, byAdmin = false) {
+export async function deactivatePupil(pupil: Pupil, silent = false, reason?: DeactivationReason, byAdmin = false) {
     if (!pupil.active) {
         throw new RedundantError('Pupil was already deactivated');
     }
 
     if (!silent) {
-        const action = byAdmin ? 'pupil_account_deactivated_by_admin' : 'pupil_account_deactivated';
+        let action;
+        if (reason === DeactivationReason.noMoreInterest) {
+            action = 'pupil_account_deactivated_no_more_interest';
+        } else {
+            action = byAdmin ? 'pupil_account_deactivated_by_admin' : 'pupil_account_deactivated';
+        }
         await Notification.actionTaken(userForPupil(pupil), action, {});
     }
 

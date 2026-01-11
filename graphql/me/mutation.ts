@@ -10,7 +10,7 @@ import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } 
 import { registerPupil } from '../../common/pupil/registration';
 import '../types/enums';
 import { PrerequisiteError } from '../../common/util/error';
-import { userForStudent, userForPupil } from '../../common/user';
+import { userForStudent, userForPupil, DeactivationReason } from '../../common/user';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
@@ -26,7 +26,6 @@ import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/eval
 import { verifyEmail } from '../../common/secret';
 import { createIDPLogin } from '../../common/secret/idp';
 import { CalendarPreferences } from '../types/calendarPreferences';
-
 @InputType()
 class MeUpdateInput {
     @Field((type) => String, { nullable: true })
@@ -188,7 +187,7 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
+    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: DeactivationReason) {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
             const updatedPupil = await deactivatePupil(pupil, false, reason, false);

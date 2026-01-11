@@ -7,14 +7,14 @@ import { deleteZoomUser } from '../zoom/user';
 import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import { CertificateState } from '../certificate';
 import { removeAllPushSubcriptions } from '../notification/channels/push';
 
 export async function deactivateStudent(
     student: Student,
     silent = false,
-    reason?: string,
+    reason?: DeactivationReason,
     dissolveReasons: dissolve_reason[] = [dissolve_reason.accountDeactivated]
 ) {
     if (!student.active) {
@@ -22,7 +22,11 @@ export async function deactivateStudent(
     }
 
     if (!silent) {
-        await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
+        if (reason === DeactivationReason.noMoreInterest) {
+            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated_no_more_interest', {});
+        } else {
+            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
+        }
     }
 
     await Notification.cancelRemindersFor(userForStudent(student));

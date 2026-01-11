@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
@@ -9,25 +9,24 @@ import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
+    gender_enum as Gender,
     Prisma,
     PrismaClient,
     pupil as Pupil,
+    pupil_languages_enum as Language,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
-    pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
-    gender_enum as Gender,
     school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForPupil } from '../../common/user';
+import { DeactivationReason, userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
-import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
-import { invalidatePupilScreening } from '../../common/pupil/screening';
+import { addPupilScreening, invalidatePupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { RegistrationSchool } from '../types/userInputs';
@@ -274,7 +273,7 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil, false, 'deactivated by admin', true);
+        await deactivatePupil(pupil, false, DeactivationReason.deactivatedByAdmin, true);
         return true;
     }
 

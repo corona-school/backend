@@ -7,6 +7,8 @@ import { getStudent } from '../util';
 import * as CertificateOfConduct from '../../common/certificate-of-conduct/certificateOfConduct';
 import { updateCertificateOfConduct } from '../../common/student';
 import { getLogger } from '../../common/logger/logger';
+import { DeactivationReason } from '../../common/user';
+
 const logger = getLogger('Certificate of Conduct');
 
 @Resolver((of) => GraphQLModel.Certificate_of_conduct)
@@ -23,7 +25,7 @@ export class MutateCertificateOfConductResolver {
         const student = await getStudent(studentId);
         if (criminalRecord) {
             logger.info(`Updating criminal record for student ${studentId}`);
-            await deactivateStudent(student);
+            await deactivateStudent(student, false, DeactivationReason.hasCriminalRecord);
         }
         await updateCertificateOfConduct(student, criminalRecord, dateOfIssue, dateOfInspection);
         return true;
