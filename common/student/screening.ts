@@ -121,6 +121,7 @@ export async function cancelCoCReminders(student: Student) {
 export async function updateStudentScreening(type: StudentScreeningType, screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
     const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
     const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
+    // @ts-expect-error Both models have the same shape, so this should work fine
     const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
 
     if (screening === null) {
@@ -147,7 +148,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
     if (data.status === ScreeningStatus.success) {
         await requireStudentOnboarding(screening.studentId);
     }
-    // @ts-expect-error For some reason Typescript doesn't treat the update the same way it does with the find. This should work fine
+    // @ts-expect-error Both models have the same shape, so this should work fine
     await screeningModel.update(update);
     logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
     if (data.status === ScreeningStatus.success) {
