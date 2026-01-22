@@ -27,6 +27,7 @@ import {
     gender_enum as Gender,
     PrismaClient,
     Prisma,
+    student_state_enum,
 } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
@@ -45,6 +46,7 @@ import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
 import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
+import { getStateFromZip } from '../../common/util/stateMappings';
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -230,6 +232,8 @@ export async function updateStudent(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
+    const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;
+
     const res = await prismaInstance.student.update({
         data: {
             firstname: ensureNoNull(firstname),
@@ -237,7 +241,7 @@ export async function updateStudent(
             email: ensureNoNull(email),
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
+            state: ensureNoNull(computedState as student_state_enum),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
