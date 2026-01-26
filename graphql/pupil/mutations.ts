@@ -216,7 +216,7 @@ export async function updatePupil(
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
             matchReason: ensureNoNull(matchReason),
-            onlyMatchWith,
+            onlyMatchWith: ensureNoNull(onlyMatchWith),
             hasSpecialNeeds,
             descriptionForMatch,
             descriptionForScreening,
