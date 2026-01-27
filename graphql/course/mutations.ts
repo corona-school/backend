@@ -13,7 +13,7 @@ import { getCourse, getStudent, getSubcoursesForCourse } from '../util';
 import { putS3File, DEFAULT_BUCKET, deleteS3File } from '../../common/file-bucket';
 import * as Notification from '../../common/notification';
 
-import { course_schooltype_enum as CourseSchooltype, course_subject_enum as CourseSubject } from '../generated';
+import { course_schooltype_enum, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
 import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteSubcourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
@@ -36,8 +36,8 @@ class PublicCourseCreateInput {
 
     @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
     subject?: CourseSubject;
-    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
-    schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
+    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    schooltype?: course_schooltype_enum;
 }
 
 @InputType()
@@ -55,8 +55,8 @@ class PublicCourseEditInput {
 
     @TypeGraphQL.Field((_type) => CourseSubject, { nullable: true })
     subject?: CourseSubject;
-    @TypeGraphQL.Field((_type) => CourseSchooltype, { nullable: true })
-    schooltype?: 'gymnasium' | 'realschule' | 'grundschule' | 'hauptschule' | 'f_rderschule' | 'other';
+    @TypeGraphQL.Field((_type) => course_schooltype_enum, { nullable: true })
+    schooltype?: course_schooltype_enum;
 }
 
 @InputType()
@@ -75,7 +75,7 @@ export class MutateCourseResolver {
     @Authorized(Role.ADMIN, Role.INSTRUCTOR, Role.COURSE_SCREENER)
     async courseCreate(
         @Ctx() context: GraphQLContext,
-        @Arg('course') course: PublicCourseCreateInput,
+        @Arg('course', () => PublicCourseCreateInput) course: PublicCourseCreateInput,
         @Arg('studentId', { nullable: true }) studentId?: number
     ): Promise<GraphQLModel.Course> {
         const mayCreateHomeworkHelp = context.user.roles.includes(Role.ADMIN) || context.user.roles.includes(Role.COURSE_SCREENER);
@@ -83,7 +83,9 @@ export class MutateCourseResolver {
             throw new ForbiddenError('Only authorized users can create homework help courses');
         }
         const student = await getSessionStudent(context, studentId);
-        const result = await prisma.course.create({ data: { ...course, courseState: 'created' } });
+        const result = await prisma.course.create({
+            data: { ...course, schooltype: course.schooltype ? [course.schooltype] : undefined, courseState: 'created' },
+        });
         await prisma.course_instructors_student.create({ data: { courseId: result.id, studentId: student.id } });
         logger.info(`Course (${result.id}) created by Student (${student.id})`);
         return result;
@@ -139,7 +141,7 @@ export class MutateCourseResolver {
                 throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
             }
         }
-        const result = await prisma.course.update({ data, where: { id: courseId } });
+        const result = await prisma.course.update({ data: { ...data, schooltype: data.schooltype ? [data.schooltype] : undefined }, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
 
         await updateAchievementCTXByCourse(result);

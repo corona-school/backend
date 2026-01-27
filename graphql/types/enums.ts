@@ -15,6 +15,7 @@ import {
     gender_enum as Gender,
     course_subject_enum,
     school_schooltype_enum,
+    course_schooltype_enum,
     pupil_email_owner_enum as PupilEmailOwner,
     student_screening_status_enum as StudentScreeningStatus,
 } from '@prisma/client';
@@ -82,6 +83,11 @@ registerEnumType(course_subject_enum, {
 
 registerEnumType(school_schooltype_enum, {
     name: 'SchoolSchoolTypeEnum',
+    description: 'The type of school',
+});
+
+registerEnumType(course_schooltype_enum, {
+    name: 'CourseSchoolTypeEnum',
     description: 'The type of school',
 });
 
