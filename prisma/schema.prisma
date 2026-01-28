@@ -1468,6 +1468,7 @@ enum screening_jobstatus_enum {
   Employee
   Retiree
   Misc
+  Azubi
 }
 
 enum dissolved_by_enum {
