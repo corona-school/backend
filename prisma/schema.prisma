@@ -1490,6 +1490,11 @@ enum dissolve_reason {
   languageIssues // "Wir hatten sprachliche Schwierigkeiten"
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
+  internshipEnded // For cases where the mentoring/tutoring partnership was tied to an internship or BFP program and ended with it
+  subjectMismatch // When the learner needs help in a subject the tutor can’t/won’t provide
+  genderPreference // When the learner (or parents) specifically requests a female tutor
+  repeatedNoShows // When the learner repeatedly doesn’t attend sessions, often without cancellation
+  newPartnerFound // When the learner/tutor moves on to another partner (inside or outside Lern-Fair)
 }
 
 enum gender_enum {
