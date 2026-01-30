@@ -19,14 +19,14 @@ import {
 import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
 import {
-    gender_enum as Gender,
-    Prisma,
-    PrismaClient,
     pupil_registrationsource_enum as RegistrationSource,
     student as Student,
+    student_state_enum as State,
     student_languages_enum as Language,
     student_screening_status_enum as StudentScreeningStatus,
-    student_state_enum as State,
+    gender_enum as Gender,
+    PrismaClient,
+    Prisma,
 } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
@@ -44,6 +44,7 @@ import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
 import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
+import { getStateFromZip } from '../../common/util/stateMappings';
 
 const log = getLogger(`StudentMutation`);
 
@@ -231,6 +232,8 @@ export async function updateStudent(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
+    const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;
+
     const res = await prismaInstance.student.update({
         data: {
             firstname: ensureNoNull(firstname),
@@ -238,7 +241,7 @@ export async function updateStudent(
             email: ensureNoNull(email),
             subjects: subjects ? JSON.stringify(subjects.map(toStudentSubjectDatabaseFormat)) : undefined,
             registrationSource: ensureNoNull(registrationSource),
-            state: ensureNoNull(state),
+            state: ensureNoNull(computedState as student_state_enum),
             aboutMe: ensureNoNull(aboutMe),
             lastTimeCheckedNotifications: ensureNoNull(lastTimeCheckedNotifications),
             notificationPreferences: ensureNoNull(notificationPreferences),
