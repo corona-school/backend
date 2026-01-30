@@ -15,6 +15,7 @@ export async function deactivateStudent(
     student: Student,
     silent = false,
     reason?: DeactivationReason,
+    otherReason?: string,
     dissolveReasons: dissolve_reason[] = [dissolve_reason.accountDeactivated]
 ) {
     if (!student.active) {
@@ -110,7 +111,7 @@ export async function deactivateStudent(
         where: { id: student.id },
     });
 
-    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason, otherReason });
 
     return updatedStudent;
 }

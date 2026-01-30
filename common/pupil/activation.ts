@@ -28,7 +28,7 @@ export async function activatePupil(pupil: Pupil) {
     return updatedPupil;
 }
 
-export async function deactivatePupil(pupil: Pupil, silent = false, reason?: DeactivationReason, byAdmin = false) {
+export async function deactivatePupil(pupil: Pupil, silent = false, reason?: DeactivationReason, otherReason?: string, byAdmin = false) {
     if (!pupil.active) {
         throw new RedundantError('Pupil was already deactivated');
     }
@@ -79,7 +79,7 @@ export async function deactivatePupil(pupil: Pupil, silent = false, reason?: Dea
         where: { id: pupil.id },
     });
 
-    await logTransaction('deActivate', userForPupil(pupil), { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForPupil(pupil), { newStatus: false, deactivationReason: reason, otherReason });
     logger.info(`Deactivated Pupil(${pupil.id})`);
 
     return updatedPupil;

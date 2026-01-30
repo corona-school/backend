@@ -1,5 +1,5 @@
 import { Role } from '../authorizations';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, registerEnumType, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
 import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
@@ -62,6 +62,8 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 const logger = getLogger('Me Mutations');
+
+registerEnumType(DeactivationReason, { name: 'DeactivationReason' });
 
 @Resolver((of) => UserType)
 export class MutateMeResolver {
@@ -187,10 +189,14 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: DeactivationReason) {
+    async meDeactivate(
+        @Ctx() context: GraphQLContext,
+        @Arg('reason', () => DeactivationReason, { nullable: true }) reason?: DeactivationReason,
+        @Arg('otherReason', { nullable: true }) otherReason?: string
+    ) {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil, false, reason, false);
+            const updatedPupil = await deactivatePupil(pupil, false, reason, otherReason, false);
 
             const roles: Role[] = [];
             await evaluatePupilRoles(updatedPupil, roles);
