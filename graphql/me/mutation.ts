@@ -209,7 +209,7 @@ export class MutateMeResolver {
 
         if (isSessionStudent(context)) {
             const student = await getSessionStudent(context);
-            const updatedStudent = await deactivateStudent(student, false, reason);
+            const updatedStudent = await deactivateStudent(student, false, reason, otherReason);
 
             const roles: Role[] = [];
             await evaluateStudentRoles(updatedStudent, roles);

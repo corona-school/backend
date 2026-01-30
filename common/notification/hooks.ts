@@ -16,7 +16,7 @@ registerStudentHook(
     'deactivate-student',
     'Account gets deactivated, matches are dissolved, courses are cancelled',
     async (student) => {
-        await deactivateStudent(student, true, DeactivationReason.missingCoC, [dissolve_reason.accountDeactivatedNoCoC]);
+        await deactivateStudent(student, true, DeactivationReason.missingCoC, undefined, [dissolve_reason.accountDeactivatedNoCoC]);
     } // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 
@@ -51,5 +51,5 @@ registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pe
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {
-    await deactivatePupil(pupil, true, DeactivationReason.deactivatedByAdmin, true);
+    await deactivatePupil(pupil, true, DeactivationReason.deactivatedByAdmin, undefined, true);
 });

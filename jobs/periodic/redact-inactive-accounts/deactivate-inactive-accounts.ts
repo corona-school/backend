@@ -19,7 +19,7 @@ export async function deactivateInactiveAccounts() {
     });
 
     for (const pupil of persons.pupils) {
-        await deactivatePupil(pupil, false, DeactivationReason.inactiveAccount, false);
+        await deactivatePupil(pupil, false, DeactivationReason.inactiveAccount, undefined, false);
     }
 
     for (const student of persons.students) {
