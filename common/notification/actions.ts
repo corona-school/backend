@@ -568,8 +568,16 @@ const _notificationActions = {
         description: 'Pupil / Account deactivated by admin',
         sampleContext: {},
     },
+    pupil_account_deactivated_no_more_interest: {
+        description: 'Pupil / Account deactivated - no more interest',
+        sampleContext: {},
+    },
     student_account_deactivated: {
         description: 'Student / Account deactivated',
+        sampleContext: {},
+    },
+    student_account_deactivated_no_more_interest: {
+        description: 'Student / Account deactivated - no more interest',
         sampleContext: {},
     },
 
