@@ -1,4 +1,4 @@
-import { course_coursestate_enum as CourseState, Prisma, subcourse } from '@prisma/client';
+import { course_coursestate_enum as CourseState, Prisma, subcourse, pupil_schooltype_enum } from '@prisma/client';
 import { canCancel, canDeleteSubcourse, canEditSubcourse, canPublish } from '../../common/courses/states';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { canJoinSubcourse, couldJoinSubcourse, isParticipant, isMentor as isSubcourseMentor } from '../../common/courses/participants';
@@ -8,15 +8,7 @@ import { Role } from '../authorizations';
 import { PublicCache } from '../cache';
 import { LimitedQuery, LimitEstimated } from '../complexity';
 import { GraphQLContext } from '../context';
-import {
-    Course,
-    course_coursestate_enum,
-    Lecture,
-    Pupil,
-    pupil_schooltype_enum,
-    Subcourse,
-    subcourse_promotion_type_enum as SubcoursePromotionType,
-} from '../generated';
+import { Course, course_coursestate_enum, Lecture, Pupil, Subcourse, subcourse_promotion_type_enum as SubcoursePromotionType } from '../generated';
 import { Decision } from '../types/reason';
 import { Instructor } from '../types/instructor';
 import { canContactInstructors, canContactParticipants } from '../../common/courses/contact';
@@ -43,7 +35,7 @@ class Participant {
     @Field((_type) => Int)
     gradeAsInt: number;
     @Field((_type) => pupil_schooltype_enum)
-    schooltype: 'grundschule' | 'gesamtschule' | 'hauptschule' | 'realschule' | 'gymnasium' | 'f_rderschule' | 'berufsschule' | 'other';
+    schooltype: pupil_schooltype_enum;
     @Field((_type) => String)
     aboutMe: string;
 }
