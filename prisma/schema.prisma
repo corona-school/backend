@@ -1181,6 +1181,8 @@ enum pupil_schooltype_enum {
   f_rderschule      @map("förderschule")
   berufsschule
   mittelschule
+  oberschule
+  sekundarschule
   stadtteilschule
   berufsfachschule
   fachoberschule
@@ -1189,6 +1191,7 @@ enum pupil_schooltype_enum {
   fachschule
   abendschule_vhs
   berufskolleg
+  beruflichesgymnasium
   uni_studienkolleg
   auslandsschule
   privatschule
@@ -1226,6 +1229,8 @@ enum school_schooltype_enum {
   f_rderschule      @map("förderschule")
   berufsschule
   mittelschule
+  oberschule
+  sekundarschule
   stadtteilschule
   berufsfachschule
   fachoberschule
@@ -1234,6 +1239,7 @@ enum school_schooltype_enum {
   fachschule
   abendschule_vhs
   berufskolleg
+  beruflichesgymnasium
   uni_studienkolleg
   auslandsschule
   privatschule
@@ -1389,6 +1395,8 @@ enum course_schooltype_enum {
   f_rderschule      @map("förderschule")
   berufsschule
   mittelschule
+  oberschule
+  sekundarschule
   stadtteilschule
   berufsfachschule
   fachoberschule
@@ -1397,6 +1405,7 @@ enum course_schooltype_enum {
   fachschule
   abendschule_vhs
   berufskolleg
+  beruflichesgymnasium
   uni_studienkolleg
   auslandsschule
   privatschule
