@@ -21,6 +21,7 @@ import { Chat, getChat } from '../chat/fields';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
 import { getParticipants } from '../../common/pupil';
 import { AppointmentRole } from '../../common/appointment/util';
+import moment from 'moment';
 
 @ObjectType()
 class Participant {
@@ -554,6 +555,8 @@ export class ExtendedFieldsSubcourseResolver {
             where: {
                 subcourseId: subcourse.id,
                 isCanceled: false,
+                // Temporal hotfix for the Hausaufgabenhilfe
+                ...(subcourse.allowMentoring ? { start: { gt: moment().subtract(1, 'week').toDate() } } : {}),
             },
             orderBy: { start: 'asc' },
         });
@@ -573,6 +576,8 @@ export class ExtendedFieldsSubcourseResolver {
                 [asRole === AppointmentRole.organizer ? 'organizerIds' : 'participantIds']: {
                     has: context.user.userID,
                 },
+                // Temporal hotfix for the Hausaufgabenhilfe
+                ...(subcourse.allowMentoring ? { start: { gt: moment().subtract(1, 'week').toDate() } } : {}),
             },
             orderBy: { start: 'asc' },
         });
