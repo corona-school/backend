@@ -74,7 +74,7 @@
         "keyv": "^4.0.3",
         "lodash": "^4.17.21",
         "log4js": "^6.4.0",
-        "mammoth": "^1.8.0",
+        "mammoth": "^1.11.0",
         "moment": "^2.29.2",
         "moment-timezone": "^0.5.35",
         "multer": "^2.0.2",
