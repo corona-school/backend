@@ -362,6 +362,7 @@ export class ExtendedFieldsSubcourseResolver {
                 grade: true,
                 aboutMe: true,
             },
+            take: 20, // More do not matter?
         });
         return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
     }
