@@ -33,6 +33,8 @@ export interface GraphQLContext extends Session {
     deferredRequiredRoles?: Role[];
     ip: string;
     setCookie(key: string, value: string);
+
+    valueCache: Record<symbol, any>;
 }
 
 type GraphQLUserStudent = GraphQLUser & { studentId: number };
@@ -59,6 +61,7 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         sessionToken: undefined,
         sessionID: '?',
         ip,
+        valueCache: {},
         setCookie: (key, value) => res.cookie(key, value, { secure: true }),
     };
 

@@ -18,6 +18,27 @@ import { ZoomError } from '../../common/util/error';
 
 const logger = getLogger('Appointment Fields');
 
+// For a query subcourse { lectures { position, total } }, we would query all lectures again and again for every lecture.
+// Now instead we cache it in the query, thus reusing it for all field resolvers
+const POSITION_CACHE = Symbol('Position Cache');
+
+async function getCachedPositions(ctx: GraphQLContext, key: string, getPositions: () => Promise<{ id: number }[]>) {
+    const cache: Record<string, number[]> = ctx.valueCache[POSITION_CACHE] || (ctx.valueCache[POSITION_CACHE] = {});
+    return cache[key] || (cache[key] = (await getPositions()).map((it) => it.id));
+}
+
+async function getSubcoursePositions(ctx: GraphQLContext, subcourseId: number) {
+    return await getCachedPositions(ctx, `subcourse/${subcourseId}`, () =>
+        prisma.lecture.findMany({ where: { subcourseId, isCanceled: false }, orderBy: { start: 'asc' }, select: { id: true } })
+    );
+}
+
+async function getMatchPositions(ctx: GraphQLContext, matchId: number) {
+    return await getCachedPositions(ctx, `match/${matchId}`, () =>
+        prisma.lecture.findMany({ where: { matchId, isCanceled: false }, orderBy: { start: 'asc' }, select: { id: true } })
+    );
+}
+
 @ObjectType()
 class AppointmentActionsUrls {
     @Field((_type) => String, { nullable: true })
@@ -115,20 +136,12 @@ export class ExtendedFieldsLectureResolver {
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.USER, Role.ADMIN)
-    async position(@Root() appointment: Appointment): Promise<number> {
+    async position(@Ctx() ctx: GraphQLContext, @Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return (
-                (await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
-                    (currentAppointment) => currentAppointment.id === appointment.id
-                ) + 1
-            );
+            return (await getSubcoursePositions(ctx, appointment.subcourseId)).indexOf(appointment.id);
         }
         if (appointment.matchId) {
-            return (
-                (await prisma.lecture.findMany({ where: { matchId: appointment.matchId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
-                    (currentAppointment) => currentAppointment.id === appointment.id
-                ) + 1
-            );
+            return (await getMatchPositions(ctx, appointment.matchId)).indexOf(appointment.id);
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
@@ -137,12 +150,12 @@ export class ExtendedFieldsLectureResolver {
     }
     @FieldResolver((returns) => Int)
     @Authorized(Role.USER, Role.ADMIN)
-    async total(@Root() appointment: Appointment): Promise<number> {
+    async total(@Ctx() ctx: GraphQLContext, @Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId, isCanceled: false } });
+            return (await getSubcoursePositions(ctx, appointment.subcourseId)).length;
         }
         if (appointment.matchId) {
-            return await prisma.lecture.count({ where: { matchId: appointment.matchId, isCanceled: false } });
+            return (await getMatchPositions(ctx, appointment.subcourseId)).length;
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
