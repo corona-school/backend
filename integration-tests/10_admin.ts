@@ -309,7 +309,7 @@ void test('Admin Manage Notifications', async () => {
         `mutation updateMeLastTime($lastTimeCheckedNotifications: DateTime) {
         meUpdate(update: { lastTimeCheckedNotifications: $lastTimeCheckedNotifications })
     }`,
-        { lastTimeCheckedNotifications: Date.now() }
+        { lastTimeCheckedNotifications: new Date() }
     );
 
     const {
