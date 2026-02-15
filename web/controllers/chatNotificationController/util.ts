@@ -1,4 +1,5 @@
 import { getChatUser } from '../../../common/chat';
+import { hasCachedChatUser } from '../../../common/chat/create';
 import { getLogger } from '../../../common/logger/logger';
 import { User } from '../../../common/user';
 import { getCourse, getSubcourse } from '../../../graphql/util';
@@ -19,6 +20,10 @@ export function getChatType(participants: string[]) {
 }
 
 export async function verifyChatUser(user: User) {
+    if (hasCachedChatUser(user)) {
+        return true;
+    }
+
     const chatUser = await getChatUser(user);
     if (chatUser) {
         return true;
