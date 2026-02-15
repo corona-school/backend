@@ -34,6 +34,7 @@ import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
+import { Prisma } from '@prisma/client';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -145,23 +146,36 @@ export class UserFieldsResolver {
         @Ctx() context: GraphQLContext,
         @Root() user: User,
         @Arg('take', { nullable: true }) take?: number,
-        @Arg('skip', { nullable: true }) skip?: number
+        @Arg('skip', { nullable: true }) skip?: number,
+        @Arg('onlyUnread', { nullable: true }) onlyUnread?: boolean
     ): Promise<ConcreteNotification[]> {
+        const filters: Prisma.concrete_notificationWhereInput[] = [];
+
         const isAdmin = context.user.roles.includes(Role.ADMIN);
-        const userQuery = {
-            notification: {
-                message_translation: {
-                    some: {},
+        if (!isAdmin) {
+            filters.push({
+                notification: {
+                    message_translation: {
+                        some: {},
+                    },
                 },
-            },
-            NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
-        };
+                NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
+            });
+        }
+
+        if (onlyUnread) {
+            const lastTimeCheckedNotifications = (await queryUser(user, { lastTimeCheckedNotifications: true })).lastTimeCheckedNotifications;
+            filters.push({
+                sentAt: { gte: lastTimeCheckedNotifications },
+            });
+        }
+
         return await prisma.concrete_notification.findMany({
             orderBy: [{ sentAt: 'desc' }],
             where: {
                 userId: user.userID,
                 state: ConcreteNotificationState.SENT,
-                AND: [isAdmin ? null : userQuery],
+                AND: filters,
             },
             take,
             skip,
