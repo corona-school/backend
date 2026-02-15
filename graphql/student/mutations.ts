@@ -27,6 +27,7 @@ import {
     gender_enum as Gender,
     PrismaClient,
     Prisma,
+    student_state_enum,
 } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
