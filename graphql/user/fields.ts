@@ -10,7 +10,7 @@ import {
     Log,
     Push_subscription as PushSubscription,
     notification_channel_enum as NotificationChannelEnum,
-    concrete_notificationWhereInput,
+    Concrete_notificationWhereInput,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { GraphQLContext } from '../context';
@@ -149,7 +149,7 @@ export class UserFieldsResolver {
         @Arg('skip', { nullable: true }) skip?: number,
         @Arg('onlyUnread', { nullable: true }) onlyUnread?: boolean
     ): Promise<ConcreteNotification[]> {
-        const filters: concrete_notificationWhereInput[] = [];
+        const filters: Concrete_notificationWhereInput[] = [];
 
         const isAdmin = context.user.roles.includes(Role.ADMIN);
         if (!isAdmin) {
