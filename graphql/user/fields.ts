@@ -160,7 +160,7 @@ export class UserFieldsResolver {
                     },
                 },
                 NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
-            });
+            } as any);
         }
 
         if (onlyUnread) {
