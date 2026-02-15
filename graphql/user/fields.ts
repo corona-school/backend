@@ -10,7 +10,6 @@ import {
     Log,
     Push_subscription as PushSubscription,
     notification_channel_enum as NotificationChannelEnum,
-    Concrete_notificationWhereInput,
 } from '../generated';
 import { Root, Authorized, FieldResolver, Query, Resolver, Arg, Ctx, ObjectType, Field, Int } from 'type-graphql';
 import { GraphQLContext } from '../context';
@@ -35,6 +34,7 @@ import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
+import { Prisma } from '@prisma/client';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -149,7 +149,7 @@ export class UserFieldsResolver {
         @Arg('skip', { nullable: true }) skip?: number,
         @Arg('onlyUnread', { nullable: true }) onlyUnread?: boolean
     ): Promise<ConcreteNotification[]> {
-        const filters: Concrete_notificationWhereInput[] = [];
+        const filters: Prisma.concrete_notificationWhereInput[] = [];
 
         const isAdmin = context.user.roles.includes(Role.ADMIN);
         if (!isAdmin) {
@@ -160,7 +160,7 @@ export class UserFieldsResolver {
                     },
                 },
                 NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
-            } as any);
+            });
         }
 
         if (onlyUnread) {
