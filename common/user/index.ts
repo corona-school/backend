@@ -8,11 +8,14 @@ import { Prisma as PrismaTypes } from '@prisma/client';
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
 type UserTypes = 'student' | 'pupil' | 'screener';
+export const ADMIN_USERID = 'admin/' as const;
+export const UNAUTHENTICATED_USERID = '-/-' as const;
+export type UserID = `${UserTypes}/${number}` | typeof ADMIN_USERID | typeof UNAUTHENTICATED_USERID;
 
 /* As Prisma values do not inherit an entity class but are plain objects,
    we need a wrapper around the different entities */
 export type User = {
-    userID: string;
+    userID: UserID;
     email: string;
     firstname: string;
     lastname: string;
@@ -291,7 +294,7 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` }));
+    ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` as UserID }));
 
     const pupils = (
         await prisma.pupil.findMany({
@@ -310,7 +313,7 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` }));
+    ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` as UserID }));
     return [...students, ...pupils];
 }
 

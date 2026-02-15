@@ -2,7 +2,7 @@
 
 import { Role } from './roles';
 import Keyv from 'keyv';
-import { User } from '.';
+import { UNAUTHENTICATED_USERID, User } from '.';
 import { v4 as uuid } from 'uuid';
 import { DEFAULT_PREFERENCES } from '../notification/defaultPreferences';
 import { getLogger } from '../logger/logger';
@@ -22,7 +22,7 @@ export const UNAUTHENTICATED_USER = {
     email: '-',
     firstname: '',
     lastname: '',
-    userID: '-/-',
+    userID: UNAUTHENTICATED_USERID,
     lastTimeCheckedNotifications: new Date(),
     notificationPreferences: DEFAULT_PREFERENCES,
     roles: [Role.UNAUTHENTICATED],

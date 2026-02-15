@@ -6,7 +6,7 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
+import { getUserTypeAndIdForUserId, getUsers, getUser, UserID } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
@@ -100,7 +100,7 @@ export class ExtendedFieldsLectureResolver {
         @Arg('skip', (type) => Int) skip: number
     ) {
         const [userType] = getUserTypeAndIdForUserId(context.user.userID);
-        return (await getUsers(appointment.participantIds)).map(({ email, lastname, ...rest }) => ({
+        return (await getUsers(appointment.participantIds as UserID[])).map(({ email, lastname, ...rest }) => ({
             ...rest,
             lastname: userType === 'pupil' ? undefined : lastname,
         }));
@@ -110,7 +110,7 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER, Role.ADMIN)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        return (await getUsers(appointment.organizerIds)).map(({ email, ...rest }) => ({ ...rest }));
+        return (await getUsers(appointment.organizerIds as UserID[])).map(({ email, ...rest }) => ({ ...rest }));
     }
 
     @FieldResolver((returns) => Int)
