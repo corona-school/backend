@@ -14,7 +14,7 @@ import { randomBytes } from 'crypto';
 void test('Pupil Account Deactivation', async () => {
     const { client, pupil, password } = await pupilOneWithPassword;
 
-    await client.request(`mutation { meDeactivate(reason: "Keine Lust mehr auf Integration-Tests")}`);
+    await client.request(`mutation { meDeactivate(reason: "other", otherReason: "Keine Lust mehr auf Integration-Tests")}`);
     await client.request(`mutation { logout }`);
 
     await client.requestShallFail(`mutation { loginPassword(email: "${pupil.email}", password: "${password}")}`);
@@ -247,7 +247,7 @@ void test('User should not receive notifications after deactivation', async () =
     });
     assert.strictEqual(sentNotificationsBefore, 1);
 
-    await client.request(`mutation { meDeactivate(reason: "Keine Lust mehr auf nervige Nachrichten von Lern-Fair")}`);
+    await client.request(`mutation { meDeactivate(reason: "noMoreInterest")}`);
 
     await adminClient.request(`mutation TriggerAction {
         _actionTakenAt(action: "TEST2", at: "${new Date().toISOString()}" context: { a: "a" } dryRun: false, userID: "${student.userID}")
