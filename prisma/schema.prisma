@@ -558,6 +558,7 @@ model instant_certificate {
   courseParticipantsCount   Int
   courseAppointmentsCount   Int
   totalAppointmentsDuration Int // in minutes
+  homeworkHelpDuration      Int? // in minutes
 }
 
 model pupil {
