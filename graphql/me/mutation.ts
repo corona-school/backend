@@ -1,5 +1,5 @@
 import { Role } from '../authorizations';
-import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Mutation, registerEnumType, Resolver } from 'type-graphql';
 import { GraphQLContext } from '../context';
 import { pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
 import { getSessionPupil, getSessionStudent, getSessionUser, isSessionPupil, isSessionStudent, loginAsUser, updateSessionUser } from '../authentication';
@@ -10,7 +10,7 @@ import { becomeInstructor, BecomeInstructorData, becomeTutor, registerStudent } 
 import { registerPupil } from '../../common/pupil/registration';
 import '../types/enums';
 import { PrerequisiteError } from '../../common/util/error';
-import { userForStudent, userForPupil } from '../../common/user';
+import { userForStudent, userForPupil, DeactivationReason } from '../../common/user';
 import { Pupil, Student } from '../generated';
 import { UserInputError } from 'apollo-server-express';
 import { UserType } from '../types/user';
@@ -26,7 +26,6 @@ import { evaluatePupilRoles, evaluateStudentRoles } from '../../common/user/eval
 import { verifyEmail } from '../../common/secret';
 import { createIDPLogin } from '../../common/secret/idp';
 import { CalendarPreferences } from '../types/calendarPreferences';
-
 @InputType()
 class MeUpdateInput {
     @Field((type) => String, { nullable: true })
@@ -63,6 +62,8 @@ class BecomeInstructorInput implements BecomeInstructorData {
 }
 
 const logger = getLogger('Me Mutations');
+
+registerEnumType(DeactivationReason, { name: 'DeactivationReason' });
 
 @Resolver((of) => UserType)
 export class MutateMeResolver {
@@ -188,10 +189,14 @@ export class MutateMeResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.USER)
-    async meDeactivate(@Ctx() context: GraphQLContext, @Arg('reason', { nullable: true }) reason?: string) {
+    async meDeactivate(
+        @Ctx() context: GraphQLContext,
+        @Arg('reason', () => DeactivationReason, { nullable: true }) reason?: DeactivationReason,
+        @Arg('otherReason', { nullable: true }) otherReason?: string
+    ) {
         if (isSessionPupil(context)) {
             const pupil = await getSessionPupil(context);
-            const updatedPupil = await deactivatePupil(pupil, false, reason, false);
+            const updatedPupil = await deactivatePupil(pupil, false, reason, otherReason, false);
 
             const roles: Role[] = [];
             await evaluatePupilRoles(updatedPupil, roles);
@@ -204,7 +209,7 @@ export class MutateMeResolver {
 
         if (isSessionStudent(context)) {
             const student = await getSessionStudent(context);
-            const updatedStudent = await deactivateStudent(student, false, reason);
+            const updatedStudent = await deactivateStudent(student, false, reason, otherReason);
 
             const roles: Role[] = [];
             await evaluateStudentRoles(updatedStudent, roles);

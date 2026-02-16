@@ -11,10 +11,10 @@ import {
     addInstructorScreening,
     addTutorScreening,
     cancelCoCReminders,
-    scheduleCoCReminders,
     requireStudentOnboarding,
-    updateStudentScreening,
+    scheduleCoCReminders,
     StudentScreeningType,
+    updateStudentScreening,
 } from '../../common/student/screening';
 import { becomeTutor, registerStudent } from '../../common/student/registration';
 import { Subject } from '../types/subject';
@@ -31,14 +31,13 @@ import {
 } from '@prisma/client';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toStudentSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForStudent } from '../../common/user';
+import { DeactivationReason, userForStudent } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
 import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequestPDF } from '../../common/remission-request';
-import { getFileURL, addFile } from '../files';
+import { addFile, getFileURL } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
-const log = getLogger(`StudentMutation`);
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
 import { GraphQLJSON } from 'graphql-scalars';
@@ -47,6 +46,8 @@ import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { getStateFromZip } from '../../common/util/stateMappings';
+
+const log = getLogger(`StudentMutation`);
 
 @InputType('Instructor_screeningCreateInput', {
     isAbstract: true,
@@ -345,7 +346,7 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async studentDeactivate(@Arg('studentId') studentId: number): Promise<boolean> {
         const student = await getStudent(studentId);
-        await deactivateStudent(student);
+        await deactivateStudent(student, false, DeactivationReason.deactivatedByAdmin);
         return true;
     }
 

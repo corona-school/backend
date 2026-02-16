@@ -19,7 +19,7 @@ type LogData<Type extends LogType> = {
     matchDissolve: { matchId: number };
     projectMatchDissolve: { projectMatchId: number };
     fetchedFromWix: never;
-    deActivate: { newStatus: boolean; deactivationReason?: string; deactivationFeedback?: string };
+    deActivate: { newStatus: boolean; deactivationReason?: string; deactivationFeedback?: string; otherReason?: string };
     updatePersonal: any;
     updateSubjects: { oldSubjects: string[] };
     updateProjectFields: { oldProjectFields: string[] };

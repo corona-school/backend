@@ -28,6 +28,22 @@ export type User = {
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
 
+export enum DeactivationReason {
+    noMoreTime = 'noMoreTime', // Ich habe keine Zeit mehr.
+    couldntAttendMeeting = 'couldntAttendMeeting', // Ich konnte/wollte das Kennenlerngespräch nicht wahrnehmen.
+    noMoreInterest = 'noMoreInterest', // Ich habe kein Interesse mehr.
+    onlyTestAccount = 'onlyTestAccount', // Ich habe mich nur zu Testzwecken angemeldet.
+    otherVolunteerWorkFound = 'otherVolunteerWorkFound', // Ich habe eine andere Möglichkeit gefunden mich zu engagieren.
+    otherSupportFound = 'otherSupportFound', // Ich habe eine andere Möglichkeit gefunden, Unterstützung zu erhalten.
+    expectationsDiffered = 'expectationsDiffered', // Ich habe mir das Programm anders vorgestellt.
+    didntMeetRequirements = 'didntMeetRequirements', // Ich erfülle die Zugangsvoraussetzungen für die Projekte nicht.
+    missingCoC = 'missingCoC',
+    deactivatedByAdmin = 'deactivatedByAdmin',
+    inactiveAccount = 'inactiveAccount',
+    hasCriminalRecord = 'hasCriminalRecord',
+    other = 'other', // Sonstiges
+}
+
 export function getPupilsIds(userIds: string[]) {
     return userIds.filter((id) => {
         const [type] = getUserTypeAndIdForUserId(id);
