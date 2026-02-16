@@ -1,4 +1,4 @@
-import { User } from '../user';
+import { User, UserID } from '../user';
 import { ChatMetaData, ContactReason, Conversation, ConversationInfos, FinishedReason, SystemMessage, TJConversation } from './types';
 import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
@@ -9,6 +9,15 @@ import systemMessages from './localization';
 import { getLogger } from '../logger/logger';
 import assert from 'assert';
 import { createHmac } from 'crypto';
+
+// We do not replicate TalkJS data in the Backend but instead always fetch their REST API which is particularily slow.
+// As Users cannot be deleted in TalkJS, if a user once had an account, we can cache their TalkJS signature.
+const signatureCache = new Map<UserID, string>();
+
+// If it returns true, the user definetly has a TalkJS user. If it returns false, the TalkJS API needs to be checked
+export function hasCachedChatUser(user: User) {
+    return signatureCache.has(user.userID);
+}
 
 const logger = getLogger('Chat');
 const getOrCreateOneOnOneConversation = async (
@@ -57,19 +66,28 @@ const getOrCreateOneOnOneConversation = async (
 
 async function ensureChatUsersExist(participants: [User, User] | User[]): Promise<void> {
     await Promise.all(
-        participants.map(async (participant) => {
-            await getOrCreateChatUser(participant);
-        })
+        participants
+            .filter((it) => !hasCachedChatUser(it))
+            .map(async (participant) => {
+                await getOrCreateChatUser(participant);
+            })
     );
 }
 
 const createChatSignature = async (user: User): Promise<string> => {
+    if (signatureCache.has(user.userID)) {
+        return signatureCache.get(user.userID);
+    }
+
     const TALKJS_SECRET_KEY = process.env.TALKJS_API_KEY;
     assert(TALKJS_SECRET_KEY, `No TalkJS secret key to create a chat signature for user ${user.userID}.`);
     const userId = (await getOrCreateChatUser(user)).id;
     const key = TALKJS_SECRET_KEY;
     const hash = createHmac('sha256', key).update(userIdToTalkJsId(userId));
-    return hash.digest('hex');
+    const signature = hash.digest('hex');
+
+    signatureCache.set(user.userID, signature);
+    return signature;
 };
 
 async function handleExistingConversation(
