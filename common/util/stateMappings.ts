@@ -106,9 +106,9 @@ const stateToZipRanges: { [key in keyof typeof school_state_enum]: { min: number
         { min: 40210, max: 48739 },
         { min: 49477, max: 49549 },
         { min: 50126, max: 53359 },
-        { min: 53604, max: 57072 },
+        { min: 53604, max: 57517 },
         { min: 57489, max: 58089 },
-        { min: 59969, max: 59969 },
+        { min: 58090, max: 59969 },
     ],
     rp: [
         { min: 53424, max: 53579 },
