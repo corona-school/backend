@@ -14,6 +14,10 @@
         <%= NAMESTUDENT %> unterstützte <%= MATCHES_COUNT %> Schüler:innen in der 1:1 Lernunterstützung und führte <%= MATCH_APPOINTMENTS_COUNT %> Nachhilfetermine durch. Zudem agierte <%= NAMESTUDENT %> als Gruppenkurs-Leiter und unterstütze so <%= COURSE_PARTICIPANTS_COUNT %> Schüler:innen in <%= COURSE_APPOINTMENTS_COUNT %> Lektionen.
 
         Insgesamt unterstützte <%= NAMESTUDENT %> bildungsbenachteiligte Kinder und Jugendliche in <%= TOTAL_APPOINTMENTS_DURATION %> Stunden in dieser Zeit.
+
+        <% if(HOMEWORK_HELP_DURATION) { %>
+            Zusätzlich unterstützte <%= NAMESTUDENT %> Schüler:innen in der Hausaufgabenhilfe im Umfang von <%= HOMEWORK_HELP_DURATION %> Stunden.
+        <% } %>
         <br/>
         <img src="<%=QR_CODE%>" alt="Verifizierung code" width="100px" />
 
