@@ -3,7 +3,6 @@ import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
-import { NotFoundError } from '@prisma/client/runtime';
 import { userForPupil } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
@@ -43,7 +42,7 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
     const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
     if (screening === null) {
         logger.error('cannot find PupilScreening', new Error('cannot find PupilScreening'), { pupilScreeningId });
-        throw new NotFoundError('pupil screening not found');
+        throw new Error('pupil screening not found');
     }
 
     await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });

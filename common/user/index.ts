@@ -65,21 +65,21 @@ export async function getUser(userID: string, active?: boolean): Promise<User> {
     const [type, id] = getUserTypeAndIdForUserId(userID);
 
     if (type === 'student') {
-        const student = await prisma.student.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        const student = await prisma.student.findFirstOrThrow({ where: { id, active }, select: userSelection });
         if (student) {
             return userForStudent(student as Student);
         }
     }
 
     if (type === 'pupil') {
-        const pupil = await prisma.pupil.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        const pupil = await prisma.pupil.findFirstOrThrow({ where: { id, active }, select: userSelection });
         if (pupil) {
             return userForPupil(pupil as Pupil);
         }
     }
 
     if (type === 'screener') {
-        const screener = await prisma.screener.findFirst({ where: { id, active }, rejectOnNotFound: true, select: userSelection });
+        const screener = await prisma.screener.findFirstOrThrow({ where: { id, active }, select: userSelection });
         if (screener) {
             return userForScreener(screener as Screener);
         }

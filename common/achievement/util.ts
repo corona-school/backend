@@ -59,7 +59,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
     let matches: any[] = [];
     if (relation?.includes('match') || !relation) {
         matches = await prisma.match.findMany({
-            where: { ...whereClause, [`${userType}Id`]: id },
+            where: { ...(whereClause as Prisma.matchWhereInput), [`${userType}Id`]: id },
             select: {
                 id: true,
                 lecture: {
@@ -78,7 +78,7 @@ export async function getBucketContext(userID: string, relation?: string): Promi
                 : { subcourse_participants_pupil: { some: { pupilId: id } } };
         const subcourseWhere = { ...whereClause, ...userClause };
         subcourses = await prisma.subcourse.findMany({
-            where: subcourseWhere,
+            where: subcourseWhere as Prisma.subcourseWhereInput,
             select: {
                 id: true,
                 lecture: {

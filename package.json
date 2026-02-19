@@ -45,7 +45,7 @@
         "@langchain/core": "^0.3.13",
         "@langchain/openai": "^0.3.8",
         "@onlabsorg/swan-js": "^0.13.0",
-        "@prisma/client": "4.15.0",
+        "@prisma/client": "^5.22.0",
         "apollo-server-express": "3.4.0",
         "apollo-server-plugin-response-cache": "3.4.0",
         "basic-auth": "^2.0.1",
@@ -134,10 +134,10 @@
         "nodemon": "^3.0.1",
         "pre-commit": "^1.2.2",
         "prettier": "^2.7.1",
-        "prisma": "4.15.0",
+        "prisma": "^5.22.0",
         "ts-jest": "^29.0.5",
-        "typegraphql-prisma": "0.26.0",
-        "typescript": "^4.3.5"
+        "typegraphql-prisma": "0.28.0",
+        "typescript": "^4.9.3"
     },
     "optionalDependencies": {
         "html-pppdf": "^1.0.1"
