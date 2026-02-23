@@ -46,6 +46,12 @@ import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { getStateFromZip } from '../../common/util/stateMappings';
+import {
+    student_jobstatus_enum as JobStatus,
+    student_education_experience_enum as EducationExperienceEnum,
+    student_experience_level_enum as ExperienceLevelEnum,
+    student_special_experience_enum as SpecialExperienceEnum,
+} from '../generated';
 
 const log = getLogger(`StudentMutation`);
 
@@ -122,6 +128,24 @@ class StudentRegisterPlusManyInput {
 }
 
 @InputType()
+class StudentExperienceInput {
+    @Field((type) => Boolean, { nullable: true })
+    hasWorkingExperienceInEducation?: boolean;
+
+    @Field((type) => EducationExperienceEnum, { nullable: true })
+    educationExperience?: EducationExperienceEnum;
+
+    @Field((type) => ExperienceLevelEnum, { nullable: true })
+    teachingExperienceIndividual?: ExperienceLevelEnum;
+
+    @Field((type) => ExperienceLevelEnum, { nullable: true })
+    teachingExperienceGroup?: ExperienceLevelEnum;
+
+    @Field((type) => [SpecialExperienceEnum], { nullable: true })
+    specialExperience?: SpecialExperienceEnum[];
+}
+
+@InputType()
 export class StudentUpdateInput {
     @Field((type) => String, { nullable: true })
     firstname?: string;
@@ -178,6 +202,12 @@ export class StudentUpdateInput {
 
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
+
+    @Field((type) => JobStatus, { nullable: true })
+    jobStatus?: JobStatus;
+
+    @Field((type) => StudentExperienceInput, { nullable: true })
+    experience?: StudentExperienceInput;
 }
 
 const logger = getLogger('Student Mutations');
@@ -207,6 +237,8 @@ export async function updateStudent(
         descriptionForMatch,
         descriptionForScreening,
         calendarPreferences,
+        jobStatus,
+        experience,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -255,6 +287,8 @@ export async function updateStudent(
             descriptionForMatch,
             descriptionForScreening,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
+            jobStatus: ensureNoNull(jobStatus),
+            experience: ensureNoNull(experience as Record<string, any>),
         },
         where: { id: student.id },
     });
