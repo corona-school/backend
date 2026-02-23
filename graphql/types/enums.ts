@@ -17,10 +17,16 @@ import {
     school_schooltype_enum,
     pupil_email_owner_enum as PupilEmailOwner,
     student_screening_status_enum as StudentScreeningStatus,
+    student_jobstatus_enum as JobStatus,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 import { StudentScreeningType } from '../../common/student/screening';
 import { AppointmentRole } from '../../common/appointment/util';
+import {
+    student_education_experience_enum as EducationExperienceEnum,
+    student_experience_level_enum as ExperienceLevelEnum,
+    student_special_experience_enum as SpecialExperienceEnum,
+} from '../../graphql/generated';
 
 registerEnumType(PupilEmailOwner, {
     name: 'PupilEmailOwner',
@@ -88,3 +94,7 @@ registerEnumType(school_schooltype_enum, {
 registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });
 registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
 registerEnumType(AppointmentRole, { name: 'AppointmentRole' });
+registerEnumType(JobStatus, { name: 'StudentJobStatus' });
+registerEnumType(EducationExperienceEnum, { name: 'EducationExperienceEnum' });
+registerEnumType(ExperienceLevelEnum, { name: 'ExperienceLevelEnum' });
+registerEnumType(SpecialExperienceEnum, { name: 'SpecialExperienceEnum' });
