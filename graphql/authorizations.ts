@@ -522,7 +522,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             descriptionForScreening: onlyAdminOrScreener,
             isAdult: adminOrOwnerOrScreener,
             jobStatus: adminOrOwnerOrScreener,
-            experience: adminOrOwnerOrScreener,
+            formalEducation: adminOrOwnerOrScreener,
+            specialTeachingExperience: adminOrOwnerOrScreener,
         }),
     },
 
