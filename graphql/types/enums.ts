@@ -22,11 +22,6 @@ import {
 import { LoginOption } from '../../common/secret';
 import { StudentScreeningType } from '../../common/student/screening';
 import { AppointmentRole } from '../../common/appointment/util';
-import {
-    student_education_experience_enum as EducationExperienceEnum,
-    student_experience_level_enum as ExperienceLevelEnum,
-    student_special_experience_enum as SpecialExperienceEnum,
-} from '../../graphql/generated';
 
 registerEnumType(PupilEmailOwner, {
     name: 'PupilEmailOwner',
@@ -95,6 +90,3 @@ registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });
 registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
 registerEnumType(AppointmentRole, { name: 'AppointmentRole' });
 registerEnumType(JobStatus, { name: 'StudentJobStatus' });
-registerEnumType(EducationExperienceEnum, { name: 'EducationExperienceEnum' });
-registerEnumType(ExperienceLevelEnum, { name: 'ExperienceLevelEnum' });
-registerEnumType(SpecialExperienceEnum, { name: 'SpecialExperienceEnum' });

@@ -845,7 +845,8 @@ model student {
   calendarPreferences       Json?                       @db.Json
   subcourse_mentors_student subcourse_mentors_student[]
   jobStatus                 student_jobstatus_enum?
-  experience                Json?                       @db.Json
+  formalEducation           String?
+  specialTeachingExperience String[]                    @default([])
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1574,33 +1575,4 @@ enum student_jobstatus_enum {
   Retiree
   Misc
   Azubi
-}
-
-enum student_education_experience_enum {
-  teacher
-  specialEducationTeacher
-  earlyChildhoodEducator
-  socialWorker
-  childAndAdolescentPsychologist
-  other
-}
-
-enum student_experience_level_enum {
-  none
-  some
-  extensive
-}
-
-enum student_special_experience_enum {
-  daz
-  adhd
-  dyslexia
-  dyscalculia
-  autismSpectrumDisorder
-  emotionalAndSocialDevelopment
-  giftedness
-  visualImpairment
-  hearingImpairment
-  traumaSensitivePedagogy
-  other
 }
