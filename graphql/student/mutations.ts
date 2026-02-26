@@ -46,6 +46,7 @@ import { ForbiddenError } from '../error';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { getStateFromZip } from '../../common/util/stateMappings';
+import { student_jobstatus_enum as JobStatus } from '../generated';
 
 const log = getLogger(`StudentMutation`);
 
@@ -178,6 +179,15 @@ export class StudentUpdateInput {
 
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
+
+    @Field((type) => JobStatus, { nullable: true })
+    jobStatus?: JobStatus;
+
+    @Field((type) => String, { nullable: true })
+    formalEducation?: string;
+
+    @Field((type) => [String], { nullable: true })
+    specialTeachingExperience?: string[];
 }
 
 const logger = getLogger('Student Mutations');
@@ -207,6 +217,9 @@ export async function updateStudent(
         descriptionForMatch,
         descriptionForScreening,
         calendarPreferences,
+        jobStatus,
+        formalEducation,
+        specialTeachingExperience,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -255,6 +268,9 @@ export async function updateStudent(
             descriptionForMatch,
             descriptionForScreening,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
+            jobStatus: ensureNoNull(jobStatus),
+            formalEducation: ensureNoNull(formalEducation),
+            specialTeachingExperience: ensureNoNull(specialTeachingExperience),
         },
         where: { id: student.id },
     });
