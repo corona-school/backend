@@ -9,7 +9,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls"]
+  previewFeatures = []
 }
 
 // 'prisma generate' also generates GraphQL Resolvers:
