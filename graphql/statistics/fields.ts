@@ -896,7 +896,7 @@ export class StatisticsResolver {
     @Authorized(Role.ADMIN)
     async dissolvedMatches(@Root() statistics: Statistics, @Arg('dissolvedBy') dissolvedBy: dissolved_by_enum) {
         const selectedDuration = moment(statistics.to).diff(moment(statistics.from), 'days') + 1; // include start
-        const averages: { average_matches: number; dissolve_reason: string }[] = await prisma.$queryRaw`
+        const averages: { average_matches: number; dissolve_reason: string; other_dissolve_reason: string }[] = await prisma.$queryRaw`
                     SELECT AVG(value) AS average_matches,
                    "indDissolveReason" as dissolve_reason,
                    "otherDissolveReason" as other_dissolve_reason
@@ -911,7 +911,7 @@ export class StatisticsResolver {
                        AND "dissolvedAt" >= '2022-01-01'::timestamp
                        AND "dissolvedAt" < ${statistics.from}::timestamp
                        AND "dissolvedBy" = ${dissolvedBy}::dissolved_by_enum
-                     GROUP BY "year", "month", "indDissolveReason"
+                     GROUP BY "year", "month", "indDissolveReason", "otherDissolveReason"
                  ) AS dissolved_reasons
             GROUP BY "indDissolveReason", "otherDissolveReason"
             ORDER BY average_matches;
@@ -930,8 +930,13 @@ export class StatisticsResolver {
             ORDER BY "singleDissolveReason" DESC;
         `;
 
-        return data.map(({ reason, value }) => {
-            const avg = averages.find((a) => a.dissolve_reason === reason)?.average_matches;
+        return data.map(({ reason, otherReason, value }) => {
+            const avg = averages.find((a) => {
+                if (reason === dissolve_reason.other && a.dissolve_reason === dissolve_reason.other) {
+                    return a.other_dissolve_reason === otherReason;
+                }
+                return a.dissolve_reason === reason;
+            })?.average_matches;
             let trend: number;
             if (avg) {
                 trend = value / ((avg / 30) * selectedDuration) - 1.0;
@@ -940,7 +945,7 @@ export class StatisticsResolver {
             }
             // the average is an average over a month; we need an average for the selected number of days.
             return {
-                label: reason,
+                label: reason === dissolve_reason.other ? `Sonstiges: ${otherReason}` : reason,
                 value,
                 trend,
             };
