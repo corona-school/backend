@@ -8,11 +8,14 @@ import { Prisma as PrismaTypes } from '@prisma/client';
 type Person = { id: number; isPupil?: boolean; isStudent?: boolean };
 
 type UserTypes = 'student' | 'pupil' | 'screener';
+export const ADMIN_USERID = 'admin/' as const;
+export const UNAUTHENTICATED_USERID = '-/-' as const;
+export type UserID = `${UserTypes}/${number}` | typeof ADMIN_USERID | typeof UNAUTHENTICATED_USERID;
 
 /* As Prisma values do not inherit an entity class but are plain objects,
    we need a wrapper around the different entities */
 export type User = {
-    userID: string;
+    userID: UserID;
     email: string;
     firstname: string;
     lastname: string;
@@ -24,6 +27,22 @@ export type User = {
     screenerId?: number;
 };
 export const userSelection = { id: true, firstname: true, lastname: true, email: true, active: true, lastLogin: true };
+
+export enum DeactivationReason {
+    noMoreTime = 'noMoreTime', // Ich habe keine Zeit mehr.
+    couldntAttendMeeting = 'couldntAttendMeeting', // Ich konnte/wollte das Kennenlerngespräch nicht wahrnehmen.
+    noMoreInterest = 'noMoreInterest', // Ich habe kein Interesse mehr.
+    onlyTestAccount = 'onlyTestAccount', // Ich habe mich nur zu Testzwecken angemeldet.
+    otherVolunteerWorkFound = 'otherVolunteerWorkFound', // Ich habe eine andere Möglichkeit gefunden mich zu engagieren.
+    otherSupportFound = 'otherSupportFound', // Ich habe eine andere Möglichkeit gefunden, Unterstützung zu erhalten.
+    expectationsDiffered = 'expectationsDiffered', // Ich habe mir das Programm anders vorgestellt.
+    didntMeetRequirements = 'didntMeetRequirements', // Ich erfülle die Zugangsvoraussetzungen für die Projekte nicht.
+    missingCoC = 'missingCoC',
+    deactivatedByAdmin = 'deactivatedByAdmin',
+    inactiveAccount = 'inactiveAccount',
+    hasCriminalRecord = 'hasCriminalRecord',
+    other = 'other', // Sonstiges
+}
 
 export function getPupilsIds(userIds: string[]) {
     return userIds.filter((id) => {
@@ -291,7 +310,7 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` }));
+    ).map((p) => ({ ...p, isStudent: true, userID: `student/${p.id}` as UserID }));
 
     const pupils = (
         await prisma.pupil.findMany({
@@ -310,7 +329,7 @@ export async function getUsers(userIds: User['userID'][]): Promise<User[]> {
                 lastLogin: true,
             },
         })
-    ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` }));
+    ).map((p) => ({ ...p, isPupil: true, userID: `pupil/${p.id}` as UserID }));
     return [...students, ...pupils];
 }
 

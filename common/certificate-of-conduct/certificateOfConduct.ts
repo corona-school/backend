@@ -3,7 +3,7 @@ import { prisma } from '../prisma';
 import { deactivateStudent } from '../student/activation';
 import { getStudent } from '../../graphql/util';
 import * as Notification from '../notification';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import moment from 'moment';
 import { cancelRemissionRequest } from '../remission-request';
 
@@ -25,7 +25,7 @@ export async function create(dateOfInspection: Date, dateOfIssue: Date, criminal
         expirationDate: moment(dateOfIssue).add(3, 'years').format('DD.MM.YYYY'),
     });
     if (criminalRecords) {
-        await deactivateStudent(student);
+        await deactivateStudent(student, false, DeactivationReason.hasCriminalRecord);
     } else {
         await Notification.actionTaken(userForStudent(student), 'student_coc_approved', {});
     }

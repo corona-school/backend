@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import * as Notification from '../notification';
 import {
+    course_category_enum,
     instant_certificate as InstantCertificate,
     participation_certificate as ParticipationCertificate,
     Prisma,
@@ -124,13 +125,24 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointmentsCount, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration] = await Promise.all([
-        matchesCountPromise,
-        matchAppointmentsCountPromise,
-        uniqueCourseParticipantsPromise,
-        courseAppointmentsCountPromise,
-        totalAppointmentsDurationPromise,
-    ]);
+    const homeworkHelpDurationPromise = prisma.lecture.aggregate({
+        where: {
+            isCanceled: false,
+            subcourse: { course: { category: course_category_enum.homework_help } },
+            joinedBy: { has: userForStudent(requester).userID },
+        },
+        _sum: { duration: true },
+    });
+
+    const [matchesCount, matchAppointmentsCount, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration, homeworkHelpDuration] =
+        await Promise.all([
+            matchesCountPromise,
+            matchAppointmentsCountPromise,
+            uniqueCourseParticipantsPromise,
+            courseAppointmentsCountPromise,
+            totalAppointmentsDurationPromise,
+            homeworkHelpDurationPromise,
+        ]);
     const courseParticipantsCount = courseParticipants.length;
 
     const certificate = await prisma.instant_certificate.create({
@@ -143,6 +155,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             courseParticipantsCount,
             courseAppointmentsCount,
             totalAppointmentsDuration: totalAppointmentsDuration._sum.duration ?? 0,
+            homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
         },
         include: { student: true },
     });
@@ -265,6 +278,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
             COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
             TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
+            HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? formatFloat(certificate.homeworkHelpDuration / 60, lang) : undefined,
             DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
         });
     }
@@ -471,6 +485,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
         TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
+        HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? formatFloat(certificate.homeworkHelpDuration / 60, lang) : undefined,
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
     });

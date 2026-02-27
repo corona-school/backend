@@ -558,6 +558,7 @@ model instant_certificate {
   courseParticipantsCount   Int
   courseAppointmentsCount   Int
   totalAppointmentsDuration Int // in minutes
+  homeworkHelpDuration      Int? // in minutes
 }
 
 model pupil {
@@ -843,6 +844,9 @@ model student {
   // Stores a structure like { weeklyAvailability: { monday: [{ from: 600 (minutes of the day), to: 660 }, ...], friday: [{ from: 780, to: 840 }], ... } }
   calendarPreferences       Json?                       @db.Json
   subcourse_mentors_student subcourse_mentors_student[]
+  jobStatus                 student_jobstatus_enum?
+  formalEducation           String?
+  specialTeachingExperience String[]                    @default([])
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1178,7 +1182,7 @@ enum pupil_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule      @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
   mittelschule
   oberschule
@@ -1226,7 +1230,7 @@ enum school_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule      @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
   mittelschule
   oberschule
@@ -1392,7 +1396,7 @@ enum course_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule      @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
   mittelschule
   oberschule
@@ -1562,4 +1566,13 @@ enum student_screening_status_enum {
   success   @map("1")
   rejection @map("2")
   missed    @map("3")
+}
+
+enum student_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
+  Azubi
 }

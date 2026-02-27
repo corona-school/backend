@@ -1,11 +1,11 @@
-import { User } from '../../common/user';
+import { User, UserID } from '../../common/user';
 import { Pupil, Student, Screener } from '../generated';
 import { ObjectType, Field, Int } from 'type-graphql';
 
 @ObjectType()
 export class UserType implements User {
     @Field()
-    userID: string;
+    userID: UserID;
 
     @Field()
     firstname: string;
