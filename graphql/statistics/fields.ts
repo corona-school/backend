@@ -173,6 +173,21 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
+    async registeredPupilsHavingScreening(@Root() statistics: Statistics) {
+        return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
+                                           date_part('year', pupil."createdAt"::date)  AS year,
+                                           date_part('month', pupil."createdAt"::date) AS month
+                                    FROM pupil
+                                             LEFT JOIN pupil_screening on pupil_screening."pupilId" = pupil.id
+                                    WHERE pupil."createdAt" > ${statistics.from}::timestamp
+                                      AND pupil."createdAt" < ${statistics.to}::timestamp
+                                      AND (pupil_screening."createdAt" IS NOT NULL)
+                                    GROUP BY "year", "month"
+                                    ORDER BY "year" ASC, "month" ASC`;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async pupilRegistrationsByState(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`SELECT COUNT(*)::INT                         AS value,
                                              date_part('year', "createdAt"::date)  AS year,
@@ -1070,7 +1085,7 @@ export class StatisticsResolver {
                     EXTRACT(YEAR FROM l."start")::int AS year,
                     EXTRACT(MONTH FROM l."start")::int AS month,
                     SUM(
-                        l."duration" * CASE 
+                        l."duration" * CASE
                             WHEN l."appointmentType" = 'match' THEN 1
                             ELSE COALESCE(array_length(l."participantIds", 1), 0)
                         END
@@ -1114,7 +1129,7 @@ export class StatisticsResolver {
                     COUNT(CASE WHEN l_count >= ${minCompletedLectures} THEN m.id END) AS successful_matches
                 FROM match m
                 LEFT JOIN (
-                    SELECT 
+                    SELECT
                         l."matchId",
                         COUNT(*) AS l_count
                     FROM lecture l
@@ -1151,7 +1166,7 @@ export class StatisticsResolver {
             EXTRACT(MONTH FROM l."start")::int AS month,
             COUNT(DISTINCT m."id")::int AS value
         FROM match m
-        JOIN lecture l 
+        JOIN lecture l
         ON l."matchId" = m."id"
         WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
         AND l."isCanceled" = FALSE
@@ -1168,7 +1183,7 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT m."id")::int AS value
         FROM match m
-        JOIN lecture l 
+        JOIN lecture l
         ON l."matchId" = m."id"
         WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
         AND l."isCanceled" = FALSE
@@ -1186,13 +1201,13 @@ export class StatisticsResolver {
             EXTRACT(MONTH FROM l."start")::int AS month,
             COUNT(DISTINCT p_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."participantIds"
             END
@@ -1226,8 +1241,8 @@ export class StatisticsResolver {
         LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
         LEFT JOIN course c  ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."organizerIds"
             END
@@ -1256,12 +1271,12 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT p_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
+            CASE
                 WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."participantIds"
@@ -1290,13 +1305,13 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT s_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."organizerIds"
             END
