@@ -894,7 +894,7 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [DataWithTrends])
     @Authorized(Role.ADMIN)
-    async dissolvedMatches(@Root() statistics: Statistics, @Arg('dissolvedBy', () => dissolved_by_enum) dissolvedBy: dissolved_by_enum) {
+    async dissolvedMatches(@Root() statistics: Statistics, @Arg('dissolvedBy') dissolvedBy: dissolved_by_enum) {
         const selectedDuration = moment(statistics.to).diff(moment(statistics.from), 'days') + 1; // include start
         const averages: { average_matches: number; dissolve_reason: string }[] = await prisma.$queryRaw`
                     SELECT AVG(value) AS average_matches,
