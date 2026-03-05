@@ -1,7 +1,13 @@
 import { Role } from '../authorizations';
 import { Arg, Authorized, Field, FieldResolver, Float, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { course_category_enum, dissolve_reason, pupil_screening_status_enum, student_screening_status_enum as ScreeningStatus } from '@prisma/client';
+import {
+    course_category_enum,
+    dissolve_reason,
+    dissolved_by_enum,
+    pupil_screening_status_enum,
+    student_screening_status_enum as ScreeningStatus,
+} from '@prisma/client';
 import { GraphQLInt, GraphQLString } from 'graphql';
 import moment from 'moment-timezone';
 
@@ -888,39 +894,49 @@ export class StatisticsResolver {
 
     @FieldResolver((returns) => [DataWithTrends])
     @Authorized(Role.ADMIN)
-    async dissolvedMatches(@Root() statistics: Statistics) {
+    async dissolvedMatches(@Root() statistics: Statistics, @Arg('dissolvedBy') dissolvedBy: dissolved_by_enum) {
         const selectedDuration = moment(statistics.to).diff(moment(statistics.from), 'days') + 1; // include start
-        const averages: { average_matches: number; dissolve_reason: string }[] = await prisma.$queryRaw`
+        const averages: { average_matches: number; dissolve_reason: string; other_dissolve_reason: string }[] = await prisma.$queryRaw`
                     SELECT AVG(value) AS average_matches,
-                   "indDissolveReason" as dissolve_reason
+                   "indDissolveReason" as dissolve_reason,
+                   "otherDissolveReason" as other_dissolve_reason
             FROM (
                      SELECT COUNT(*)::INT AS value,
                             "indDissolveReason",
+                            "otherDissolveReason",
                             date_part('year', "dissolvedAt"::date)  AS year,
                             date_part('month', "dissolvedAt"::date) AS month
                      FROM "match", UNNEST("dissolveReasons") as "indDissolveReason" /* dissolveReasons is an array, we want to count every single reason each month. UNNEST splits a row with the array into several rows with the specific array entries */
                      WHERE dissolved = TRUE
                        AND "dissolvedAt" >= '2022-01-01'::timestamp
                        AND "dissolvedAt" < ${statistics.from}::timestamp
-                     GROUP BY "year", "month", "indDissolveReason"
+                       AND "dissolvedBy" = ${dissolvedBy}::dissolved_by_enum
+                     GROUP BY "year", "month", "indDissolveReason", "otherDissolveReason"
                  ) AS dissolved_reasons
-            GROUP BY "indDissolveReason"
+            GROUP BY "indDissolveReason", "otherDissolveReason"
             ORDER BY average_matches;
         `;
 
-        const data: { value: number; reason: string }[] = await prisma.$queryRaw`
+        const data: { value: number; reason: string; otherReason: string }[] = await prisma.$queryRaw`
             SELECT count(*)::int as value,
-                "singleDissolveReason" as reason
+                "singleDissolveReason" as reason,
+               "otherDissolveReason" as "otherReason"
             FROM "match", UNNEST("dissolveReasons") as "singleDissolveReason"
             WHERE dissolved = TRUE
                 AND "dissolvedAt" >= ${statistics.from}::timestamp
                 AND "dissolvedAt" < ${statistics.to}::timestamp
-            GROUP BY "singleDissolveReason"
+                AND "dissolvedBy" = ${dissolvedBy}::dissolved_by_enum
+            GROUP BY "singleDissolveReason", "otherDissolveReason"
             ORDER BY "singleDissolveReason" DESC;
         `;
 
-        return data.map(({ reason, value }) => {
-            const avg = averages.find((a) => a.dissolve_reason === reason)?.average_matches;
+        return data.map(({ reason, otherReason, value }) => {
+            const avg = averages.find((a) => {
+                if (reason === dissolve_reason.other && a.dissolve_reason === dissolve_reason.other) {
+                    return a.other_dissolve_reason === otherReason;
+                }
+                return a.dissolve_reason === reason;
+            })?.average_matches;
             let trend: number;
             if (avg) {
                 trend = value / ((avg / 30) * selectedDuration) - 1.0;
@@ -929,7 +945,7 @@ export class StatisticsResolver {
             }
             // the average is an average over a month; we need an average for the selected number of days.
             return {
-                label: reason,
+                label: reason === dissolve_reason.other ? `Sonstiges: ${otherReason}` : reason,
                 value,
                 trend,
             };
@@ -1070,7 +1086,7 @@ export class StatisticsResolver {
                     EXTRACT(YEAR FROM l."start")::int AS year,
                     EXTRACT(MONTH FROM l."start")::int AS month,
                     SUM(
-                        l."duration" * CASE 
+                        l."duration" * CASE
                             WHEN l."appointmentType" = 'match' THEN 1
                             ELSE COALESCE(array_length(l."participantIds", 1), 0)
                         END
@@ -1114,7 +1130,7 @@ export class StatisticsResolver {
                     COUNT(CASE WHEN l_count >= ${minCompletedLectures} THEN m.id END) AS successful_matches
                 FROM match m
                 LEFT JOIN (
-                    SELECT 
+                    SELECT
                         l."matchId",
                         COUNT(*) AS l_count
                     FROM lecture l
@@ -1151,7 +1167,7 @@ export class StatisticsResolver {
             EXTRACT(MONTH FROM l."start")::int AS month,
             COUNT(DISTINCT m."id")::int AS value
         FROM match m
-        JOIN lecture l 
+        JOIN lecture l
         ON l."matchId" = m."id"
         WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
         AND l."isCanceled" = FALSE
@@ -1168,7 +1184,7 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT m."id")::int AS value
         FROM match m
-        JOIN lecture l 
+        JOIN lecture l
         ON l."matchId" = m."id"
         WHERE l."start" >= ${statistics.from}::timestamp AND l."start" <= ${statistics.to}::timestamp
         AND l."isCanceled" = FALSE
@@ -1186,13 +1202,13 @@ export class StatisticsResolver {
             EXTRACT(MONTH FROM l."start")::int AS month,
             COUNT(DISTINCT p_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."participantIds"
             END
@@ -1226,8 +1242,8 @@ export class StatisticsResolver {
         LEFT JOIN subcourse sc ON sc."id" = l."subcourseId"
         LEFT JOIN course c  ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."organizerIds"
             END
@@ -1256,12 +1272,12 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT p_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
+            CASE
                 WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."participantIds"
@@ -1290,13 +1306,13 @@ export class StatisticsResolver {
         SELECT
             COUNT(DISTINCT s_id)::int AS value
         FROM lecture l
-        LEFT JOIN subcourse sc 
+        LEFT JOIN subcourse sc
             ON sc."id" = l."subcourseId"
-        LEFT JOIN course c 
+        LEFT JOIN course c
             ON c."id" = sc."courseId"
         CROSS JOIN LATERAL UNNEST(
-            CASE 
-                WHEN c."name" LIKE '%Hausaufgabenhilfe%' 
+            CASE
+                WHEN c."name" LIKE '%Hausaufgabenhilfe%'
                     THEN l."joinedBy"
                 ELSE l."organizerIds"
             END
