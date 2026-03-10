@@ -40,7 +40,7 @@ export const schoolTypeSearchStrings: Record<SchoolType, string[]> = {
     berufskolleg: ['berufskolleg'],
     oberschule: ['oberschule'],
     f_rderschule: ['förderschule'],
-    beruflichesgymnasium: ['beruflichesgymnasium', 'fachgymnasium'],
+    beruflichesgymnasium: ['berufliches gymnasium', 'fachgymnasium'],
     uni_studienkolleg: ['studienkolleg', 'universität'],
     fachschule: ['fachschule'],
     hauptschule: ['hauptschule'],
