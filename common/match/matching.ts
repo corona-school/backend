@@ -179,7 +179,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
         return NO_MATCH;
     }
 
-    const subjectBonus = sigmoid((matchingSubjects - 1) * 2);
+    const subjectBonus = matchingSubjects / Math.max(request.subjects.length, offer.subjects.length);
 
     // Add a small bonus if the state matches
     // As the probability of a state match is relatively high (about 1/16),

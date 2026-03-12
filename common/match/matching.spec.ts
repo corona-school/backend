@@ -202,8 +202,8 @@ const offerSix = {
 
 describe('Matching Score Basics', () => {
     testScore('no subject', requestOne, offerTwo, NO_MATCH);
-    testScore('one subject', requestOne, offerOne, 0.3);
-    testScore('two subjects', requestFour, offerFour, 0.41423912339336466);
+    testScore('one subject', requestOne, offerOne, 0.44999999999999996);
+    testScore('two subjects', requestFour, offerFour, 0.44999999999999996);
     testScore('two requested one offered', requestFour, offerOne, 0.3);
     testScore('one requested two offered', requestOne, offerFour, 0.3);
     // testScore('one requested two offered - different state', requestOne, offerFive, 0.495);
@@ -221,13 +221,13 @@ describe('Matching Score Waiting Bonus', () => {
         'pupil waiting for less than 14 days',
         { ...requestOne, requestAt: moment(TODAY_TEST_DATE).subtract(10, 'days').toDate() },
         offerOne,
-        0.4499863806393892
+        0.5999863806393892
     );
     testScore(
         'pupil waiting for more than 14 days',
         { ...requestOne, requestAt: moment(TODAY_TEST_DATE).subtract(20, 'days').toDate() },
         offerOne,
-        0.7499999987633078
+        0.8999999987633078
     );
 });
 
