@@ -179,7 +179,7 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
         return NO_MATCH;
     }
 
-    const subjectBonus = sigmoid((matchingSubjects - 1) * 2);
+    const subjectBonus = matchingSubjects / Math.max(request.subjects.length, offer.subjects.length);
 
     // Add a small bonus if the state matches
     // As the probability of a state match is relatively high (about 1/16),
@@ -202,11 +202,11 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
         }
     }
 
-    const offerWaitDays = (+currentDate - +offer.requestAt) / MS_PER_DAY;
-    const offerWaitingBonus = offerWaitDays > 20 ? sigmoid(offerWaitDays - 20) : 0;
+    const requestWaitDays = (+currentDate - +request.requestAt) / MS_PER_DAY;
+    const requestWaitingBonus = requestWaitDays >= 14 ? sigmoid(requestWaitDays) : sigmoid(requestWaitDays) * 0.5;
 
     // how good a match is in (0, 1)
-    const score = 0.8 * subjectBonus + 0.05 * languageBonus /* + 0.02 * stateBonus + */ + 0.2 * offerWaitingBonus;
+    const score = 0.3 * subjectBonus + 0.1 * languageBonus + 0.6 * requestWaitingBonus;
 
     // TODO: Fix retention for matches with only few subjects (e.g. both helper and helpee only have math as subject)
     // in that case the score is not so high, and thus they are retained for a long time, although the match is perfect
