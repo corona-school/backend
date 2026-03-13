@@ -103,7 +103,44 @@ export class StatisticsResolver {
                                                 AND "createdAt" < ${statistics.to}::timestamp
                                               GROUP BY "year", "month"
                                               ORDER BY "year" ASC, "month" ASC;`;
-        console.log(result);
+        return result;
+    }
+
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
+    async helperRegistrationsByScreeningStatus(@Root() statistics: Statistics) {
+        const result = await prisma.$queryRaw`WITH student_screening AS (
+                                                SELECT DISTINCT ON (s.id)
+                                                    s.id,
+                                                    s."createdAt",
+                                                    COALESCE(sc.status, isc.status) AS status,
+                                                    COALESCE(sc."createdAt", isc."createdAt") AS screening_created_at
+                                                FROM student s
+                                                LEFT JOIN screening sc 
+                                                    ON sc."studentId" = s.id
+                                                LEFT JOIN instructor_screening isc 
+                                                    ON isc."studentId" = s.id
+                                                WHERE s."verifiedAt" is NOT NULL
+                                                AND s."createdAt" >= ${statistics.from}::timestamp
+                                                AND s."createdAt" < ${statistics.to}::timestamp
+                                                ORDER BY 
+                                                    s.id,
+                                                    COALESCE(sc."createdAt", isc."createdAt") DESC
+                                            )
+                                            SELECT 
+                                                COUNT(*)::INT AS value,
+                                                date_part('year', ss."createdAt")  AS year,
+                                                date_part('month', ss."createdAt") AS month,
+                                                CASE
+                                                    WHEN ss.status IS NULL THEN 'no_screening'
+                                                    WHEN ss.status = '0' THEN 'pending'
+                                                    WHEN ss.status = '1' THEN 'approved'
+                                                    WHEN ss.status = '2' THEN 'rejected'
+                                                    WHEN ss.status = '3' THEN 'disputed'
+                                                END AS "group"
+                                            FROM student_screening ss
+                                            GROUP BY year, month, ss.status
+                                            ORDER BY year ASC, month ASC, ss.status;`;
         return result;
     }
 
@@ -180,23 +217,32 @@ export class StatisticsResolver {
     @FieldResolver((returns) => [ByMonth])
     @Authorized(Role.ADMIN)
     async pupilRegistrationsByScreeningStatus(@Root() statistics: Statistics) {
-        return await prisma.$queryRaw`SELECT COUNT(*)::INT                                  AS value, 	
+        return await prisma.$queryRaw`WITH first_screening AS (
+                                            SELECT DISTINCT ON ("pupilId")
+                                                "pupilId",
+                                                "status"
+                                            FROM pupil_screening
+                                            ORDER BY "pupilId", "createdAt" ASC
+                                        )
+                                        SELECT 	
+                                                COUNT(*)::INT AS value,
                                                 date_part('year', pupil."createdAt"::date)  AS year,
                                                 date_part('month', pupil."createdAt"::date) AS month,
                                                 CASE
-                                                    WHEN "status" IS NULL THEN 'no_screening' 
-                                                    WHEN "status" = '0' THEN 'pending'
-                                                    WHEN "status" = '1' THEN 'approved'
-                                                    WHEN "status" = '2' THEN 'rejected'
-                                                    WHEN "status" = '3' THEN 'disputed'
-                                                END AS group
+                                                    WHEN fs."status" IS NULL THEN 'no_screening'
+                                                    WHEN fs."status" = '0' THEN 'pending'
+                                                    WHEN fs."status" = '1' THEN 'approved'
+                                                    WHEN fs."status" = '2' THEN 'rejected'
+                                                    WHEN fs."status" = '3' THEN 'disputed'
+                                                END AS "group"
                                         FROM "pupil"
-                                        LEFT JOIN pupil_screening on pupil_screening."pupilId" = pupil.id
-                                        WHERE "verifiedAt" is NOT NULL
+                                        LEFT JOIN first_screening fs 
+                                            ON fs."pupilId" = pupil.id
+                                        WHERE pupil."verifiedAt" IS NOT NULL
                                         AND pupil."createdAt" >= ${statistics.from}::timestamp
                                         AND pupil."createdAt" <= ${statistics.to}::timestamp
-                                        GROUP BY "status", "year", "month"
-                                        ORDER BY "status", "year" ASC, "month" ASC;`;
+                                        GROUP BY fs."status", "year", "month"
+                                        ORDER BY fs."status", "year" ASC, "month" ASC;`;
     }
 
     @FieldResolver((returns) => [ByMonth])
