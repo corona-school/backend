@@ -55,7 +55,7 @@ class Statistics {
 }
 
 @ObjectType()
-class MedianTimeToMatch {
+class MedianTimePupilStudent {
     @Field((type) => Float)
     median_days_pupil: number;
 
@@ -1138,7 +1138,7 @@ export class StatisticsResolver {
         return await prisma.secret.count({ where: { lastUsed: { gte: beginingOfTheDay } } });
     }
 
-    @FieldResolver(() => MedianTimeToMatch)
+    @FieldResolver(() => MedianTimePupilStudent)
     @Authorized(Role.ADMIN, Role.USER)
     async medianTimeToMatch() {
         return (
@@ -1155,6 +1155,33 @@ export class StatisticsResolver {
                 WHERE
                     "createdAt" >= now() - INTERVAL '1 month'
             ) AS durations;`
+        )[0];
+    }
+
+    @FieldResolver(() => MedianTimePupilStudent)
+    @Authorized(Role.ADMIN, Role.USER)
+    async medianTimeSinceLastSuccessfulScreening() {
+        return (
+            await prisma.$queryRaw`
+            SELECT (
+                SELECT
+                    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (EXTRACT(EPOCH FROM (now() - "updatedAt"))/86400)::int)
+                FROM
+                    screening
+                WHERE
+                    "updatedAt" >= now() - INTERVAL '1 month'
+                AND "status" = '1'::student_screening_status_enum
+            ) as median_days_student,
+            (
+                SELECT
+                    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (EXTRACT(EPOCH FROM (now() - "updatedAt"))/86400)::int)
+                FROM
+                    pupil_screening
+                WHERE
+                    "updatedAt" >= now() - INTERVAL '1 month'
+                  AND "status" = '1'::pupil_screening_status_enum
+                AND "invalidated" = FALSE
+            ) AS median_days_pupil;`
         )[0];
     }
 
