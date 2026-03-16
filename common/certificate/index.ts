@@ -88,7 +88,9 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
     const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
-    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { isCanceled: false, match: { studentId: requester.id }, start: { lt: new Date() } } });
+    const matchAppointmentsCountPromise = prisma.lecture.findMany({
+        where: { isCanceled: false, match: { studentId: requester.id }, start: { lt: new Date() }, joinedBy: { has: userForStudent(requester).userID } },
+    });
     const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
         where: {
@@ -134,16 +136,16 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointmentsCount, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration, homeworkHelpDuration] =
-        await Promise.all([
-            matchesCountPromise,
-            matchAppointmentsCountPromise,
-            uniqueCourseParticipantsPromise,
-            courseAppointmentsCountPromise,
-            totalAppointmentsDurationPromise,
-            homeworkHelpDurationPromise,
-        ]);
+    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration, homeworkHelpDuration] = await Promise.all([
+        matchesCountPromise,
+        matchAppointmentsCountPromise,
+        uniqueCourseParticipantsPromise,
+        courseAppointmentsCountPromise,
+        totalAppointmentsDurationPromise,
+        homeworkHelpDurationPromise,
+    ]);
     const courseParticipantsCount = courseParticipants.length;
+    const matchAppointmentsCount = matchAppointments.filter((lecture) => lecture.joinedBy.length > 1).length;
 
     const certificate = await prisma.instant_certificate.create({
         data: {
