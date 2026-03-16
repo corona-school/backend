@@ -155,7 +155,7 @@ export class ExtendedFieldsLectureResolver {
             return (await getSubcoursePositions(ctx, appointment.subcourseId)).length;
         }
         if (appointment.matchId) {
-            return (await getMatchPositions(ctx, appointment.subcourseId)).length;
+            return (await getMatchPositions(ctx, appointment.matchId)).length;
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
