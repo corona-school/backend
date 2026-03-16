@@ -229,6 +229,8 @@ export class StatisticsResolver {
                                     ORDER BY "year" ASC, "month" ASC`;
     }
 
+    @FieldResolver((returns) => [ByMonth])
+    @Authorized(Role.ADMIN)
     async pupilRegistrationsByScreeningStatus(@Root() statistics: Statistics) {
         return await prisma.$queryRaw`WITH first_screening AS (
                                             SELECT DISTINCT ON ("pupilId")
