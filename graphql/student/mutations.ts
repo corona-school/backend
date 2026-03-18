@@ -188,6 +188,12 @@ export class StudentUpdateInput {
 
     @Field((type) => [String], { nullable: true })
     specialTeachingExperience?: string[];
+
+    @Field((type) => Boolean, { nullable: true })
+    isFromUniCooperation?: boolean;
+
+    @Field((type) => Number, { nullable: true })
+    cooperationId?: number;
 }
 
 const logger = getLogger('Student Mutations');
@@ -220,6 +226,8 @@ export async function updateStudent(
         jobStatus,
         formalEducation,
         specialTeachingExperience,
+        isFromUniCooperation,
+        cooperationId,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -244,6 +252,10 @@ export async function updateStudent(
 
     if (descriptionForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    if (cooperationId !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('cooperationId may only be changed by elevated users');
     }
 
     const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;
@@ -271,6 +283,8 @@ export async function updateStudent(
             jobStatus: ensureNoNull(jobStatus),
             formalEducation: ensureNoNull(formalEducation),
             specialTeachingExperience: ensureNoNull(specialTeachingExperience),
+            isFromUniCooperation: ensureNoNull(isFromUniCooperation),
+            cooperationID: ensureNoNull(cooperationId),
         },
         where: { id: student.id },
     });
