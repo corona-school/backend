@@ -248,4 +248,18 @@ export class ExtendFieldsStudentResolver {
             take: 100,
         });
     }
+
+    @Query((returns) => [Student])
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async cooperationStudentsToBeConfirmed() {
+        return await prisma.student.findMany({
+            where: {
+                active: true,
+                AND: [{ screening: { is: null } }, { instructor_screening: { is: null } }],
+                isFromUniCooperation: true,
+            },
+            take: 100,
+            orderBy: { createdAt: 'asc' },
+        });
+    }
 }
