@@ -129,7 +129,7 @@ model bbb_meeting {
 
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
-  id             Int       @id() @default(autoincrement())
+  id             Int                   @id() @default(autoincrement())
   name           String
   // This is a short string which can be passed in to the registration to associate users with this
   tag            String
@@ -137,6 +137,7 @@ model cooperation {
   welcomeTitle   String
   welcomeMessage String
   student        student[]
+  type           cooperation_type_enum @default(company)
 }
 
 // A Concrete Notification represents a Notification sent to one specific user
@@ -847,6 +848,7 @@ model student {
   jobStatus                 student_jobstatus_enum?
   formalEducation           String?
   specialTeachingExperience String[]                    @default([])
+  isFromUniCooperation      Boolean?
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1575,4 +1577,9 @@ enum student_jobstatus_enum {
   Retiree
   Misc
   Azubi
+}
+
+enum cooperation_type_enum {
+  company
+  university
 }

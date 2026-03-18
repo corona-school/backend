@@ -456,6 +456,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isStudent'
             | 'isInstructor'
             | 'isUniversityStudent'
+            | 'isFromUniCooperation'
             | 'languages'
             | 'aboutMe'
             | 'state'
@@ -513,7 +514,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
             cooperation: everyone,
-            cooperationID: nobody,
+            cooperationID: onlyAdminOrScreener,
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
