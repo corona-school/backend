@@ -14,7 +14,7 @@ class CooperationInput {
     welcomeTitle: string;
     @Field()
     welcomeMessage: string;
-    @Field()
+    @Field(() => CooperationType)
     type: CooperationType;
 }
 
