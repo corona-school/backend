@@ -256,7 +256,7 @@ export class ExtendFieldsStudentResolver {
             where: {
                 active: true,
                 AND: [{ screening: { is: null } }, { instructor_screening: { is: null } }],
-                isFromUniCooperation: true,
+                registrationSource: 'cooperation',
             },
             take: 100,
             orderBy: { createdAt: 'asc' },

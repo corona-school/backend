@@ -456,7 +456,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'isStudent'
             | 'isInstructor'
             | 'isUniversityStudent'
-            | 'isFromUniCooperation'
             | 'languages'
             | 'aboutMe'
             | 'state'

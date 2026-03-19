@@ -189,9 +189,6 @@ export class StudentUpdateInput {
     @Field((type) => [String], { nullable: true })
     specialTeachingExperience?: string[];
 
-    @Field((type) => Boolean, { nullable: true })
-    isFromUniCooperation?: boolean;
-
     @Field((type) => Number, { nullable: true })
     cooperationId?: number;
 }
@@ -226,13 +223,8 @@ export async function updateStudent(
         jobStatus,
         formalEducation,
         specialTeachingExperience,
-        isFromUniCooperation,
         cooperationId,
     } = update;
-
-    if (registrationSource != undefined && !isElevated(context)) {
-        throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
-    }
 
     if (email != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
@@ -283,7 +275,6 @@ export async function updateStudent(
             jobStatus: ensureNoNull(jobStatus),
             formalEducation: ensureNoNull(formalEducation),
             specialTeachingExperience: ensureNoNull(specialTeachingExperience),
-            isFromUniCooperation: ensureNoNull(isFromUniCooperation),
             cooperationID: ensureNoNull(cooperationId),
         },
         where: { id: student.id },
