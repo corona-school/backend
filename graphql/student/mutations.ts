@@ -188,6 +188,9 @@ export class StudentUpdateInput {
 
     @Field((type) => [String], { nullable: true })
     specialTeachingExperience?: string[];
+
+    @Field((type) => Number, { nullable: true })
+    cooperationId?: number;
 }
 
 const logger = getLogger('Student Mutations');
@@ -220,11 +223,8 @@ export async function updateStudent(
         jobStatus,
         formalEducation,
         specialTeachingExperience,
+        cooperationId,
     } = update;
-
-    if (registrationSource != undefined && !isElevated(context)) {
-        throw new PrerequisiteError(`RegistrationSource may only be changed by elevated users`);
-    }
 
     if (email != undefined && !isElevated(context)) {
         throw new PrerequisiteError(`Only Admins may change the email without verification`);
@@ -244,6 +244,10 @@ export async function updateStudent(
 
     if (descriptionForScreening !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
+    }
+
+    if (cooperationId !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('cooperationId may only be changed by elevated users');
     }
 
     const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;
@@ -271,6 +275,7 @@ export async function updateStudent(
             jobStatus: ensureNoNull(jobStatus),
             formalEducation: ensureNoNull(formalEducation),
             specialTeachingExperience: ensureNoNull(specialTeachingExperience),
+            cooperationID: ensureNoNull(cooperationId),
         },
         where: { id: student.id },
     });

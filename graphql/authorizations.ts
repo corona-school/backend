@@ -513,7 +513,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
             cooperation: everyone,
-            cooperationID: nobody,
+            cooperationID: onlyAdminOrScreener,
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,

@@ -313,7 +313,7 @@ export const studentOne = test('Register Student', createNewStudent);
 
 const cooperationOne = test('Admin Creates Cooperation', async () => {
     await adminClient.request(
-        `mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "" })}`
+        `mutation CreateCorp { cooperationCreate(data: { tag: "evil-corp", name: "E Corp.", welcomeTitle: "E Corp now also supports Lern-Fair", welcomeMessage: "", type: company })}`
     );
 
     return { cooperationTag: 'evil-corp' };
