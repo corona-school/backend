@@ -87,7 +87,12 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 }
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
-    const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
+    const matchesCountPromise = prisma.match.count({
+        where: {
+            studentId: requester.id,
+            lecture: { some: { isCanceled: false, start: { lt: new Date() }, joinedBy: { has: userForStudent(requester).userID } } },
+        },
+    });
     const matchAppointmentsCountPromise = prisma.lecture.findMany({
         where: { isCanceled: false, match: { studentId: requester.id }, start: { lt: new Date() }, joinedBy: { has: userForStudent(requester).userID } },
     });
@@ -97,6 +102,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             subcourse: {
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
+                course: { category: { not: course_category_enum.homework_help } },
             },
         },
     });
@@ -106,8 +112,10 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             subcourse: {
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
+                course: { category: { not: course_category_enum.homework_help } },
             },
             start: { lt: new Date() },
+            joinedBy: { has: userForStudent(requester).userID },
         },
     });
     const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
@@ -119,10 +127,12 @@ export async function createInstantCertificate(requester: Student, lang: Languag
                     subcourse: {
                         cancelled: false,
                         subcourse_instructors_student: { some: { studentId: requester.id } },
+                        course: { category: { not: course_category_enum.homework_help } },
                     },
                 },
                 { match: { studentId: requester.id } },
             ],
+            joinedBy: { has: userForStudent(requester).userID },
         },
         _sum: { duration: true },
     });
