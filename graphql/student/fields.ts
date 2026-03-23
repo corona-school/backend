@@ -272,8 +272,6 @@ export class ExtendFieldsStudentResolver {
                 AND: [{ screening: { is: null } }, { instructor_screening: { is: null } }],
                 registrationSource: 'cooperation',
             },
-            take: 100,
-            orderBy: { createdAt: 'asc' },
         });
     }
 }
