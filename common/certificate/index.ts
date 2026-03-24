@@ -118,7 +118,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             joinedBy: { has: userForStudent(requester).userID },
         },
     });
-    const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
+    const appointmentsForDurationPromise = prisma.lecture.findMany({
         where: {
             isCanceled: false,
             start: { lt: new Date() },
@@ -134,7 +134,10 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             ],
             joinedBy: { has: userForStudent(requester).userID },
         },
-        _sum: { duration: true },
+        select: {
+            duration: true,
+            joinedBy: true,
+        },
     });
 
     const homeworkHelpDurationPromise = prisma.lecture.aggregate({
@@ -146,16 +149,19 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration, homeworkHelpDuration] = await Promise.all([
+    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsCount, appointmentsForDuration, homeworkHelpDuration] = await Promise.all([
         matchesCountPromise,
         matchAppointmentsCountPromise,
         uniqueCourseParticipantsPromise,
         courseAppointmentsCountPromise,
-        totalAppointmentsDurationPromise,
+        appointmentsForDurationPromise,
         homeworkHelpDurationPromise,
     ]);
     const courseParticipantsCount = courseParticipants.length;
     const matchAppointmentsCount = matchAppointments.filter((lecture) => lecture.joinedBy.length > 1).length;
+    const totalAppointmentsDuration = appointmentsForDuration
+        .filter((l) => l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID))
+        .reduce((sum, l) => sum + (l.duration ?? 0), 0);
 
     const certificate = await prisma.instant_certificate.create({
         data: {
@@ -166,7 +172,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             matchAppointmentsCount,
             courseParticipantsCount,
             courseAppointmentsCount,
-            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration ?? 0,
+            totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
         },
         include: { student: true },
