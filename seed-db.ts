@@ -170,7 +170,7 @@ const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
     const { topics = [] } = data;
     await createPupilMatchRequest(data.pupil, true);
     await createStudentMatchRequest(data.student, true);
-    const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL);
+    const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL, { skipChatCreation: true });
     if (topics.length) {
         for (const topic of topics) {
             const createdTopic = await prisma.learning_topic.create({
