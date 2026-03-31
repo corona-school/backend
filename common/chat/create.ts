@@ -1,4 +1,4 @@
-import { User, UserID } from '../user';
+import { User, userForPupil, userForStudent, UserID } from '../user';
 import { ChatMetaData, ContactReason, Conversation, ConversationInfos, FinishedReason, SystemMessage, TJConversation } from './types';
 import { checkChatMembersAccessRights, convertTJConversation, createOneOnOneId, userIdToTalkJsId } from './helper';
 import { createConversation, getConversation, markConversationAsWriteable, sendSystemMessage, updateConversation } from './conversation';
@@ -224,4 +224,20 @@ async function createContactChat(meUser: User, contactUser: User): Promise<strin
     return conversation.id;
 }
 
-export { getOrCreateOneOnOneConversation, getOrCreateGroupConversation, createContactChat, createChatSignature };
+const createMatchConversation = async (matchId: number): Promise<string> => {
+    const match = await prisma.match.findFirst({ where: { id: matchId }, include: { student: true, pupil: true } });
+    const studentUser = userForStudent(match.student);
+    const pupilUser = userForPupil(match.pupil);
+    const conversationInfos: ConversationInfos = {
+        welcomeMessages: [systemMessages.de.oneOnOne],
+        custom: {
+            createdBy: studentUser.userID,
+            match: { matchId: match.id },
+        },
+    };
+
+    const conversation = await getOrCreateOneOnOneConversation([studentUser, pupilUser], conversationInfos, ContactReason.MATCH);
+    return conversation.id;
+};
+
+export { getOrCreateOneOnOneConversation, getOrCreateGroupConversation, createContactChat, createChatSignature, createMatchConversation };
