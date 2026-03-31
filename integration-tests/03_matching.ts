@@ -137,6 +137,20 @@ export const expectMatchChatCreation = (student, pupil) => {
         responseStatus: 200,
         response: { id: 'mocked' }, // TODO: mock propery
     });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: '{}',
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
+        method: 'POST',
+        responseStatus: 200,
+        response: '{}',
+    });
 };
 
 export const match1 = test('Manual Match creation', async () => {

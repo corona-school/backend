@@ -55,6 +55,9 @@ const getOrCreateOneOnOneConversation = async (
         const newConversation = await getConversation(newConversationId);
         const convertedConversation = convertTJConversation(newConversation);
         logger.info(`One-on-one conversation was created with ID ${convertedConversation.id} `);
+        if (reason === ContactReason.MATCH) {
+            await sendSystemMessage(systemMessages.de.oneOnOne, newConversationId, SystemMessage.FIRST);
+        }
 
         return convertedConversation;
     }
@@ -234,14 +237,8 @@ const createMatchConversation = async (matchId: number): Promise<string> => {
         },
     };
 
-    const participantsConversationId = createOneOnOneId(studentUser, pupilUser);
-    const conversation = await getConversation(participantsConversationId);
-    if (conversation) {
-        return conversation.id;
-    }
-    const newConversation = await getOrCreateOneOnOneConversation([studentUser, pupilUser], conversationInfos, ContactReason.MATCH);
-    await sendSystemMessage(systemMessages.de.oneOnOne, newConversation.id, SystemMessage.FIRST);
-    return newConversation.id;
+    const conversation = await getOrCreateOneOnOneConversation([studentUser, pupilUser], conversationInfos, ContactReason.MATCH);
+    return conversation.id;
 };
 
 export { getOrCreateOneOnOneConversation, getOrCreateGroupConversation, createContactChat, createChatSignature, createMatchConversation };
