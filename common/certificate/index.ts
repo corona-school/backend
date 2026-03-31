@@ -87,14 +87,51 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
 }
 
 export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+    const joinedByIntroductionDate = new Date('2025-03-25');
+
     const matchesCountPromise = prisma.match.count({
         where: {
             studentId: requester.id,
-            lecture: { some: { isCanceled: false, start: { lt: new Date() }, joinedBy: { has: userForStudent(requester).userID } } },
+            lecture: {
+                some: {
+                    start: { lt: new Date() }, // only past lectures
+                    isCanceled: false,
+                    OR: [
+                        {
+                            // At this point joinedBy wasn't used yet.
+                            start: { lt: joinedByIntroductionDate },
+                        },
+                        {
+                            // After the introduction of joinedBy, we only want to count lectures the student actually joined.
+                            start: { gte: joinedByIntroductionDate },
+                            joinedBy: {
+                                has: userForStudent(requester).userID,
+                            },
+                        },
+                    ],
+                },
+            },
         },
     });
     const matchAppointmentsCountPromise = prisma.lecture.findMany({
-        where: { isCanceled: false, match: { studentId: requester.id }, start: { lt: new Date() }, joinedBy: { has: userForStudent(requester).userID } },
+        where: {
+            start: { lt: new Date() }, // only past lectures
+            isCanceled: false,
+            match: {
+                studentId: requester.id,
+            },
+            OR: [
+                {
+                    start: { lt: joinedByIntroductionDate },
+                },
+                {
+                    start: { gte: joinedByIntroductionDate },
+                    joinedBy: {
+                        has: userForStudent(requester).userID,
+                    },
+                },
+            ],
+        },
     });
     const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
@@ -115,28 +152,64 @@ export async function createInstantCertificate(requester: Student, lang: Languag
                 course: { category: { not: course_category_enum.homework_help } },
             },
             start: { lt: new Date() },
-            joinedBy: { has: userForStudent(requester).userID },
+            OR: [
+                {
+                    start: { lt: joinedByIntroductionDate },
+                },
+                {
+                    start: { gte: joinedByIntroductionDate },
+                    joinedBy: {
+                        has: userForStudent(requester).userID,
+                    },
+                },
+            ],
         },
     });
+
     const appointmentsForDurationPromise = prisma.lecture.findMany({
         where: {
             isCanceled: false,
             start: { lt: new Date() },
+
             OR: [
                 {
                     subcourse: {
                         cancelled: false,
-                        subcourse_instructors_student: { some: { studentId: requester.id } },
-                        course: { category: { not: course_category_enum.homework_help } },
+                        subcourse_instructors_student: {
+                            some: { studentId: requester.id },
+                        },
+                        course: {
+                            category: { not: course_category_enum.homework_help },
+                        },
                     },
                 },
-                { match: { studentId: requester.id } },
+                {
+                    match: {
+                        studentId: requester.id,
+                    },
+                },
             ],
-            joinedBy: { has: userForStudent(requester).userID },
+
+            AND: [
+                {
+                    OR: [
+                        {
+                            start: { lt: joinedByIntroductionDate },
+                        },
+                        {
+                            start: { gte: joinedByIntroductionDate },
+                            joinedBy: {
+                                has: userForStudent(requester).userID,
+                            },
+                        },
+                    ],
+                },
+            ],
         },
         select: {
             duration: true,
             joinedBy: true,
+            start: true,
         },
     });
 
@@ -160,7 +233,12 @@ export async function createInstantCertificate(requester: Student, lang: Languag
     const courseParticipantsCount = courseParticipants.length;
     const matchAppointmentsCount = matchAppointments.filter((lecture) => lecture.joinedBy.length > 1).length;
     const totalAppointmentsDuration = appointmentsForDuration
-        .filter((l) => l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID))
+        .filter((l) => {
+            if (l.start < joinedByIntroductionDate) {
+                return true;
+            }
+            return l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
+        })
         .reduce((sum, l) => sum + (l.duration ?? 0), 0);
 
     const certificate = await prisma.instant_certificate.create({
