@@ -231,7 +231,12 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         homeworkHelpDurationPromise,
     ]);
     const courseParticipantsCount = courseParticipants.length;
-    const matchAppointmentsCount = matchAppointments.filter((lecture) => lecture.joinedBy.length > 1).length;
+    const matchAppointmentsCount = matchAppointments.filter((lecture) => {
+        if (lecture.start < joinedByIntroductionDate) {
+            return true;
+        }
+        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
+    }).length;
     const totalAppointmentsDuration = appointmentsForDuration
         .filter((l) => {
             if (l.start < joinedByIntroductionDate) {
