@@ -1519,6 +1519,7 @@ enum screening_jobstatus_enum {
   Retiree
   Misc
   Azubi
+  SeekingEmployment
 }
 
 enum dissolved_by_enum {
@@ -1576,6 +1577,7 @@ enum student_jobstatus_enum {
   Retiree
   Misc
   Azubi
+  SeekingEmployment
 }
 
 enum cooperation_type_enum {
