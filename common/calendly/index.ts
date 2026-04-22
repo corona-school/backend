@@ -64,6 +64,8 @@ export interface InviteeEvent {
     reschedule_url: string;
 }
 
+const validEventTypes = (process.env.CALENDLY_WEBHOOK_EVENT_TYPES ?? '').split(',').map((uuid) => `https://api.calendly.com/event_types/${uuid}`);
+
 export const cancelCalendlyEvent = async (eventUrl: string, reason: string) => {
     const parts = eventUrl.split('/');
     const uuid = parts[parts.length - 1];
@@ -188,6 +190,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     }
 
     if (user.pupilId) {
+        const pupil = await getPupil(user);
         await Notification.actionTaken(user, 'pupil_screening_appointment_booked', {});
         // Check if there is already a valid screening
         let screening = await prisma.pupil_screening.findFirst({
@@ -209,7 +212,6 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
                 },
             });
         } else {
-            const pupil = await getPupil(user);
             screening = await addPupilScreening(pupil, { systemMessages: [newAppointmentComment], status: 'pending' }, true);
         }
         const appointment = await prisma.lecture.create({
@@ -324,6 +326,10 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
                 invalidated: false,
             },
         });
+        if (!screening) {
+            logger.warn(`No valid screening found for Pupil(${appointment.pupilScreening.pupilId}) to update after screening appointment was canceled`);
+            return;
+        }
         await prisma.pupil_screening.update({
             where: { id: screening.id },
             data: {
@@ -376,7 +382,6 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
     }
 };
 
-const validEventTypes = (process.env.CALENDLY_WEBHOOK_EVENT_TYPES ?? '').split(',').map((uuid) => `https://api.calendly.com/event_types/${uuid}`);
 export const onEvent = (event: CalendlyEvent) => {
     // Discard event if it's not configured
     if (!validEventTypes.includes(event.payload.scheduled_event.event_type)) {

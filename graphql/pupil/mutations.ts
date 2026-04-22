@@ -36,6 +36,7 @@ import { findOrCreateSchool } from '../../common/school/create';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { updateSessionRolesOfUser } from '../../common/user/session';
+import { cancelCalendlyEvent } from '../../common/calendly';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -303,7 +304,28 @@ export class MutatePupilResolver {
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
-
+        const pendingScreeningAppointment = await prisma.lecture.findFirst({
+            where: {
+                participantIds: {
+                    has: userForPupil(pupil).userID,
+                },
+                isCanceled: false,
+                appointmentType: 'screening',
+                start: {
+                    gt: new Date(),
+                },
+            },
+        });
+        if (pendingScreeningAppointment?.eventUrl) {
+            try {
+                await cancelCalendlyEvent(pendingScreeningAppointment.eventUrl, 'Match-Anfrage zurückgezogen');
+            } catch (error) {
+                logger.warn(
+                    `Failed to cancel Calendly Event(${pendingScreeningAppointment.eventUrl}) screening appointment for pupil ${pupil.id} after match request was deleted`,
+                    error
+                );
+            }
+        }
         return true;
     }
 
