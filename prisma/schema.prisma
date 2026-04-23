@@ -129,7 +129,7 @@ model bbb_meeting {
 
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
-  id             Int       @id() @default(autoincrement())
+  id             Int                   @id() @default(autoincrement())
   name           String
   // This is a short string which can be passed in to the registration to associate users with this
   tag            String
@@ -137,6 +137,7 @@ model cooperation {
   welcomeTitle   String
   welcomeMessage String
   student        student[]
+  type           cooperation_type_enum @default(company)
 }
 
 // A Concrete Notification represents a Notification sent to one specific user
@@ -558,6 +559,7 @@ model instant_certificate {
   courseParticipantsCount   Int
   courseAppointmentsCount   Int
   totalAppointmentsDuration Int // in minutes
+  homeworkHelpDuration      Int? // in minutes
 }
 
 model pupil {
@@ -843,6 +845,9 @@ model student {
   // Stores a structure like { weeklyAvailability: { monday: [{ from: 600 (minutes of the day), to: 660 }, ...], friday: [{ from: 780, to: 840 }], ... } }
   calendarPreferences       Json?                       @db.Json
   subcourse_mentors_student subcourse_mentors_student[]
+  jobStatus                 student_jobstatus_enum?
+  formalEducation           String?
+  specialTeachingExperience String[]                    @default([])
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1178,8 +1183,23 @@ enum pupil_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1211,8 +1231,23 @@ enum school_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1362,8 +1397,23 @@ enum course_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1468,6 +1518,8 @@ enum screening_jobstatus_enum {
   Employee
   Retiree
   Misc
+  Azubi
+  SeekingEmployment
 }
 
 enum dissolved_by_enum {
@@ -1490,6 +1542,11 @@ enum dissolve_reason {
   languageIssues // "Wir hatten sprachliche Schwierigkeiten"
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
+  internshipEnded // For cases where the mentoring/tutoring partnership was tied to an internship or BFP program and ended with it
+  subjectMismatch // When the learner needs help in a subject the tutor can’t/won’t provide
+  genderPreference // When the learner (or parents) specifically requests a female tutor
+  repeatedNoShows // When the learner repeatedly doesn’t attend sessions, often without cancellation
+  newPartnerFound // When the learner/tutor moves on to another partner (inside or outside Lern-Fair)
 }
 
 enum gender_enum {
@@ -1511,4 +1568,19 @@ enum student_screening_status_enum {
   success   @map("1")
   rejection @map("2")
   missed    @map("3")
+}
+
+enum student_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
+  Azubi
+  SeekingEmployment
+}
+
+enum cooperation_type_enum {
+  company
+  university
 }

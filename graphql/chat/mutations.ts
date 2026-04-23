@@ -8,7 +8,7 @@ import { ConversationInfos, getConversation, markConversationAsReadOnlyForPupils
 import { User, getUser } from '../../common/user';
 import { isSubcourseParticipant, getMatchByMatchees, getMembersForSubcourseGroupChat } from '../../common/chat/helper';
 import { ChatType, ContactReason, FinishedReason } from '../../common/chat/types';
-import { createContactChat, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
+import { createContactChat, createMatchConversation, getOrCreateGroupConversation, getOrCreateOneOnOneConversation } from '../../common/chat/create';
 import { addSubcourseProspect, getCourseImageURL } from '../../common/courses/util';
 import { deactivateConversation, isConversationReadOnly } from '../../common/chat/deactivation';
 import { PrerequisiteError } from '../../common/util/error';
@@ -21,22 +21,11 @@ export class MutateChatResolver {
     @AuthorizedDeferred(Role.OWNER)
     async matchChatCreate(@Ctx() context: GraphQLContext, @Arg('matcheeUserId') matcheeUserId: string) {
         const { user } = context;
-        const matcheeUser = await getUser(matcheeUserId);
-        const matchees: [User, User] = [user, matcheeUser];
 
         const match = await getMatchByMatchees([user.userID, matcheeUserId]);
         await hasAccess(context, 'Match', match);
 
-        const conversationInfos: ConversationInfos = {
-            welcomeMessages: [systemMessages.de.oneOnOne],
-            custom: {
-                createdBy: user.userID,
-                match: { matchId: match.id },
-            },
-        };
-
-        const conversation = await getOrCreateOneOnOneConversation(matchees, conversationInfos, ContactReason.MATCH);
-        return conversation.id;
+        return createMatchConversation(match.id);
     }
 
     @Mutation(() => String)

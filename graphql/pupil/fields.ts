@@ -25,6 +25,7 @@ import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
 import { GraphQLBoolean } from 'graphql';
 import { subcourseSearch } from '../../common/courses/search';
+import moment from 'moment';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -183,5 +184,28 @@ export class ExtendFieldsPupilResolver {
         return await prisma.school.findFirst({
             where: { id: pupil.schoolId },
         });
+    }
+
+    @FieldResolver((returns) => Boolean, { nullable: true })
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
+    async needScreening(@Root() pupil: Required<Pupil>) {
+        if (!pupil.schoolId) {
+            return;
+        }
+        const hasActiveMatch = (await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } })) > 0;
+        const screeningInTheLastFourMonths = await prisma.pupil_screening.findFirst({
+            where: {
+                pupilId: pupil.id,
+                status: 'success',
+                invalidated: false,
+                createdAt: {
+                    gte: moment().subtract(4, 'months').toDate(),
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+        return !screeningInTheLastFourMonths || hasActiveMatch;
     }
 }

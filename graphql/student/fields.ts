@@ -248,4 +248,28 @@ export class ExtendFieldsStudentResolver {
             take: 100,
         });
     }
+
+    @Query((returns) => [Student])
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async cooperationStudentsToBeConfirmed() {
+        return await prisma.student.findMany({
+            where: {
+                active: true,
+                registrationSource: 'cooperation',
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    @Query((returns) => Int)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async cooperationStudentsToBeConfirmedCount() {
+        return await prisma.student.count({
+            where: {
+                active: true,
+                AND: [{ screening: { is: null } }, { instructor_screening: { is: null } }],
+                registrationSource: 'cooperation',
+            },
+        });
+    }
 }

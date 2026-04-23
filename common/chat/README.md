@@ -51,7 +51,7 @@ The reasons for chat deactivation include:
 -   **Match Dissolution**:
     -   If a match is dissolved due to personal issues, it becomes inactive immediately.
     -   If it is dissolved due to missing CoC, the chat remains active for 14 days.
-    -   For all other reasons, the chat remains active for 3 days after dissolved before being deactivated.
+    -   For all other reasons, the chat remains active for 7 days after dissolved before being deactivated.
 -   **Subcourse Completion**: If the associated subcourse for the chat has ended more than 30 days ago, the chat serves no further purpose and is deactivated.
 
 ### ⚓️ Webhook for missed messages

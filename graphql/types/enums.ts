@@ -17,6 +17,8 @@ import {
     school_schooltype_enum,
     pupil_email_owner_enum as PupilEmailOwner,
     student_screening_status_enum as StudentScreeningStatus,
+    student_jobstatus_enum as JobStatus,
+    cooperation_type_enum as CooperationType,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 import { StudentScreeningType } from '../../common/student/screening';
@@ -88,3 +90,5 @@ registerEnumType(school_schooltype_enum, {
 registerEnumType(StudentScreeningStatus, { name: 'StudentScreeningStatus' });
 registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
 registerEnumType(AppointmentRole, { name: 'AppointmentRole' });
+registerEnumType(JobStatus, { name: 'StudentJobStatus' });
+registerEnumType(CooperationType, { name: 'CooperationType' });

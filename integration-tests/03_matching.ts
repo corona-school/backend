@@ -77,10 +77,87 @@ const studentWithMR = test('Student Request Match', async () => {
     return { client, student };
 });
 
+export const expectMatchChatCreation = (student, pupil) => {
+    // Creating a Chat ensures all users have accounts:
+
+    // The student has one:
+    expectFetch({
+        method: 'GET',
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
+        responseStatus: 200,
+        response: {}, // TODO: Mock properly
+    });
+    // The pupil does not have one, it gets created:
+    expectFetch({
+        method: 'GET',
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
+        responseStatus: 404,
+    });
+
+    expectFetch({
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
+        method: 'PUT',
+        body: JSON.stringify({ name: `${pupil.firstname} ${pupil.lastname.charAt(0).concat('.')}`, email: [pupil.email.toLowerCase()], role: 'pupil' }),
+        responseStatus: 200,
+    });
+
+    expectFetch({
+        method: 'GET',
+        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
+        responseStatus: 200,
+        response: {}, // TODO: Mock properly
+    });
+
+    // Then the conversion is created:
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 404,
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'PUT',
+        // TODO: For some reason the body matching does not work here? even if both are the same...
+        // body: JSON.stringify({
+        //     welcomeMessages: [systemMessages.de.oneOnOne],
+        //     custom: {
+        //         createdBy: `pupil/${pupil.pupil.id}`,
+        //         match: JSON.stringify({ matchId: id }),
+        //     },
+        //     participants: [`pupil_${pupil.pupil.id}`, `student_${student.student.id}`],
+        // }),
+        responseStatus: 200,
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: { id: 'mocked' }, // TODO: mock propery
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
+        method: 'GET',
+        responseStatus: 200,
+        response: '{}',
+    });
+
+    expectFetch({
+        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*/messages',
+        method: 'POST',
+        responseStatus: 200,
+        response: '{}',
+    });
+};
+
 export const match1 = test('Manual Match creation', async () => {
     const { pupil, client: pupilClient } = await pupilWithMR;
     const { student, client: studentClient } = await studentWithMR;
 
+    expectMatchChatCreation(student, pupil);
     await adminClient.request(`
         mutation CreateManualMatch {
             matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})
@@ -140,66 +217,7 @@ export const match1 = test('Manual Match creation', async () => {
 void test('Create Chat for Match', async () => {
     const { id, pupil, student, pupilClient, studentClient } = await match1;
 
-    // Creating a Chat ensures all users have accounts:
-
-    // The pupil does not have one, it gets created:
-    expectFetch({
-        method: 'GET',
-        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
-        responseStatus: 404,
-    });
-
-    // The student has one:
-    expectFetch({
-        method: 'GET',
-        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/student_${student.student.id}`,
-        responseStatus: 200,
-        response: {}, // TODO: Mock properly
-    });
-
-    expectFetch({
-        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
-        method: 'PUT',
-        body: JSON.stringify({ name: `${pupil.firstname} ${pupil.lastname.charAt(0).concat('.')}`, email: [pupil.email.toLowerCase()], role: 'pupil' }),
-        responseStatus: 200,
-    });
-
-    expectFetch({
-        method: 'GET',
-        url: `https://api.talkjs.com/v1/mocked-talkjs-appid/users/pupil_${pupil.pupil.id}`,
-        responseStatus: 200,
-        response: {}, // TODO: Mock properly
-    });
-
-    // Then the conversion is created:
-
-    expectFetch({
-        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
-        method: 'GET',
-        responseStatus: 404,
-    });
-
-    expectFetch({
-        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
-        method: 'PUT',
-        // TODO: For some reason the body matching does not work here? even if both are the same...
-        // body: JSON.stringify({
-        //     welcomeMessages: [systemMessages.de.oneOnOne],
-        //     custom: {
-        //         createdBy: `pupil/${pupil.pupil.id}`,
-        //         match: JSON.stringify({ matchId: id }),
-        //     },
-        //     participants: [`pupil_${pupil.pupil.id}`, `student_${student.student.id}`],
-        // }),
-        responseStatus: 200,
-    });
-
-    expectFetch({
-        url: 'https://api.talkjs.com/v1/mocked-talkjs-appid/conversations/*',
-        method: 'GET',
-        responseStatus: 200,
-        response: { id: 'mocked' }, // TODO: mock propery
-    });
+    expectMatchChatCreation(student, pupil);
 
     const { matchChatCreate: conversationID } = await pupilClient.request(`
         mutation PupilCreatesChat {

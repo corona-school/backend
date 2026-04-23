@@ -3,9 +3,9 @@ import moment from 'moment';
 import { deactivatePupil } from '../../../common/pupil/activation';
 import { deactivateStudent } from '../../../common/student/activation';
 import { getLogger } from '../../../common/logger/logger';
+import { DeactivationReason } from '../../../common/user';
 
 export const DEACTIVATE_ACCOUNTS_INACTIVITY_DAYS = 4 * 365;
-const DEACTIVATION_MESSAGE = 'User was inactive for more than 4 years.';
 
 const logger = getLogger('DeactivateInactiveAccounts');
 
@@ -19,11 +19,11 @@ export async function deactivateInactiveAccounts() {
     });
 
     for (const pupil of persons.pupils) {
-        await deactivatePupil(pupil, false, DEACTIVATION_MESSAGE, false);
+        await deactivatePupil(pupil, false, DeactivationReason.inactiveAccount, undefined, false);
     }
 
     for (const student of persons.students) {
-        await deactivateStudent(student, true, DEACTIVATION_MESSAGE);
+        await deactivateStudent(student, true, DeactivationReason.inactiveAccount);
     }
 
     logger.info('End deactivating inactive accounts');

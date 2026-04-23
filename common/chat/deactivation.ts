@@ -9,7 +9,7 @@ import { getLastLecture } from '../courses/lectures';
 
 const logger = getLogger('Chat Deactivation');
 
-// one to one chats (if match) whose match was dissolved 3 days ago should be "disabled" (readonly).
+// one to one chats (if match) whose match was dissolved 7 days ago should be "disabled" (readonly).
 // if the match was dissolved because a deactivated student due to no CoC, we keep it open for 14 days
 // if the match was dissolved due to personal issues we disable the chat ASAP
 export async function isMatchChatActive(id: number): Promise<boolean> {
@@ -29,8 +29,8 @@ export async function isMatchChatActive(id: number): Promise<boolean> {
         return !dissolvedAtPlus14Days.isBefore(today);
     }
 
-    const dissolvedAtPlus3Days = moment(match.dissolvedAt).add(3, 'days');
-    return !dissolvedAtPlus3Days.isBefore(today);
+    const dissolvedAtPlus7Days = moment(match.dissolvedAt).add(7, 'days');
+    return !dissolvedAtPlus7Days.isBefore(today);
 }
 
 async function isActiveSubcourse(id: number): Promise<boolean> {

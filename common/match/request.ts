@@ -8,6 +8,7 @@ import * as Notification from '../notification';
 import { userForPupil, userForStudent } from '../user';
 import moment from 'moment';
 import { parseSubjectString } from '../util/subjectsutils';
+import { isDev } from '../util/environment';
 
 const logger = getLogger('Match');
 
@@ -20,6 +21,7 @@ type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'no-subj
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
 
+    const isTestUserOnProd = !isDev && pupil.email.startsWith('test+prod') && pupil.email.endsWith('@lern-fair.de');
     if (!pupil.isPupil) {
         return { allowed: false, reason: 'not-tutee' };
     }
@@ -37,7 +39,15 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
     }
 
     const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
-    if (pupil.openMatchRequestCount + activeMatchCount >= PUPIL_MAX_MATCHES) {
+
+    const getMaxMatchesForUser = () => {
+        // Test users on production are allowed to have 2 active matches for testing purposes
+        if (isTestUserOnProd) {
+            return PUPIL_MAX_MATCHES + 1;
+        }
+        return PUPIL_MAX_MATCHES;
+    };
+    if (pupil.openMatchRequestCount + activeMatchCount >= getMaxMatchesForUser()) {
         return { allowed: false, reason: 'max-matches', limit: PUPIL_MAX_MATCHES };
     }
 

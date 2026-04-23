@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
@@ -9,25 +9,24 @@ import { GraphQLContext } from '../context';
 import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
+    gender_enum as Gender,
     Prisma,
     PrismaClient,
     pupil as Pupil,
+    pupil_languages_enum as Language,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
-    pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
-    gender_enum as Gender,
     school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForPupil } from '../../common/user';
+import { DeactivationReason, userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
 import { NotificationPreferences } from '../types/preferences';
-import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
-import { invalidatePupilScreening } from '../../common/pupil/screening';
+import { addPupilScreening, invalidatePupilScreening, updatePupilScreening } from '../../common/pupil/screening';
 import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
 import { RegistrationSchool } from '../types/userInputs';
@@ -37,6 +36,7 @@ import { findOrCreateSchool } from '../../common/school/create';
 import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { updateSessionRolesOfUser } from '../../common/user/session';
+import { cancelCalendlyEvent } from '../../common/calendly';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -274,7 +274,7 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil, false, 'deactivated by admin', true);
+        await deactivatePupil(pupil, false, DeactivationReason.deactivatedByAdmin, undefined, true);
         return true;
     }
 
@@ -304,7 +304,28 @@ export class MutatePupilResolver {
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
-
+        const pendingScreeningAppointment = await prisma.lecture.findFirst({
+            where: {
+                participantIds: {
+                    has: userForPupil(pupil).userID,
+                },
+                isCanceled: false,
+                appointmentType: 'screening',
+                start: {
+                    gt: new Date(),
+                },
+            },
+        });
+        if (pendingScreeningAppointment?.eventUrl) {
+            try {
+                await cancelCalendlyEvent(pendingScreeningAppointment.eventUrl, 'Match-Anfrage zurückgezogen');
+            } catch (error) {
+                logger.warn(
+                    `Failed to cancel Calendly Event(${pendingScreeningAppointment.eventUrl}) screening appointment for pupil ${pupil.id} after match request was deleted`,
+                    error
+                );
+            }
+        }
         return true;
     }
 

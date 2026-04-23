@@ -11,10 +11,20 @@ import type { ConcreteMatchPool } from './pool';
 import { userForPupil, userForStudent } from '../user';
 import { DAZ } from '../util/subjectsutils';
 import { gradeAsInt } from '../util/gradestrings';
+import { createMatchConversation } from '../chat/create';
 
 const logger = getLogger('Match');
 
-export async function createMatch(pupil: Pupil, student: Student, pool: ConcreteMatchPool): Promise<Match> {
+interface CreateMatchOptions {
+    skipChatCreation?: boolean;
+}
+
+export async function createMatch(
+    pupil: Pupil,
+    student: Student,
+    pool: ConcreteMatchPool,
+    options: CreateMatchOptions = { skipChatCreation: false }
+): Promise<Match> {
     const uuid = generateUUID();
 
     // Refetch match request count to reduce the likelihood of race conditions
@@ -115,6 +125,9 @@ export async function createMatch(pupil: Pupil, student: Student, pool: Concrete
     await Notification.actionTaken(userForPupil(pupil), 'tutee_matching_success', tuteeContext);
 
     logger.info(`Created Match(${match.uuid}) for Student(${student.id}) and Pupil(${pupil.id})`);
+    if (!options?.skipChatCreation) {
+        await createMatchConversation(match.id);
+    }
 
     return match;
 }
