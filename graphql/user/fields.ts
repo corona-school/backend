@@ -16,7 +16,7 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getPupil, getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
 import { isElevated } from '../authentication';
 import { JSONResolver } from 'graphql-scalars';
@@ -36,6 +36,7 @@ import { getPushSubscriptions, publicKey } from '../../common/notification/chann
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 import { Prisma } from '@prisma/client';
+import { normalizeLastName } from '../../common/pupil';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -68,14 +69,12 @@ export class UserFieldsResolver {
 
     @FieldResolver((returns) => String)
     @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
-    lastname(@Root() user: User, @Ctx() context: GraphQLContext): string {
-        const isOwnerOrElevated = isElevated(context) || context.user.roles.includes(Role.TEMPORARY_OWNER) || context.user.userID == user.userID;
-
-        if (isOwnerOrElevated || (user.pupilId && user.age >= 18)) {
+    async lastname(@Root() user: User, @Ctx() context: GraphQLContext): Promise<string> {
+        if (!user.pupilId) {
             return user.lastname;
-        } else {
-            return `${user.lastname.charAt(0)}.`;
         }
+        const pupil = await getPupil(user);
+        return normalizeLastName(pupil, context);
     }
 
     // NOTE: In the following we use TEMPORARY_OWNER instead of OWNER,
