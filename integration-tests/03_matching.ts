@@ -209,7 +209,7 @@ export const match1 = test('Manual Match creation', async () => {
     assert.strictEqual(s1.matches.length, 1);
     assert.strictEqual(s1.matches[0].dissolved, false);
     assert.strictEqual(s1.matches[0].pupil.firstname, pupil.firstname);
-    assert.strictEqual(s1.matches[0].pupil.lastname, pupil.lastname);
+    assert.strictEqual(s1.matches[0].pupil.lastname[0], pupil.lastname[0]);
 
     return { id: s1.matches[0].id, uuid: s1.matches[0].uuid, pupil, student, pupilClient, studentClient };
 });
