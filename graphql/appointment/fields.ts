@@ -15,6 +15,7 @@ import { getLogger } from '../../common/logger/logger';
 import { getDisplayName } from '../../common/appointment/util';
 import { getCalendlyInviteeEvent } from '../../common/calendly';
 import { ZoomError } from '../../common/util/error';
+import { normalizeLastName } from '../../common/pupil';
 
 const logger = getLogger('Appointment Fields');
 
@@ -123,7 +124,7 @@ export class ExtendedFieldsLectureResolver {
         const [userType] = getUserTypeAndIdForUserId(context.user.userID);
         return (await getUsers(appointment.participantIds as UserID[])).map(({ email, lastname, ...rest }) => ({
             ...rest,
-            lastname: userType === 'pupil' ? undefined : lastname,
+            lastname: normalizeLastName({ id: rest.pupilId, lastname, age: rest.age }, context),
         }));
     }
 
