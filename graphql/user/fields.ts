@@ -68,13 +68,9 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
-    async lastname(@Root() user: User, @Ctx() context: GraphQLContext): Promise<string> {
-        if (!user.pupilId) {
-            return user.lastname;
-        }
-        const pupil = await getPupil(user);
-        return normalizeLastName(pupil, context);
+    @Authorized(Role.OWNER, Role.ADMIN, Role.TEMPORARY_OWNER, Role.SCREENER)
+    lastname(@Root() user: User, @Ctx() context: GraphQLContext): string {
+        return user.lastname;
     }
 
     // NOTE: In the following we use TEMPORARY_OWNER instead of OWNER,

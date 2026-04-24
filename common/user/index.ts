@@ -23,7 +23,6 @@ export type User = {
     lastLogin: Date;
 
     pupilId?: number;
-    age?: number;
 
     studentId?: number;
     screenerId?: number;
