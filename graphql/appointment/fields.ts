@@ -124,7 +124,7 @@ export class ExtendedFieldsLectureResolver {
         const [userType] = getUserTypeAndIdForUserId(context.user.userID);
         return (await getUsers(appointment.participantIds as UserID[])).map(({ email, lastname, ...rest }) => ({
             ...rest,
-            lastname: normalizeLastName({ id: rest.pupilId, lastname, age: rest.age }, context),
+            lastname: normalizeLastName({ id: rest.pupilId, lastname }, context),
         }));
     }
 
