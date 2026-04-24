@@ -21,8 +21,7 @@ export async function getParticipants(where: Prisma.pupilWhereInput) {
 }
 
 export function normalizeLastName(pupil: { id: number; lastname: string; age: number }, context: GraphQLContext) {
-    const isOwnerOrElevated =
-        isElevated(context) || context.user.roles.includes(Role.TEMPORARY_OWNER) || (context.user.pupilId && context.user.pupilId == pupil.id);
+    const isOwnerOrElevated = isElevated(context) || context.user.roles.includes(Role.OWNER) || (context.user.pupilId && context.user.pupilId == pupil.id);
     if (isOwnerOrElevated || pupil.age >= 18) {
         return pupil.lastname;
     } else {
