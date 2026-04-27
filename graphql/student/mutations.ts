@@ -2,6 +2,7 @@ import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
+import * as Notification from '../../common/notification';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
 import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
@@ -248,6 +249,16 @@ export async function updateStudent(
 
     if (cooperationId !== undefined && !isElevated(context)) {
         throw new PrerequisiteError('cooperationId may only be changed by elevated users');
+    }
+
+    // Elevated user is removing a student from the cooperation list
+    if (student.registrationSource === 'cooperation' && registrationSource === 'normal' && isElevated(context)) {
+        await Notification.actionTaken(userForStudent(student), 'student_cooperation_list_removed', {});
+    }
+
+    // Student is adding itself to the cooperation list
+    if (registrationSource === 'cooperation' && !isElevated(context)) {
+        await Notification.actionTaken(userForStudent(student), 'student_cooperation_list_added', {});
     }
 
     const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;

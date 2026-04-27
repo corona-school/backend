@@ -54,7 +54,14 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
 
         const asUser = userForStudent(student);
-        await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        if (student.registrationSource === 'cooperation') {
+            const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
+            await Notification.actionTaken(asUser, 'cooperation_instructor_screening_success', {
+                cooperation: cooperation ? cooperation.name : null,
+            });
+        } else {
+            await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        }
         await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
@@ -87,7 +94,14 @@ export async function addTutorScreening(
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
+            if (student.registrationSource === 'cooperation') {
+                const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
+                await Notification.actionTaken(asUser, 'cooperation_tutor_screening_success', {
+                    cooperation: cooperation ? cooperation.name : null,
+                });
+            } else {
+                await Notification.actionTaken(asUser, 'tutor_screening_success', {});
+            }
         } else if (screening.status === ScreeningStatus.rejection) {
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }
@@ -161,11 +175,17 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             await logTransaction('skippedCoC', userForStudent(screening.student), { screenerId: screenerId });
             logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
         }
-        await Notification.actionTaken(
-            userForStudent(screening.student),
-            type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success',
-            {}
-        );
+
+        if (screening.student.registrationSource === 'cooperation') {
+            const cooperation = await prisma.cooperation.findFirst({ where: { id: screening?.student?.cooperationID } });
+            const action = type === 'instructor' ? 'cooperation_instructor_screening_success' : 'cooperation_tutor_screening_success';
+            await Notification.actionTaken(userForStudent(screening.student), action, {
+                cooperation: cooperation ? cooperation.name : null,
+            });
+        } else {
+            const action = type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success';
+            await Notification.actionTaken(userForStudent(screening.student), action, {});
+        }
     } else if (data.status === ScreeningStatus.rejection) {
         await Notification.actionTaken(
             userForStudent(screening.student),

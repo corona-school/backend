@@ -158,6 +158,12 @@ const _notificationActions = {
         description: 'Tutor / Screening was successful',
         sampleContext: {},
     },
+    cooperation_tutor_screening_success: {
+        description: 'Cooperation Tutor / Screening was successful',
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
+    },
     tutor_screening_rejection: {
         description: 'Tutor / Screening was rejected',
         sampleContext: {},
@@ -170,8 +176,22 @@ const _notificationActions = {
         description: 'Instructor / Screening was successful',
         sampleContext: {},
     },
+    cooperation_instructor_screening_success: {
+        description: 'Cooperation Instructor / Screening was successful',
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
+    },
     instructor_screening_rejection: {
         description: 'Instructor / Screening was rejected',
+        sampleContext: {},
+    },
+    student_cooperation_list_removed: {
+        description: 'Student / Removed from cooperation list',
+        sampleContext: {},
+    },
+    student_cooperation_list_added: {
+        description: 'Student / Added to cooperation list',
         sampleContext: {},
     },
     participant_course_joined: {
