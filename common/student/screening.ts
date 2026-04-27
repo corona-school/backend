@@ -54,7 +54,11 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
 
         const asUser = userForStudent(student);
-        await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        await Notification.actionTaken(
+            asUser,
+            student.registrationSource === 'cooperation' ? 'cooperation_instructor_screening_success' : 'instructor_screening_success',
+            {}
+        );
         await updateSessionRolesOfUser(asUser.userID);
     } else {
         await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
@@ -87,7 +91,11 @@ export async function addTutorScreening(
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
+            await Notification.actionTaken(
+                userForStudent(student),
+                student.registrationSource === 'cooperation' ? 'cooperation_tutor_screening_success' : 'tutor_screening_success',
+                {}
+            );
         } else if (screening.status === ScreeningStatus.rejection) {
             await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
         }
@@ -161,11 +169,10 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             await logTransaction('skippedCoC', userForStudent(screening.student), { screenerId: screenerId });
             logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
         }
-        await Notification.actionTaken(
-            userForStudent(screening.student),
-            type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success',
-            {}
-        );
+        const instructorAction =
+            screening.student.registrationSource === 'cooperation' ? 'cooperation_instructor_screening_success' : 'instructor_screening_success';
+        const tutorAction = screening.student.registrationSource === 'cooperation' ? 'cooperation_tutor_screening_success' : 'tutor_screening_success';
+        await Notification.actionTaken(userForStudent(screening.student), type === 'instructor' ? instructorAction : tutorAction, {});
     } else if (data.status === ScreeningStatus.rejection) {
         await Notification.actionTaken(
             userForStudent(screening.student),
