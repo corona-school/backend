@@ -182,6 +182,14 @@ const _notificationActions = {
         description: 'Instructor / Screening was rejected',
         sampleContext: {},
     },
+    student_cooperation_list_removed: {
+        description: 'Student / Removed from cooperation list',
+        sampleContext: {},
+    },
+    student_cooperation_list_added: {
+        description: 'Student / Added to cooperation list',
+        sampleContext: {},
+    },
     participant_course_joined: {
         description: 'Participant / Joined Course',
         sampleContext: {
