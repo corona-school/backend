@@ -160,7 +160,9 @@ const _notificationActions = {
     },
     cooperation_tutor_screening_success: {
         description: 'Cooperation Tutor / Screening was successful',
-        sampleContext: {},
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
     },
     tutor_screening_rejection: {
         description: 'Tutor / Screening was rejected',
@@ -176,7 +178,9 @@ const _notificationActions = {
     },
     cooperation_instructor_screening_success: {
         description: 'Cooperation Instructor / Screening was successful',
-        sampleContext: {},
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
     },
     instructor_screening_rejection: {
         description: 'Instructor / Screening was rejected',
