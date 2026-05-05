@@ -19,7 +19,7 @@ import { GraphQLInt } from 'graphql';
 import { getCourseCapacity, getSubcourseProspects } from '../../common/courses/util';
 import { Chat, getChat } from '../chat/fields';
 import { canPromoteSubcourse } from '../../common/courses/notifications';
-import { getParticipants } from '../../common/pupil';
+import { getParticipants, normalizeLastName } from '../../common/pupil';
 import { AppointmentRole } from '../../common/appointment/util';
 import moment from 'moment';
 
@@ -322,7 +322,7 @@ export class ExtendedFieldsSubcourseResolver {
     @FieldResolver((returns) => [Participant])
     @Authorized(Role.OWNER)
     @LimitEstimated(100)
-    async participants(@Root() subcourse: Subcourse) {
+    async participants(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext) {
         const pupils = await prisma.pupil.findMany({
             where: {
                 subcourse_participants_pupil: {
@@ -338,9 +338,10 @@ export class ExtendedFieldsSubcourseResolver {
                 grade: true,
                 schooltype: true,
                 aboutMe: true,
+                age: true,
             },
         });
-        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade) }));
+        return pupils.map((e) => ({ ...e, gradeAsInt: gradeAsInt(e.grade), age: undefined, lastname: normalizeLastName(e, context) }));
     }
 
     @FieldResolver((returns) => [OtherParticipant])

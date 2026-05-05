@@ -9,7 +9,7 @@ import {
     Pupil_screening as PupilScreening,
     School,
 } from '../generated';
-import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { userForPupil } from '../../common/user';
@@ -26,6 +26,8 @@ import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../commo
 import { GraphQLBoolean } from 'graphql';
 import { subcourseSearch } from '../../common/courses/search';
 import moment from 'moment';
+import { GraphQLContext } from '../context';
+import { normalizeLastName } from '../../common/pupil';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -33,6 +35,12 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN, Role.OWNER, Role.PUPIL_SCREENER)
     user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
+    }
+
+    @FieldResolver((type) => String)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER, Role.TUTOR, Role.INSTRUCTOR)
+    lastname(@Root() pupil: Required<Pupil>, @Ctx() context: GraphQLContext) {
+        return normalizeLastName(pupil, context);
     }
 
     @FieldResolver((type) => [Subcourse])

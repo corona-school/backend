@@ -16,8 +16,9 @@ import { GraphQLContext } from '../context';
 import { Role } from '../authorizations';
 import { prisma } from '../../common/prisma';
 import { getSecrets } from '../../common/secret';
-import { getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
+import { getPupil, getReferredByIDCount, getTotalSupportedHours, queryUser, User, userForPupil, userForStudent } from '../../common/user';
 import { UserType } from '../types/user';
+import { isElevated } from '../authentication';
 import { JSONResolver } from 'graphql-scalars';
 import { ACCUMULATED_LIMIT, LimitedQuery, LimitEstimated } from '../complexity';
 import { findUsers } from '../../common/user/search';
@@ -35,6 +36,7 @@ import { getPushSubscriptions, publicKey } from '../../common/notification/chann
 import { getUserNotificationPreferences } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 import { Prisma } from '@prisma/client';
+import { normalizeLastName } from '../../common/pupil';
 
 @ObjectType()
 export class UserContact implements UserContactType {
@@ -66,8 +68,8 @@ export class UserFieldsResolver {
     }
 
     @FieldResolver((returns) => String)
-    @Authorized(Role.USER, Role.ADMIN, Role.TEMPORARY_OWNER)
-    lastname(@Root() user: User): string {
+    @Authorized(Role.OWNER, Role.ADMIN, Role.TEMPORARY_OWNER, Role.SCREENER)
+    lastname(@Root() user: User, @Ctx() context: GraphQLContext): string {
         return user.lastname;
     }
 
