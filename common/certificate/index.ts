@@ -22,6 +22,7 @@ import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 import QRCode from 'qrcode';
+import { shortenLastName } from '../pupil';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 
@@ -349,7 +350,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
 
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
-            NAMESCHUELER: certificate.pupil?.firstname + ' ' + certificate.pupil?.lastname,
+            NAMESCHUELER: certificate.pupil?.firstname + ' ' + shortenLastName(certificate.pupil?.lastname),
             DATUMHEUTE: moment(certificate.certificateDate).format('D.M.YYYY'),
             SCHUELERSTART: moment(certificate.startDate).format('D.M.YYYY'),
             SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
@@ -515,7 +516,7 @@ function exposeCertificate(
         subjects,
         uuid,
         userIs: pupil.id === to.pupilId ? 'pupil' : 'student',
-        pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
+        pupil: { firstname: pupil.firstname, lastname: shortenLastName(pupil.lastname) },
         student: { firstname: student.firstname, lastname: student.lastname },
         state: state as CertificateState,
     };
