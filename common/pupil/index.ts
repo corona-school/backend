@@ -25,6 +25,13 @@ export function normalizeLastName(pupil: { id: number; lastname: string; age?: n
     if (isOwnerOrElevated || (pupil.age !== undefined && pupil.age >= 18)) {
         return pupil.lastname;
     } else {
-        return `${pupil.lastname.charAt(0)}.`;
+        return shortenLastName(pupil.lastname);
     }
 }
+
+export const shortenLastName = (lastname: string) => {
+    if (lastname.length > 0) {
+        return lastname.charAt(0).concat('.');
+    }
+    return '';
+};
