@@ -168,9 +168,9 @@ interface CreateTutoringMatchArgs {
 
 const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
     const { topics = [] } = data;
-    await createPupilMatchRequest(data.pupil, true);
-    await createStudentMatchRequest(data.student, true);
-    const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL, { skipChatCreation: true });
+    const pupilMatchRequest = await createPupilMatchRequest(data.pupil, true);
+    const studentMatchRequest = await createStudentMatchRequest(data.student, true);
+    const match = await createMatch(pupilMatchRequest, studentMatchRequest, TEST_POOL, { skipChatCreation: true });
     if (topics.length) {
         for (const topic of topics) {
             const createdTopic = await prisma.learning_topic.create({
