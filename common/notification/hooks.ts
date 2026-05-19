@@ -47,7 +47,12 @@ registerStudentHook(
 );
 
 registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
-    await deletePupilMatchRequest(pupil);
+    // TODO-MatchRequest: This should receive a required ID parameter to specify which match request to delete... This is a hook, how can I do that??
+    const openMatchRequest = await prisma.match_request.findFirst({ where: { pupilId: pupil.id, status: 'open' } });
+    if (!openMatchRequest) {
+        throw new Error(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
+    }
+    await deletePupilMatchRequest(openMatchRequest.id);
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {

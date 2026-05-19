@@ -1,4 +1,4 @@
-import { student as Student, pupil as Pupil, match as Match } from '@prisma/client';
+import { student as Student, pupil as Pupil, match as Match, match_request as MatchRequest } from '@prisma/client';
 import { prisma } from '../prisma';
 import { v4 as generateUUID } from 'uuid';
 import { getPupilGradeAsString } from '../pupil';
@@ -20,25 +20,25 @@ interface CreateMatchOptions {
 }
 
 export async function createMatch(
-    pupil: Pupil,
-    student: Student,
+    request: MatchRequest,
+    offer: MatchRequest,
     pool: ConcreteMatchPool,
     options: CreateMatchOptions = { skipChatCreation: false }
 ): Promise<Match> {
     const uuid = generateUUID();
+    const freshRequest = await prisma.match_request.findUniqueOrThrow({ where: { id: request.id }, include: { pupil: true } });
+    const freshOffer = await prisma.match_request.findUniqueOrThrow({ where: { id: offer.id }, include: { student: true } });
 
-    // Refetch match request count to reduce the likelihood of race conditions
-    // (does not prevent it though, we would actually need a SELECT FOR UPDATE)
-    const freshPupil = await prisma.pupil.findUniqueOrThrow({ where: { id: pupil.id }, select: { openMatchRequestCount: true } });
-    const freshStudent = await prisma.student.findUniqueOrThrow({ where: { id: student.id }, select: { openMatchRequestCount: true } });
-
-    if (freshPupil.openMatchRequestCount < 1) {
-        throw new PrerequisiteError(`Cannot create Match for Pupil without open match requests`);
+    if (freshRequest.status !== 'open') {
+        throw new PrerequisiteError(`Cannot create Match for MatchRequest(${request.id}) with status ${freshRequest.status}`);
     }
 
-    if (freshStudent.openMatchRequestCount < 1) {
-        throw new PrerequisiteError(`Cannot create Match for Student without open match request count`);
+    if (freshOffer.status !== 'open') {
+        throw new PrerequisiteError(`Cannot create Match for MatchOffer(${offer.id}) with status ${freshOffer.status}`);
     }
+
+    const pupil = freshRequest.pupil;
+    const student = freshOffer.student;
 
     const overlappingSubjects = getOverlappingSubjects(pupil, student);
     const pupilGrade = pupil.grade ?? gradeAsInt(pupil.grade);
@@ -62,18 +62,14 @@ export async function createMatch(
         },
     });
 
-    await prisma.pupil.update({
-        where: { id: pupil.id },
-        data: {
-            openMatchRequestCount: { decrement: 1 },
-        },
+    await prisma.match_request.update({
+        where: { id: freshRequest.id },
+        data: { status: 'resolved', matchId: match.id },
     });
 
-    await prisma.student.update({
-        where: { id: student.id },
-        data: {
-            openMatchRequestCount: { decrement: 1 },
-        },
+    await prisma.match_request.update({
+        where: { id: freshOffer.id },
+        data: { status: 'resolved', matchId: match.id },
     });
 
     await removeInterest(pupil);

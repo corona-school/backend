@@ -272,4 +272,10 @@ export class ExtendFieldsStudentResolver {
             },
         });
     }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequestCount(@Root() student: Required<Student>) {
+        return await prisma.match_request.count({ where: { studentId: student.id, status: 'open' } });
+    }
 }

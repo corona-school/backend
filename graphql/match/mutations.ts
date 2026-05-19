@@ -58,7 +58,8 @@ export class MutateMatchResolver {
             throw new Error(`Unknown MatchPool(${poolName})`);
         }
 
-        await createMatch(pupil, student, pool as ConcreteMatchPool);
+        // TODO-MatchRequest: Need to create a logic to force a match creation between two users
+        // await createMatch(pupil, student, pool as ConcreteMatchPool);
 
         return true;
     }

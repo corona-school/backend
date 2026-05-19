@@ -216,4 +216,10 @@ export class ExtendFieldsPupilResolver {
         });
         return !screeningInTheLastFourMonths || hasActiveMatch;
     }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequestCount(@Root() pupil: Required<Pupil>) {
+        return await prisma.match_request.count({ where: { pupilId: pupil.id, status: 'open' } });
+    }
 }

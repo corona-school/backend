@@ -6,6 +6,7 @@ import {
     gender_enum,
     pupil_languages_enum as PupilLanguage,
     student_languages_enum as StudentLanguage,
+    match_request as MatchRequestEntity,
 } from '@prisma/client';
 import { maxWeightAssign } from 'munkres-algorithm';
 import { getPupilGradeAsString } from '../pupil';
@@ -16,6 +17,7 @@ import { prisma } from '../prisma';
 import { CalendarPreferences } from '../../graphql/types/calendarPreferences';
 import { getOverlappingHoursCount } from '../util/calendarPreferences';
 import { Language } from '../daz/language';
+import type { MatchPupil, MatchStudent } from './pool';
 
 // ------- The Matching Algorithm ------------
 // For a series of match requests and match offers computes
@@ -35,26 +37,27 @@ export type MatchRequest = Readonly<{
     onlyMatchWith?: gender_enum;
     hasSpecialNeeds?: boolean;
     calendarPreferences?: CalendarPreferences;
+    matchRequest: MatchRequestEntity;
 }>;
 
-export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
+export function pupilsToRequests(pupils: MatchPupil[]): MatchRequest[] {
     const result: MatchRequest[] = [];
 
     for (const pupil of pupils) {
-        const request: MatchRequest = {
-            pupil,
-            pupilId: pupil.id,
-            grade: gradeAsInt(pupil.grade),
-            state: pupil.state,
-            subjects: parseSubjectString(pupil.subjects),
-            requestAt: pupil.firstMatchRequest,
-            onlyMatchWith: pupil.onlyMatchWith,
-            hasSpecialNeeds: pupil.hasSpecialNeeds,
-            calendarPreferences: pupil.calendarPreferences as Record<string, any> as CalendarPreferences,
-            languages: pupil.languages,
-        };
-
-        for (let i = 0; i < pupil.openMatchRequestCount; i++) {
+        for (const matchRequest of pupil.match_request) {
+            const request: MatchRequest = {
+                pupil,
+                pupilId: pupil.id,
+                grade: gradeAsInt(pupil.grade),
+                state: pupil.state,
+                subjects: parseSubjectString(pupil.subjects),
+                requestAt: pupil.firstMatchRequest,
+                onlyMatchWith: pupil.onlyMatchWith,
+                hasSpecialNeeds: pupil.hasSpecialNeeds,
+                calendarPreferences: pupil.calendarPreferences as Record<string, any> as CalendarPreferences,
+                languages: pupil.languages,
+                matchRequest: matchRequest,
+            };
             result.push(request);
         }
     }
@@ -73,25 +76,27 @@ export type MatchOffer = Readonly<{
     gender?: gender_enum;
     hasSpecialExperience?: boolean;
     calendarPreferences?: CalendarPreferences;
+    matchRequest: MatchRequestEntity;
 }>;
 
-export function studentsToOffers(students: Student[]): MatchOffer[] {
+export function studentsToOffers(students: MatchStudent[]): MatchOffer[] {
     const result: MatchOffer[] = [];
 
     for (const student of students) {
-        const offer: MatchOffer = {
-            student,
-            studentId: student.id,
-            state: student.state,
-            subjects: parseSubjectString(student.subjects),
-            requestAt: student.firstMatchRequest,
-            gender: student.gender,
-            hasSpecialExperience: student.hasSpecialExperience,
-            calendarPreferences: student.calendarPreferences as Record<string, any> as CalendarPreferences,
-            languages: student.languages,
-        };
+        for (const matchRequest of student.match_request) {
+            const offer: MatchOffer = {
+                student,
+                studentId: student.id,
+                state: student.state,
+                subjects: parseSubjectString(student.subjects),
+                requestAt: student.firstMatchRequest,
+                gender: student.gender,
+                hasSpecialExperience: student.hasSpecialExperience,
+                calendarPreferences: student.calendarPreferences as Record<string, any> as CalendarPreferences,
+                languages: student.languages,
+                matchRequest: matchRequest,
+            };
 
-        for (let i = 0; i < student.openMatchRequestCount; i++) {
             result.push(offer);
         }
     }

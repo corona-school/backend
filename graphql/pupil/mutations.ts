@@ -303,7 +303,12 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
-        await deletePupilMatchRequest(pupil);
+        // TODO-MatchRequest: This should receive a required ID parameter to specify which match request to delete.
+        const openMatchRequest = await prisma.match_request.findFirst({ where: { pupilId: pupil.id, status: 'open' } });
+        if (!openMatchRequest) {
+            throw new Error(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
+        }
+        await deletePupilMatchRequest(openMatchRequest.id);
         const pendingScreeningAppointment = await prisma.lecture.findFirst({
             where: {
                 participantIds: {

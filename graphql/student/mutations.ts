@@ -415,7 +415,12 @@ export class MutateStudentResolver {
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
         const student = await getSessionStudent(context, /* elevated override */ studentId);
-        await deleteStudentMatchRequest(student);
+        // TODO-MatchRequest: This should receive a required ID parameter to specify which match request to delete.
+        const openMatchRequest = await prisma.match_request.findFirst({ where: { studentId: student.id, status: 'open' } });
+        if (!openMatchRequest) {
+            throw new Error(`Cannot delete match request for Student(${student.id}) as student has no request left`);
+        }
+        await deleteStudentMatchRequest(openMatchRequest.id);
 
         return true;
     }
