@@ -482,6 +482,7 @@ model match {
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
   @@unique([studentId, pupilId], name: "UQ_MATCH", map: "UQ_MATCH")
+  match_request match_request[]
 }
 
 // A template for a Notification sent to a User
@@ -644,7 +645,8 @@ model pupil {
 
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner pupil_email_owner_enum @default(unknown)
+  emailOwner    pupil_email_owner_enum @default(unknown)
+  match_request match_request[]
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -848,6 +850,7 @@ model student {
   jobStatus                 student_jobstatus_enum?
   formalEducation           String?
   specialTeachingExperience String[]                    @default([])
+  match_request             match_request[]
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1583,4 +1586,24 @@ enum student_jobstatus_enum {
 enum cooperation_type_enum {
   company
   university
+}
+
+enum match_request_status {
+  open
+  resolved
+  cancelled
+}
+
+model match_request {
+  id        Int                  @id() @default(autoincrement())
+  createdAt DateTime             @default(now()) @db.Timestamp(6)
+  subjects  Json[]               @default([]) @db.Json
+  status    match_request_status @default(open)
+  closedAt  DateTime?
+  studentId Int?
+  student   student?             @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pupilId   Int?
+  pupil     pupil?               @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  matchId   Int?
+  match     match?                @relation(fields: [matchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
