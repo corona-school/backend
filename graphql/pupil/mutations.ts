@@ -21,7 +21,7 @@ import {
     school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
-import { PrerequisiteError } from '../../common/util/error';
+import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { DeactivationReason, userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
@@ -306,7 +306,7 @@ export class MutatePupilResolver {
         // TODO-MatchRequest: This should receive a required ID parameter to specify which match request to delete.
         const openMatchRequest = await prisma.match_request.findFirst({ where: { pupilId: pupil.id, status: 'open' } });
         if (!openMatchRequest) {
-            throw new Error(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
+            throw new RedundantError(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
         }
         await deletePupilMatchRequest(openMatchRequest.id);
         const pendingScreeningAppointment = await prisma.lecture.findFirst({
