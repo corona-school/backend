@@ -50,16 +50,21 @@ class MatchReportInput {
 export class MutateMatchResolver {
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN)
-    async matchAdd(@Arg('pupilId') pupilId: number, @Arg('studentId') studentId: number, @Arg('poolName') poolName: string): Promise<boolean> {
-        const pupil = await getPupil(pupilId);
-        const student = await getStudent(studentId);
+    async matchAdd(
+        @Arg('pupilMatchRequestId') pupilMatchRequestId: number,
+        @Arg('studentMatchRequestId') studentMatchRequestId: number,
+        @Arg('poolName') poolName: string
+    ): Promise<boolean> {
+        const pupilMatchRequest = await prisma.match_request.findFirst({ where: { id: pupilMatchRequestId, status: 'open', pupilId: { not: null } } });
+        const studentMatchRequest = await prisma.match_request.findFirst({ where: { id: studentMatchRequestId, status: 'open', studentId: { not: null } } });
         const pool = pools.find((it) => it.name === poolName);
         if (!pool) {
             throw new Error(`Unknown MatchPool(${poolName})`);
         }
-
-        // TODO-MatchRequest: Need to create a logic to force a match creation between two users
-        // await createMatch(pupil, student, pool as ConcreteMatchPool);
+        if (!pupilMatchRequest || !studentMatchRequest) {
+            throw new Error(`One or both MatchRequests(${pupilMatchRequestId}, ${studentMatchRequestId}) not found or not open`);
+        }
+        await createMatch(pupilMatchRequest, studentMatchRequest, pool as ConcreteMatchPool);
 
         return true;
     }

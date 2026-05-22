@@ -413,15 +413,20 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
-    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
-        const student = await getSessionStudent(context, /* elevated override */ studentId);
-        // TODO-MatchRequest: This should receive a required ID parameter to specify which match request to delete.
-        const openMatchRequest = await prisma.match_request.findFirst({ where: { studentId: student.id, status: 'open' } });
+    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('matchRequestId', { nullable: true }) matchRequestId?: number): Promise<boolean> {
+        let student: Student | null = null;
+        const openMatchRequest = await prisma.match_request.findFirst({ where: { id: matchRequestId, status: 'open' } });
         if (!openMatchRequest) {
-            throw new RedundantError(`Cannot delete match request for Student(${student.id}) as student has no request left`);
+            throw new RedundantError(`Cannot delete MatchRequest(${matchRequestId}) as it is not open or does not exist`);
         }
-        await deleteStudentMatchRequest(openMatchRequest.id);
 
+        if (isElevated(context)) {
+            student = await prisma.student.findFirst({ where: { id: openMatchRequest?.studentId } });
+        } else {
+            student = await getSessionStudent(context);
+        }
+
+        await deleteStudentMatchRequest(openMatchRequest.id);
         return true;
     }
 
