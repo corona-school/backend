@@ -160,8 +160,8 @@ export class UserFieldsResolver {
                     message_translation: {
                         some: {},
                     },
+                    NOT: { disabledChannels: { has: NotificationChannelEnum.inapp } },
                 },
-                NOT: { notification: { disabledChannels: { has: NotificationChannelEnum.inapp } } },
             });
         }
 
