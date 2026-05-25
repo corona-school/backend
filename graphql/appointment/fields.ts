@@ -122,7 +122,7 @@ export class ExtendedFieldsLectureResolver {
         @Arg('skip', (type) => Int) skip: number
     ) {
         const [userType] = getUserTypeAndIdForUserId(context.user.userID);
-        return (await getUsers(appointment.participantIds as UserID[])).map(({ email, lastname, ...rest }) => ({
+        return (await getUsers(appointment.participantIds.slice(skip, skip + take) as UserID[])).map(({ email, lastname, ...rest }) => ({
             ...rest,
             lastname: normalizeLastName({ id: rest.pupilId, lastname }, context),
         }));
@@ -132,7 +132,7 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER, Role.ADMIN)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        return (await getUsers(appointment.organizerIds as UserID[])).map(({ email, ...rest }) => ({ ...rest }));
+        return (await getUsers(appointment.organizerIds.slice(skip, skip + take) as UserID[])).map(({ email, ...rest }) => ({ ...rest }));
     }
 
     @FieldResolver((returns) => Int)
