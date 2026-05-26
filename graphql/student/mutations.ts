@@ -426,6 +426,10 @@ export class MutateStudentResolver {
             student = await getSessionStudent(context);
         }
 
+        if (student.id !== openMatchRequest?.studentId) {
+            throw new PrerequisiteError(`Cannot delete MatchRequest(${matchRequestId}) as the student does not have permission`);
+        }
+
         await deleteStudentMatchRequest(openMatchRequest.id);
         return true;
     }

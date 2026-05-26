@@ -314,6 +314,10 @@ export class MutatePupilResolver {
             pupil = await getSessionPupil(context);
         }
 
+        if (pupil.id !== openMatchRequest?.pupilId) {
+            throw new PrerequisiteError(`Cannot delete MatchRequest(${matchRequestId}) as the pupil does not have permission`);
+        }
+
         await deletePupilMatchRequest(openMatchRequest.id);
         const pendingScreeningAppointment = await prisma.lecture.findFirst({
             where: {
