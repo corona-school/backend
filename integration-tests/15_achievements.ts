@@ -12,6 +12,7 @@ import { AchievementTemplateCreate, purgeAchievementTemplateCache } from '../com
 import { achievement_with_template, ConditionDataAggregations } from '../common/achievement/types';
 import { deleteUnreachableCourseAchievements } from '../jobs/periodic/delete-unreachable-achievements/courses';
 import { createRelation, EventRelationType } from '../common/achievement/relation';
+import { expectMatchChatCreation } from './03_matching';
 
 function findTemplateByMetric(achievements: achievement_with_template[], metric: string) {
     for (const achievement of achievements) {
@@ -200,6 +201,7 @@ void test('Reward pupil conducted match appointment', async () => {
             pupilCreateMatchRequest
         }
     `);
+    expectMatchChatCreation(student, pupil);
     await adminClient.request(`
         mutation CreateManualMatch {
             matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})

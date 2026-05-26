@@ -4,8 +4,9 @@ import * as ics from 'ics';
 import { EventAttributes } from 'ics';
 import moment from 'moment-timezone';
 import { prisma } from '../prisma';
-import { getUsers } from '../user';
+import { getUsers, UserID } from '../user';
 import { getLogger } from '../logger/logger';
+import { shortenLastName } from '../pupil';
 
 const language = 'de-DE';
 const logger = getLogger('Appointment');
@@ -59,10 +60,10 @@ export async function getDisplayName(appointment: Appointment, isOrganizer: bool
     switch (appointment.appointmentType) {
         case lecture_appointmenttype_enum.match: {
             if (isOrganizer) {
-                const [tutee] = await getUsers(appointment.participantIds);
-                return `${tutee.firstname} ${tutee.lastname}`;
+                const [tutee] = await getUsers(appointment.participantIds as UserID[]);
+                return `${tutee.firstname} ${shortenLastName(tutee.lastname)}`;
             } else {
-                const [tutor] = await getUsers(appointment.organizerIds);
+                const [tutor] = await getUsers(appointment.organizerIds as UserID[]);
                 return `${tutor.firstname} ${tutor.lastname}`;
             }
         }

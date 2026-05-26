@@ -1,5 +1,5 @@
 import { Arg, Authorized, Field, InputType, Int, ObjectType, Query, Resolver } from 'type-graphql';
-import { SchoolResult, searchExternalSchools } from '../../common/school/externalSearch';
+import { getSchoolDetails, SchoolResult, searchExternalSchools } from '../../common/school/externalSearch';
 import { pupil_state_enum as State, pupil_schooltype_enum as SchoolType } from '@prisma/client';
 import { Role } from '../authorizations';
 import { RateLimit } from '../rate-limit';
@@ -10,8 +10,8 @@ class ExternalSchoolSearch implements SchoolResult {
     id: string;
     @Field(() => String)
     name: string;
-    @Field(() => State)
-    state: State;
+    @Field(() => State, { nullable: true })
+    state?: State;
     @Field(() => SchoolType, { nullable: true })
     schooltype?: SchoolType;
     @Field(() => String, { nullable: true })
@@ -28,18 +28,19 @@ class ExternalSchoolSearchFilters {
     name: string;
 }
 
-@InputType()
-class ExternalSchoolSearchOptions {
-    @Field((type) => Int, { defaultValue: 20 })
-    limit: number;
-}
-
 @Resolver((of) => ExternalSchoolSearch)
 export class ExternalSchoolResolver {
     @Query((returns) => [ExternalSchoolSearch])
     @Authorized(Role.UNAUTHENTICATED)
     @RateLimit('ExternalSchoolSearch', 100 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
-    externalSchoolSearch(@Arg('filters') filters: ExternalSchoolSearchFilters, @Arg('options') options: ExternalSchoolSearchOptions) {
-        return searchExternalSchools({ filters, options });
+    externalSchoolSearch(@Arg('filters') filters: ExternalSchoolSearchFilters) {
+        return searchExternalSchools({ filters });
+    }
+
+    @Query((returns) => ExternalSchoolSearch)
+    @Authorized(Role.UNAUTHENTICATED)
+    @RateLimit('SchoolDetail', 100 /* requests per */, 5 * 60 * 60 * 1000 /* 5 hours */)
+    schoolDetail(@Arg('schoolId') id: string) {
+        return getSchoolDetails(id);
     }
 }

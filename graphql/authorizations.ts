@@ -267,7 +267,7 @@ const onlyAdminOrScreener = [Authorized(Role.ADMIN, Role.SCREENER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
-const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER, Role.SCREENER)];
 const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.SUBCOURSE_MENTOR, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
@@ -513,7 +513,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
             cooperation: everyone,
-            cooperationID: nobody,
+            cooperationID: onlyAdminOrScreener,
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
@@ -521,6 +521,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
             isAdult: adminOrOwnerOrScreener,
+            jobStatus: adminOrOwnerOrScreener,
+            formalEducation: adminOrOwnerOrScreener,
+            specialTeachingExperience: adminOrOwnerOrScreener,
         }),
     },
 

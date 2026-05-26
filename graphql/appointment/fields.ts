@@ -6,7 +6,7 @@ import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } fr
 import { Deprecated, getMatch, getSubcourse } from '../util';
 import { LimitEstimated } from '../complexity';
 import { prisma } from '../../common/prisma';
-import { getUserTypeAndIdForUserId, getUsers, getUser } from '../../common/user';
+import { getUserTypeAndIdForUserId, getUsers, getUser, UserID } from '../../common/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { UserType } from '../types/user';
@@ -15,8 +15,30 @@ import { getLogger } from '../../common/logger/logger';
 import { getDisplayName } from '../../common/appointment/util';
 import { getCalendlyInviteeEvent } from '../../common/calendly';
 import { ZoomError } from '../../common/util/error';
+import { normalizeLastName } from '../../common/pupil';
 
 const logger = getLogger('Appointment Fields');
+
+// For a query subcourse { lectures { position, total } }, we would query all lectures again and again for every lecture.
+// Now instead we cache it in the query, thus reusing it for all field resolvers
+const POSITION_CACHE = Symbol('Position Cache');
+
+async function getCachedPositions(ctx: GraphQLContext, key: string, getPositions: () => Promise<{ id: number }[]>) {
+    const cache: Record<string, number[]> = ctx.valueCache[POSITION_CACHE] || (ctx.valueCache[POSITION_CACHE] = {});
+    return cache[key] || (cache[key] = (await getPositions()).map((it) => it.id));
+}
+
+async function getSubcoursePositions(ctx: GraphQLContext, subcourseId: number) {
+    return await getCachedPositions(ctx, `subcourse/${subcourseId}`, () =>
+        prisma.lecture.findMany({ where: { subcourseId, isCanceled: false }, orderBy: { start: 'asc' }, select: { id: true } })
+    );
+}
+
+async function getMatchPositions(ctx: GraphQLContext, matchId: number) {
+    return await getCachedPositions(ctx, `match/${matchId}`, () =>
+        prisma.lecture.findMany({ where: { matchId, isCanceled: false }, orderBy: { start: 'asc' }, select: { id: true } })
+    );
+}
 
 @ObjectType()
 class AppointmentActionsUrls {
@@ -100,9 +122,9 @@ export class ExtendedFieldsLectureResolver {
         @Arg('skip', (type) => Int) skip: number
     ) {
         const [userType] = getUserTypeAndIdForUserId(context.user.userID);
-        return (await getUsers(appointment.participantIds)).map(({ email, lastname, ...rest }) => ({
+        return (await getUsers(appointment.participantIds.slice(skip, skip + take) as UserID[])).map(({ email, lastname, ...rest }) => ({
             ...rest,
-            lastname: userType === 'pupil' ? undefined : lastname,
+            lastname: normalizeLastName({ id: rest.pupilId, lastname }, context),
         }));
     }
 
@@ -110,25 +132,17 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER, Role.ADMIN)
     @LimitEstimated(5)
     async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        return (await getUsers(appointment.organizerIds)).map(({ email, ...rest }) => ({ ...rest }));
+        return (await getUsers(appointment.organizerIds.slice(skip, skip + take) as UserID[])).map(({ email, ...rest }) => ({ ...rest }));
     }
 
     @FieldResolver((returns) => Int)
     @Authorized(Role.USER, Role.ADMIN)
-    async position(@Root() appointment: Appointment): Promise<number> {
+    async position(@Ctx() ctx: GraphQLContext, @Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return (
-                (await prisma.lecture.findMany({ where: { subcourseId: appointment.subcourseId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
-                    (currentAppointment) => currentAppointment.id === appointment.id
-                ) + 1
-            );
+            return (await getSubcoursePositions(ctx, appointment.subcourseId)).indexOf(appointment.id);
         }
         if (appointment.matchId) {
-            return (
-                (await prisma.lecture.findMany({ where: { matchId: appointment.matchId, isCanceled: false }, orderBy: { start: 'asc' } })).findIndex(
-                    (currentAppointment) => currentAppointment.id === appointment.id
-                ) + 1
-            );
+            return (await getMatchPositions(ctx, appointment.matchId)).indexOf(appointment.id);
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
@@ -137,12 +151,12 @@ export class ExtendedFieldsLectureResolver {
     }
     @FieldResolver((returns) => Int)
     @Authorized(Role.USER, Role.ADMIN)
-    async total(@Root() appointment: Appointment): Promise<number> {
+    async total(@Ctx() ctx: GraphQLContext, @Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return await prisma.lecture.count({ where: { subcourseId: appointment.subcourseId, isCanceled: false } });
+            return (await getSubcoursePositions(ctx, appointment.subcourseId)).length;
         }
         if (appointment.matchId) {
-            return await prisma.lecture.count({ where: { matchId: appointment.matchId, isCanceled: false } });
+            return (await getMatchPositions(ctx, appointment.matchId)).length;
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
