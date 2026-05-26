@@ -56,7 +56,7 @@ export async function addGroupAppointmentsParticipant(subcourseId: number, userI
 }
 
 export async function removeGroupAppointmentsParticipant(subcourseId: number, userId: string) {
-    const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { hasSome: userId } } });
+    const appointments = await prisma.lecture.findMany({ where: { subcourseId, participantIds: { has: userId } } });
     const user = await getUser(userId);
 
     await Promise.all(

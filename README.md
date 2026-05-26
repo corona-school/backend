@@ -145,6 +145,11 @@ Apart from local environments, the backend is deployed in the following ways:
 -   The _Staging Environment_ is automatically deployed from pushes to master, where the database is seeded with test content, some external connections are enabled to end-to-end test features
 -   The _Productive Environment_ is manually promoted from the staging environment, database migrations are applied on promotions
 
+### Recommended VSCode Extensions
+
+Take a look at [.vscode/extensions.json](.vscode/extensions.json) for recommended extensions to use while working on the backend.
+Please for the `prisma` extension install the version `5.22.0` as later versions have some issues with our current setup.
+
 ### Contributing
 
 We're always happy and open about contributions, please [contact the HR team](mailto:team@lern-fair.de) in case you are interested in joining our
