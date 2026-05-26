@@ -92,7 +92,7 @@
         "talkjs": "^0.15.9",
         "tiktoken": "^1.0.17",
         "type-graphql": "^1.1.1",
-        "uuid": "^7.0.3",
+        "uuid": "^14.0.0",
         "web-push": "^3.6.7",
         "wildcard-match": "^5.1.2",
         "ws": "^8.17.1",
