@@ -108,7 +108,8 @@ export async function deletePupilMatchRequest(id: number) {
         data: { status: 'cancelled', closedAt: new Date() },
     });
 
-    if (result.status === 'cancelled') {
+    const openMatchRequestCount = await prisma.match_request.count({ where: { pupilId: result.pupilId, status: 'open' } });
+    if (openMatchRequestCount === 0) {
         const pupil = await prisma.pupil.findUnique({ where: { id: result.pupilId! } });
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }
@@ -157,7 +158,8 @@ export async function deleteStudentMatchRequest(id: number) {
         data: { status: 'cancelled', closedAt: new Date() },
     });
 
-    if (result.status === 'cancelled') {
+    const openMatchRequestCount = await prisma.match_request.count({ where: { studentId: result.studentId, status: 'open' } });
+    if (openMatchRequestCount === 0) {
         const student = await prisma.student.findUnique({ where: { id: result.studentId! } });
         await Notification.actionTaken(userForStudent(student), 'tutor_match_request_revoked', {});
     }
