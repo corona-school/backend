@@ -12,13 +12,17 @@ const logger = getLogger('MutateInstantCertificateResolver');
 export class MutateInstantCertificateResolver {
     @Mutation((returns) => String)
     @Authorized(Role.STUDENT)
-    async instantCertificateCreate(@Ctx() context: GraphQLContext, @Arg('lang') lang: string): Promise<string> {
+    async instantCertificateCreate(
+        @Ctx() context: GraphQLContext,
+        @Arg('lang') lang: string,
+        @Arg('hasCompletedTraining') hasCompletedTraining: boolean
+    ): Promise<string> {
         const student = await getSessionStudent(context);
 
         if (lang !== 'de' && lang !== 'en') {
             throw new Error('Unsupported language');
         }
-        const { pdf, certificate } = await createInstantCertificate(student, lang);
+        const { pdf, certificate } = await createInstantCertificate(student, lang, hasCompletedTraining);
         logger.info(`InstantCertificate(${certificate.id}) created for Student(${student.id})`);
         const file = addFile({
             buffer: pdf,

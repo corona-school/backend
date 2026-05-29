@@ -87,7 +87,13 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     return pdf;
 }
 
-export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+export async function createInstantCertificate(
+    requester: Student,
+    lang: Language,
+    hasCompletedTrainingDuration: boolean
+): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+    const TRAINING_DURATION_MINUTES = 10 * 60;
+    const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
     const joinedByIntroductionDate = new Date('2025-03-25');
 
     const matchesCountPromise = prisma.match.count({
@@ -144,7 +150,7 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             },
         },
     });
-    const courseAppointmentsCountPromise = prisma.lecture.count({
+    const courseAppointmentsAggregatePromise = prisma.lecture.aggregate({
         where: {
             isCanceled: false,
             subcourse: {
@@ -165,6 +171,8 @@ export async function createInstantCertificate(requester: Student, lang: Languag
                 },
             ],
         },
+        _count: true,
+        _sum: { duration: true },
     });
 
     const appointmentsForDurationPromise = prisma.lecture.findMany({
@@ -223,21 +231,23 @@ export async function createInstantCertificate(requester: Student, lang: Languag
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsCount, appointmentsForDuration, homeworkHelpDuration] = await Promise.all([
-        matchesCountPromise,
-        matchAppointmentsCountPromise,
-        uniqueCourseParticipantsPromise,
-        courseAppointmentsCountPromise,
-        appointmentsForDurationPromise,
-        homeworkHelpDurationPromise,
-    ]);
+    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsAggregate, appointmentsForDuration, homeworkHelpDuration] = await Promise.all(
+        [
+            matchesCountPromise,
+            matchAppointmentsCountPromise,
+            uniqueCourseParticipantsPromise,
+            courseAppointmentsAggregatePromise,
+            appointmentsForDurationPromise,
+            homeworkHelpDurationPromise,
+        ]
+    );
     const courseParticipantsCount = courseParticipants.length;
-    const matchAppointmentsCount = matchAppointments.filter((lecture) => {
+    const validMatchAppointments = matchAppointments.filter((lecture) => {
         if (lecture.start < joinedByIntroductionDate) {
             return true;
         }
         return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
-    }).length;
+    });
     const totalAppointmentsDuration = appointmentsForDuration
         .filter((l) => {
             if (l.start < joinedByIntroductionDate) {
@@ -253,11 +263,15 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             uuid: randomBytes(6).toString('hex').toUpperCase(),
             startDate: requester.createdAt,
             matchesCount,
-            matchAppointmentsCount,
+            matchAppointmentsCount: validMatchAppointments.length,
+            totalMatchAppointmentsDuration: validMatchAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
             courseParticipantsCount,
-            courseAppointmentsCount,
+            courseAppointmentsCount: courseAppointmentsAggregate._count,
+            totalCourseAppointmentDuration: courseAppointmentsAggregate._sum.duration ?? 0,
             totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
+            trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,
+            isInternship: COOPERATIONS_WITH_INTERNSHIPS.includes(requester.cooperationID.toString()),
         },
         include: { student: true },
     });
@@ -590,6 +604,10 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? formatFloat(certificate.homeworkHelpDuration / 60, lang) : undefined,
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
+        IS_INTERNSHIP: certificate.isInternship,
+        MATCH_APPOINTMENTS_DURATION: formatFloat(certificate.totalMatchAppointmentsDuration / 60, lang),
+        COURSE_APPOINTMENTS_DURATION: formatFloat(certificate.totalCourseAppointmentDuration / 60, lang),
+        FURTHER_TRAINING_DURATION: formatFloat(certificate.trainingDuration / 60, lang),
     });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
