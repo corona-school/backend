@@ -547,19 +547,23 @@ model participation_certificate {
 }
 
 model instant_certificate {
-  id                        Int      @id @default(autoincrement())
-  createdAt                 DateTime @default(now()) @db.Timestamp(6)
+  id                             Int      @id @default(autoincrement())
+  createdAt                      DateTime @default(now()) @db.Timestamp(6)
   // Non-guessable, used for the public verification endpoint that everyone can visit to check that a certificate was issued by us
-  uuid                      String   @unique @db.VarChar
-  studentId                 Int
-  student                   student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  startDate                 DateTime
-  matchesCount              Int
-  matchAppointmentsCount    Int
-  courseParticipantsCount   Int
-  courseAppointmentsCount   Int
-  totalAppointmentsDuration Int // in minutes
-  homeworkHelpDuration      Int? // in minutes
+  uuid                           String   @unique @db.VarChar
+  studentId                      Int
+  student                        student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  startDate                      DateTime
+  matchesCount                   Int
+  matchAppointmentsCount         Int
+  courseParticipantsCount        Int
+  courseAppointmentsCount        Int
+  totalAppointmentsDuration      Int // in minutes
+  homeworkHelpDuration           Int? // in minutes
+  totalCourseAppointmentDuration Int      @default(0) // in minutes
+  totalMatchAppointmentsDuration Int      @default(0) // in minutes
+  trainingDuration               Int      @default(0) // in minutes
+  isInternship                   Boolean  @default(false)
 }
 
 model pupil {
