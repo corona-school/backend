@@ -20,6 +20,7 @@ import {
     student_screening_status_enum as StudentScreeningStatus,
     student_jobstatus_enum as JobStatus,
     cooperation_type_enum as CooperationType,
+    learning_offer_constraints_enum as LearningOfferConstraintsEnum,
 } from '@prisma/client';
 import { LoginOption } from '../../common/secret';
 import { StudentScreeningType } from '../../common/student/screening';
@@ -98,3 +99,4 @@ registerEnumType(StudentScreeningType, { name: 'StudentScreeningType' });
 registerEnumType(AppointmentRole, { name: 'AppointmentRole' });
 registerEnumType(JobStatus, { name: 'StudentJobStatus' });
 registerEnumType(CooperationType, { name: 'CooperationType' });
+registerEnumType(LearningOfferConstraintsEnum, { name: 'LearningOfferConstraintsEnum' });
