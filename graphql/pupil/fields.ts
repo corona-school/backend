@@ -8,6 +8,7 @@ import {
     Match,
     Pupil_screening as PupilScreening,
     School,
+    Match_request,
 } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -215,5 +216,17 @@ export class ExtendFieldsPupilResolver {
             },
         });
         return !screeningInTheLastFourMonths || hasActiveMatch;
+    }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequestCount(@Root() pupil: Required<Pupil>) {
+        return await prisma.match_request.count({ where: { pupilId: pupil.id, status: 'open' } });
+    }
+
+    @FieldResolver((type) => [Match_request])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequests(@Root() pupil: Required<Pupil>) {
+        return await prisma.match_request.findMany({ where: { pupilId: pupil.id, status: 'open' } });
     }
 }

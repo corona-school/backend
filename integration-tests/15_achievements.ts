@@ -193,25 +193,55 @@ void test('Reward student conducted match appointment', async () => {
 
 void test('Reward pupil conducted match appointment', async () => {
     await adminClient.request(`mutation ResetRateLimits { _resetRateLimits }`);
-    const { student } = await studentOne;
-    const { pupil, client } = await pupilTwo;
+    const { student, client: studentClient } = await studentOne;
+    const { pupil, client: pupilClient } = await pupilTwo;
 
-    await client.request(`
+    await pupilClient.request(`
         mutation {
             pupilCreateMatchRequest
         }
     `);
+    await studentClient.request(`
+        mutation {
+            studentCreateMatchRequest
+        }
+    `);
+
+    const { me: updatedPupil } = await pupilClient.request(`
+        query GetOpenMatchRequest {
+            me {
+                pupil {
+                    openMatchRequests {
+                        id
+                    }
+                }
+            }
+        }
+    `);
+
+    const { me: updatedStudent } = await studentClient.request(`
+        query GetOpenMatchRequest {
+            me {
+                student {
+                    openMatchRequests {
+                        id
+                    }
+                }
+            }
+        }
+    `);
+
     expectMatchChatCreation(student, pupil);
     await adminClient.request(`
         mutation CreateManualMatch {
-            matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})
+            matchAdd(poolName: "lern-fair-now", studentMatchRequestId: ${updatedStudent.student.openMatchRequests[0].id}, pupilMatchRequestId: ${updatedPupil.pupil.openMatchRequests[0].id})
         }
     `);
     const {
         me: {
             pupil: { matches },
         },
-    } = await client.request(`
+    } = await pupilClient.request(`
         query PupilWithMatch {
             me {
                 pupil {
@@ -226,7 +256,7 @@ void test('Reward pupil conducted match appointment', async () => {
 
     const dates = createDates();
     const appointments = await generateLectures(dates, match, student.userID, pupil.userID);
-    await client.request(`
+    await pupilClient.request(`
         mutation PupilJoinMatchMeeting { appointmentTrackJoin(appointmentId:${appointments[0].id}) }
     `);
     const pupilJoinedMatchMeetingAchievements = await prisma.user_achievement.findMany({

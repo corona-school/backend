@@ -22,11 +22,12 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
 
     const isTestUserOnProd = !isDev && pupil.email.startsWith('test+prod') && pupil.email.endsWith('@lern-fair.de');
+    const openMatchRequestCount = await prisma.match_request.count({ where: { pupilId: pupil.id, status: 'open' } });
     if (!pupil.isPupil) {
         return { allowed: false, reason: 'not-tutee' };
     }
 
-    if (pupil.openMatchRequestCount >= PUPIL_MAX_REQUESTS) {
+    if (openMatchRequestCount >= PUPIL_MAX_REQUESTS) {
         return { allowed: false, reason: 'max-requests', limit: PUPIL_MAX_REQUESTS };
     }
 
@@ -47,7 +48,7 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
         }
         return PUPIL_MAX_MATCHES;
     };
-    if (pupil.openMatchRequestCount + activeMatchCount >= getMaxMatchesForUser()) {
+    if (openMatchRequestCount + activeMatchCount >= getMaxMatchesForUser()) {
         return { allowed: false, reason: 'max-matches', limit: PUPIL_MAX_MATCHES };
     }
 
@@ -64,19 +65,7 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
         throw new PrerequisiteError('Subjects must be selected before creating a match request');
     }
 
-    const result = await prisma.pupil.update({
-        where: { id: pupil.id },
-        data: {
-            openMatchRequestCount: { increment: 1 },
-        },
-    });
-
-    if (result.openMatchRequestCount === 1) {
-        await prisma.pupil.update({
-            where: { id: pupil.id },
-            data: { firstMatchRequest: new Date() },
-        });
-    }
+    const request = await prisma.match_request.create({ data: { pupilId: pupil.id, subjects: parseSubjectString(pupil.subjects) } });
 
     await Notification.actionTaken(userForPupil(pupil), 'tutee_match_requested', {});
 
@@ -104,26 +93,28 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
         }
     }
 
-    logger.info(`Created match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
+    logger.info(`Created MatchRequest(${request.id}) for Pupil(${pupil.id}). Was admin: ${adminOverride}`);
+    return request;
 }
 
-export async function deletePupilMatchRequest(pupil: Pupil) {
-    if (pupil.openMatchRequestCount <= 0) {
-        throw new RedundantError(`Cannot delete match request for Pupil(${pupil.id}) as pupil has no request left`);
+export async function deletePupilMatchRequest(id: number) {
+    const openMatchRequest = await prisma.match_request.findFirst({ where: { id, status: 'open', pupilId: { not: null } } });
+    if (!openMatchRequest) {
+        throw new RedundantError(`Cannot delete MatchRequest(${id}) as it is not open or does not exist`);
     }
 
-    const result = await prisma.pupil.update({
-        where: { id: pupil.id },
-        data: {
-            openMatchRequestCount: { decrement: 1 },
-        },
+    const result = await prisma.match_request.update({
+        where: { id },
+        data: { status: 'cancelled', closedAt: new Date() },
     });
 
-    if (result.openMatchRequestCount === 0) {
+    const openMatchRequestCount = await prisma.match_request.count({ where: { pupilId: result.pupilId, status: 'open' } });
+    if (openMatchRequestCount === 0) {
+        const pupil = await prisma.pupil.findUnique({ where: { id: result.pupilId! } });
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted MatchRequest(${id}) for Pupil(${result.pupilId})`);
 }
 
 export async function canStudentRequestMatch(student: Student): Promise<Decision<RequestBlockReasons>> {
@@ -136,7 +127,8 @@ export async function canStudentRequestMatch(student: Student): Promise<Decision
         return { allowed: false, reason: 'not-screened' };
     }
 
-    if (student.openMatchRequestCount >= STUDENT_MAX_REQUESTS) {
+    const openMatchRequestCount = await prisma.match_request.count({ where: { studentId: student.id, status: 'open' } });
+    if (openMatchRequestCount >= STUDENT_MAX_REQUESTS) {
         return { allowed: false, reason: 'max-requests', limit: STUDENT_MAX_REQUESTS };
     }
 
@@ -147,37 +139,30 @@ export async function createStudentMatchRequest(student: Student, adminOverride 
     if (!adminOverride) {
         assertAllowed(await canStudentRequestMatch(student));
     }
-
-    const result = await prisma.student.update({
-        where: { id: student.id },
-        data: { openMatchRequestCount: { increment: 1 } },
-    });
-
-    if (result.openMatchRequestCount === 1) {
-        await prisma.student.update({
-            where: { id: student.id },
-            data: { firstMatchRequest: new Date() },
-        });
-    }
+    const request = await prisma.match_request.create({ data: { studentId: student.id, subjects: parseSubjectString(student.subjects) } });
 
     await Notification.actionTaken(userForStudent(student), 'tutor_match_requested', {});
 
-    logger.info(`Created match request for Student(${student.id}), now has ${result.openMatchRequestCount} requests, was admin: ${adminOverride}`);
+    logger.info(`Created MatchRequest(${request.id}) for Student(${student.id}). Was admin: ${adminOverride}`);
+    return request;
 }
 
-export async function deleteStudentMatchRequest(student: Student) {
-    if (student.openMatchRequestCount <= 0) {
-        throw new RedundantError(`Cannot delete match request for Student(${student.id}) as student has no request left`);
+export async function deleteStudentMatchRequest(id: number) {
+    const openMatchRequest = await prisma.match_request.findFirst({ where: { id, status: 'open', studentId: { not: null } } });
+    if (!openMatchRequest) {
+        throw new RedundantError(`Cannot delete MatchRequest(${id}) as it is not open or does not exist`);
     }
 
-    const result = await prisma.student.update({
-        where: { id: student.id },
-        data: { openMatchRequestCount: { decrement: 1 } },
+    const result = await prisma.match_request.update({
+        where: { id },
+        data: { status: 'cancelled', closedAt: new Date() },
     });
 
-    if (result.openMatchRequestCount === 0) {
+    const openMatchRequestCount = await prisma.match_request.count({ where: { studentId: result.studentId, status: 'open' } });
+    if (openMatchRequestCount === 0) {
+        const student = await prisma.student.findUnique({ where: { id: result.studentId! } });
         await Notification.actionTaken(userForStudent(student), 'tutor_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for student, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted MatchRequest(${id}) for Student(${result.studentId})`);
 }

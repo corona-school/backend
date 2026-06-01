@@ -101,6 +101,9 @@ export async function createNewPupil() {
                     isPupil
                     isParticipant
                     openMatchRequestCount
+                    openMatchRequests {
+                        id
+                    }
                 }
             }
         }
@@ -118,7 +121,10 @@ export async function createNewPupil() {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
 
-    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
+    return {
+        client,
+        pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number; openMatchRequests: { id: number }[] } },
+    };
 }
 
 export const pupilTwo = test('Register Pupil', async () => {
@@ -220,7 +226,10 @@ export const pupilTwo = test('Register Pupil', async () => {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     pupil.email = pupil.email.toUpperCase();
 
-    return { client, pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number } } };
+    return {
+        client,
+        pupil: pupil as { userID: string; firstname: string; lastname: string; email: string; pupil: { id: number; openMatchRequests: { id: number }[] } },
+    };
 });
 
 export const pupilOne = test('Register Pupil', createNewPupil);
@@ -270,7 +279,12 @@ export async function createNewStudent() {
                 firstname
                 lastname
                 email
-                student { id }
+                student { 
+                    id
+                    openMatchRequests {
+                        id
+                    }
+                }
             }
             myRoles
         }
@@ -306,7 +320,16 @@ export async function createNewStudent() {
     // Ensure that E-Mails are consumed case-insensitive everywhere:
     student.email = student.email.toUpperCase();
 
-    return { client, student: student as { userID: string; firstname: string; lastname: string; email: string; student: { id: number } } };
+    return {
+        client,
+        student: student as {
+            userID: string;
+            firstname: string;
+            lastname: string;
+            email: string;
+            student: { id: number; openMatchRequests: { id: number }[] };
+        },
+    };
 }
 
 export const studentOne = test('Register Student', createNewStudent);

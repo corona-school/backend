@@ -320,6 +320,16 @@ describe('Real World Matching Performance', () => {
                     subjects: parseSubjectString(pupil.subjects),
                     requestAt: new Date(pupil.requestAt),
                     languages: pupil.languages as pupil_languages_enum[],
+                    matchRequest: {
+                        id: 1,
+                        pupilId: pupil.id,
+                        status: 'open',
+                        subjects: parseSubjectString(pupil.subjects),
+                        closedAt: null,
+                        createdAt: new Date(pupil.requestAt),
+                        studentId: null,
+                        matchId: null,
+                    },
                 });
                 pupilIdx += 1;
                 // log += `  + ${pupil.requestAt} - add pupil\n`;
@@ -332,6 +342,16 @@ describe('Real World Matching Performance', () => {
                     subjects: parseSubjectString(student.subjects),
                     requestAt: new Date(student.requestAt),
                     languages: student.languages as student_languages_enum[],
+                    matchRequest: {
+                        id: 1,
+                        studentId: student.id,
+                        status: 'open',
+                        subjects: parseSubjectString(student.subjects),
+                        closedAt: null,
+                        createdAt: new Date(student.requestAt),
+                        pupilId: null,
+                        matchId: null,
+                    },
                 });
                 studentIdx += 1;
                 // log += `  + ${student.requestAt} - add student\n`;

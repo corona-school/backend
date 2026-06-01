@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import type { Prisma, pupil as Pupil, student as Student, match as Match } from '@prisma/client';
+import type { Prisma, pupil as Pupil, student as Student, match as Match, match_request } from '@prisma/client';
 import { createMatch } from './create';
 import { assertExists } from '../util/basic';
 import { getLogger } from '../logger/logger';
@@ -9,6 +9,7 @@ import { userSearch } from '../user/search';
 import { addPupilScreening } from '../pupil/screening';
 import assert from 'assert';
 import { computeMatchings, getMatchExclusions, MatchOffer, MatchRequest, pupilsToRequests, studentsToOffers } from './matching';
+import { match_request as MatchRequestEntity } from '@prisma/client';
 
 const logger = getLogger('MatchingPool');
 
@@ -21,7 +22,7 @@ export interface MatchPool {
     readonly name: string;
     studentsToMatch: (toggles: readonly Toggle[]) => Prisma.studentWhereInput;
     pupilsToMatch: (toggles: readonly Toggle[]) => Prisma.pupilWhereInput;
-    readonly createMatch: (pupil: Pupil, student: Student, pool: MatchPool) => Promise<Match>;
+    readonly createMatch: (request: MatchRequestEntity, offer: MatchRequestEntity, pool: MatchPool) => Promise<Match>;
     readonly toggles: readonly Toggle[];
     // There are a few well known toggles:
     //  "skip-interest-confirmation" -> do not exclude pupils that have not confirmed their interest
@@ -39,6 +40,14 @@ export interface MatchPool {
     // Otherwise this can be done manually via GraphQL
     readonly autoInviteForInterestConfirmation?: boolean;
     readonly autoInviteForScreening?: boolean;
+}
+
+export interface MatchPupil extends Pupil {
+    match_request: match_request[];
+}
+
+export interface MatchStudent extends Student {
+    match_request: match_request[];
 }
 
 /* ---------------- UTILS ------------------------------------- */
@@ -61,18 +70,19 @@ const getViableUsers = (toggles: string[]) => {
     return viableUsers;
 };
 
-export async function getStudents(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string) {
+export async function getStudents(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string): Promise<MatchStudent[]> {
     const where = { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) };
 
     return await prisma.student.findMany({
         where: { AND: [where, userSearch(search)] },
         orderBy: { createdAt: 'asc' },
+        include: { match_request: { where: { status: 'open' } } },
         take,
         skip,
     });
 }
 
-export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string) {
+export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: number, skip?: number, search?: string): Promise<MatchPupil[]> {
     const where = { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) };
 
     return await prisma.pupil.findMany({
@@ -87,6 +97,7 @@ export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: numbe
             },
             { createdAt: 'asc' },
         ],
+        include: { match_request: { where: { status: 'open' } } },
         take,
         skip,
     });
@@ -99,12 +110,9 @@ export async function getStudentCount(pool: MatchPool, toggles: Toggle[]) {
 }
 
 export async function getStudentOfferCount(pool: MatchPool, toggles: Toggle[]) {
-    return (
-        await prisma.student.aggregate({
-            _sum: { openMatchRequestCount: true },
-            where: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) },
-        })
-    )._sum.openMatchRequestCount;
+    return await prisma.match_request.count({
+        where: { student: { ...getViableUsers(toggles), ...pool.studentsToMatch(toggles) }, status: 'open' },
+    });
 }
 
 export async function getPupilCount(pool: MatchPool, toggles: Toggle[]) {
@@ -114,12 +122,9 @@ export async function getPupilCount(pool: MatchPool, toggles: Toggle[]) {
 }
 
 export async function getPupilDemandCount(pool: MatchPool, toggles: Toggle[]) {
-    return (
-        await prisma.pupil.aggregate({
-            _sum: { openMatchRequestCount: true },
-            where: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) },
-        })
-    )._sum.openMatchRequestCount;
+    return await prisma.match_request.count({
+        where: { pupil: { ...getViableUsers(toggles), ...pool.pupilsToMatch(toggles) }, status: 'open' },
+    });
 }
 
 const INTEREST_CONFIRMATION_TOGGLES = ['confirmation-success', 'confirmation-pending', 'confirmation-unknown'] as const;
@@ -195,17 +200,17 @@ export const TEST_POOL = {
     toggles: ['allow-unverified'],
     pupilsToMatch: (toggles): Prisma.pupilWhereInput => ({
         isPupil: true,
-        openMatchRequestCount: { gt: 0 },
+        match_request: { some: { status: 'open' } },
     }),
     studentsToMatch: (toggles): Prisma.studentWhereInput => ({
         isStudent: true,
-        openMatchRequestCount: { gt: 0 },
+        match_request: { some: { status: 'open' } },
     }),
-    createMatch(pupil, student) {
+    createMatch(request, offer) {
         if (!isDev) {
             throw new Error(`The Test Pool may not be run in production!`);
         }
-        return createMatch(pupil, student, this);
+        return createMatch(request, offer, this);
     },
 } as const;
 
@@ -218,7 +223,7 @@ const _pools = [
         pupilsToMatch: (toggles: (InterestConfirmationToggle | PupilScreeningToggle)[]): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
-                openMatchRequestCount: { gt: 0 },
+                match_request: { some: { status: 'open' } },
                 subjects: { not: '[]' },
                 registrationSource: { notIn: ['plus'] },
             };
@@ -248,7 +253,7 @@ const _pools = [
         },
         studentsToMatch: (toggles): Prisma.studentWhereInput => ({
             isStudent: true,
-            openMatchRequestCount: { gt: 0 },
+            match_request: { some: { status: 'open' } },
             subjects: { not: '[]' },
             screening: { status: 'success' },
             registrationSource: { notIn: ['plus'] },
@@ -261,7 +266,7 @@ const _pools = [
         pupilsToMatch: (toggles: PupilScreeningToggle[]): Prisma.pupilWhereInput => {
             const query: Prisma.pupilWhereInput = {
                 isPupil: true,
-                openMatchRequestCount: { gt: 0 },
+                match_request: { some: { status: 'open' } },
                 subjects: { not: '[]' },
                 registrationSource: { equals: 'plus' },
             };
@@ -276,7 +281,7 @@ const _pools = [
         },
         studentsToMatch: (toggles): Prisma.studentWhereInput => ({
             isStudent: true,
-            openMatchRequestCount: { gt: 0 },
+            match_request: { some: { status: 'open' } },
             subjects: { not: '[]' },
             screening: { status: 'success' },
             registrationSource: { equals: 'plus' },
@@ -357,8 +362,8 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
     const result = computeMatchings(requests, offers, excludeMatchings);
 
     const matches = result.map((it) => ({
-        student: assertExists(it.offer.student),
-        pupil: assertExists(it.request.pupil),
+        offer: assertExists(it.offer),
+        request: assertExists(it.request),
     }));
 
     timing.matching = Date.now() - startMatching;
@@ -395,7 +400,7 @@ export async function runMatching(poolName: string, apply: boolean, _toggles: st
         const createdMatches: Match[] = [];
 
         for (const match of matches) {
-            createdMatches.push(await pool.createMatch(match.pupil, match.student, pool));
+            createdMatches.push(await pool.createMatch(match.request.matchRequest, match.offer.matchRequest, pool));
         }
 
         timing.commit = Date.now() - startCommit;
