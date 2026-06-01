@@ -135,7 +135,6 @@ export async function cancelCoCReminders(student: Student) {
 export async function updateStudentScreening(type: StudentScreeningType, screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
     const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
     const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
-    // @ts-expect-error Both models have the same shape, so this should work fine
     const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
 
     if (screening === null) {
