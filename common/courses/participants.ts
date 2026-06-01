@@ -1,4 +1,4 @@
-import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student } from '@prisma/client';
+import { course as Course, subcourse as Subcourse, pupil as Pupil, student as Student, course_category_enum } from '@prisma/client';
 import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import * as Notification from '../notification';
@@ -119,6 +119,7 @@ export async function leaveSubcourseWaitinglist(subcourse: Subcourse, pupil: Pup
 }
 
 type CourseDecision =
+    | 'offer-restriction'
     | 'not-participant'
     | 'no-lectures'
     | 'subcourse-full'
@@ -195,6 +196,10 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
     }
     if (subcourse.maxGrade && pupilGrade > subcourse.maxGrade) {
         return { allowed: false, reason: 'grade-to-high' };
+    }
+    const course = await prisma.course.findUnique({ where: { id: subcourse.courseId } });
+    if (pupil.learningOfferConstraints.includes('ONLY_DAZ_COURSES') && course.category !== course_category_enum.language) {
+        return { allowed: false, reason: 'offer-restriction' };
     }
 
     return { allowed: true };
