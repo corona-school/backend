@@ -197,9 +197,6 @@ export class ExtendFieldsPupilResolver {
     @FieldResolver((returns) => Boolean, { nullable: true })
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
     async needScreening(@Root() pupil: Required<Pupil>) {
-        if (!pupil.schoolId) {
-            return;
-        }
         const hasActiveMatch = (await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } })) > 0;
         const screeningInTheLastFourMonths = await prisma.pupil_screening.findFirst({
             where: {
