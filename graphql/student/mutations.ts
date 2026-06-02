@@ -413,10 +413,24 @@ export class MutateStudentResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
-    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('studentId', { nullable: true }) studentId?: number): Promise<boolean> {
-        const student = await getSessionStudent(context, /* elevated override */ studentId);
-        await deleteStudentMatchRequest(student);
+    async studentDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('matchRequestId', { nullable: true }) matchRequestId?: number): Promise<boolean> {
+        let student: Student | null = null;
+        const openMatchRequest = await prisma.match_request.findFirst({ where: { id: matchRequestId, status: 'open' } });
+        if (!openMatchRequest) {
+            throw new RedundantError(`Cannot delete MatchRequest(${matchRequestId}) as it is not open or does not exist`);
+        }
 
+        if (isElevated(context)) {
+            student = await prisma.student.findFirst({ where: { id: openMatchRequest?.studentId } });
+        } else {
+            student = await getSessionStudent(context);
+        }
+
+        if (student.id !== openMatchRequest?.studentId) {
+            throw new PrerequisiteError(`Cannot delete MatchRequest(${matchRequestId}) as the student does not have permission`);
+        }
+
+        await deleteStudentMatchRequest(openMatchRequest.id);
         return true;
     }
 

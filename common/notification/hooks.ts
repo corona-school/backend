@@ -46,8 +46,14 @@ registerStudentHook(
     }
 );
 
-registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
-    await deletePupilMatchRequest(pupil);
+registerPupilHook('revoke-pupil-match-request', 'Match Requests are taken back, pending Pupil Screenings are invalidated', async (pupil) => {
+    const openMatchRequests = await prisma.match_request.findMany({ where: { pupilId: pupil.id, status: 'open' } });
+    if (!openMatchRequests.length) {
+        throw new Error(`Cannot delete match requests for Pupil(${pupil.id}) as pupil has no request left`);
+    }
+    for (const request of openMatchRequests) {
+        await deletePupilMatchRequest(request.id);
+    }
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {

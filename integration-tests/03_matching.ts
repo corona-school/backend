@@ -32,13 +32,16 @@ const pupilWithMR = test('Pupil Request Match', async () => {
             me {
                 pupil {
                     openMatchRequestCount
+                    openMatchRequests {
+                        id
+                    }
                 }
             }
         }
     `);
 
     assert.strictEqual(p1.pupil.openMatchRequestCount, 1);
-    return { client, pupil };
+    return { client, pupil: { ...pupil, pupil: { ...pupil.pupil, openMatchRequests: p1.pupil.openMatchRequests } } };
 });
 
 const studentWithMR = test('Student Request Match', async () => {
@@ -63,18 +66,21 @@ const studentWithMR = test('Student Request Match', async () => {
         }
     `);
 
-    const { me: s1 } = await client.request(`
+    const { me: updatedUser } = await client.request(`
         query GetOpenMatchRequestCount {
             me {
                 student {
                     openMatchRequestCount
+                    openMatchRequests {
+                        id
+                    }
                 }
             }
         }
     `);
 
-    assert.strictEqual(s1.student.openMatchRequestCount, 1);
-    return { client, student };
+    assert.strictEqual(updatedUser.student.openMatchRequestCount, 1);
+    return { client, student: { ...student, student: { ...student.student, ...updatedUser.student } } };
 });
 
 export const expectMatchChatCreation = (student, pupil) => {
@@ -160,7 +166,7 @@ export const match1 = test('Manual Match creation', async () => {
     expectMatchChatCreation(student, pupil);
     await adminClient.request(`
         mutation CreateManualMatch {
-            matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})
+            matchAdd(poolName: "lern-fair-now", studentMatchRequestId: ${student.student.openMatchRequests[0].id}, pupilMatchRequestId: ${pupil.pupil.openMatchRequests[0].id})
         }
     `);
 

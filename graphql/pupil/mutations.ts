@@ -21,7 +21,7 @@ import {
     school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
-import { PrerequisiteError } from '../../common/util/error';
+import { PrerequisiteError, RedundantError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
 import { DeactivationReason, userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
@@ -301,9 +301,24 @@ export class MutatePupilResolver {
 
     @Mutation((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
-    async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
-        const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
-        await deletePupilMatchRequest(pupil);
+    async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('matchRequestId', { nullable: true }) matchRequestId?: number): Promise<boolean> {
+        let pupil: Pupil | null = null;
+        const openMatchRequest = await prisma.match_request.findFirst({ where: { id: matchRequestId, status: 'open' } });
+        if (!openMatchRequest) {
+            throw new RedundantError(`Cannot delete MatchRequest(${matchRequestId}) as it is not open or does not exist`);
+        }
+
+        if (isElevated(context)) {
+            pupil = await prisma.pupil.findFirst({ where: { id: openMatchRequest?.pupilId } });
+        } else {
+            pupil = await getSessionPupil(context);
+        }
+
+        if (pupil.id !== openMatchRequest?.pupilId) {
+            throw new PrerequisiteError(`Cannot delete MatchRequest(${matchRequestId}) as the pupil does not have permission`);
+        }
+
+        await deletePupilMatchRequest(openMatchRequest.id);
         const pendingScreeningAppointment = await prisma.lecture.findFirst({
             where: {
                 participantIds: {

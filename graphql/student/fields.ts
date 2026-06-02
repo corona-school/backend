@@ -8,6 +8,7 @@ import {
     Subcourse,
     Course,
     StudentWhereInput,
+    Match_request,
 } from '../generated';
 import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -271,5 +272,17 @@ export class ExtendFieldsStudentResolver {
                 registrationSource: 'cooperation',
             },
         });
+    }
+
+    @FieldResolver((type) => Int)
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequestCount(@Root() student: Required<Student>) {
+        return await prisma.match_request.count({ where: { studentId: student.id, status: 'open' } });
+    }
+
+    @FieldResolver((type) => [Match_request])
+    @Authorized(Role.ADMIN, Role.OWNER)
+    async openMatchRequests(@Root() student: Required<Student>) {
+        return await prisma.match_request.findMany({ where: { studentId: student.id, status: 'open' } });
     }
 }

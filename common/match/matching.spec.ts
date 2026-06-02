@@ -18,34 +18,64 @@ function test(name: string, requests: MatchRequest[], offers: MatchOffer[], expe
     });
 }
 
-const requestOne = {
+const requestOne: MatchRequest = {
     grade: 10,
     pupilId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', mandatory: false }],
     requestAt: TODAY_TEST_DATE,
     languages: [pupil_languages_enum.Englisch, pupil_languages_enum.Spanisch],
+    matchRequest: {
+        id: 1,
+        pupilId: 1,
+        subjects: [{ name: 'Deutsch', mandatory: false }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestTwo = {
+const requestTwo: MatchRequest = {
     grade: 10,
     pupilId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', mandatory: false }],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 2,
+        pupilId: 2,
+        subjects: [{ name: 'Mathematik', mandatory: false }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestThree = {
+const requestThree: MatchRequest = {
     grade: 10,
     pupilId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', mandatory: false }],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 3,
+        pupilId: 3,
+        subjects: [{ name: 'Klingonisch', mandatory: false }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestFour = {
+const requestFour: MatchRequest = {
     grade: 10,
     pupilId: 4,
     state: 'at' as const,
@@ -55,9 +85,22 @@ const requestFour = {
     ],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 4,
+        pupilId: 4,
+        subjects: [
+            { name: 'Mathematik', mandatory: false },
+            { name: 'Deutsch', mandatory: false },
+        ],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestFive = {
+const requestFive: MatchRequest = {
     grade: 10,
     pupilId: 5,
     state: 'at' as const,
@@ -78,9 +121,22 @@ const requestFive = {
         },
     },
     languages: [],
+    matchRequest: {
+        id: 5,
+        pupilId: 5,
+        subjects: [
+            { name: 'Mathematik', mandatory: true },
+            { name: 'Deutsch', mandatory: false },
+        ],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestSix = {
+const requestSix: MatchRequest = {
     grade: 10,
     pupilId: 5,
     state: 'at' as const,
@@ -88,9 +144,19 @@ const requestSix = {
     requestAt: TODAY_TEST_DATE,
     onlyMatchWith: 'female' as const,
     languages: [],
+    matchRequest: {
+        id: 6,
+        pupilId: 5,
+        subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestSeven = {
+const requestSeven: MatchRequest = {
     grade: 10,
     pupilId: 5,
     state: 'at' as const,
@@ -98,9 +164,19 @@ const requestSeven = {
     requestAt: TODAY_TEST_DATE,
     hasSpecialNeeds: true,
     languages: [],
+    matchRequest: {
+        id: 7,
+        pupilId: 5,
+        subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const requestEight = {
+const requestEight: MatchRequest = {
     grade: 10,
     pupilId: 8,
     state: 'at' as const,
@@ -122,64 +198,130 @@ const requestEight = {
         },
     },
     languages: [],
+    matchRequest: {
+        id: 8,
+        pupilId: 8,
+        subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerOne = {
+const offerOne: MatchOffer = {
     studentId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', grade: { min: 1, max: 10 } }],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 1,
+        pupilId: 1,
+        subjects: [{ name: 'Deutsch', grade: { min: 1, max: 10 } }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerTwo = {
+const offerTwo: MatchOffer = {
     studentId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', grade: { min: 1, max: 10 } }],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 2,
+        pupilId: 2,
+        subjects: [{ name: 'Mathematik', grade: { min: 1, max: 10 } }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerThree = {
+const offerThree: MatchOffer = {
     studentId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', grade: { min: 1, max: 10 } }],
     requestAt: TODAY_TEST_DATE,
     languages: [],
+    matchRequest: {
+        id: 3,
+        pupilId: 3,
+        subjects: [{ name: 'Klingonisch', grade: { min: 1, max: 10 } }],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerFour = {
+const offerFour: MatchOffer = {
     studentId: 4,
     state: 'at' as const,
     subjects: [
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
-        { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        { name: 'Mathematik', grade: { min: 1, max: 10 } },
     ],
     requestAt: TODAY_TEST_DATE,
     gender: 'male' as const,
     hasSpecialExperience: false,
     languages: [],
+    matchRequest: {
+        id: 4,
+        pupilId: 4,
+        subjects: [
+            { name: 'Deutsch', grade: { min: 1, max: 10 } },
+            { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        ],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerFive = {
+const offerFive: MatchOffer = {
     studentId: 4,
     state: 'bw' as const,
     subjects: [
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
-        { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        { name: 'Mathematik', grade: { min: 1, max: 10 } },
     ],
     requestAt: TODAY_TEST_DATE,
     gender: 'female' as const,
     hasSpecialExperience: true,
     languages: [student_languages_enum.Deutsch, student_languages_enum.Spanisch],
+    matchRequest: {
+        id: 5,
+        pupilId: 5,
+        subjects: [
+            { name: 'Deutsch', grade: { min: 1, max: 10 } },
+            { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        ],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
-const offerSix = {
+const offerSix: MatchOffer = {
     studentId: 6,
     state: 'bw' as const,
     subjects: [
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
-        { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        { name: 'Mathematik', grade: { min: 1, max: 10 } },
     ],
     requestAt: TODAY_TEST_DATE,
     calendarPreferences: {
@@ -198,6 +340,19 @@ const offerSix = {
         },
     },
     languages: [student_languages_enum.Englisch],
+    matchRequest: {
+        id: 6,
+        pupilId: 6,
+        subjects: [
+            { name: 'Deutsch', grade: { min: 1, max: 10 } },
+            { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
+        ],
+        closedAt: null,
+        createdAt: TODAY_TEST_DATE,
+        studentId: null,
+        matchId: null,
+        status: 'open',
+    },
 };
 
 describe('Matching Score Basics', () => {
