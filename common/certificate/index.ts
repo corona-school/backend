@@ -396,6 +396,11 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
             HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? formatFloat(certificate.homeworkHelpDuration / 60, lang) : undefined,
             DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
+            IS_INTERNSHIP: certificate.isInternship,
+            MATCH_APPOINTMENTS_DURATION: (certificate.totalMatchAppointmentsDuration / 60, lang),
+            COURSE_APPOINTMENTS_DURATION: (certificate.totalCourseAppointmentDuration / 60, lang),
+            FURTHER_TRAINING_DURATION: (certificate.trainingDuration / 60, lang),
+            formatFloat: (value: number) => formatFloat(value, lang),
         });
     }
 }
@@ -600,14 +605,15 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-        TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
-        HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? formatFloat(certificate.homeworkHelpDuration / 60, lang) : undefined,
+        TOTAL_APPOINTMENTS_DURATION: (certificate.totalAppointmentsDuration / 60, lang),
+        HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? (certificate.homeworkHelpDuration / 60, lang) : undefined,
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
         IS_INTERNSHIP: certificate.isInternship,
-        MATCH_APPOINTMENTS_DURATION: formatFloat(certificate.totalMatchAppointmentsDuration / 60, lang),
-        COURSE_APPOINTMENTS_DURATION: formatFloat(certificate.totalCourseAppointmentDuration / 60, lang),
-        FURTHER_TRAINING_DURATION: formatFloat(certificate.trainingDuration / 60, lang),
+        MATCH_APPOINTMENTS_DURATION: (certificate.totalMatchAppointmentsDuration / 60, lang),
+        COURSE_APPOINTMENTS_DURATION: (certificate.totalCourseAppointmentDuration / 60, lang),
+        FURTHER_TRAINING_DURATION: (certificate.trainingDuration / 60, lang),
+        formatFloat: (value: number) => formatFloat(value, lang),
     });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
