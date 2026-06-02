@@ -249,6 +249,13 @@ export class ExtendFieldsStudentResolver {
         });
     }
 
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    isInternship(@Root() student: Student) {
+        const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
+        return student.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(student.cooperationID.toString()) : false;
+    }
+
     @Query((returns) => [Student])
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
     async cooperationStudentsToBeConfirmed() {
