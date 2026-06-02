@@ -23,8 +23,10 @@ import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 import QRCode from 'qrcode';
 import { shortenLastName } from '../pupil';
+import { getLogger } from '../logger/logger';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
+const logger = getLogger('Certificates');
 
 export const VALID_BASE64 = /^data:image\/(png|jpeg);base64,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
@@ -345,6 +347,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 function formatFloat(value: number | Prisma.Decimal, language: 'de' | 'en') {
+    logger.info(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
     return language === 'de' ? value.toFixed(2).replace('.', ',') : value.toFixed(2);
 }
 
