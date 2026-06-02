@@ -249,7 +249,7 @@ export class ExtendFieldsStudentResolver {
         });
     }
 
-    @Query((returns) => [Boolean])
+    @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
     isInternship(@Root() student: Student) {
         const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
