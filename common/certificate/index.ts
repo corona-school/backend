@@ -388,7 +388,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
         if (!certificate) {
             throw new CertificateError(`Certificate not found`);
         }
-        const verificationTemplate = loadTemplate('verifiedInstantCertificatePage', lang);
+        const verificationTemplate = loadTemplate('instantCertificateTemplate', lang);
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
             STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
@@ -404,6 +404,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
             FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
             formatFloat: (value: number) => formatFloat(value, lang),
+            IS_VERIFICATION_PAGE: true,
         });
     }
 }
