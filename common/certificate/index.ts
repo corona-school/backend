@@ -273,7 +273,7 @@ export async function createInstantCertificate(
             totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
             trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,
-            isInternship: COOPERATIONS_WITH_INTERNSHIPS.includes(requester.cooperationID.toString()),
+            isInternship: requester.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(requester.cooperationID?.toString()) : false,
         },
         include: { student: true },
     });
@@ -618,6 +618,7 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
         FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
         formatFloat: (value: number) => formatFloat(value, lang),
+        IS_VERIFICATION_PAGE: false,
     });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],
