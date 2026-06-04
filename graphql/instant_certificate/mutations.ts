@@ -6,6 +6,7 @@ import { GraphQLContext } from '../context';
 import { getSessionStudent } from '../authentication';
 import { addFile, getFileURL } from '../files';
 import { getLogger } from '../../common/logger/logger';
+import moment from 'moment';
 
 const logger = getLogger('MutateInstantCertificateResolver');
 @Resolver((of) => GraphQLModel.Instant_certificate)
@@ -27,7 +28,7 @@ export class MutateInstantCertificateResolver {
         const file = addFile({
             buffer: pdf,
             mimetype: 'application/pdf',
-            originalname: 'Zertifikat.pdf',
+            originalname: `${moment().format('YYYYMMDD')}_${certificate.isInternship ? 'Praktikumsbescheinigung' : 'Ehrenamtsbescheinigung'}_Lern-Fair.pdf`,
             size: pdf.length,
         });
         return getFileURL(file);
