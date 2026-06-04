@@ -164,6 +164,7 @@ interface CreateTutoringMatchArgs {
             task: string;
         }[];
     }[];
+    lectures: Omit<CreateLecturesArgs, 'matchId'>;
 }
 
 const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
@@ -171,6 +172,12 @@ const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
     await createPupilMatchRequest(data.pupil, true);
     await createStudentMatchRequest(data.student, true);
     const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL, { skipChatCreation: true });
+    await createLectures({
+        ...data.lectures,
+        participantsIds: [`pupil/${data.pupil.id}`],
+        organizerIds: [`student/${data.student.id}`],
+        matchId: match.id,
+    });
     if (topics.length) {
         for (const topic of topics) {
             const createdTopic = await prisma.learning_topic.create({
@@ -224,10 +231,11 @@ interface CreateLecturesArgs {
     startOffsetInDays: number;
     participantsIds?: string[];
     organizerIds?: string[];
-    subcourseId: number;
+    subcourseId?: number;
+    matchId?: number;
 }
 
-const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId, organizerIds, participantsIds }: CreateLecturesArgs) => {
+const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId, matchId, organizerIds, participantsIds }: CreateLecturesArgs) => {
     let currentLecture = Date.now() + startOffsetInDays * 24 * 60 * 60 * 1000;
     const interval = intervalInDays * 24 * 60 * 60 * 1000;
 
@@ -236,11 +244,13 @@ const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subco
         await prisma.lecture.create({
             data: {
                 subcourseId: subcourseId,
+                matchId: matchId,
                 duration: 60,
                 start,
                 organizerIds: start <= new Date() ? organizerIds : [],
                 participantIds: start <= new Date() ? participantsIds : [],
-                appointmentType: 'group',
+                joinedBy: start <= new Date() ? participantsIds.concat(organizerIds ?? []) : [],
+                appointmentType: subcourseId ? 'group' : 'match',
             },
         });
 
@@ -836,16 +846,17 @@ void (async function setupDevDB() {
                 ],
             },
         ],
+        lectures: { amount: 20, intervalInDays: 1, startOffsetInDays: -8 },
     });
 
-    await createTutoringMatch({ pupil: pupil1, student: student3 });
-    await createTutoringMatch({ pupil: pupil2, student: student1 });
-    await createTutoringMatch({ pupil: pupil3, student: student1 });
-    await createTutoringMatch({ pupil: pupil6, student: student1 });
-    await createTutoringMatch({ pupil: pupil3, student: student3 });
-    await createTutoringMatch({ pupil: pupil4, student: student2 });
-    await createTutoringMatch({ pupil: pupil5, student: student2 });
-    await createTutoringMatch({ pupil: pupil8, student: student2 });
+    await createTutoringMatch({ pupil: pupil1, student: student3, lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil2, student: student1, lectures: { amount: 10, intervalInDays: 1, startOffsetInDays: 0 } });
+    await createTutoringMatch({ pupil: pupil3, student: student1, lectures: { amount: 8, intervalInDays: 1, startOffsetInDays: -1 } });
+    await createTutoringMatch({ pupil: pupil6, student: student1, lectures: { amount: 6, intervalInDays: 1, startOffsetInDays: -3 } });
+    await createTutoringMatch({ pupil: pupil3, student: student3, lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil4, student: student2, lectures: { amount: 9, intervalInDays: 1, startOffsetInDays: -1 } });
+    await createTutoringMatch({ pupil: pupil5, student: student2, lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil8, student: student2, lectures: { amount: 12, intervalInDays: 1, startOffsetInDays: -4 } });
 
     const keepAtIt = await createCourseTag(null, 'Dranbleiben', CourseCategory.focus);
     await createCourseTag(null, 'Denk an Dich', CourseCategory.focus);
@@ -979,7 +990,7 @@ void (async function setupDevDB() {
         course_tags_course_tag: { create: { courseTagId: digitalWorld.id } },
         instructors: [student1],
         participants: [pupil1, pupil2, pupil3, pupil4, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
-        lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -1 },
+        lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 },
     });
 
     const [course9, subcourse9] = await createCourse({
@@ -993,7 +1004,7 @@ void (async function setupDevDB() {
         maxParticipants: 5,
         instructors: [student1],
         participants: [pupil2, pupil3, pupil4, pupil5, pupil6],
-        lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -1 },
+        lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -4 },
     });
 
     const [course10, subcourse10] = await createCourse({
@@ -1006,7 +1017,7 @@ void (async function setupDevDB() {
         maxParticipants: 1000,
         instructors: [student1, student2, student3],
         participants: [pupil1, pupil2, pupil3, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
-        lectures: { amount: 15, intervalInDays: 7, startOffsetInDays: -14 },
+        lectures: { amount: 40, intervalInDays: 7, startOffsetInDays: -140 },
         allowContact: false,
         joinAfterStart: true,
         allowMentoring: true,
