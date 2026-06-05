@@ -1008,6 +1008,10 @@ model important_information {
   recipients  important_information_recipients_enum
   navigateTo  String?
   language    important_information_language_enum   @default(de)
+  ctaLabel    String?
+  category    important_information_category_enum   @default(important)
+  activeFrom  DateTime?                              @db.Timestamp(6)
+  activeUntil DateTime?                              @db.Timestamp(6)
 }
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
@@ -1587,4 +1591,14 @@ enum student_jobstatus_enum {
 enum cooperation_type_enum {
   company
   university
+}
+
+enum important_information_category_enum {
+  event
+  high_demand
+  feedback
+  feature_update
+  holiday_info
+  news
+  important
 }
