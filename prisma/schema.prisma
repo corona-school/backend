@@ -648,7 +648,7 @@ model pupil {
 
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner            pupil_email_owner_enum      @default(unknown)
+  emailOwner               pupil_email_owner_enum            @default(unknown)
   learningOfferConstraints learning_offer_constraints_enum[] @default([])
 }
 
@@ -1009,6 +1009,10 @@ model important_information {
   recipients  important_information_recipients_enum
   navigateTo  String?
   language    important_information_language_enum   @default(de)
+  ctaLabel    String?
+  category    important_information_category_enum   @default(important)
+  activeFrom  DateTime?                             @db.Timestamp(6)
+  activeUntil DateTime?                             @db.Timestamp(6)
 }
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
@@ -1593,4 +1597,14 @@ enum cooperation_type_enum {
 enum learning_offer_constraints_enum {
   ONLY_DAZ_COURSES
   DAZ_SUBJECT_REQUIRED_FOR_MATCHING
+}
+
+enum important_information_category_enum {
+  event
+  high_demand
+  feedback
+  feature_update
+  holiday_info
+  news
+  important
 }
