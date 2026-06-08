@@ -80,7 +80,10 @@ export async function getPupils(pool: MatchPool, toggles: Toggle[], take?: numbe
         orderBy: [
             { match: { _count: 'asc' } },
             {
-                firstMatchRequest: 'asc',
+                firstMatchRequest: {
+                    sort: 'asc',
+                    nulls: 'first',
+                },
             },
             { createdAt: 'asc' },
         ],
