@@ -1,4 +1,4 @@
-import { pupil as Pupil, student as Student, pupil_registrationsource_enum as RegistrationSource } from '@prisma/client';
+import { pupil as Pupil, student as Student, pupil_registrationsource_enum as RegistrationSource, course_subject_enum } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../prisma';
 import { assertAllowed, Decision } from '../util/decision';
@@ -60,8 +60,14 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
     if (!adminOverride) {
         assertAllowed(await canPupilRequestMatch(pupil));
     }
-    if (!parseSubjectString(pupil.subjects).length) {
+    const subjects = parseSubjectString(pupil.subjects);
+    if (!subjects.length) {
         throw new PrerequisiteError('Subjects must be selected before creating a match request');
+    }
+
+    const subjectsIncludeDaz = subjects.some((subject) => subject.name === course_subject_enum.Deutsch_als_Zweitsprache);
+    if (pupil.learningOfferConstraints.includes('DAZ_SUBJECT_REQUIRED_FOR_MATCHING') && !subjectsIncludeDaz) {
+        throw new PrerequisiteError('DAZ must be selected as a subject to request a match');
     }
 
     const result = await prisma.pupil.update({

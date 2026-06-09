@@ -648,7 +648,8 @@ model pupil {
 
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner pupil_email_owner_enum @default(unknown)
+  emailOwner            pupil_email_owner_enum      @default(unknown)
+  learningOfferConstraints learning_offer_constraints_enum[] @default([])
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -1601,4 +1602,9 @@ enum important_information_category_enum {
   holiday_info
   news
   important
+}
+
+enum learning_offer_constraints_enum {
+  ONLY_DAZ_COURSES
+  DAZ_SUBJECT_REQUIRED_FOR_MATCHING
 }

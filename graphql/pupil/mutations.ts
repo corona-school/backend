@@ -10,6 +10,7 @@ import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevate
 import { Subject } from '../types/subject';
 import {
     gender_enum as Gender,
+    learning_offer_constraints_enum as LearningOfferConstraintsEnum,
     Prisma,
     PrismaClient,
     pupil as Pupil,
@@ -110,6 +111,9 @@ export class PupilUpdateInput {
 
     @Field((type) => Boolean, { nullable: true })
     isParticipant?: boolean;
+
+    @Field((type) => [LearningOfferConstraintsEnum], { nullable: true })
+    learningOfferConstraints?: LearningOfferConstraintsEnum[];
 }
 
 @InputType()
@@ -159,6 +163,7 @@ export async function updatePupil(
         age,
         isPupil,
         isParticipant,
+        learningOfferConstraints,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -193,6 +198,10 @@ export async function updatePupil(
         throw new PrerequisiteError('isParticipant may only be changed by elevated users');
     }
 
+    if (learningOfferConstraints !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('learningOfferConstraints may only be changed by elevated users');
+    }
+
     let dbSchool: School | undefined;
     try {
         dbSchool = await findOrCreateSchool(school);
@@ -225,6 +234,7 @@ export async function updatePupil(
             age: ensureNoNull(age),
             isPupil,
             isParticipant,
+            learningOfferConstraints: ensureNoNull(learningOfferConstraints),
         },
         where: { id: pupil.id },
     });
