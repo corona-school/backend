@@ -111,6 +111,13 @@ export class ExtendedFieldsSubcourseResolver {
                         AND: [{ minGrade: { lte: pupilGrade }, maxGrade: { gte: pupilGrade } }],
                     });
                 }
+                if (pupil.learningOfferConstraints.includes('ONLY_DAZ_COURSES')) {
+                    filters.push({
+                        course: {
+                            category: 'language',
+                        },
+                    });
+                }
             }
         }
 

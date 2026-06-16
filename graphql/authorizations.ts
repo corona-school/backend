@@ -442,6 +442,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             referredById: adminOrOwner,
             emailOwner: adminOrOwnerOrScreener,
             age: adminOrOwnerOrScreener,
+            learningOfferConstraints: adminOrOwnerOrScreener,
         }),
     },
 
