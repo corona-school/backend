@@ -8,6 +8,7 @@ import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
 import { Field, InputType, Int } from 'type-graphql';
+import { PrerequisiteError } from '../util/error';
 @InputType()
 export class AppointmentUpdateInput {
     @Field(() => Int)
@@ -22,11 +23,19 @@ export class AppointmentUpdateInput {
     duration?: number;
     @Field(() => String, { nullable: true })
     override_meeting_link?: string;
+    @Field(() => [String], { nullable: true })
+    joinedBy?: string[];
 }
 
 const logger = getLogger('Appointment');
 
-export async function updateAppointment(user: User, appointment: Appointment, appointmentUpdate: AppointmentUpdateInput, silent = false) {
+export async function updateAppointment(
+    user: User,
+    appointment: Appointment,
+    appointmentUpdate: AppointmentUpdateInput,
+    silent = false,
+    isAdminOverride = false
+) {
     const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link: existing_override_meeting_link } = appointment;
     const { duration: newDuration, start: newStart } = appointmentUpdate;
 
@@ -43,22 +52,26 @@ export async function updateAppointment(user: User, appointment: Appointment, ap
     const currentDate = moment();
     const isPastAppointment = moment(start).add(duration).isBefore(currentDate);
 
-    if (isPastAppointment) {
-        throw new Error(`Cannot update past appointment.`);
+    if (isPastAppointment && !isAdminOverride) {
+        throw new PrerequisiteError(`Cannot update past appointment.`);
+    }
+
+    if (appointmentUpdate.joinedBy !== undefined && !isAdminOverride) {
+        throw new PrerequisiteError(`Only admins can update joinedBy field.`);
     }
 
     const sameStart = !newStart || start.toISOString() === newStart.toISOString();
     const sameDuration = !newDuration || duration === newDuration;
     const sameDate = sameStart && sameDuration;
-    const matchAppointmentDateChanged = appointmentType === 'match' && !sameDate;
+    const futureMatchAppointmentDateChanged = appointmentType === 'match' && !sameDate && isPastAppointment;
 
     const updatedAppointment = await prisma.lecture.update({
         where: { id: id },
-        data: matchAppointmentDateChanged
+        data: futureMatchAppointmentDateChanged
             ? {
                   ...appointmentUpdate,
                   override_meeting_link,
-                  declinedBy: [],
+                  declinedBy: [], // reset declinedBy to allow participants to accept the new appointment date
               }
             : { ...appointmentUpdate, override_meeting_link },
     });
@@ -147,7 +160,7 @@ export async function updateAppointment(user: User, appointment: Appointment, ap
         endDate: lastDate,
     };
 
-    if (!override_meeting_link && zoomMeetingId) {
+    if (!override_meeting_link && zoomMeetingId && !isPastAppointment) {
         await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
     }
 
