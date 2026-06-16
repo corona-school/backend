@@ -84,8 +84,8 @@ export async function updateAppointment(
 
     let lastDate: Date;
 
-    const student = await getStudent(user);
-    if (!silent) {
+    if (!silent && !isAdminOverride) {
+        const student = await getStudent(user);
         // send notifications
         switch (appointmentType) {
             case AppointmentType.group: {
