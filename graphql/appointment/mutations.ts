@@ -91,12 +91,13 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
         const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
-        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent);
+        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent || isAdmin, isAdmin);
 
         return true;
     }
