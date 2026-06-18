@@ -382,7 +382,7 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
     }
 };
 
-export const onEvent = (event: CalendlyEvent) => {
+export const onEvent = async (event: CalendlyEvent) => {
     // Discard event if it's not configured
     if (!validEventTypes.includes(event.payload.scheduled_event.event_type)) {
         logger.debug(`Discarding event type: ${event.payload.scheduled_event.event_type}`);
@@ -393,9 +393,9 @@ export const onEvent = (event: CalendlyEvent) => {
     try {
         switch (event.event) {
             case 'invitee.created':
-                return onEventInviteeCreated(event);
+                return await onEventInviteeCreated(event);
             case 'invitee.canceled':
-                return onEventInviteeCanceled(event);
+                return await onEventInviteeCanceled(event);
             case 'invitee_no_show.created':
                 // We don't handle this for now
                 break;
