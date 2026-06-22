@@ -379,7 +379,7 @@ model lecture {
   start                 DateTime                     @db.Timestamp(6)
   // Scheduled duration of the appointment
   duration              Int // in minutes
-  // This is the duration in minutes in which the host + someone else were in the meeting together
+  // This is the duration in minutes in which the host + someone else were in the meeting together (Only set for match appointments)
   actualDuration        Int                          @default(0) // in minutes
   title                 String?
   description           String?
