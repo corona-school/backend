@@ -307,6 +307,7 @@ function createLecture({ start }: { start: Date }): lecture {
         instructorScreeningId: null,
         pupilScreeningId: null,
         tutorScreeningId: null,
+        actualDuration: null,
     };
 }
 

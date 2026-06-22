@@ -20,6 +20,7 @@ import { chatNotificationRouter } from './controllers/chatNotificationController
 import { WithRawBody } from './controllers/chatNotificationController/types';
 import { metricsRouter } from '../common/logger/metrics';
 import { calendlyRouter } from './controllers/calendlyController';
+import { zoomRouter } from './controllers/zoomController';
 
 // ------------------ Setup Logging, Common Headers, Routes ----------------
 
@@ -106,6 +107,7 @@ export const server = (async function setupWebserver() {
     app.use('/api/chat', chatNotificationRouter);
     app.use('/metrics', metricsRouter);
     app.use('/api/calendly', calendlyRouter);
+    app.use('/api/zoom', zoomRouter);
 
     app.get('/:certificateId', (req, res, next) => {
         if (!req.subdomains.includes('verify')) {

@@ -377,7 +377,10 @@ model lecture {
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
   start                 DateTime                     @db.Timestamp(6)
+  // Scheduled duration of the appointment
   duration              Int // in minutes
+  // This is the duration in minutes in which the host + someone else were in the meeting together (Only set for match appointments)
+  actualDuration        Int                          @default(0) // in minutes
   title                 String?
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
@@ -648,7 +651,7 @@ model pupil {
 
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner            pupil_email_owner_enum      @default(unknown)
+  emailOwner               pupil_email_owner_enum            @default(unknown)
   learningOfferConstraints learning_offer_constraints_enum[] @default([])
 }
 
@@ -1011,8 +1014,8 @@ model important_information {
   language    important_information_language_enum   @default(de)
   ctaLabel    String?
   category    important_information_category_enum   @default(important)
-  activeFrom  DateTime?                              @db.Timestamp(6)
-  activeUntil DateTime?                              @db.Timestamp(6)
+  activeFrom  DateTime?                             @db.Timestamp(6)
+  activeUntil DateTime?                             @db.Timestamp(6)
 }
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
