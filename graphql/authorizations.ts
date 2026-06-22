@@ -654,6 +654,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomMeetingReport: adminOrOwner,
             override_meeting_link: participantOrOwnerOrAdmin,
             eventUrl: adminOrOwner,
+            actualDuration: adminOrOwner,
         }),
     },
     Participation_certificate: {
