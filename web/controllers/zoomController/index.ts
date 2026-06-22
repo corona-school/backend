@@ -11,6 +11,9 @@ const webhookSigningKey = process.env.ZOOM_WEBHOOK_SECRET_TOKEN;
 export const zoomRouter = Router();
 
 zoomRouter.post('/event', async (req: WithRawBody<Request>, res) => {
+    if (!webhookSigningKey) {
+        return;
+    }
     logger.info('Request at /zoom/event');
     try {
         const message = `v0:${req.headers['x-zm-request-timestamp']}:${JSON.stringify(req.body)}`;
