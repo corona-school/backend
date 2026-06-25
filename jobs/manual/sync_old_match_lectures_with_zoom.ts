@@ -3,7 +3,6 @@ import { lecture as Appointment } from '@prisma/client';
 import { getPastZoomMeetingParticipants, ZoomMeetingReport } from '../../common/zoom/scheduled-meeting';
 import { getLogger } from '../../common/logger/logger';
 import { ZoomError } from '../../common/util/error';
-import { getIntervalOverlapInSeconds } from '../../common/util/basic';
 import { getSharedMeetingTimeInSeconds } from '../../common/zoom/util';
 
 const logger = getLogger('SyncOldMatchLecturesWithZoom');
@@ -63,7 +62,6 @@ export async function syncOldMatchLecturesWithZoom(): Promise<void> {
 }
 
 async function getParticipants(meetingId: string): Promise<ZoomMeetingReport['participants']> {
-    // eslint-disable-next-line no-constant-condition
     const MAX_RETRIES = 10;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         const response = await getPastZoomMeetingParticipants(meetingId);
