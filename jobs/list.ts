@@ -13,6 +13,7 @@ import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
 import processExpiredCoC from './periodic/process-expired-coc';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
+import { syncOldMatchLecturesWithZoom } from './manual/sync_old_match_lectures_with_zoom';
 
 export const allJobs = {
     cleanupSecrets,
@@ -31,6 +32,7 @@ export const allJobs = {
     processExpiredCoC,
 
     assignOriginalAchievement,
+    syncOldMatchLecturesWithZoom,
 
     // For Integration Tests only:
     NOTHING_DO_NOT_USE: async () => {
