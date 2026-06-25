@@ -4,6 +4,7 @@ import { getLogger } from '../logger/logger';
 import { prisma } from '../prisma';
 import { getUser } from '../user';
 import { getZoomMeetingReport } from './scheduled-meeting';
+import { getSharedMeetingTimeInSeconds } from './util';
 
 interface ZoomMeetingEndedEvent {
     event: 'meeting.ended';
@@ -90,53 +91,13 @@ export const onEvent = async (zoomEvent: ZoomEvent) => {
     }
 };
 
-const getOverlapInSeconds = (intervalsA: { start: Date; end: Date }[], intervalsB: { start: Date; end: Date }[]) => {
-    let total = 0;
-
-    for (const a of intervalsA) {
-        for (const b of intervalsB) {
-            const start = Math.max(a.start.getTime(), b.start.getTime());
-            const end = Math.min(a.end.getTime(), b.end.getTime());
-
-            if (end > start) {
-                total += (end - start) / 1000;
-            }
-        }
-    }
-
-    return total;
-};
-
 const onEventMeetingEnded = async (event: ZoomMeetingEndedEvent, appointment: Appointment) => {
     const report = await getZoomMeetingReport(event.payload.object.id);
     if (!report?.participants) {
         return;
     }
 
-    // Only students have a zoom account
-    const hostFragments = report.participants.filter((e) => !!e.id);
-    const guestFragments = report.participants.filter((e) => !e.id);
-
-    if (!hostFragments.length || !guestFragments.length) {
-        return;
-    }
-
-    // Users can have internet issues or other reason to reconnect and so have multiple join/leave times.
-    const hostIntervals = hostFragments
-        .filter((r) => r.status === 'in_meeting')
-        .map((r) => ({
-            start: new Date(r.join_time),
-            end: new Date(r.leave_time),
-        }));
-
-    const guestIntervals = guestFragments
-        .filter((r) => r.status === 'in_meeting')
-        .map((r) => ({
-            start: new Date(r.join_time),
-            end: new Date(r.leave_time),
-        }));
-
-    const sharedTime = getOverlapInSeconds(hostIntervals, guestIntervals);
+    const sharedTime = getSharedMeetingTimeInSeconds(report.participants);
 
     if (!sharedTime) {
         return;
