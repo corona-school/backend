@@ -8,30 +8,25 @@ import { getSharedMeetingTimeInSeconds } from '../../common/zoom/util';
 const logger = getLogger('SyncOldMatchLecturesWithZoom');
 const CONCURRENCY = 5;
 
+type LectureChunk = Pick<Appointment, 'id' | 'participantIds' | 'organizerIds' | 'start' | 'zoomMeetingId'>;
+
+type Result = {
+    migratedLectures: string[];
+    notFoundLectures: string[];
+    foundButNotMigratedLectures: string[];
+};
+
 export async function syncOldMatchLecturesWithZoom(): Promise<void> {
-    const lectures = (await prisma.$queryRaw`
-        SELECT lecture."id", lecture."zoomMeetingId", lecture."participantIds", lecture."organizerIds"
-        FROM lecture
-        INNER JOIN match ON match.id = lecture."matchId"
-        INNER JOIN student ON student.id = match."studentId"
-        WHERE lecture."createdAt" >= '2025-04-01'
-            AND lecture."isCanceled" IS FALSE
-            AND lecture."appointmentType" = 'match'
-            AND lecture."zoomMeetingId" IS NOT NULL
-            AND array_length(lecture."declinedBy", 1) IS NULL
-            AND array_length(lecture."joinedBy", 1) = 1
-            AND student."zoomUserId" IS NOT NULL
-            AND lecture."actualDuration" = 0
-        ORDER BY lecture."start" ASC
-    `) as Appointment[];
+    const migrationResult: Result = {
+        migratedLectures: [],
+        notFoundLectures: [],
+        foundButNotMigratedLectures: [],
+    };
+    let processedLectures = 0;
+    let lastLectureCursor: LectureChunk | null = null;
+    let chunk = await getLectureChunk(lastLectureCursor);
 
-    logger.info(`Found ${lectures.length} lectures to sync with Zoom.`);
-    const migratedLectures: string[] = [];
-    const failedLectures: string[] = [];
-
-    for (let i = 0; i < lectures.length; i += CONCURRENCY) {
-        const chunk = lectures.slice(i, i + CONCURRENCY);
-
+    while (chunk.length > 0) {
         await Promise.all(
             chunk.map(async (lecture) => {
                 try {
@@ -39,12 +34,12 @@ export async function syncOldMatchLecturesWithZoom(): Promise<void> {
 
                     const result = await migrateLecture(lecture, participants);
                     if (!result.migrated) {
-                        failedLectures.push(lecture.zoomMeetingId);
+                        migrationResult.foundButNotMigratedLectures.push(lecture.zoomMeetingId);
                     } else {
-                        migratedLectures.push(result.zoomMeetingId);
+                        migrationResult.migratedLectures.push(result.zoomMeetingId);
                     }
                 } catch (error) {
-                    failedLectures.push(lecture.zoomMeetingId);
+                    migrationResult.notFoundLectures.push(lecture.zoomMeetingId);
                     const zoomError = error as ZoomError;
 
                     if (zoomError.status !== 404) {
@@ -54,12 +49,18 @@ export async function syncOldMatchLecturesWithZoom(): Promise<void> {
             })
         );
 
-        logger.info(`Processed ${Math.min(i + CONCURRENCY, lectures.length)} / ${lectures.length}`);
+        processedLectures += chunk.length;
+        lastLectureCursor = chunk[chunk.length - 1];
+        logger.info(`Processed ${processedLectures} lectures so far.`);
+        chunk = await getLectureChunk(lastLectureCursor);
     }
 
-    logger.info(`Finished syncing ${lectures.length} lectures with Zoom.`);
-    logger.info(`Migrated lectures: ${migratedLectures.length}`, { migratedLectures });
-    logger.info(`Failed migrations: ${failedLectures.length}`, { failedLectures });
+    logger.info(`Finished syncing ${processedLectures} lectures with Zoom.`);
+    logger.info(`Migrated lectures: ${migrationResult.migratedLectures.length}`, { migratedLectures: migrationResult.migratedLectures });
+    logger.info(`Not found lectures: ${migrationResult.notFoundLectures.length}`, { notFoundLectures: migrationResult.notFoundLectures });
+    logger.info(`Found but not migrated lectures: ${migrationResult.foundButNotMigratedLectures.length}`, {
+        foundButNotMigratedLectures: migrationResult.foundButNotMigratedLectures,
+    });
 }
 
 async function getParticipants(meetingId: string): Promise<ZoomMeetingReport['participants']> {
@@ -87,7 +88,31 @@ async function getParticipants(meetingId: string): Promise<ZoomMeetingReport['pa
     throw new Error(`Failed to fetch participants for meeting ID: ${meetingId} after ${MAX_RETRIES} attempts.`);
 }
 
-async function migrateLecture(appointment: Appointment, participants: ZoomMeetingReport['participants']) {
+async function getLectureChunk(lastLectureCursor: LectureChunk | null): Promise<LectureChunk[]> {
+    return (await prisma.$queryRaw`
+        SELECT lecture."id", lecture."zoomMeetingId", lecture."participantIds", lecture."organizerIds", lecture."start"
+        FROM lecture
+        INNER JOIN match ON match.id = lecture."matchId"
+        INNER JOIN student ON student.id = match."studentId"
+        WHERE lecture."createdAt" >= '2025-05-01'
+            AND lecture."isCanceled" IS FALSE
+            AND lecture."appointmentType" = 'match'
+            AND lecture."zoomMeetingId" IS NOT NULL
+            AND array_length(lecture."declinedBy", 1) IS NULL
+            AND array_length(lecture."joinedBy", 1) = 1
+            AND student."zoomUserId" IS NOT NULL
+            AND lecture."actualDuration" = 0
+            AND (
+                ${lastLectureCursor === null}
+                OR lecture."start" > ${lastLectureCursor?.start ?? null}
+                OR (lecture."start" = ${lastLectureCursor?.start ?? null} AND lecture."id" > ${lastLectureCursor?.id ?? null})
+            )
+        ORDER BY lecture."start" ASC, lecture."id" ASC
+        LIMIT ${CONCURRENCY}
+    `) as LectureChunk[];
+}
+
+async function migrateLecture(appointment: LectureChunk, participants: ZoomMeetingReport['participants']) {
     const pupilId = appointment.participantIds.find((id) => id.startsWith('pupil/'));
     const studentId = appointment.organizerIds.find((id) => id.startsWith('student/'));
 
@@ -112,3 +137,8 @@ async function migrateLecture(appointment: Appointment, participants: ZoomMeetin
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+void syncOldMatchLecturesWithZoom().catch((error) => {
+    logger.error('Error syncing old match lectures with Zoom:', error);
+    process.exit(1);
+});
