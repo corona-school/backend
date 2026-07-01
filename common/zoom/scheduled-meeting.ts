@@ -69,6 +69,7 @@ export type ZoomMeetingReport = {
 
 const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
+const zoomPastMeetingUrl = 'https://api.zoom.us/v2/past_meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
 const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, name: string): Promise<ZoomMeeting> => {
@@ -175,6 +176,19 @@ async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
     }
 
     return (await response.json()) as ZoomMeetings;
+}
+
+async function getPastZoomMeetingParticipants(meetingId: string): Promise<Response> {
+    const { access_token } = await getAccessToken();
+    const response = await fetch(`${zoomPastMeetingUrl}/${meetingId}/participants`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    return response;
 }
 
 const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
@@ -327,4 +341,5 @@ export {
     updateZoomMeeting,
     addOrganizerToZoomMeeting,
     removeOrganizerFromZoomMeeting,
+    getPastZoomMeetingParticipants,
 };

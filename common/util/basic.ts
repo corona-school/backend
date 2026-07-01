@@ -87,3 +87,25 @@ export function shuffleArray<T>(array: T[]): T[] {
 
     return shuffledArray;
 }
+
+interface Interval {
+    start: Date;
+    end: Date;
+}
+
+export function getIntervalOverlapInSeconds(intervalsA: Interval[], intervalsB: Interval[]) {
+    let total = 0;
+
+    for (const a of intervalsA) {
+        for (const b of intervalsB) {
+            const start = Math.max(a.start.getTime(), b.start.getTime());
+            const end = Math.min(a.end.getTime(), b.end.getTime());
+
+            if (end > start) {
+                total += (end - start) / 1000;
+            }
+        }
+    }
+
+    return total;
+}
