@@ -137,8 +137,3 @@ async function migrateLecture(appointment: LectureChunk, participants: ZoomMeeti
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-void syncOldMatchLecturesWithZoom().catch((error) => {
-    logger.error('Error syncing old match lectures with Zoom:', error);
-    process.exit(1);
-});
