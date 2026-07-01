@@ -10,7 +10,7 @@ const CONCURRENCY = 5;
 
 export async function syncOldMatchLecturesWithZoom(): Promise<void> {
     const lectures = (await prisma.$queryRaw`
-        SELECT lecture.*
+        SELECT lecture."id", lecture."zoomMeetingId", lecture."participantIds", lecture."organizerIds"
         FROM lecture
         INNER JOIN match ON match.id = lecture."matchId"
         INNER JOIN student ON student.id = match."studentId"
@@ -21,6 +21,7 @@ export async function syncOldMatchLecturesWithZoom(): Promise<void> {
             AND array_length(lecture."declinedBy", 1) IS NULL
             AND array_length(lecture."joinedBy", 1) = 1
             AND student."zoomUserId" IS NOT NULL
+            AND lecture."actualDuration" = 0
         ORDER BY lecture."start" ASC
     `) as Appointment[];
 
