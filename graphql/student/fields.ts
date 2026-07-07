@@ -13,7 +13,7 @@ import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, 
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
-import { Subject } from '../types/subject';
+import { Subject, SubjectStatsForStudents } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
@@ -32,6 +32,8 @@ import * as CertificateOfConductCommon from '../../common/certificate-of-conduct
 import { addFile, getFileURL } from '../files';
 import { createInstantCertificate } from '../../common/certificate';
 import { getLogger } from '../../common/logger/logger';
+import { getPupils, pools } from '../../common/match/pool';
+import { gradeAsInt } from '../../common/util/gradestrings';
 
 const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
@@ -278,5 +280,35 @@ export class ExtendFieldsStudentResolver {
                 registrationSource: 'cooperation',
             },
         });
+    }
+
+    @Query(() => [SubjectStatsForStudents])
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
+    async subjectsForStudents() {
+        const result = (await prisma.$queryRaw`
+            WITH valid_pupils AS (
+                SELECT p.*
+                FROM pupil p
+                WHERE p."openMatchRequestCount" > 0
+                AND p.active = TRUE
+                AND EXISTS (
+                    SELECT 1
+                    FROM pupil_screening ps
+                    WHERE ps."pupilId" = p.id
+                        AND ps.status = '1'
+                        AND ps.invalidated = FALSE
+                )
+            )
+            SELECT
+                subject->>'name' AS subject_name,
+                COUNT(*) AS mandatory_count,
+                array_agg(vp.grade ORDER BY vp.grade) AS grades
+            FROM valid_pupils vp
+            CROSS JOIN LATERAL jsonb_array_elements(vp.subjects::jsonb) AS subject
+            WHERE (subject->>'mandatory')::boolean = TRUE
+            GROUP BY subject->>'name'
+            ORDER BY mandatory_count DESC;
+        `) as { subject_name: string; mandatory_count: number; grades: string[] }[];
+        return result.map((e) => ({ subject: e.subject_name, pupilsWaiting: e.mandatory_count, gradesAvailable: e.grades.map((g) => gradeAsInt(g)) }));
     }
 }
