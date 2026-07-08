@@ -175,19 +175,6 @@ model course {
   shared                     Boolean                      @default(false)
 }
 
-// DEPRECATED: This was filled from BBB Meetings, replaced with the zoomMeetingReports field of lectures
-model course_attendance_log {
-  id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
-  createdAt    DateTime @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  attendedTime Int?
-  ip           String?  @db.VarChar
-  pupilId      Int?
-  lectureId    Int?
-  lecture      lecture? @relation(fields: [lectureId], references: [id], onDelete: Cascade, map: "FK_927959c3480126ecdceeae26609")
-  pupil        pupil?   @relation(fields: [pupilId], references: [id], onDelete: Cascade, map: "FK_acc59dc4321a888376f7fad5a3d")
-}
-
 // DEPRECATED: This was used historically to invite guests to BBB Course Meetings
 model course_guest {
   id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
@@ -403,7 +390,6 @@ model lecture {
   pupilScreening        pupil_screening?             @relation(fields: [pupilScreeningId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tutorScreening        screening?                   @relation(fields: [tutorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   instructorScreening   instructor_screening?        @relation(fields: [instructorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  course_attendance_log course_attendance_log[]
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
 }
@@ -612,7 +598,6 @@ model pupil {
   matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
-  course_attendance_log                        course_attendance_log[]
   course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]

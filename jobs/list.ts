@@ -1,7 +1,6 @@
 import { runInterestConfirmations } from '../common/match/pool';
 import { checkReminders } from '../common/notification';
 import { cleanupSecrets } from '../common/secret';
-import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
@@ -19,7 +18,6 @@ export const allJobs = {
     cleanupSecrets,
     dropOldNotificationContexts,
     runInterestConfirmations,
-    anonymiseAttendanceLog,
     syncToWebflow,
     postStatisticsToSlack,
     redactInactiveAccounts,
@@ -54,7 +52,6 @@ export const regularJobs: ScheduledJob[] = [
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', name: 'checkReminders' },
     // each night - database cleanups
-    { cronTime: '00 00 05 * * *', name: 'anonymiseAttendanceLog' },
     { cronTime: '00 00 04 * * *', name: 'cleanupSecrets' },
     { cronTime: '00 00 01 * * *', name: 'dropOldNotificationContexts' },
     // Account redaction

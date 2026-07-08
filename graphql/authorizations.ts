@@ -294,7 +294,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Student: allAdmin,
     Screening: allAdmin,
     Screener: allAdmin,
-    Course_attendance_log: allAdmin,
     Course_instructors_student: allAdmin,
     Course_tag: {
         course_tags: everyone,
@@ -425,7 +424,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
             participation_certificate: nobody,
             pupil_tutoring_interest_confirmation_request: nobody,
-            course_attendance_log: nobody,
             course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
             match: nobody,
@@ -634,7 +632,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'tutorScreeningId'
             | 'instructorScreeningId'
         >({
-            course_attendance_log: nobody,
             // subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
