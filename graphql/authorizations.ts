@@ -627,7 +627,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse: nobody,
             student: nobody,
             instructorId: nobody,
-            _count: nobody,
             match: adminOrOwner,
             pupilScreening: adminOrOwner,
             tutorScreening: adminOrOwner,
