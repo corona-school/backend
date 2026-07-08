@@ -227,15 +227,6 @@ model instructor_screening {
   lecture               lecture[]
 }
 
-// DEPRECATED: We once had a cooperation with Jugend Forscht ("jufo")
-model jufo_verification_transmission {
-  id        Int      @id(map: "PK_3e81acd237ad0b7e97003c835d8") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  uuid      String   @db.VarChar
-  studentId Int?     @unique(map: "REL_1ceddec34e7b90cdbb85ff9738")
-  student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
-}
-
 // A topic a pupil is currently learning in a certain subject
 // This is used to group notes and assignments
 model learning_topic {
@@ -754,26 +745,25 @@ model student {
   sentInstructorScreeningReminderCount      Int                      @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                @db.Timestamp(6)
 
-  lastUpdatedSettingsViaBlocker    DateTime?                          @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker  DateTime?                       @db.Timestamp(6)
   // The registration form used to register the user, mainly used to find Lern-Fair Plus students
-  registrationSource               student_registrationsource_enum    @default(normal)
-  aboutMe                          String                             @default("") @db.VarChar
+  registrationSource             student_registrationsource_enum @default(normal)
+  aboutMe                        String                          @default("") @db.VarChar
   // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
-  zoomUserId                       String?                            @db.VarChar
-  certificate_of_conduct           certificate_of_conduct?
-  course                           course[]
-  course_instructors_student       course_instructors_student[]
-  instructor_screening             instructor_screening?
-  jufo_verification_transmission   jufo_verification_transmission?
-  lecture                          lecture[]
-  match                            match[]
-  participation_certificate        participation_certificate[]
-  instant_certificate              instant_certificate[]
-  remission_request                remission_request?
-  screening                        screening?
-  subcourse_instructors_student    subcourse_instructors_student[]
+  zoomUserId                     String?                         @db.VarChar
+  certificate_of_conduct         certificate_of_conduct?
+  course                         course[]
+  course_instructors_student     course_instructors_student[]
+  instructor_screening           instructor_screening?
+  lecture                        lecture[]
+  match                          match[]
+  participation_certificate      participation_certificate[]
+  instant_certificate            instant_certificate[]
+  remission_request              remission_request?
+  screening                      screening?
+  subcourse_instructors_student  subcourse_instructors_student[]
   // Should stay null for users who where registered before the onboarding got added
-  hasDoneEthicsOnboarding          Boolean?
+  hasDoneEthicsOnboarding        Boolean?
 
   cooperationID           Int?
   cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
@@ -800,36 +790,36 @@ model student {
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
 model subcourse {
-  id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
-  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
-  updatedAt                        DateTime                           @default(now()) @updatedAt @db.Timestamp(6)
-  minGrade                         Int
-  maxGrade                         Int
-  maxParticipants                  Int
-  joinAfterStart                   Boolean                            @default(false)
-  published                        Boolean
-  publishedAt                      DateTime?                          @db.Timestamp(6)
-  cancelled                        Boolean                            @default(false)
+  id                            Int                             @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
+  createdAt                     DateTime                        @default(now()) @db.Timestamp(6)
+  updatedAt                     DateTime                        @default(now()) @updatedAt @db.Timestamp(6)
+  minGrade                      Int
+  maxGrade                      Int
+  maxParticipants               Int
+  joinAfterStart                Boolean                         @default(false)
+  published                     Boolean
+  publishedAt                   DateTime?                       @db.Timestamp(6)
+  cancelled                     Boolean                         @default(false)
   // DEPRECATED: In favor of subcourse_promotions
-  alreadyPromoted                  Boolean                            @default(false)
+  alreadyPromoted               Boolean                         @default(false)
   // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants
   // of a Subcourse might change, we create a random ID for it and store it:
-  conversationId                   String?                            @db.VarChar
+  conversationId                String?                         @db.VarChar
   // conversation IDs of prospect chats
   // (not an injective relation, one conversation can be a prospect chat for multiple subcourses)
-  prospectChats                    Json[]                             @default([]) @db.Json
-  allowChatContactProspects        Boolean                            @default(true)
-  allowChatContactParticipants     Boolean                            @default(true)
-  groupChatType                    chat_type                          @default(NORMAL)
-  courseId                         Int?
-  course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
-  lecture                          lecture[]
-  subcourse_instructors_student    subcourse_instructors_student[]
-  subcourse_participants_pupil     subcourse_participants_pupil[]
-  waiting_list_enrollment          waiting_list_enrollment[]
-  subcourse_promotions             subcourse_promotion[]
-  subcourse_mentors_student        subcourse_mentors_student[]
-  allowMentoring                   Boolean                            @default(false)
+  prospectChats                 Json[]                          @default([]) @db.Json
+  allowChatContactProspects     Boolean                         @default(true)
+  allowChatContactParticipants  Boolean                         @default(true)
+  groupChatType                 chat_type                       @default(NORMAL)
+  courseId                      Int?
+  course                        course?                         @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
+  lecture                       lecture[]
+  subcourse_instructors_student subcourse_instructors_student[]
+  subcourse_participants_pupil  subcourse_participants_pupil[]
+  waiting_list_enrollment       waiting_list_enrollment[]
+  subcourse_promotions          subcourse_promotion[]
+  subcourse_mentors_student     subcourse_mentors_student[]
+  allowMentoring                Boolean                         @default(false)
 }
 
 model subcourse_promotion {
