@@ -336,7 +336,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Subcourse_mentors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Concrete_notification: allAdmin,
-    Course_participation_certificate: allAdmin,
     Notification: {
         notification: everyone,
         notifications: everyone,
@@ -423,7 +422,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
             participation_certificate: nobody,
             pupil_tutoring_interest_confirmation_request: nobody,
-            course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
             match: nobody,
             _count: nobody,
@@ -501,7 +499,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_mentors_student: nobody,
             course: nobody,
             course_instructors_student: nobody,
-            course_participation_certificate: nobody,
             jufo_verification_transmission: nobody,
             instructor_screening: nobody,
             remission_request: nobody,
@@ -571,7 +568,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'groupChatType'
             | 'allowMentoring'
         >({
-            course_participation_certificate: nobody,
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_mentors_student: nobody,

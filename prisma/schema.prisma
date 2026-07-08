@@ -114,7 +114,6 @@ model attachment {
   date              DateTime @db.Timestamp(6)
 }
 
-
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
   id             Int                   @id() @default(autoincrement())
@@ -184,19 +183,6 @@ model course_instructors_student {
   @@id([courseId, studentId], map: "PK_aa54b28c5de0010f486dd0d72df")
   @@index([courseId], map: "IDX_54bce9a9a93ae130beaa70bb2f")
   @@index([studentId], map: "IDX_66b47860afa3098729925338c1")
-}
-
-// DEPRECATED: Course Instructors were able to send a participation certificate to some participants of a course
-model course_participation_certificate {
-  id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
-  createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @updatedAt @db.Timestamp(6)
-  issuerId    Int?
-  pupilId     Int?
-  subcourseId Int?
-  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_585aa209315fc328d48af2765b4")
-  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_bc6a26ac82132b6e9f1d6de3e4c")
-  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
 }
 
 model course_tag {
@@ -582,7 +568,6 @@ model pupil {
   matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
-  course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]
   pupil_screening                              pupil_screening[]
@@ -778,7 +763,6 @@ model student {
   certificate_of_conduct           certificate_of_conduct?
   course                           course[]
   course_instructors_student       course_instructors_student[]
-  course_participation_certificate course_participation_certificate[]
   instructor_screening             instructor_screening?
   jufo_verification_transmission   jufo_verification_transmission?
   lecture                          lecture[]
@@ -839,7 +823,6 @@ model subcourse {
   groupChatType                    chat_type                          @default(NORMAL)
   courseId                         Int?
   course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
-  course_participation_certificate course_participation_certificate[]
   lecture                          lecture[]
   subcourse_instructors_student    subcourse_instructors_student[]
   subcourse_participants_pupil     subcourse_participants_pupil[]
