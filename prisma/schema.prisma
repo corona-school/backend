@@ -168,26 +168,10 @@ model course {
   //             Instead, use the course_instructors_student relation
   correspondentId            Int?
   student                    student?                     @relation(fields: [correspondentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0682a6fe3bace3ed13377c1b1ca")
-  course_guest               course_guest[]
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
   subcourse                  subcourse[]
   shared                     Boolean                      @default(false)
-}
-
-// DEPRECATED: This was used historically to invite guests to BBB Course Meetings
-model course_guest {
-  id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  token     String   @unique(map: "IDX_8fb7b15823c3ed0fea3c508ac4") @db.VarChar
-  firstname String   @db.VarChar
-  lastname  String   @db.VarChar
-  email     String   @db.VarChar
-  courseId  Int?
-  inviterId Int?
-  course    course?  @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4392726b6462358a809db822af4")
-  student   student? @relation(fields: [inviterId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0843258a46daa7d91dc2cef917")
 }
 
 // A course instructor can edit a course and create subcourses from it
@@ -793,7 +777,6 @@ model student {
   zoomUserId                       String?                            @db.VarChar
   certificate_of_conduct           certificate_of_conduct?
   course                           course[]
-  course_guest                     course_guest[]
   course_instructors_student       course_instructors_student[]
   course_participation_certificate course_participation_certificate[]
   instructor_screening             instructor_screening?

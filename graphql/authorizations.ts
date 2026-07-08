@@ -336,7 +336,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Subcourse_mentors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Concrete_notification: allAdmin,
-    Course_guest: allAdmin,
     Course_participation_certificate: allAdmin,
     Notification: {
         notification: everyone,
@@ -501,7 +500,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_instructors_student: nobody,
             subcourse_mentors_student: nobody,
             course: nobody,
-            course_guest: nobody,
             course_instructors_student: nobody,
             course_participation_certificate: nobody,
             jufo_verification_transmission: nobody,
@@ -605,7 +603,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
-            course_guest: nobody,
             course_instructors_student: nobody,
             course_tags_course_tag: nobody,
             subcourse: nobody,
