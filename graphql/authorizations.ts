@@ -294,7 +294,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Student: allAdmin,
     Screening: allAdmin,
     Screener: allAdmin,
-    Bbb_meeting: allAdmin,
     Course_attendance_log: allAdmin,
     Course_instructors_student: allAdmin,
     Course_tag: {

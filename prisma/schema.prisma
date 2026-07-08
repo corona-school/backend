@@ -114,18 +114,6 @@ model attachment {
   date              DateTime @db.Timestamp(6)
 }
 
-// DEPRECATED
-// Was used for course meetings before Zoom was introduced in Summer 2023
-model bbb_meeting {
-  id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
-  createdAt      DateTime @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  meetingID      String   @db.VarChar
-  meetingName    String?  @db.VarChar
-  attendeePW     String?  @db.VarChar
-  moderatorPW    String?  @db.VarChar
-  alternativeUrl String?  @db.VarChar
-}
 
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
