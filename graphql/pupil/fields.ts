@@ -28,6 +28,8 @@ import { subcourseSearch } from '../../common/courses/search';
 import moment from 'moment';
 import { GraphQLContext } from '../context';
 import { normalizeLastName } from '../../common/pupil';
+import { isDev } from '../../common/util/environment';
+import { testPupilSubjectsHistory } from '../../utils/test-data';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -217,7 +219,11 @@ export class ExtendFieldsPupilResolver {
     @Query(() => [SubjectStatsForPupils])
     @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
     async subjectsForPupils() {
-        const result = (await prisma.$queryRaw`
+        let result: { subject: string; match_count: number; median_days: number; p90_days: number }[];
+        if (isDev) {
+            result = testPupilSubjectsHistory;
+        } else {
+            result = (await prisma.$queryRaw`
             WITH match_subjects AS (
                 SELECT
                     m.id,
@@ -240,6 +246,7 @@ export class ExtendFieldsPupilResolver {
             GROUP BY subject
             ORDER BY match_count DESC;
         `) as { subject: string; match_count: number; median_days: number; p90_days: number }[];
+        }
         return result.map((s) => ({
             subject: s.subject,
             waitingDaysRange: s.match_count > 5 ? { from: s.median_days, to: s.p90_days } : { from: 0, to: 0 },

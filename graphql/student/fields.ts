@@ -34,6 +34,8 @@ import { createInstantCertificate } from '../../common/certificate';
 import { getLogger } from '../../common/logger/logger';
 import { getPupils, pools } from '../../common/match/pool';
 import { gradeAsInt } from '../../common/util/gradestrings';
+import { testStudentSubjectsHistory } from '../../utils/test-data';
+import { isDev } from '../../common/util/environment';
 
 const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
@@ -285,7 +287,15 @@ export class ExtendFieldsStudentResolver {
     @Query(() => [SubjectStatsForStudents])
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async subjectsForStudents() {
-        const result = (await prisma.$queryRaw`
+        let result: { subject_name: string; mandatory_count: number; grades: string[] }[];
+        if (isDev) {
+            return testStudentSubjectsHistory.map((e) => ({
+                subject: e.subject_name,
+                pupilsWaiting: e.mandatory_count,
+                gradesAvailable: e.grades.map((g) => gradeAsInt(g)),
+            }));
+        } else {
+            result = (await prisma.$queryRaw`
             WITH valid_pupils AS (
                 SELECT p.*
                 FROM pupil p
@@ -298,17 +308,43 @@ export class ExtendFieldsStudentResolver {
                         AND ps.status = '1'
                         AND ps.invalidated = FALSE
                 )
+            ),
+
+            current_demand AS (
+                SELECT
+                    subject->>'name' AS subject_name,
+                    COUNT(*) AS mandatory_count,
+                    array_agg(vp.grade ORDER BY vp.grade) AS grades
+                FROM valid_pupils vp
+                CROSS JOIN LATERAL jsonb_array_elements(vp.subjects::jsonb) AS subject
+                WHERE (subject->>'mandatory')::boolean
+                GROUP BY subject->>'name'
+            ),
+
+            historical_demand AS (
+                SELECT
+                    subject->>'name' AS subject_name,
+                    COUNT(*) AS historical_matches
+                FROM "match" m
+                CROSS JOIN LATERAL unnest(m."subjectsAtMatchingTime") AS subject
+                WHERE (subject->>'mandatory')::boolean
+                GROUP BY subject->>'name'
             )
+
             SELECT
-                subject->>'name' AS subject_name,
-                COUNT(*) AS mandatory_count,
-                array_agg(vp.grade ORDER BY vp.grade) AS grades
-            FROM valid_pupils vp
-            CROSS JOIN LATERAL jsonb_array_elements(vp.subjects::jsonb) AS subject
-            WHERE (subject->>'mandatory')::boolean = TRUE
-            GROUP BY subject->>'name'
-            ORDER BY mandatory_count DESC;
+                h.subject_name,
+                COALESCE(c.mandatory_count, 0) AS mandatory_count,
+                COALESCE(c.grades, ARRAY[]::VARCHAR[]) AS grades,
+                h.historical_matches
+            FROM historical_demand h
+            LEFT JOIN current_demand c
+                ON c.subject_name = h.subject_name
+            ORDER BY
+                (COALESCE(c.mandatory_count, 0) = 0),
+                c.mandatory_count DESC,
+                h.historical_matches DESC;
         `) as { subject_name: string; mandatory_count: number; grades: string[] }[];
+        }
         return result.map((e) => ({ subject: e.subject_name, pupilsWaiting: e.mandatory_count, gradesAvailable: e.grades.map((g) => gradeAsInt(g)) }));
     }
 }
