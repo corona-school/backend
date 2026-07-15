@@ -1037,8 +1037,6 @@ enum log_logtype_enum {
   cocCancel
   cancelledCourse
   cancelledSubcourse
-  createdCourseAttendanceLog
-  bbbMeeting
   participantJoinedCourse
   participantLeftCourse
   mentorJoinedCourse // when mentor joined course by themselves

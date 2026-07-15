@@ -25,8 +25,6 @@ type LogData<Type extends LogType> = {
     cocCancel: { studentId: number };
     cancelledCourse: { id: number };
     cancelledSubcourse: { id: number };
-    createdCourseAttendanceLog: { courseAttendanceLog: any };
-    bbbMeeting: { bbbMeeting: any };
     contactExpert: { emailText: string; subject?: string };
     participantJoinedCourse: { subcourseID: number };
     participantLeftCourse: { subcourseID: number };
