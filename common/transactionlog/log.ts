@@ -1,10 +1,4 @@
-import {
-    log_logtype_enum as LogType,
-    pupil as Pupil,
-    student as Student,
-    course_attendance_log as CourseAttendanceLog,
-    bbb_meeting as BBBMeeting,
-} from '@prisma/client';
+import { log_logtype_enum as LogType, pupil as Pupil, student as Student } from '@prisma/client';
 import { getLogger } from '../../common/logger/logger';
 import { InterestConfirmationStatus } from '../match/interest';
 import { prisma } from '../prisma';
@@ -31,8 +25,6 @@ type LogData<Type extends LogType> = {
     cocCancel: { studentId: number };
     cancelledCourse: { id: number };
     cancelledSubcourse: { id: number };
-    createdCourseAttendanceLog: { courseAttendanceLog: CourseAttendanceLog };
-    bbbMeeting: { bbbMeeting: BBBMeeting };
     contactExpert: { emailText: string; subject?: string };
     participantJoinedCourse: { subcourseID: number };
     participantLeftCourse: { subcourseID: number };

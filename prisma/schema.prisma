@@ -114,19 +114,6 @@ model attachment {
   date              DateTime @db.Timestamp(6)
 }
 
-// DEPRECATED
-// Was used for course meetings before Zoom was introduced in Summer 2023
-model bbb_meeting {
-  id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
-  createdAt      DateTime @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  meetingID      String   @db.VarChar
-  meetingName    String?  @db.VarChar
-  attendeePW     String?  @db.VarChar
-  moderatorPW    String?  @db.VarChar
-  alternativeUrl String?  @db.VarChar
-}
-
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
   id             Int                   @id() @default(autoincrement())
@@ -180,39 +167,10 @@ model course {
   //             Instead, use the course_instructors_student relation
   correspondentId            Int?
   student                    student?                     @relation(fields: [correspondentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0682a6fe3bace3ed13377c1b1ca")
-  course_guest               course_guest[]
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
   subcourse                  subcourse[]
   shared                     Boolean                      @default(false)
-}
-
-// DEPRECATED: This was filled from BBB Meetings, replaced with the zoomMeetingReports field of lectures
-model course_attendance_log {
-  id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
-  createdAt    DateTime @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  attendedTime Int?
-  ip           String?  @db.VarChar
-  pupilId      Int?
-  lectureId    Int?
-  lecture      lecture? @relation(fields: [lectureId], references: [id], onDelete: Cascade, map: "FK_927959c3480126ecdceeae26609")
-  pupil        pupil?   @relation(fields: [pupilId], references: [id], onDelete: Cascade, map: "FK_acc59dc4321a888376f7fad5a3d")
-}
-
-// DEPRECATED: This was used historically to invite guests to BBB Course Meetings
-model course_guest {
-  id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  token     String   @unique(map: "IDX_8fb7b15823c3ed0fea3c508ac4") @db.VarChar
-  firstname String   @db.VarChar
-  lastname  String   @db.VarChar
-  email     String   @db.VarChar
-  courseId  Int?
-  inviterId Int?
-  course    course?  @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4392726b6462358a809db822af4")
-  student   student? @relation(fields: [inviterId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0843258a46daa7d91dc2cef917")
 }
 
 // A course instructor can edit a course and create subcourses from it
@@ -225,19 +183,6 @@ model course_instructors_student {
   @@id([courseId, studentId], map: "PK_aa54b28c5de0010f486dd0d72df")
   @@index([courseId], map: "IDX_54bce9a9a93ae130beaa70bb2f")
   @@index([studentId], map: "IDX_66b47860afa3098729925338c1")
-}
-
-// DEPRECATED: Course Instructors were able to send a participation certificate to some participants of a course
-model course_participation_certificate {
-  id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
-  createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @updatedAt @db.Timestamp(6)
-  issuerId    Int?
-  pupilId     Int?
-  subcourseId Int?
-  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_585aa209315fc328d48af2765b4")
-  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_bc6a26ac82132b6e9f1d6de3e4c")
-  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
 }
 
 model course_tag {
@@ -280,15 +225,6 @@ model instructor_screening {
   student               student?                      @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
   screener              screener?                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
   lecture               lecture[]
-}
-
-// DEPRECATED: We once had a cooperation with Jugend Forscht ("jufo")
-model jufo_verification_transmission {
-  id        Int      @id(map: "PK_3e81acd237ad0b7e97003c835d8") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  uuid      String   @db.VarChar
-  studentId Int?     @unique(map: "REL_1ceddec34e7b90cdbb85ff9738")
-  student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
 // A topic a pupil is currently learning in a certain subject
@@ -415,7 +351,6 @@ model lecture {
   pupilScreening        pupil_screening?             @relation(fields: [pupilScreeningId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tutorScreening        screening?                   @relation(fields: [tutorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   instructorScreening   instructor_screening?        @relation(fields: [instructorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  course_attendance_log course_attendance_log[]
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
 }
@@ -624,8 +559,6 @@ model pupil {
   matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
-  course_attendance_log                        course_attendance_log[]
-  course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]
   pupil_screening                              pupil_screening[]
@@ -812,28 +745,25 @@ model student {
   sentInstructorScreeningReminderCount      Int                      @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                @db.Timestamp(6)
 
-  lastUpdatedSettingsViaBlocker    DateTime?                          @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker  DateTime?                       @db.Timestamp(6)
   // The registration form used to register the user, mainly used to find Lern-Fair Plus students
-  registrationSource               student_registrationsource_enum    @default(normal)
-  aboutMe                          String                             @default("") @db.VarChar
+  registrationSource             student_registrationsource_enum @default(normal)
+  aboutMe                        String                          @default("") @db.VarChar
   // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
-  zoomUserId                       String?                            @db.VarChar
-  certificate_of_conduct           certificate_of_conduct?
-  course                           course[]
-  course_guest                     course_guest[]
-  course_instructors_student       course_instructors_student[]
-  course_participation_certificate course_participation_certificate[]
-  instructor_screening             instructor_screening?
-  jufo_verification_transmission   jufo_verification_transmission?
-  lecture                          lecture[]
-  match                            match[]
-  participation_certificate        participation_certificate[]
-  instant_certificate              instant_certificate[]
-  remission_request                remission_request?
-  screening                        screening?
-  subcourse_instructors_student    subcourse_instructors_student[]
+  zoomUserId                     String?                         @db.VarChar
+  certificate_of_conduct         certificate_of_conduct?
+  course                         course[]
+  course_instructors_student     course_instructors_student[]
+  instructor_screening           instructor_screening?
+  lecture                        lecture[]
+  match                          match[]
+  participation_certificate      participation_certificate[]
+  instant_certificate            instant_certificate[]
+  remission_request              remission_request?
+  screening                      screening?
+  subcourse_instructors_student  subcourse_instructors_student[]
   // Should stay null for users who where registered before the onboarding got added
-  hasDoneEthicsOnboarding          Boolean?
+  hasDoneEthicsOnboarding        Boolean?
 
   cooperationID           Int?
   cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
@@ -860,37 +790,36 @@ model student {
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
 model subcourse {
-  id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
-  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
-  updatedAt                        DateTime                           @default(now()) @updatedAt @db.Timestamp(6)
-  minGrade                         Int
-  maxGrade                         Int
-  maxParticipants                  Int
-  joinAfterStart                   Boolean                            @default(false)
-  published                        Boolean
-  publishedAt                      DateTime?                          @db.Timestamp(6)
-  cancelled                        Boolean                            @default(false)
+  id                            Int                             @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
+  createdAt                     DateTime                        @default(now()) @db.Timestamp(6)
+  updatedAt                     DateTime                        @default(now()) @updatedAt @db.Timestamp(6)
+  minGrade                      Int
+  maxGrade                      Int
+  maxParticipants               Int
+  joinAfterStart                Boolean                         @default(false)
+  published                     Boolean
+  publishedAt                   DateTime?                       @db.Timestamp(6)
+  cancelled                     Boolean                         @default(false)
   // DEPRECATED: In favor of subcourse_promotions
-  alreadyPromoted                  Boolean                            @default(false)
+  alreadyPromoted               Boolean                         @default(false)
   // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants
   // of a Subcourse might change, we create a random ID for it and store it:
-  conversationId                   String?                            @db.VarChar
+  conversationId                String?                         @db.VarChar
   // conversation IDs of prospect chats
   // (not an injective relation, one conversation can be a prospect chat for multiple subcourses)
-  prospectChats                    Json[]                             @default([]) @db.Json
-  allowChatContactProspects        Boolean                            @default(true)
-  allowChatContactParticipants     Boolean                            @default(true)
-  groupChatType                    chat_type                          @default(NORMAL)
-  courseId                         Int?
-  course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
-  course_participation_certificate course_participation_certificate[]
-  lecture                          lecture[]
-  subcourse_instructors_student    subcourse_instructors_student[]
-  subcourse_participants_pupil     subcourse_participants_pupil[]
-  waiting_list_enrollment          waiting_list_enrollment[]
-  subcourse_promotions             subcourse_promotion[]
-  subcourse_mentors_student        subcourse_mentors_student[]
-  allowMentoring                   Boolean                            @default(false)
+  prospectChats                 Json[]                          @default([]) @db.Json
+  allowChatContactProspects     Boolean                         @default(true)
+  allowChatContactParticipants  Boolean                         @default(true)
+  groupChatType                 chat_type                       @default(NORMAL)
+  courseId                      Int?
+  course                        course?                         @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
+  lecture                       lecture[]
+  subcourse_instructors_student subcourse_instructors_student[]
+  subcourse_participants_pupil  subcourse_participants_pupil[]
+  waiting_list_enrollment       waiting_list_enrollment[]
+  subcourse_promotions          subcourse_promotion[]
+  subcourse_mentors_student     subcourse_mentors_student[]
+  allowMentoring                Boolean                         @default(false)
 }
 
 model subcourse_promotion {
@@ -1108,8 +1037,6 @@ enum log_logtype_enum {
   cocCancel
   cancelledCourse
   cancelledSubcourse
-  createdCourseAttendanceLog
-  bbbMeeting
   participantJoinedCourse
   participantLeftCourse
   mentorJoinedCourse // when mentor joined course by themselves
