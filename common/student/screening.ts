@@ -54,7 +54,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
 
         const asUser = userForStudent(student);
-        if (student.registrationSource === 'cooperation') {
+        if (student.registrationSource === 'cooperation' && student.cooperationID) {
             const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
             await Notification.actionTaken(asUser, 'cooperation_instructor_screening_success', {
                 cooperation: cooperation ? cooperation.name : null,
@@ -94,7 +94,7 @@ export async function addTutorScreening(
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
-            if (student.registrationSource === 'cooperation') {
+            if (student.registrationSource === 'cooperation' && student.cooperationID) {
                 const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
                 await Notification.actionTaken(asUser, 'cooperation_tutor_screening_success', {
                     cooperation: cooperation ? cooperation.name : null,
@@ -177,7 +177,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
         }
 
-        if (screening.student.registrationSource === 'cooperation') {
+        if (screening.student.registrationSource === 'cooperation' && screening.student.cooperationID) {
             const cooperation = await prisma.cooperation.findFirst({ where: { id: screening?.student?.cooperationID } });
             const action = type === 'instructor' ? 'cooperation_instructor_screening_success' : 'cooperation_tutor_screening_success';
             await Notification.actionTaken(userForStudent(screening.student), action, {

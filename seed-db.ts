@@ -112,17 +112,19 @@ const createPupil = async ({ includePassword = true, calendarPreferences, ...dat
 
 interface CreateStudentArgs extends Partial<RegisterStudentData>, BecomeTutorData {
     isInstructor?: boolean;
+    isTutor?: boolean;
     calendarPreferences: CalendarPreferences;
+    cooperationID?: number;
 }
 
-const createStudent = async ({ isInstructor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
+const createStudent = async ({ isInstructor = true, isTutor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
     const student = await registerStudent({
         firstname: data.firstname,
         lastname: data.lastname,
         email: data.email,
         aboutMe: data.aboutMe,
         newsletter: data.newsletter ?? true,
-        registrationSource: 'normal',
+        registrationSource: data.registrationSource ?? 'normal',
         isAdult: true,
     });
     await verifyEmail(userForStudent(student));
@@ -133,10 +135,12 @@ const createStudent = async ({ isInstructor = true, calendarPreferences, ...data
         languages: data.languages,
         subjects: data.subjects,
     });
-    await addTutorScreening(screener, student, { status: 'success' });
+    if (isTutor) {
+        await addTutorScreening(screener, student, { status: 'success' });
+    }
     await prisma.student.update({
         where: { id: student.id },
-        data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any> },
+        data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any>, cooperationID: data.cooperationID },
     });
     if (isInstructor) {
         await becomeInstructor(student, {});
@@ -1022,6 +1026,73 @@ void (async function setupDevDB() {
         joinAfterStart: true,
         allowMentoring: true,
     });
+
+    const firstNames = [
+        'Emma',
+        'Liam',
+        'Olivia',
+        'Noah',
+        'Sophia',
+        'James',
+        'Charlotte',
+        'Benjamin',
+        'Amelia',
+        'Lucas',
+        'Mia',
+        'Henry',
+        'Evelyn',
+        'Alexander',
+        'Harper',
+        'Daniel',
+        'Ella',
+        'Michael',
+        'Grace',
+        'Leo',
+    ];
+
+    const students = [];
+
+    for (let i = 0; i < firstNames.length; i++) {
+        const number = i + 22;
+
+        students.push(
+            await createStudent(
+                {
+                    firstname: firstNames[i],
+                    lastname: 'Doe',
+                    email: `test+dev+s${number}@lern-fair.de`,
+                    aboutMe: `I'm Student ${number}`,
+                    newsletter: false,
+                    registrationSource: 'cooperation',
+                    isInstructor: i > 15,
+                    isTutor: i >= 10 && i <= 15,
+                    cooperationID: i >= 10 ? 1 : undefined,
+                    languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
+                    subjects: [
+                        { name: 'Französisch', grade: { min: 1, max: 14 } },
+                        { name: 'Mathematik', grade: { min: 1, max: 10 } },
+                    ],
+                    calendarPreferences: createSimpleCalendarPreferences(
+                        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                        [
+                            { from: '10:00', to: '11:00' },
+                            { from: '11:00', to: '12:00' },
+                            { from: '12:00', to: '13:00' },
+                            { from: '13:00', to: '14:00' },
+                            { from: '14:00', to: '15:00' },
+                            { from: '15:00', to: '16:00' },
+                            { from: '16:00', to: '17:00' },
+                            { from: '17:00', to: '18:00' },
+                            { from: '18:00', to: '19:00' },
+                            { from: '19:00', to: '20:00' },
+                            { from: '20:00', to: '21:00' },
+                        ]
+                    ),
+                },
+                screener1
+            )
+        );
+    }
 
     await importAchievements();
 
