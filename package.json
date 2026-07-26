@@ -67,7 +67,7 @@
         "graphql-fields": "^2.0.3",
         "graphql-request": "^4.2.0",
         "graphql-scalars": "^1.10.0",
-        "handlebars": "^4.7.7",
+        "handlebars": "^4.7.9",
         "helmet": "^3.22.0",
         "ics": "^3.8.1",
         "jsonwebtoken": "^9.0.0",
