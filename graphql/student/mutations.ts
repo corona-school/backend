@@ -192,6 +192,15 @@ export class StudentUpdateInput {
 
     @Field((type) => Number, { nullable: true })
     cooperationId?: number;
+
+    @Field((type) => [String], { nullable: true })
+    screeningTags?: string[];
+
+    @Field((type) => Number, { nullable: true })
+    maxParallelMatches?: number;
+
+    @Field((type) => Number, { nullable: true })
+    furtherTrainingsAttendedCount?: number;
 }
 
 const logger = getLogger('Student Mutations');
@@ -225,6 +234,9 @@ export async function updateStudent(
         formalEducation,
         specialTeachingExperience,
         cooperationId,
+        screeningTags,
+        maxParallelMatches,
+        furtherTrainingsAttendedCount,
     } = update;
 
     if (email != undefined && !isElevated(context)) {
@@ -251,6 +263,16 @@ export async function updateStudent(
         throw new PrerequisiteError('cooperationId may only be changed by elevated users');
     }
 
+    if (screeningTags !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('screeningTags may only be changed by elevated users');
+    }
+    if (maxParallelMatches !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('maxParallelMatches may only be changed by elevated users');
+    }
+    if (furtherTrainingsAttendedCount !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('furtherTrainingsAttendedCount may only be changed by elevated users');
+    }
+
     // Elevated user is removing a student from the cooperation list
     if (student.registrationSource === 'cooperation' && registrationSource === 'normal' && isElevated(context)) {
         await Notification.actionTaken(userForStudent(student), 'student_cooperation_list_removed', {});
@@ -262,7 +284,6 @@ export async function updateStudent(
     }
 
     const computedState = (state === student_state_enum.other || !state) && zipCode ? getStateFromZip(Number(zipCode)) : state;
-
     const res = await prismaInstance.student.update({
         data: {
             firstname: ensureNoNull(firstname),
@@ -287,6 +308,9 @@ export async function updateStudent(
             formalEducation: ensureNoNull(formalEducation),
             specialTeachingExperience: ensureNoNull(specialTeachingExperience),
             cooperationID: ensureNoNull(cooperationId),
+            screeningTags: ensureNoNull(screeningTags),
+            maxParallelMatches: maxParallelMatches,
+            furtherTrainingsAttendedCount: furtherTrainingsAttendedCount,
         },
         where: { id: student.id },
     });
