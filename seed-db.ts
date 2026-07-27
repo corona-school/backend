@@ -9,7 +9,7 @@ import { registerPupil, RegisterPupilData } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
 import { prisma } from './common/prisma';
 import { becomeInstructor, becomeTutor, BecomeTutorData, registerStudent, RegisterStudentData } from './common/student/registration';
-import { addInstructorScreening, addTutorScreening } from './common/student/screening';
+import { addInstructorScreening, addTutorScreening, scheduleCoCReminders } from './common/student/screening';
 import { addPupilScreening } from './common/pupil/screening';
 import { createMatch } from './common/match/create';
 import { TEST_POOL } from './common/match/pool';
@@ -37,6 +37,7 @@ import { importAchievements } from './seed-achievements';
 import { CalendarPreferences, Day, WeeklyAvailability } from './graphql/types/calendarPreferences';
 import { PupilUpdateInput } from './graphql/pupil/mutations';
 import { Subject } from './common/util/subjectsutils';
+import * as certificateOfConduct from './common/certificate-of-conduct/certificateOfConduct';
 
 const logger = getLogger('DevSetup');
 
@@ -115,6 +116,7 @@ interface CreateStudentArgs extends Partial<RegisterStudentData>, BecomeTutorDat
     isTutor?: boolean;
     calendarPreferences: CalendarPreferences;
     cooperationID?: number;
+    createCoC?: boolean;
 }
 
 const createStudent = async ({ isInstructor = true, isTutor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
@@ -153,6 +155,9 @@ const createStudent = async ({ isInstructor = true, isTutor = true, calendarPref
             },
             false
         );
+    }
+    if (data.createCoC) {
+        await certificateOfConduct.create(new Date(), new Date(), false, student.id);
     }
     return refetchStudent(student);
 };
@@ -659,6 +664,7 @@ void (async function setupDevDB() {
             aboutMe: `Im Student 1`,
             languages: ['Deutsch', 'Englisch', 'Spanisch'],
             newsletter: true,
+            createCoC: true,
             subjects: [
                 { name: 'Spanisch', grade: { min: 4, max: 10 } },
                 { name: 'Deutsch als Zweitsprache', grade: { min: 4, max: 10 } },
@@ -693,6 +699,7 @@ void (async function setupDevDB() {
             aboutMe: `Im Student 2`,
             email: 'test+dev+s2@lern-fair.de',
             newsletter: false,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
             subjects: [
@@ -732,6 +739,7 @@ void (async function setupDevDB() {
             email: 'test+dev+s3@lern-fair.de',
             aboutMe: `I'm Student 3`,
             newsletter: true,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
             subjects: [
@@ -766,6 +774,7 @@ void (async function setupDevDB() {
             email: 'test+dev+s4@lern-fair.de',
             aboutMe: `I'm Student 4`,
             newsletter: false,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
             subjects: [
@@ -799,7 +808,9 @@ void (async function setupDevDB() {
             email: 'test+dev+s5@lern-fair.de',
             aboutMe: `I'm Student 5`,
             newsletter: true,
-            registrationSource: 'normal',
+            createCoC: true,
+            registrationSource: 'cooperation',
+            cooperationID: 1,
             languages: ['Englisch', 'Arabisch', 'Deutsch'],
             subjects: [
                 { name: 'Französisch', grade: { min: 1, max: 14 } },
@@ -1102,6 +1113,7 @@ void (async function setupDevDB() {
     }
 
     _setSilenceNotificationSystem(false);
+    await scheduleCoCReminders(students[0]);
 
     logger.info(`Successfully seeded the DB`);
 })();
