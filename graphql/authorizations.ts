@@ -525,6 +525,9 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             jobStatus: adminOrOwnerOrScreener,
             formalEducation: adminOrOwnerOrScreener,
             specialTeachingExperience: adminOrOwnerOrScreener,
+            maxParallelMatches: adminOrOwnerOrScreener,
+            screeningTags: onlyAdminOrScreener,
+            furtherTrainingsAttendedCount: onlyAdminOrScreener,
         }),
     },
 
