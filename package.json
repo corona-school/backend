@@ -132,7 +132,7 @@
         "jest-mock-extended": "^3.0.5",
         "lint-staged": "^14.0.1",
         "nodemon": "^3.0.1",
-        "pre-commit": "^1.2.2",
+        "pre-commit": "^2.0.0",
         "prettier": "^2.7.1",
         "prisma": "^5.22.0",
         "ts-jest": "^29.0.5",
