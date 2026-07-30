@@ -786,8 +786,11 @@ model student {
   jobStatus                     student_jobstatus_enum?
   formalEducation               String?
   specialTeachingExperience     String[]                    @default([])
+  // Screeners mark students for different administrative purposes.
   screeningTags                 String[]                    @default([]) @db.VarChar
+  // How many matches a student can have at the same time, if not set, then it's unrestricted
   maxParallelMatches            Int?
+  // Used by screeners to document how many trainings a student has attended
   furtherTrainingsAttendedCount Int?                        @default(0)
 }
 
