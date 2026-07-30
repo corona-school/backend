@@ -48,12 +48,12 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
         return false;
     }
 
-    const lastLecturePlus30Days = moment(lastLecture.start).add(30, 'days');
-    const is30DaysBeforeToday = lastLecturePlus30Days.isBefore(today);
+    const lastLecturePlus10Days = moment(lastLecture.start).add(10, 'days');
+    const is10DaysBeforeToday = lastLecturePlus10Days.isBefore(today);
 
-    logger.info(`Checked if Subcourse(${subcourse.id}) is active`, { lastLecture, lastLecturePlus30Days, is30DaysBeforeToday });
+    logger.info(`Checked if Subcourse(${subcourse.id}) is active`, { lastLecture, lastLecturePlus10Days, is10DaysBeforeToday });
 
-    return !is30DaysBeforeToday;
+    return !is10DaysBeforeToday;
 }
 
 export function isConversationReadOnly(conversation: TJConversation) {

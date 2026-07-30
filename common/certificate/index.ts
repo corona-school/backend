@@ -152,7 +152,7 @@ export async function createInstantCertificate(
             },
         },
     });
-    const courseAppointmentsAggregatePromise = prisma.lecture.aggregate({
+    const courseAppointmentsAggregatePromise = prisma.lecture.findMany({
         where: {
             isCanceled: false,
             subcourse: {
@@ -173,8 +173,11 @@ export async function createInstantCertificate(
                 },
             ],
         },
-        _count: true,
-        _sum: { duration: true },
+        select: {
+            duration: true,
+            joinedBy: true,
+            start: true,
+        },
     });
 
     const appointmentsForDurationPromise = prisma.lecture.findMany({
@@ -233,18 +236,22 @@ export async function createInstantCertificate(
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointments, courseParticipants, courseAppointmentsAggregate, appointmentsForDuration, homeworkHelpDuration] = await Promise.all(
-        [
-            matchesCountPromise,
-            matchAppointmentsCountPromise,
-            uniqueCourseParticipantsPromise,
-            courseAppointmentsAggregatePromise,
-            appointmentsForDurationPromise,
-            homeworkHelpDurationPromise,
-        ]
-    );
+    const [matchesCount, matchAppointments, courseParticipants, courseAppointments, appointmentsForDuration, homeworkHelpDuration] = await Promise.all([
+        matchesCountPromise,
+        matchAppointmentsCountPromise,
+        uniqueCourseParticipantsPromise,
+        courseAppointmentsAggregatePromise,
+        appointmentsForDurationPromise,
+        homeworkHelpDurationPromise,
+    ]);
     const courseParticipantsCount = courseParticipants.length;
     const validMatchAppointments = matchAppointments.filter((lecture) => {
+        if (lecture.start < joinedByIntroductionDate) {
+            return true;
+        }
+        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
+    });
+    const validCourseAppointments = courseAppointments.filter((lecture) => {
         if (lecture.start < joinedByIntroductionDate) {
             return true;
         }
@@ -268,8 +275,8 @@ export async function createInstantCertificate(
             matchAppointmentsCount: validMatchAppointments.length,
             totalMatchAppointmentsDuration: validMatchAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
             courseParticipantsCount,
-            courseAppointmentsCount: courseAppointmentsAggregate._count,
-            totalCourseAppointmentDuration: courseAppointmentsAggregate._sum.duration ?? 0,
+            courseAppointmentsCount: validCourseAppointments.length,
+            totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
             totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
             trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,

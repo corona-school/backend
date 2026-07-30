@@ -136,7 +136,6 @@ export async function deleteSubcourse(subcourse: Subcourse) {
     if (!can.allowed) {
         throw new ValidationError(`Cannot delete Subcourse ${subcourse.id}, reason: ${can.reason}`);
     }
-    await prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
     logger.info(`Deleted course participation certificate for subcourse ${subcourse.id}`);
     await prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
     logger.info(`Deleted lectures for subcourse ${subcourse.id}`);
