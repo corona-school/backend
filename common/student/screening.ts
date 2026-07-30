@@ -6,7 +6,7 @@ import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
@@ -64,7 +64,9 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
         await updateSessionRolesOfUser(asUser.userID);
     } else {
-        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
+        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {
+            deactivationReason: DeactivationReason.didntMeetRequirements,
+        });
     }
 
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
@@ -103,7 +105,9 @@ export async function addTutorScreening(
                 await Notification.actionTaken(asUser, 'tutor_screening_success', {});
             }
         } else if (screening.status === ScreeningStatus.rejection) {
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {
+                deactivationReason: DeactivationReason.didntMeetRequirements,
+            });
         }
     }
 
@@ -124,6 +128,7 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
     await createRemissionRequest(student);
     await Notification.actionTaken(userForStudent(student), 'coc_reminder', {
         isRenewal: isRenewal.toString(),
+        deactivationReason: DeactivationReason.missingCoC,
     });
 }
 
@@ -191,7 +196,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         await Notification.actionTaken(
             userForStudent(screening.student),
             type === 'instructor' ? 'instructor_screening_rejection' : 'tutor_screening_rejection',
-            {}
+            { deactivationReason: DeactivationReason.didntMeetRequirements }
         );
     }
 

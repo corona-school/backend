@@ -15,8 +15,20 @@ import { deactivatePupil } from '../pupil/activation';
 registerStudentHook(
     'deactivate-student',
     'Account gets deactivated, matches are dissolved, courses are cancelled',
-    async (student) => {
-        await deactivateStudent(student, true, DeactivationReason.missingCoC, undefined, [dissolve_reason.accountDeactivatedNoCoC]);
+    async (student, context) => {
+        const contextWithDeactivationData = context as SpecificNotificationContext<
+            'coc_reminder' | 'tutor_screening_rejection' | 'instructor_screening_rejection'
+        >;
+        const deactivationReason = contextWithDeactivationData.deactivationReason as DeactivationReason;
+        const getMatchDeactivationReason = (reason: DeactivationReason) => {
+            switch (reason) {
+                case DeactivationReason.missingCoC:
+                    return dissolve_reason.accountDeactivatedNoCoC;
+                default:
+                    return dissolve_reason.accountDeactivated;
+            }
+        };
+        await deactivateStudent(student, true, deactivationReason, undefined, [getMatchDeactivationReason(deactivationReason)]);
     } // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 
