@@ -19,7 +19,7 @@ registerStudentHook(
         const contextWithDeactivationData = context as SpecificNotificationContext<
             'coc_reminder' | 'tutor_screening_rejection' | 'instructor_screening_rejection'
         >;
-        const deactivationReason = contextWithDeactivationData.deactivationReason as DeactivationReason;
+        const deactivationReason = (contextWithDeactivationData.deactivationReason as DeactivationReason) ?? DeactivationReason.missingCoC;
         const getMatchDeactivationReason = (reason: DeactivationReason) => {
             switch (reason) {
                 case DeactivationReason.missingCoC:
