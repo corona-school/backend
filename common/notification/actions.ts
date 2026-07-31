@@ -647,6 +647,7 @@ const _notificationActions = {
     student_add_appointment_match: {
         description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
+            appointment: sampleAppointment,
             student: sampleUser,
             matchId: '1',
         },
