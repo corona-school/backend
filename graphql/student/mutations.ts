@@ -259,17 +259,17 @@ export async function updateStudent(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
-    if (cooperationId !== undefined && !isElevated(context)) {
+    if (cooperationId != undefined && !isElevated(context)) {
         throw new PrerequisiteError('cooperationId may only be changed by elevated users');
     }
 
-    if (screeningTags !== undefined && !isElevated(context)) {
+    if (screeningTags != undefined && !isElevated(context)) {
         throw new PrerequisiteError('screeningTags may only be changed by elevated users');
     }
-    if (maxParallelMatches !== undefined && !isElevated(context)) {
+    if (maxParallelMatches != undefined && !isElevated(context)) {
         throw new PrerequisiteError('maxParallelMatches may only be changed by elevated users');
     }
-    if (furtherTrainingsAttendedCount !== undefined && !isElevated(context)) {
+    if (furtherTrainingsAttendedCount != undefined && !isElevated(context)) {
         throw new PrerequisiteError('furtherTrainingsAttendedCount may only be changed by elevated users');
     }
 
