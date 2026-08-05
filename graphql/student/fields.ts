@@ -9,7 +9,7 @@ import {
     Course,
     StudentWhereInput,
 } from '../generated';
-import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
@@ -36,6 +36,15 @@ import { getPupils, pools } from '../../common/match/pool';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { testStudentSubjectsHistory } from '../../utils/test-data';
 import { isDev } from '../../common/util/environment';
+
+@ObjectType()
+export class AppointmentStats {
+    @Field()
+    plannedAppointments: number;
+
+    @Field((type) => Int)
+    successfulAppointments: number;
+}
 
 const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
@@ -258,6 +267,49 @@ export class ExtendFieldsStudentResolver {
     isInternship(@Root() student: Student) {
         const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
         return student.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(student.cooperationID.toString()) : false;
+    }
+
+    @FieldResolver((returns) => AppointmentStats)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    async matchesAppointmentStats(@Root() student: Student) {
+        const lectures = await prisma.lecture.findMany({
+            where: {
+                match: { studentId: student.id },
+            },
+            select: {
+                isCanceled: true,
+                declinedBy: true,
+                joinedBy: true,
+            },
+        });
+        return {
+            plannedAppointments: lectures.filter((l) => !l.isCanceled).length,
+            successfulAppointments: lectures.filter((l) => !l.isCanceled && !l.declinedBy.length && l.joinedBy.length >= 2).length,
+        };
+    }
+
+    @FieldResolver((returns) => AppointmentStats)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    async groupAppointmentStats(@Root() student: Student) {
+        const lectures = await prisma.lecture.findMany({
+            where: {
+                organizerIds: { has: `student/${student.id}` },
+                appointmentType: 'group',
+            },
+            select: {
+                isCanceled: true,
+                declinedBy: true,
+                joinedBy: true,
+            },
+        });
+        return {
+            plannedAppointments: lectures.filter((l) => !l.isCanceled).length,
+            successfulAppointments: lectures.filter((l) => {
+                const studentJoined = l.joinedBy.some((j) => j.startsWith(`student/${student.id}`));
+                const atLeastOneOtherJoined = l.joinedBy.some((j) => !j.startsWith(`student/${student.id}`));
+                return !l.isCanceled && studentJoined && atLeastOneOtherJoined;
+            }).length,
+        };
     }
 
     @Query((returns) => [Student])

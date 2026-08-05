@@ -781,11 +781,17 @@ model student {
   referredById String? @db.VarChar
 
   // Stores a structure like { weeklyAvailability: { monday: [{ from: 600 (minutes of the day), to: 660 }, ...], friday: [{ from: 780, to: 840 }], ... } }
-  calendarPreferences       Json?                       @db.Json
-  subcourse_mentors_student subcourse_mentors_student[]
-  jobStatus                 student_jobstatus_enum?
-  formalEducation           String?
-  specialTeachingExperience String[]                    @default([])
+  calendarPreferences           Json?                       @db.Json
+  subcourse_mentors_student     subcourse_mentors_student[]
+  jobStatus                     student_jobstatus_enum?
+  formalEducation               String?
+  specialTeachingExperience     String[]                    @default([])
+  // Screeners mark students for different administrative purposes.
+  screeningTags                 String[]                    @default([]) @db.VarChar
+  // How many matches a student can have at the same time, if not set, then it's unrestricted
+  maxParallelMatches            Int?
+  // Used by screeners to document how many trainings a student has attended
+  furtherTrainingsAttendedCount Int?                        @default(0)
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors

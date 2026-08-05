@@ -146,6 +146,12 @@ export async function canStudentRequestMatch(student: Student): Promise<Decision
         return { allowed: false, reason: 'max-requests', limit: STUDENT_MAX_REQUESTS };
     }
 
+    const activeMatchCount = await prisma.match.count({ where: { studentId: student.id, dissolved: false } });
+
+    if (!!student.maxParallelMatches && student.openMatchRequestCount + activeMatchCount >= student.maxParallelMatches) {
+        return { allowed: false, reason: 'max-matches', limit: student.maxParallelMatches };
+    }
+
     return { allowed: true };
 }
 
