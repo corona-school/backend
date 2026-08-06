@@ -37,11 +37,13 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         await requireStudentOnboarding(student.id);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prisma.instructor_screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -83,11 +85,13 @@ export async function addTutorScreening(
         await requireStudentOnboarding(student.id, prismaInstance);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prismaInstance.screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -154,6 +158,8 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
+
     const update = {
         where: { id: screeningId },
         data: {
@@ -161,6 +167,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             jobStatus: data.jobStatus,
             knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
             status: data.status,
+            decisionTakenAt: isFinalDecision && statusChanges ? new Date() : screening.decisionTakenAt,
         },
     };
 
