@@ -2,7 +2,7 @@ import {
     Subcourse,
     Pupil,
     Concrete_notification,
-    Log,
+    Admin_user_flag as AdminUserFlag,
     Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation,
     Participation_certificate as ParticipationCertificate,
     Match,
@@ -214,6 +214,12 @@ export class ExtendFieldsPupilResolver {
             },
         });
         return !screeningInTheLastFourMonths || hasActiveMatch;
+    }
+
+    @FieldResolver((returns) => [AdminUserFlag])
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.PUPIL_SCREENER)
+    async adminUserFlags(@Root() pupil: Required<Pupil>) {
+        return await prisma.admin_user_flag.findMany({ where: { userId: userForPupil(pupil).userID } });
     }
 
     @Query(() => [SubjectStatsForPupils])
