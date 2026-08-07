@@ -745,25 +745,25 @@ model student {
   sentInstructorScreeningReminderCount      Int                      @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                @db.Timestamp(6)
 
-  lastUpdatedSettingsViaBlocker  DateTime?                       @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker DateTime?                       @db.Timestamp(6)
   // The registration form used to register the user, mainly used to find Lern-Fair Plus students
-  registrationSource             student_registrationsource_enum @default(normal)
-  aboutMe                        String                          @default("") @db.VarChar
+  registrationSource            student_registrationsource_enum @default(normal)
+  aboutMe                       String                          @default("") @db.VarChar
   // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
-  zoomUserId                     String?                         @db.VarChar
-  certificate_of_conduct         certificate_of_conduct?
-  course                         course[]
-  course_instructors_student     course_instructors_student[]
-  instructor_screening           instructor_screening?
-  lecture                        lecture[]
-  match                          match[]
-  participation_certificate      participation_certificate[]
-  instant_certificate            instant_certificate[]
-  remission_request              remission_request?
-  screening                      screening?
-  subcourse_instructors_student  subcourse_instructors_student[]
+  zoomUserId                    String?                         @db.VarChar
+  certificate_of_conduct        certificate_of_conduct?
+  course                        course[]
+  course_instructors_student    course_instructors_student[]
+  instructor_screening          instructor_screening?
+  lecture                       lecture[]
+  match                         match[]
+  participation_certificate     participation_certificate[]
+  instant_certificate           instant_certificate[]
+  remission_request             remission_request?
+  screening                     screening?
+  subcourse_instructors_student subcourse_instructors_student[]
   // Should stay null for users who where registered before the onboarding got added
-  hasDoneEthicsOnboarding        Boolean?
+  hasDoneEthicsOnboarding       Boolean?
 
   cooperationID           Int?
   cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
@@ -786,8 +786,6 @@ model student {
   jobStatus                     student_jobstatus_enum?
   formalEducation               String?
   specialTeachingExperience     String[]                    @default([])
-  // Screeners mark students for different administrative purposes.
-  screeningTags                 String[]                    @default([]) @db.VarChar
   // How many matches a student can have at the same time, if not set, then it's unrestricted
   maxParallelMatches            Int?
   // Used by screeners to document how many trainings a student has attended
@@ -995,6 +993,17 @@ model job_run {
   worker    String
 
   @@id([job_name, startedAt])
+}
+
+model admin_user_flag {
+  id        Int      @id() @default(autoincrement())
+  userId    String   @db.VarChar
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  flag      String   @db.VarChar
+  metadata  Json?    @db.Json
+
+  @@unique([userId, flag])
 }
 
 enum notification_channel_enum {

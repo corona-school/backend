@@ -193,9 +193,6 @@ export class StudentUpdateInput {
     @Field((type) => Number, { nullable: true })
     cooperationId?: number;
 
-    @Field((type) => [String], { nullable: true })
-    screeningTags?: string[];
-
     @Field((type) => Number, { nullable: true })
     maxParallelMatches?: number;
 
@@ -234,7 +231,6 @@ export async function updateStudent(
         formalEducation,
         specialTeachingExperience,
         cooperationId,
-        screeningTags,
         maxParallelMatches,
         furtherTrainingsAttendedCount,
     } = update;
@@ -263,9 +259,6 @@ export async function updateStudent(
         throw new PrerequisiteError('cooperationId may only be changed by elevated users');
     }
 
-    if (screeningTags != undefined && !isElevated(context)) {
-        throw new PrerequisiteError('screeningTags may only be changed by elevated users');
-    }
     if (maxParallelMatches != undefined && !isElevated(context)) {
         throw new PrerequisiteError('maxParallelMatches may only be changed by elevated users');
     }
@@ -308,7 +301,6 @@ export async function updateStudent(
             formalEducation: ensureNoNull(formalEducation),
             specialTeachingExperience: ensureNoNull(specialTeachingExperience),
             cooperationID: ensureNoNull(cooperationId),
-            screeningTags: ensureNoNull(screeningTags),
             maxParallelMatches: maxParallelMatches,
             furtherTrainingsAttendedCount: furtherTrainingsAttendedCount,
         },
