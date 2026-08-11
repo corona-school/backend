@@ -12,7 +12,7 @@ import * as Notification from '../../common/notification';
 import { getStudentsFromList, User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
-import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
+import { getAppointmentForNotification, getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 import { assertAllowed, Decision } from '../util/decision';
 import { Attachment } from '../notification/channels/mailjet';
@@ -107,7 +107,10 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             Filename: 'termin.ics',
         };
 
+        const nextAppointment = createdMatchAppointments.reduce((prev, curr) => (curr.start < prev.start ? curr : prev));
+
         await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
+            appointment: getAppointmentForNotification(nextAppointment),
             student,
             matchId: matchId.toString(),
             attachments: [icsForPupil],
