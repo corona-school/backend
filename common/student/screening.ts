@@ -6,7 +6,7 @@ import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
@@ -37,11 +37,13 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         await requireStudentOnboarding(student.id);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prisma.instructor_screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -54,7 +56,7 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
 
         const asUser = userForStudent(student);
-        if (student.registrationSource === 'cooperation') {
+        if (student.registrationSource === 'cooperation' && student.cooperationID) {
             const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
             await Notification.actionTaken(asUser, 'cooperation_instructor_screening_success', {
                 cooperation: cooperation ? cooperation.name : null,
@@ -64,7 +66,9 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
         await updateSessionRolesOfUser(asUser.userID);
     } else {
-        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
+        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {
+            deactivationReason: DeactivationReason.didntMeetRequirements,
+        });
     }
 
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
@@ -81,11 +85,13 @@ export async function addTutorScreening(
         await requireStudentOnboarding(student.id, prismaInstance);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prismaInstance.screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -94,7 +100,7 @@ export async function addTutorScreening(
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
-            if (student.registrationSource === 'cooperation') {
+            if (student.registrationSource === 'cooperation' && student.cooperationID) {
                 const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
                 await Notification.actionTaken(asUser, 'cooperation_tutor_screening_success', {
                     cooperation: cooperation ? cooperation.name : null,
@@ -103,7 +109,9 @@ export async function addTutorScreening(
                 await Notification.actionTaken(asUser, 'tutor_screening_success', {});
             }
         } else if (screening.status === ScreeningStatus.rejection) {
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {
+                deactivationReason: DeactivationReason.didntMeetRequirements,
+            });
         }
     }
 
@@ -124,6 +132,7 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
     await createRemissionRequest(student);
     await Notification.actionTaken(userForStudent(student), 'coc_reminder', {
         isRenewal: isRenewal.toString(),
+        deactivationReason: DeactivationReason.missingCoC,
     });
 }
 
@@ -149,6 +158,8 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
+
     const update = {
         where: { id: screeningId },
         data: {
@@ -156,6 +167,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             jobStatus: data.jobStatus,
             knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
             status: data.status,
+            decisionTakenAt: isFinalDecision && statusChanges ? new Date() : screening.decisionTakenAt,
         },
     };
 
@@ -177,7 +189,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
         }
 
-        if (screening.student.registrationSource === 'cooperation') {
+        if (screening.student.registrationSource === 'cooperation' && screening.student.cooperationID) {
             const cooperation = await prisma.cooperation.findFirst({ where: { id: screening?.student?.cooperationID } });
             const action = type === 'instructor' ? 'cooperation_instructor_screening_success' : 'cooperation_tutor_screening_success';
             await Notification.actionTaken(userForStudent(screening.student), action, {
@@ -191,7 +203,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         await Notification.actionTaken(
             userForStudent(screening.student),
             type === 'instructor' ? 'instructor_screening_rejection' : 'tutor_screening_rejection',
-            {}
+            { deactivationReason: DeactivationReason.didntMeetRequirements }
         );
     }
 

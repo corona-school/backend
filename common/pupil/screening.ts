@@ -63,6 +63,10 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
     const isFirstScreening = validScreeningCount === 1;
     const isFirstSucceededScreening = succeededScreeningCount === 1;
     const asUser = userForPupil(screening.pupil);
+    if (screeningUpdate.status === PupilScreeningStatus.rejection || screeningUpdate.status === PupilScreeningStatus.success) {
+        await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { decisionTakenAt: new Date() } });
+    }
+
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
             if (isFirstScreening) {
