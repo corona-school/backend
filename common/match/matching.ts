@@ -33,7 +33,6 @@ export type MatchRequest = Readonly<{
     state: pupil_state_enum;
     requestAt: Date;
     onlyMatchWith?: gender_enum;
-    hasSpecialNeeds?: boolean;
     calendarPreferences?: CalendarPreferences;
 }>;
 
@@ -49,7 +48,6 @@ export function pupilsToRequests(pupils: Pupil[]): MatchRequest[] {
             subjects: parseSubjectString(pupil.subjects),
             requestAt: pupil.firstMatchRequest,
             onlyMatchWith: pupil.onlyMatchWith,
-            hasSpecialNeeds: pupil.hasSpecialNeeds,
             calendarPreferences: pupil.calendarPreferences as Record<string, any> as CalendarPreferences,
             languages: pupil.languages,
         };
@@ -71,7 +69,6 @@ export type MatchOffer = Readonly<{
     state: student_state_enum;
     requestAt: Date;
     gender?: gender_enum;
-    hasSpecialExperience?: boolean;
     calendarPreferences?: CalendarPreferences;
 }>;
 
@@ -86,7 +83,6 @@ export function studentsToOffers(students: Student[]): MatchOffer[] {
             subjects: parseSubjectString(student.subjects),
             requestAt: student.firstMatchRequest,
             gender: student.gender,
-            hasSpecialExperience: student.hasSpecialExperience,
             calendarPreferences: student.calendarPreferences as Record<string, any> as CalendarPreferences,
             languages: student.languages,
         };
@@ -130,11 +126,6 @@ export function matchScore(request: MatchRequest, offer: MatchOffer, currentDate
     // ---------- Constraints -----------
     // If there is a gender constraint, only match helpers whose gender is known and matches
     if (request.onlyMatchWith && (!offer.gender || request.onlyMatchWith !== offer.gender)) {
-        return NO_MATCH;
-    }
-
-    // Only match "special needs" with "special experience"
-    if (request.hasSpecialNeeds && !offer.hasSpecialExperience) {
         return NO_MATCH;
     }
 

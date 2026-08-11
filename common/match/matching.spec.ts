@@ -276,15 +276,6 @@ describe('Gender Constraint', () => {
     test('', [requestSix], [offerFive], [{ request: requestSix, offer: offerFive }]);
 });
 
-describe('Special Needs Constraint', () => {
-    // Unknown offer experience -> No Match
-    test('', [requestSeven], [offerOne], []);
-    // No offer experience -> No Match
-    test('', [requestSeven], [offerFour], []);
-    // Offer experience -> Match
-    test('', [requestSeven], [offerFive], [{ request: requestSeven, offer: offerFive }]);
-});
-
 describe('Weekly Availability Constraint', () => {
     // For now if only one has availability set, then it's not a constraint to create the match
     test('', [requestFive], [offerFive], [{ request: requestFive, offer: offerFive }]);
