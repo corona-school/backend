@@ -166,7 +166,9 @@ const _notificationActions = {
     },
     tutor_screening_rejection: {
         description: 'Tutor / Screening was rejected',
-        sampleContext: {},
+        sampleContext: {
+            deactivationReason: 'didntMeetRequirements',
+        },
     },
     instructor_screening_invitation: {
         description: 'Instructor was invited for screening',
@@ -184,7 +186,9 @@ const _notificationActions = {
     },
     instructor_screening_rejection: {
         description: 'Instructor / Screening was rejected',
-        sampleContext: {},
+        sampleContext: {
+            deactivationReason: 'didntMeetRequirements',
+        },
     },
     student_cooperation_list_removed: {
         description: 'Student / Removed from cooperation list',
@@ -545,6 +549,7 @@ const _notificationActions = {
         description: 'Student / Certificate of Conduct Request',
         sampleContext: {
             isRenewal: 'false',
+            deactivationReason: 'missingCoC',
         },
     },
     coc_cancelled: {
