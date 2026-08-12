@@ -4,6 +4,7 @@ import {
     Match,
     Certificate_of_conduct as CertificateOfConduct,
     Screening,
+    Admin_user_flag as AdminUserFlag,
     Instructor_screening as InstructorScreening,
     Subcourse,
     Course,
@@ -310,6 +311,12 @@ export class ExtendFieldsStudentResolver {
                 return !l.isCanceled && studentJoined && atLeastOneOtherJoined;
             }).length,
         };
+    }
+
+    @FieldResolver((returns) => [AdminUserFlag])
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
+    async adminUserFlags(@Root() student: Required<Student>) {
+        return await prisma.admin_user_flag.findMany({ where: { userId: userForStudent(student).userID } });
     }
 
     @Query((returns) => [Student])

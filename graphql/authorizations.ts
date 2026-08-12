@@ -361,6 +361,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_assignment: allAdmin,
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
+    Admin_user_flag: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -516,7 +517,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             formalEducation: adminOrOwnerOrScreener,
             specialTeachingExperience: adminOrOwnerOrScreener,
             maxParallelMatches: adminOrOwnerOrScreener,
-            screeningTags: onlyAdminOrScreener,
             furtherTrainingsAttendedCount: onlyAdminOrScreener,
         }),
     },

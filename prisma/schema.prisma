@@ -788,8 +788,6 @@ model student {
   jobStatus                     student_jobstatus_enum?
   formalEducation               String?
   specialTeachingExperience     String[]                    @default([])
-  // Screeners mark students for different administrative purposes.
-  screeningTags                 String[]                    @default([]) @db.VarChar
   // How many matches a student can have at the same time, if not set, then it's unrestricted
   maxParallelMatches            Int?
   // Used by screeners to document how many trainings a student has attended
@@ -998,6 +996,17 @@ model job_run {
   worker    String
 
   @@id([job_name, startedAt])
+}
+
+model admin_user_flag {
+  id        Int      @id() @default(autoincrement())
+  userId    String   @db.VarChar
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  flag      String   @db.VarChar
+  metadata  Json?    @db.Json
+
+  @@unique([userId, flag])
 }
 
 enum notification_channel_enum {

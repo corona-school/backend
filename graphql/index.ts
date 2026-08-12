@@ -80,6 +80,7 @@ import { LearningNoteMutationsResolver } from './learning/note/mutations';
 import { ExternalSchoolResolver } from './external_school/fields';
 import { MutateLessonPlanResolver } from './lessonplan/mutations';
 import { MutateInstantCertificateResolver } from './instant_certificate/mutations';
+import { AdminUserFlagMutationsResolver } from './admin_user_flags/mutations';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -211,6 +212,9 @@ const schema = buildSchemaSync({
         ExternalSchoolResolver,
 
         MutateLessonPlanResolver,
+
+        /** Admin User Flags */
+        AdminUserFlagMutationsResolver,
     ],
     authChecker,
 });
