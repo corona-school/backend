@@ -4,7 +4,7 @@ import { NotificationTriggered, MessageSentEvent, WithRawBody } from './types';
 import { talkJsIdToUserId } from '../../../common/chat/helper';
 import { getUser } from '../../../common/user';
 import * as Notification from '../../../common/notification';
-import { ChatType, InvalidSignatureError, getChatType, getNotificationContext, verifyChatUser } from './util';
+import { ChatType, InvalidSignatureError, getChatType, getNotificationContext, verifyChatUser, getMessageFlag } from './util';
 import { createHmac } from 'crypto';
 import { prisma } from '../../../common/prisma';
 
@@ -91,9 +91,26 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
         }
         const senderUserId = talkJsIdToUserId(sender.id);
         const match = conversation.custom.match ? JSON.parse(conversation.custom.match) : undefined;
+        const subcourse = conversation.custom.subcourse ? JSON.parse(conversation.custom.subcourse) : undefined;
         const userType = senderUserId.startsWith('pupil') ? 'pupil' : 'student';
         const conversationParticipants = Object.keys(data.conversation.participants);
         const chatType = getChatType(conversationParticipants);
+        const messageFlag = getMessageFlag(message.text);
+        if (messageFlag) {
+            const isFlagged = await prisma.admin_user_flag.findFirst({
+                where: { userId: senderUserId, flag: messageFlag },
+            });
+            if (!isFlagged) {
+                await prisma.admin_user_flag.create({
+                    data: {
+                        userId: senderUserId,
+                        flag: messageFlag,
+                        metadata: { message: message.text, conversation: { id: conversation.id, match, subcourse } },
+                    },
+                });
+            }
+        }
+
         if (chatType === ChatType.ONE_ON_ONE && !!match?.matchId) {
             const matchRecord = await prisma.match.findFirst({
                 where: { id: match.matchId },
