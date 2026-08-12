@@ -139,10 +139,10 @@ export class ExtendedFieldsLectureResolver {
     @Authorized(Role.USER, Role.ADMIN)
     async position(@Ctx() ctx: GraphQLContext, @Root() appointment: Appointment): Promise<number> {
         if (appointment.subcourseId) {
-            return (await getSubcoursePositions(ctx, appointment.subcourseId)).indexOf(appointment.id);
+            return (await getSubcoursePositions(ctx, appointment.subcourseId)).indexOf(appointment.id) + 1;
         }
         if (appointment.matchId) {
-            return (await getMatchPositions(ctx, appointment.matchId)).indexOf(appointment.id);
+            return (await getMatchPositions(ctx, appointment.matchId)).indexOf(appointment.id) + 1;
         }
         if (appointment.pupilScreeningId || appointment.instructorScreeningId || appointment.tutorScreeningId) {
             return 1;
