@@ -347,7 +347,7 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async subjectsForStudents() {
         let result: { subject_name: string; mandatory_count: number; grades: string[] }[];
-        if (!isDev) {
+        if (isDev) {
             return testStudentSubjectsHistory.map((e) => ({
                 subject: e.subject_name,
                 pupilsWaiting: e.mandatory_count,
