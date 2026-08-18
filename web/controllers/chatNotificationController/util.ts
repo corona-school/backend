@@ -10,6 +10,9 @@ const profanity = new Profanity({
     languages: ['de', 'en'],
 });
 
+profanity.removeWords(process.env.PROFANITY_WHITE_LIST?.split(',') || []);
+profanity.addWords(process.env.PROFANITY_BLACK_LIST?.split(',') || []);
+
 const logger = getLogger('ChatNotification');
 
 export enum ChatType {
