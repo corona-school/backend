@@ -347,7 +347,7 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async subjectsForStudents() {
         let result: { subject_name: string; mandatory_count: number; grades: string[] }[];
-        if (isDev) {
+        if (!isDev) {
             return testStudentSubjectsHistory.map((e) => ({
                 subject: e.subject_name,
                 pupilsWaiting: e.mandatory_count,
@@ -392,9 +392,9 @@ export class ExtendFieldsStudentResolver {
 
             SELECT
                 h.subject_name,
-                COALESCE(c.mandatory_count, 0) AS mandatory_count,
+                COALESCE(c.mandatory_count, 0)::INT AS mandatory_count,
                 COALESCE(c.grades, ARRAY[]::VARCHAR[]) AS grades,
-                h.historical_matches
+                h.historical_matches::INT AS historical_matches
             FROM historical_demand h
             LEFT JOIN current_demand c
                 ON c.subject_name = h.subject_name
