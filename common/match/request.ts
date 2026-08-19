@@ -119,7 +119,7 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
     }
 
     const result = await prisma.pupil.update({
-        where: { id: pupil.id },
+        where: { id: pupil.id, openMatchRequestCount: { gt: 0 } },
         data: {
             openMatchRequestCount: { decrement: 1 },
         },
@@ -129,7 +129,7 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests`);
 }
 
 export async function canStudentRequestMatch(student: Student): Promise<Decision<RequestBlockReasons>> {
@@ -183,7 +183,7 @@ export async function deleteStudentMatchRequest(student: Student) {
     }
 
     const result = await prisma.student.update({
-        where: { id: student.id },
+        where: { id: student.id, openMatchRequestCount: { gt: 0 } },
         data: { openMatchRequestCount: { decrement: 1 } },
     });
 
@@ -191,5 +191,5 @@ export async function deleteStudentMatchRequest(student: Student) {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for student, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted match request for Student(${student.id}), now has ${result.openMatchRequestCount} requests`);
 }
