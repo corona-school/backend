@@ -360,6 +360,8 @@ export class ExtendFieldsStudentResolver {
                 FROM pupil p
                 WHERE p."openMatchRequestCount" > 0
                 AND p.active = TRUE
+                AND p."isPupil" = TRUE
+                AND p."registrationSource" != '5'
                 AND EXISTS (
                     SELECT 1
                     FROM pupil_screening ps
