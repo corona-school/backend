@@ -346,12 +346,13 @@ export class ExtendFieldsStudentResolver {
     @Query(() => [SubjectStatsForStudents])
     @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
     async subjectsForStudents() {
-        let result: { subject_name: string; mandatory_count: number; grades: string[] }[];
+        let result: { subject_name: string; mandatory_count: number; grades: string[]; historical_matches: number }[];
         if (isDev) {
-            return testStudentSubjectsHistory.map((e) => ({
-                subject: e.subject_name,
-                pupilsWaiting: e.mandatory_count,
-                gradesAvailable: e.grades.map((g) => gradeAsInt(g)),
+            result = testStudentSubjectsHistory.map((e) => ({
+                subject_name: e.subject_name,
+                mandatory_count: e.mandatory_count,
+                grades: e.grades,
+                historical_matches: e.historical_matches,
             }));
         } else {
             result = (await prisma.$queryRaw`
@@ -404,8 +405,28 @@ export class ExtendFieldsStudentResolver {
                 (COALESCE(c.mandatory_count, 0) = 0),
                 c.mandatory_count DESC,
                 h.historical_matches DESC;
-        `) as { subject_name: string; mandatory_count: number; grades: string[] }[];
+        `) as { subject_name: string; mandatory_count: number; grades: string[]; historical_matches: number }[];
         }
-        return result.map((e) => ({ subject: e.subject_name, pupilsWaiting: e.mandatory_count, gradesAvailable: e.grades.map((g) => gradeAsInt(g)) }));
+
+        const getDemand = (rank: number) => {
+            if (rank <= 4) {
+                return 0;
+            }
+            if (rank <= 10) {
+                return 1;
+            }
+            return 2;
+        };
+
+        const sortedByHistoricalMatches = [...result].sort((a, b) => b.historical_matches - a.historical_matches);
+        const demandBySubject = new Map(sortedByHistoricalMatches.map((e, index) => [e.subject_name, getDemand(index + 1)]));
+
+        console.log(demandBySubject);
+        return result.map((e) => ({
+            subject: e.subject_name,
+            pupilsWaiting: e.mandatory_count,
+            gradesAvailable: e.grades.map((g) => gradeAsInt(g)),
+            demandRank: demandBySubject.get(e.subject_name)!,
+        }));
     }
 }

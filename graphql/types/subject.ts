@@ -51,4 +51,7 @@ export class SubjectStatsForStudents {
 
     @Field((type) => [Int], { nullable: true })
     gradesAvailable?: number[];
+
+    @Field((type) => Int, { nullable: true })
+    demandRank?: number;
 }
