@@ -421,7 +421,6 @@ export class ExtendFieldsStudentResolver {
         const sortedByHistoricalMatches = [...result].sort((a, b) => b.historical_matches - a.historical_matches);
         const demandBySubject = new Map(sortedByHistoricalMatches.map((e, index) => [e.subject_name, getDemand(index + 1)]));
 
-        console.log(demandBySubject);
         return result.map((e) => ({
             subject: e.subject_name,
             pupilsWaiting: e.mandatory_count,
