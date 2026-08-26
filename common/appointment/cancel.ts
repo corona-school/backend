@@ -7,6 +7,7 @@ import { getAppointmentForNotification } from './util';
 import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { deleteNonSubmittedLectureFeedback } from '../lecture-feedback';
 
 const logger = getLogger('Appointment');
 
@@ -34,8 +35,13 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
         data: { isCanceled: true },
         where: { id: appointment.id },
     });
-
     logger.info(`Appointment(${appointment.id}) was cancelled by User(${user.userID})`);
+
+    try {
+        await deleteNonSubmittedLectureFeedback(appointment);
+    } catch (error) {
+        logger.error(`Failed to delete non-submitted lecture feedback for Appointment(${appointment.id})`, error);
+    }
 
     const student = await getStudent(user);
 
