@@ -51,4 +51,5 @@ export const isOwnedBy: { [Name in ResolverModelNames]?: (user: GraphQLUser, ent
     Screening: (user, screening) => user.studentId === screening.studentId,
     Instructor_screening: (user, screening) => user.studentId === screening.studentId,
     Pupil_screening: (user, screening) => user.pupilId === screening.pupilId,
+    Lecture_feedback: (user, feedback) => user.userID === feedback.userId,
 };
