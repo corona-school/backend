@@ -7,10 +7,10 @@ const logger = getLogger('Lecture Feedback');
 export const createLectureFeedback = async (appointment: Appointment) => {
     const participants = appointment.participantIds;
     const organizers = appointment.organizerIds;
-    const hasFeedback = await prisma.lecture_feedback.count({
+    const feedbackCount = await prisma.lecture_feedback.count({
         where: { lectureId: appointment.id },
     });
-    if (hasFeedback === 0) {
+    if (feedbackCount === 0) {
         await prisma.lecture_feedback.createMany({
             data: participants.concat(organizers).map((userId) => ({
                 lectureId: appointment.id,
