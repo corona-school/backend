@@ -1,6 +1,6 @@
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Int, Mutation, Resolver } from 'type-graphql';
-import { removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
+import { removeGroupAppointmentsOrganizer, removeGroupAppointmentsParticipant } from '../../common/appointment/participants';
 import { contactInstructors, contactParticipants } from '../../common/courses/contact';
 import {
     fillSubcourse,
@@ -165,6 +165,18 @@ export class MutateSubcourseResolver {
 
         await removeSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
 
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async subcourseRemoveAppointmentsOrganizer(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('organizerId') organizerId: string,
+        @Arg('studentEmail') studentEmail: string
+    ) {
+        await removeGroupAppointmentsOrganizer(subcourseId, organizerId, studentEmail);
         return true;
     }
 
