@@ -21,6 +21,8 @@ export class AppointmentUpdateInput {
     start?: Date;
     @Field(() => Int, { nullable: true })
     duration?: number;
+    @Field(() => Int, { nullable: true })
+    actualDuration?: number;
     @Field(() => String, { nullable: true })
     override_meeting_link?: string;
     @Field(() => [String], { nullable: true })
@@ -58,6 +60,10 @@ export async function updateAppointment(
 
     if (appointmentUpdate.joinedBy !== undefined && !isAdminOverride) {
         throw new PrerequisiteError(`Only admins can update joinedBy field.`);
+    }
+
+    if (appointment.actualDuration !== appointmentUpdate.actualDuration && !isAdminOverride) {
+        throw new PrerequisiteError(`Only admins can update actualDuration field.`);
     }
 
     const sameStart = !newStart || start.toISOString() === newStart.toISOString();
