@@ -394,7 +394,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 function formatFloat(value: number | Prisma.Decimal, language: 'de' | 'en') {
-    logger.info(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
+    logger.debug(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
     return language === 'de' ? value.toFixed(2).replace('.', ',') : value.toFixed(2);
 }
 
@@ -451,6 +451,11 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
             FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
             formatFloat: (value: number) => formatFloat(value, lang),
+            formatHoursWithMinutes: (value: number) => {
+                const duration = moment.duration(value, 'hours');
+                const formatted = `${Math.floor(duration.asHours())} Stunden, ${duration.minutes()} Minuten`;
+                return formatted;
+            },
             IS_VERIFICATION_PAGE: true,
         });
     }
@@ -665,6 +670,11 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
         FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
         formatFloat: (value: number) => formatFloat(value, lang),
+        formatHoursWithMinutes: (value: number) => {
+            const duration = moment.duration(value, 'hours');
+            const formatted = `${Math.floor(duration.asHours())} Stunden, ${duration.minutes()} Minuten`;
+            return formatted;
+        },
         IS_VERIFICATION_PAGE: false,
     });
     return await generatePDFFromHTML(result, {
