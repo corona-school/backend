@@ -62,7 +62,7 @@ export async function updateAppointment(
         throw new PrerequisiteError(`Only admins can update joinedBy field.`);
     }
 
-    if (appointment.actualDuration !== appointmentUpdate.actualDuration && !isAdminOverride) {
+    if (appointmentUpdate.actualDuration !== undefined && !isAdminOverride) {
         throw new PrerequisiteError(`Only admins can update actualDuration field.`);
     }
 
