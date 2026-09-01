@@ -685,7 +685,20 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         formatFloat: (value: number) => formatFloat(value, lang),
         formatHoursWithMinutes: (value: number) => {
             const duration = moment.duration(value, 'hours');
-            const formatted = `${Math.floor(duration.asHours())} Stunden, ${duration.minutes()} Minuten`;
+            const getHourLabel = () => {
+                if (duration.asHours() === 1) {
+                    return lang === 'de' ? 'Stunde' : 'hour';
+                }
+                return lang === 'de' ? 'Stunden' : 'hours';
+            };
+            const getMinuteLabel = () => {
+                if (duration.minutes() === 1) {
+                    return lang === 'de' ? 'Minute' : 'minute';
+                }
+                return lang === 'de' ? 'Minuten' : 'minutes';
+            };
+            const minutes = duration.minutes() > 0 ? `, ${duration.minutes()} ${getMinuteLabel()}` : '';
+            const formatted = `${Math.floor(duration.asHours())} ${getHourLabel()}${minutes}`;
             return formatted;
         },
         IS_VERIFICATION_PAGE: false,
