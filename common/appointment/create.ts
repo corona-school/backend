@@ -12,7 +12,7 @@ import * as Notification from '../../common/notification';
 import { getStudentsFromList, User, userForPupil, userForStudent } from '../user';
 import { getMatch, getPupil, getStudent } from '../../graphql/util';
 import { PrerequisiteError, RedundantError } from '../../common/util/error';
-import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
+import { getAppointmentForNotification, getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getIcsFile } from './util';
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 import { assertAllowed, Decision } from '../util/decision';
 import { Attachment } from '../notification/channels/mailjet';
@@ -63,7 +63,6 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
 
     // the correct meeting link is provided via appointmentsToBeCreated.
     // Cases:
-    // - override meeting link is adopted
     // - new override meeting link
     // - create zoom meeting
     let hosts: ZoomUser[] | null = null;
@@ -108,7 +107,10 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
             Filename: 'termin.ics',
         };
 
+        const nextAppointment = createdMatchAppointments.reduce((prev, curr) => (curr.start < prev.start ? curr : prev));
+
         await Notification.actionTaken(userForPupil(pupil), 'student_add_appointment_match', {
+            appointment: getAppointmentForNotification(nextAppointment),
             student,
             matchId: matchId.toString(),
             attachments: [icsForPupil],
@@ -159,13 +161,11 @@ export const createGroupAppointments = async (
     const mentors = await prisma.subcourse_mentors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const instructors = await prisma.subcourse_instructors_student.findMany({ where: { subcourseId: subcourseId }, select: { student: true } });
     const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
-    const lastAppointment = await prisma.lecture.findFirst({ where: { subcourseId }, orderBy: { createdAt: 'desc' }, select: { override_meeting_link: true } });
     const decision = canCreateGroupAppointment(subcourse, instructors.length > 0);
     assertAllowed(decision);
 
-    // we don't want to create a Zoom meeting if there's an override_meeting_link specified in the last appointment
     let hosts: ZoomUser[] | null = null;
-    if (isZoomFeatureActive() && lastAppointment?.override_meeting_link == null && !appointmentsToBeCreated[0].meetingLink) {
+    if (isZoomFeatureActive() && appointmentsToBeCreated.some((a) => !a.meetingLink)) {
         hosts = await hostsForStudents(instructors.map((i) => i.student));
     }
 
@@ -194,7 +194,7 @@ export const createGroupAppointments = async (
                     organizerIds: instructors.map((i) => userForStudent(i.student).userID),
                     participantIds: [...participants.map((p) => userForPupil(p.pupil).userID), ...mentors.map((m) => userForStudent(m.student).userID)],
                     zoomMeetingId,
-                    override_meeting_link: (appointmentToBeCreated.meetingLink ?? lastAppointment?.override_meeting_link) || null,
+                    override_meeting_link: appointmentToBeCreated.meetingLink,
                 },
             });
         })

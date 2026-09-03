@@ -45,8 +45,31 @@ export type ZoomMeetings = {
     meetings: ZoomMeeting[];
 };
 
+export type ZoomMeetingParticipant = {
+    id: string;
+    name: string;
+    user_id: string;
+    registrant_id: string;
+    user_email: string;
+    join_time: string;
+    leave_time: string;
+    duration: number;
+    failover: boolean;
+    status: string;
+    internal_user: boolean;
+};
+
+export type ZoomMeetingReport = {
+    next_page_token: string;
+    page_count: number;
+    page_size: number;
+    total_records: number;
+    participants: ZoomMeetingParticipant[];
+};
+
 const zoomUsersUrl = 'https://api.zoom.us/v2/users';
 const zoomMeetingUrl = 'https://api.zoom.us/v2/meetings';
+const zoomPastMeetingUrl = 'https://api.zoom.us/v2/past_meetings';
 const zoomMeetingReportUrl = 'https://api.zoom.us/v2/report/meetings';
 
 const createZoomMeeting = async (zoomUsers: ZoomUser[], startTime: Date, duration: number, isCourse: boolean, name: string): Promise<ZoomMeeting> => {
@@ -155,6 +178,19 @@ async function getUsersZoomMeetings(email: string): Promise<ZoomMeetings> {
     return (await response.json()) as ZoomMeetings;
 }
 
+async function getPastZoomMeetingParticipants(meetingId: string): Promise<Response> {
+    const { access_token } = await getAccessToken();
+    const response = await fetch(`${zoomPastMeetingUrl}/${meetingId}/participants`, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    return response;
+}
+
 const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
     assureZoomFeatureActive();
 
@@ -182,7 +218,7 @@ const deleteZoomMeeting = async (appointment: Appointment): Promise<void> => {
     logger.info(`Zoom - The Zoom Meeting ${appointment.zoomMeetingId} was deleted.`);
 };
 
-const getZoomMeetingReport = async (meetingId: string) => {
+const getZoomMeetingReport = async (meetingId: string): Promise<ZoomMeetingReport | null> => {
     assureZoomFeatureActive();
 
     const { access_token } = await getAccessToken('report:read:admin');
@@ -257,7 +293,7 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - failed to update meeting with ${response.status} ${await response.text()}`);
+        throw new Error(`Zoom - failed to update ZoomMeeting(${meetingId}) with ${response.status} ${await response.text()}`);
     }
 
     logger.info(`Zoom - The Zoom Meeting was updated.`);
@@ -305,4 +341,5 @@ export {
     updateZoomMeeting,
     addOrganizerToZoomMeeting,
     removeOrganizerFromZoomMeeting,
+    getPastZoomMeetingParticipants,
 };

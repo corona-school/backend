@@ -98,9 +98,12 @@ export async function activate(id: NotificationID, active: boolean): Promise<voi
     invalidateCache();
 }
 
-export async function update(id: NotificationID, values: Partial<Omit<NotificationUpdateInput, 'active'>>) {
-    if (values.hookID && !hookExists(values.hookID.set)) {
-        throw new Error(`Invalid HookID`);
+export async function update(id: NotificationID, values: Partial<Omit<Prisma.notificationUpdateInput, 'active'>>) {
+    if (values.hookID) {
+        const hookID = typeof values.hookID === 'string' ? values.hookID : values.hookID.set;
+        if (hookID && !hookExists(hookID)) {
+            throw new Error(`Invalid HookID`);
+        }
     }
 
     const matched = await prisma.notification.update({

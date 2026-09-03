@@ -38,18 +38,6 @@ export interface RegisterPupilData {
     referredById?: string;
 }
 
-export interface BecomeTuteeData {
-    subjects: Subject[];
-    gradeAsInt?: number;
-    languages: Language[];
-    learningGermanSince?: pupil_learninggermansince_enum;
-}
-
-export interface BecomeStatePupilData {
-    teacherEmail: string;
-    gradeAsInt?: number;
-}
-
 const logger = getLogger('pupilRegistration');
 
 export async function registerPupil(data: RegisterPupilData, noEmail = false, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
@@ -104,60 +92,4 @@ export async function registerPupil(data: RegisterPupilData, noEmail = false, pr
     await logTransaction('verificationRequets', userForPupil(pupil), {});
 
     return pupil;
-}
-
-export async function becomeTutee(pupil: Pupil, data: BecomeTuteeData, prismaInstance: Prisma.TransactionClient | PrismaClient = prisma) {
-    if (pupil.isPupil) {
-        throw new RedundantError(`Pupil is already tutee`);
-    }
-
-    const updatedPupil = await prismaInstance.pupil.update({
-        data: {
-            isPupil: true,
-            isParticipant: true,
-            subjects: JSON.stringify(data.subjects.map(toPupilSubjectDatabaseFormat)),
-            grade: `${data.gradeAsInt}. Klasse`,
-            languages: data.languages ? { set: data.languages } : undefined,
-            learningGermanSince: data.learningGermanSince,
-        },
-        where: { id: pupil.id },
-    });
-
-    return updatedPupil;
-}
-
-// TODO: Remove deprecated feature
-export async function becomeStatePupil(pupil: Pupil, data: BecomeStatePupilData) {
-    if (!pupil.grade && !data.gradeAsInt) {
-        throw new Error(`State Pupils must set their grade field`);
-    }
-
-    if (pupil.registrationSource !== RegistrationSource.cooperation) {
-        throw new Error(`For pupils to become a state pupil, they must register with COOPERATION as registration source`);
-    }
-
-    const updatedPupil = await prisma.pupil.update({
-        data: {
-            teacherEmailAddress: data.teacherEmail,
-            grade: data.gradeAsInt ? `${data.gradeAsInt}. Klasse` : undefined,
-        },
-        where: { id: pupil.id },
-    });
-
-    return updatedPupil;
-}
-
-export async function becomeParticipant(pupil: Pupil) {
-    if (pupil.isParticipant) {
-        throw new RedundantError(`Pupil is already a participant`);
-    }
-
-    const updatedPupil = await prisma.pupil.update({
-        data: {
-            isParticipant: true,
-        },
-        where: { id: pupil.id },
-    });
-
-    return updatedPupil;
 }

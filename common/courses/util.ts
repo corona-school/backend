@@ -17,7 +17,15 @@ export function getCourseImageKey(course: { id: number }, fileType: string) {
 }
 
 export function getCourseImageURL(course: { imageKey?: string }) {
-    return course.imageKey ? accessURLForKey(course.imageKey) : courseDefaultImage;
+    return course.imageKey
+        ? {
+              url: accessURLForKey(course.imageKey),
+              default: false,
+          }
+        : {
+              url: courseDefaultImage,
+              default: true,
+          };
 }
 
 export async function getSubcourseInstructors(subcourse: Subcourse) {

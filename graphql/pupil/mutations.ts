@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Arg, Authorized, Ctx, InputType, ObjectType, Field, Int } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, InputType, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { activatePupil, deactivatePupil } from '../../common/pupil/activation';
 import { Role } from '../authorizations';
@@ -6,36 +6,38 @@ import { ensureNoNull, getPupil } from '../util';
 import * as Notification from '../../common/notification';
 import { createPupilMatchRequest, deletePupilMatchRequest } from '../../common/match/request';
 import { GraphQLContext } from '../context';
-import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, isScreener, updateSessionUser } from '../authentication';
+import { getSessionPupil, getSessionScreener, getSessionUser, isAdmin, isElevated, updateSessionUser } from '../authentication';
 import { Subject } from '../types/subject';
 import {
+    gender_enum as Gender,
+    learning_offer_constraints_enum as LearningOfferConstraintsEnum,
     Prisma,
     PrismaClient,
     pupil as Pupil,
+    pupil_languages_enum as Language,
     pupil_registrationsource_enum as RegistrationSource,
     pupil_schooltype_enum as SchoolType,
-    pupil_languages_enum as Language,
     pupil_screening_status_enum as PupilScreeningStatus,
     pupil_state_enum as State,
-    gender_enum as Gender,
     school as School,
 } from '@prisma/client';
 import { prisma } from '../../common/prisma';
 import { PrerequisiteError } from '../../common/util/error';
 import { toPupilSubjectDatabaseFormat } from '../../common/util/subjectsutils';
-import { userForPupil, userForScreener } from '../../common/user';
+import { DeactivationReason, userForPupil } from '../../common/user';
 import { MaxLength } from 'class-validator';
-import { becomeTutee, registerPupil } from '../../common/pupil/registration';
 import { NotificationPreferences } from '../types/preferences';
-import { addPupilScreening, updatePupilScreening } from '../../common/pupil/screening';
-import { invalidatePupilScreening } from '../../common/pupil/screening';
-import { validateEmail, ValidateEmail } from '../validators';
+import { addPupilScreening, invalidatePupilScreening, updatePupilScreening } from '../../common/pupil/screening';
+import { ValidateEmail } from '../validators';
 import { getLogger } from '../../common/logger/logger';
-import { RegisterPupilInput, BecomeTuteeInput, RegistrationSchool } from '../types/userInputs';
+import { RegistrationSchool } from '../types/userInputs';
 import moment from 'moment';
 import { gradeAsInt, gradeAsString } from '../../common/util/gradestrings';
 import { findOrCreateSchool } from '../../common/school/create';
 import { CalendarPreferences } from '../types/calendarPreferences';
+import redactUsers from '../../common/user/redaction';
+import { updateSessionRolesOfUser } from '../../common/user/session';
+import { cancelCalendlyEvent } from '../../common/calendly';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -100,6 +102,18 @@ export class PupilUpdateInput {
 
     @Field((type) => CalendarPreferences, { nullable: true })
     calendarPreferences?: CalendarPreferences;
+
+    @Field((type) => Int, { nullable: true })
+    age?: number;
+
+    @Field((type) => Boolean, { nullable: true })
+    isPupil?: boolean;
+
+    @Field((type) => Boolean, { nullable: true })
+    isParticipant?: boolean;
+
+    @Field((type) => [LearningOfferConstraintsEnum], { nullable: true })
+    learningOfferConstraints?: LearningOfferConstraintsEnum[];
 }
 
 @InputType()
@@ -112,36 +126,6 @@ export class PupilScreeningUpdateInput {
 
     @Field(() => String, { nullable: true })
     knowsCoronaSchoolFrom?: string;
-}
-
-@InputType()
-class PupilRegisterPlusInput {
-    @Field(() => String) // required to identify pupil even when registration is not desired
-    email: string;
-
-    @Field((type) => RegisterPupilInput, { nullable: true })
-    register?: RegisterPupilInput;
-
-    @Field((type) => BecomeTuteeInput, { nullable: true })
-    activate?: BecomeTuteeInput;
-}
-
-@ObjectType()
-class PupilRegisterPlusManyOutput {
-    @Field((_type) => String, { nullable: true })
-    email?: string;
-
-    @Field((_type) => Boolean, { nullable: false })
-    success: boolean;
-
-    @Field((_type) => String, { nullable: false })
-    reason: string;
-}
-
-@InputType()
-class PupilRegisterPlusManyInput {
-    @Field((type) => [PupilRegisterPlusInput])
-    entries: PupilRegisterPlusInput[];
 }
 
 @InputType()
@@ -176,6 +160,10 @@ export async function updatePupil(
         descriptionForScreening,
         school,
         calendarPreferences,
+        age,
+        isPupil,
+        isParticipant,
+        learningOfferConstraints,
     } = update;
 
     if (registrationSource != undefined && !isElevated(context)) {
@@ -202,12 +190,23 @@ export async function updatePupil(
         throw new PrerequisiteError('descriptionForScreening may only be changed by elevated users');
     }
 
+    if (isPupil !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('isPupil may only be changed by elevated users');
+    }
+
+    if (isParticipant !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('isParticipant may only be changed by elevated users');
+    }
+
+    if (learningOfferConstraints !== undefined && !isElevated(context)) {
+        throw new PrerequisiteError('learningOfferConstraints may only be changed by elevated users');
+    }
+
     let dbSchool: School | undefined;
     try {
         dbSchool = await findOrCreateSchool(school);
     } catch (error) {
         logger.error('School could not be created', error);
-        throw new PrerequisiteError('School could not be created');
     }
 
     const res = await prismaInstance.pupil.update({
@@ -232,6 +231,10 @@ export async function updatePupil(
             descriptionForScreening,
             schoolId: dbSchool?.id,
             calendarPreferences: ensureNoNull(calendarPreferences as Record<string, any>),
+            age: ensureNoNull(age),
+            isPupil,
+            isParticipant,
+            learningOfferConstraints: ensureNoNull(learningOfferConstraints),
         },
         where: { id: pupil.id },
     });
@@ -242,54 +245,13 @@ export async function updatePupil(
 
     // The email, firstname or lastname might have changed, so it is a good idea to refresh the session
     await updateSessionUser(context, userForPupil(res), getSessionUser(context).deviceId);
+    // In case screeners change the roles of the user
+    if (isParticipant !== pupil.isParticipant || isPupil !== pupil.isPupil) {
+        await updateSessionRolesOfUser(userForPupil(res).userID);
+    }
 
     logger.info(`Pupil(${pupil.id}) updated their account with ${JSON.stringify(update)}`);
     return res;
-}
-
-async function pupilRegisterPlus(data: PupilRegisterPlusInput, ctx: GraphQLContext): Promise<{ success: boolean; reason: string }> {
-    let { email } = data;
-    const { register, activate } = data;
-    try {
-        email = validateEmail(email);
-        if (register) {
-            register.email = validateEmail(register.email);
-            if (register.email !== email) {
-                throw new PrerequisiteError(`Identifying email is different from email used in registration data`);
-            }
-        }
-
-        const existingAccount = await prisma.pupil.findUnique({ where: { email } });
-
-        if (!register && !existingAccount) {
-            throw new PrerequisiteError(`Account with email ${email} doesn't exist and no registration data was provided`);
-        }
-
-        await prisma.$transaction(async (tx) => {
-            let pupil = existingAccount;
-            if (register) {
-                if (pupil) {
-                    // if account already exists, overwrite relevant data with new plus data
-                    logger.info(`Account with email ${email} already exists, updating account with registration data instead... Pupil(${pupil.id})`);
-                    pupil = await updatePupil(ctx, pupil, { ...register }, tx);
-                } else {
-                    pupil = await registerPupil(register, true, tx);
-                    logger.info(`Registered account with email ${email}. Pupil(${pupil.id})`);
-                }
-            }
-            if (activate && pupil?.isPupil) {
-                logger.info(`Account with email ${email} is already a tutee, updating pupil with activation data instead... Pupil(${pupil.id})`);
-                await updatePupil(ctx, pupil, { ...activate }, tx);
-            } else if (activate) {
-                await becomeTutee(pupil, activate, tx);
-                logger.info(`Made account with email ${email} a tutee. Pupil(${pupil.id})`);
-            }
-        });
-    } catch (e) {
-        logger.error(`Error while registering pupil ${email}, skipping this one`, e);
-        return { success: false, reason: e.publicMessage || e.toString() };
-    }
-    return { success: true, reason: '' };
 }
 
 @Resolver((of) => GraphQLModel.Pupil)
@@ -322,7 +284,18 @@ export class MutatePupilResolver {
     @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
     async pupilDeactivate(@Arg('pupilId') pupilId: number): Promise<boolean> {
         const pupil = await getPupil(pupilId);
-        await deactivatePupil(pupil, false, 'deactivated by admin', true);
+        await deactivatePupil(pupil, false, DeactivationReason.deactivatedByAdmin, undefined, true);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async pupilRedact(@Arg('pupilId') pupilId: number): Promise<boolean> {
+        const pupil = await getPupil(pupilId);
+        if (pupil.active) {
+            throw new PrerequisiteError('Cannot redact active pupil');
+        }
+        await redactUsers({ pupils: [pupil], students: [], screener: [] });
         return true;
     }
 
@@ -341,26 +314,29 @@ export class MutatePupilResolver {
     async pupilDeleteMatchRequest(@Ctx() context: GraphQLContext, @Arg('pupilId', { nullable: true }) pupilId?: number): Promise<boolean> {
         const pupil = await getSessionPupil(context, /* elevated override */ pupilId);
         await deletePupilMatchRequest(pupil);
-
-        return true;
-    }
-
-    @Mutation((returns) => [PupilRegisterPlusManyOutput])
-    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER)
-    async pupilRegisterPlusMany(@Ctx() context: GraphQLContext, @Arg('data') data: PupilRegisterPlusManyInput) {
-        const { entries } = data;
-        logger.info(`Starting pupilRegisterPlusMany, received ${entries.length} pupils`);
-        const results = [];
-        for (const entry of entries) {
-            const res = await pupilRegisterPlus(entry, context);
-            results.push({ email: entry.email, ...res });
+        const pendingScreeningAppointment = await prisma.lecture.findFirst({
+            where: {
+                participantIds: {
+                    has: userForPupil(pupil).userID,
+                },
+                isCanceled: false,
+                appointmentType: 'screening',
+                start: {
+                    gt: new Date(),
+                },
+            },
+        });
+        if (pendingScreeningAppointment?.eventUrl) {
+            try {
+                await cancelCalendlyEvent(pendingScreeningAppointment.eventUrl, 'Match-Anfrage zurückgezogen');
+            } catch (error) {
+                logger.warn(
+                    `Failed to cancel Calendly Event(${pendingScreeningAppointment.eventUrl}) screening appointment for pupil ${pupil.id} after match request was deleted`,
+                    error
+                );
+            }
         }
-        logger.info(
-            `pupilRegisterPlusMany has finished. Count of successful pupils handled: ${results.filter((p) => p.success).length}. Failed count: ${
-                results.filter((p) => p.success).length
-            }`
-        );
-        return results;
+        return true;
     }
 
     @Mutation(() => Boolean)

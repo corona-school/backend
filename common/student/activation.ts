@@ -7,15 +7,16 @@ import { deleteZoomUser } from '../zoom/user';
 import { PrerequisiteError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { isZoomFeatureActive } from '../zoom/util';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import { CertificateState } from '../certificate';
 import { removeAllPushSubcriptions } from '../notification/channels/push';
-import { cancelSubcourse, deleteSubcourseInstructor, subcourseOver } from '../courses/states';
+import { cancelSubcourse, removeSubcourseInstructor, subcourseOver } from '../courses/states';
 
 export async function deactivateStudent(
     student: Student,
     silent = false,
-    reason?: string,
+    reason?: DeactivationReason,
+    otherReason?: string,
     dissolveReasons: dissolve_reason[] = [dissolve_reason.accountDeactivated]
 ) {
     if (!student.active) {
@@ -23,7 +24,11 @@ export async function deactivateStudent(
     }
 
     if (!silent) {
-        await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
+        if (reason === DeactivationReason.noMoreInterest) {
+            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated_no_more_interest', {});
+        } else {
+            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
+        }
     }
 
     await Notification.cancelRemindersFor(userForStudent(student));
@@ -70,8 +75,9 @@ export async function deactivateStudent(
     for (const subcourse of subcourses) {
         // There are multiple instructors, so just remove the student from the subcourse
         if (subcourse.subcourse_instructors_student.length > 1) {
-            await deleteSubcourseInstructor(userForStudent(student), subcourse, student);
+            await removeSubcourseInstructor(userForStudent(student), subcourse, student);
         } else if (!(await subcourseOver(subcourse))) {
+            // there is only one instructor and the subcourse is not over yet, so cancel the subcourse
             await cancelSubcourse(userForStudent(student), subcourse, true);
         }
     }
@@ -80,7 +86,7 @@ export async function deactivateStudent(
         await deleteZoomUser(student);
     }
 
-    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason });
+    await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason, otherReason });
 
     return updatedStudent;
 }

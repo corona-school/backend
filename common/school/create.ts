@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
-import { school as School } from '@prisma/client';
+import { school as School, school_state_enum } from '@prisma/client';
+import { getStateFromZip } from '../util/stateMappings';
 
 export interface CreateSchoolArgs {
     name?: School['name'];
@@ -15,10 +16,12 @@ export const findOrCreateSchool = async (school: CreateSchoolArgs) => {
         return;
     }
 
+    const state = (school.state === school_state_enum.other || !school.state) && school.zip ? getStateFromZip(Number(school.zip)) : school.state;
+
     const existingSchool = await prisma.school.findFirst({
         where: {
             name: school.name,
-            state: school.state,
+            state: state as school_state_enum,
             city: school.city || null,
         },
     });
@@ -27,7 +30,7 @@ export const findOrCreateSchool = async (school: CreateSchoolArgs) => {
     }
 
     const newSchool = await prisma.school.create({
-        data: { name: school.name!, city: school.city, zip: school.zip, state: school.state, email: school.email, schooltype: school.schooltype },
+        data: { name: school.name!, city: school.city, zip: school.zip, state: state as school_state_enum, email: school.email, schooltype: school.schooltype },
     });
     return newSchool;
 };

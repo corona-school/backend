@@ -136,7 +136,7 @@ async function accessCheck(context: GraphQLContext, requiredRoles: Role[], model
     // Do not allow access by e.g. SSO registering users unless the temporary user is explicitly allowed, or temporary ownership
     // is used
     if (!context.user.roles.includes(Role.USER) && !requiredRoles.includes(Role.TEMPORARY_OWNER)) {
-        throw new AuthenticationError(`Temporary user has no permission to perform this query`);
+        throw new AuthenticationError(`Temporary user / Admin has no permission to perform this query`);
     }
 
     // If access is not granted by a fixed role of the user, they might have access through an 'entity role',
@@ -267,7 +267,7 @@ const onlyAdminOrScreener = [Authorized(Role.ADMIN, Role.SCREENER)];
 const onlyOwner = [Authorized(Role.OWNER)];
 const nobody = [Authorized(Role.NOBODY)];
 const everyone = [Authorized(Role.UNAUTHENTICATED)];
-const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER)];
+const participantOrOwnerOrAdmin = [Authorized(Role.ADMIN, Role.APPOINTMENT_PARTICIPANT, Role.OWNER, Role.SCREENER)];
 const subcourseParticipantOrOwner = [Authorized(Role.SUBCOURSE_PARTICIPANT, Role.SUBCOURSE_MENTOR, Role.OWNER)];
 
 /* Utility to ensure that field authorizations are present except for the public fields listed */
@@ -294,8 +294,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Student: allAdmin,
     Screening: allAdmin,
     Screener: allAdmin,
-    Bbb_meeting: allAdmin,
-    Course_attendance_log: allAdmin,
     Course_instructors_student: allAdmin,
     Course_tag: {
         course_tags: everyone,
@@ -310,7 +308,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Course_tags_course_tag: allAdmin,
     Attachment: allAdmin,
     Instructor_screening: allAdmin,
-    Jufo_verification_transmission: allAdmin,
     Participation_certificate: allAdmin,
     Instant_certificate: allAdmin,
     Remission_request: allAdmin,
@@ -338,8 +335,6 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Subcourse_mentors_student: allAdmin,
     Subcourse_participants_pupil: allAdmin,
     Concrete_notification: allAdmin,
-    Course_guest: allAdmin,
-    Course_participation_certificate: allAdmin,
     Notification: {
         notification: everyone,
         notifications: everyone,
@@ -366,6 +361,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_assignment: allAdmin,
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
+    Admin_user_flag: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -395,7 +391,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'calendarPreferences'
         >({
             matchReason: everyone,
-
             email: adminOrOwnerOrScreener,
             verifiedAt: adminOrOwnerOrScreener,
             wix_id: adminOrOwner,
@@ -427,8 +422,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             // we do not have them enabled, also they are very technical and shall be replaced by semantic ones
             participation_certificate: nobody,
             pupil_tutoring_interest_confirmation_request: nobody,
-            course_attendance_log: nobody,
-            course_participation_certificate: nobody,
             subcourse_participants_pupil: nobody,
             match: nobody,
             _count: nobody,
@@ -442,6 +435,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             onlyMatchWith: onlyAdminOrScreener,
             referredById: adminOrOwner,
             emailOwner: adminOrOwnerOrScreener,
+            age: adminOrOwnerOrScreener,
+            learningOfferConstraints: adminOrOwnerOrScreener,
         }),
     },
 
@@ -503,23 +498,26 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             subcourse_instructors_student: nobody,
             subcourse_mentors_student: nobody,
             course: nobody,
-            course_guest: nobody,
             course_instructors_student: nobody,
-            course_participation_certificate: nobody,
-            jufo_verification_transmission: nobody,
             instructor_screening: nobody,
             remission_request: nobody,
             _count: nobody,
             zoomUserId: onlyAdmin,
             lastLogin: adminOrOwner,
             cooperation: everyone,
-            cooperationID: nobody,
+            cooperationID: onlyAdminOrScreener,
             hasDoneEthicsOnboarding: adminOrOwnerOrScreener,
             descriptionForMatch: onlyAdminOrScreener,
             hasSpecialExperience: onlyAdminOrScreener,
-            gender: onlyAdminOrScreener,
+            gender: adminOrOwnerOrScreener,
             referredById: adminOrOwner,
             descriptionForScreening: onlyAdminOrScreener,
+            isAdult: adminOrOwnerOrScreener,
+            jobStatus: adminOrOwnerOrScreener,
+            formalEducation: adminOrOwnerOrScreener,
+            specialTeachingExperience: adminOrOwnerOrScreener,
+            maxParallelMatches: adminOrOwnerOrScreener,
+            furtherTrainingsAttendedCount: onlyAdminOrScreener,
         }),
     },
 
@@ -569,8 +567,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'allowChatContactParticipants'
             | 'allowChatContactProspects'
             | 'groupChatType'
+            | 'allowMentoring'
         >({
-            course_participation_certificate: nobody,
             lecture: nobody,
             subcourse_instructors_student: nobody,
             subcourse_mentors_student: nobody,
@@ -602,7 +600,6 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
         >({
             screeningComment: adminOrOwner,
             correspondentId: adminOrOwner,
-            course_guest: nobody,
             course_instructors_student: nobody,
             course_tags_course_tag: nobody,
             subcourse: nobody,
@@ -629,12 +626,10 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             | 'tutorScreeningId'
             | 'instructorScreeningId'
         >({
-            course_attendance_log: nobody,
             // subcourseId: nobody,
             subcourse: nobody,
             student: nobody,
             instructorId: nobody,
-            _count: nobody,
             match: adminOrOwner,
             pupilScreening: adminOrOwner,
             tutorScreening: adminOrOwner,
@@ -648,6 +643,7 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             zoomMeetingReport: adminOrOwner,
             override_meeting_link: participantOrOwnerOrAdmin,
             eventUrl: adminOrOwner,
+            actualDuration: adminOrOwner,
         }),
     },
     Participation_certificate: {

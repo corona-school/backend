@@ -1,6 +1,6 @@
 import { Secret } from '../generated';
 import { Resolver, Mutation, Arg, Authorized, Ctx } from 'type-graphql';
-import { createPassword, createToken, getSecretByToken, requestToken, revokeSecret } from '../../common/secret';
+import { createPassword, createToken, getSecretByToken, requestToken, revokeSecret, SUPPORT_MARKER } from '../../common/secret';
 import { GraphQLContext } from '../context';
 import { getSessionUser, isAdmin } from '../authentication';
 import { Role } from '../authorizations';
@@ -35,7 +35,7 @@ export class MutateSecretResolver {
         inOneWeek.setDate(inOneWeek.getDate() + 7);
 
         const user = await getUser(userId);
-        const token = await createToken(user, /* expiresAt */ inOneWeek, `Support ${description ?? 'Week Access'}`, null);
+        const token = await createToken(user, /* expiresAt */ inOneWeek, description ?? SUPPORT_MARKER, null);
         logger.info(`Admin/trusted screener created a login token for User(${userId})`);
         return token;
     }

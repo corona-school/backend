@@ -12,7 +12,7 @@ import { GraphQLInt } from 'graphql';
 import { searchUnsplashImages } from '../../common/unsplash';
 
 @ObjectType()
-class CourseImage {
+class PotentialCourseImage {
     @Field((_type) => String)
     id: string;
     @Field((_type) => String)
@@ -25,12 +25,20 @@ class CourseImage {
 
 @ObjectType()
 class CourseImageSearchResponse {
-    @Field((_type) => [CourseImage])
-    results: CourseImage[];
+    @Field((_type) => [PotentialCourseImage])
+    results: PotentialCourseImage[];
     @Field((_type) => Number)
     total: number;
     @Field((_type) => Number)
     totalPages: number;
+}
+
+@ObjectType()
+class CourseImage {
+    @Field((_type) => String)
+    url: string;
+    @Field(() => Boolean)
+    default: boolean;
 }
 
 @Resolver((of) => Course)
@@ -60,7 +68,7 @@ export class ExtendedFieldsCourseResolver {
         });
     }
 
-    @FieldResolver((returns) => String, { nullable: true })
+    @FieldResolver((returns) => CourseImage, { nullable: true })
     @Authorized(Role.UNAUTHENTICATED)
     image(@Root() course: Course) {
         return getCourseImageURL(course);

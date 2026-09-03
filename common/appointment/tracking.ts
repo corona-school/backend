@@ -5,6 +5,8 @@ import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getMatch, getStudent, getPupil } from '../../graphql/util';
 import { createRelation, EventRelationType } from '../achievement/relation';
+import { getAppointmentEnd } from './util';
+import moment from 'moment';
 
 const logger = getLogger('Appointment Tracking');
 
@@ -12,8 +14,9 @@ const logger = getLogger('Appointment Tracking');
 // joins an appointment meeting
 export async function trackUserJoinAppointmentMeeting(user: User, appointment: Appointment) {
     const hasJoined = appointment.joinedBy.includes(user.userID);
+    const isAppointmentInTheFuture = moment().isSameOrBefore(getAppointmentEnd(appointment));
 
-    if (!hasJoined) {
+    if (!hasJoined && isAppointmentInTheFuture) {
         await prisma.lecture.update({ where: { id: appointment.id }, data: { joinedBy: { push: user.userID } } });
     }
 

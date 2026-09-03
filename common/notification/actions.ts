@@ -100,9 +100,18 @@ const _notificationActions = {
         description: 'Pupil / Screening was rejected',
         sampleContext: {},
     },
+    pupil_screening_with_active_match_rejected: {
+        description: 'Pupil / Screening was rejected while having an active match',
+        sampleContext: {},
+    },
     pupil_screening_succeeded: {
         description: 'Pupil / Screening was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: 'true',
+                matching: 'true',
+            },
+        },
     },
     pupil_screening_invalidated: {
         description: 'Pupil / Screening was invalidated (i.e. Match Request revoked)',
@@ -118,7 +127,12 @@ const _notificationActions = {
     },
     pupil_screening_after_registration_succeeded: {
         description: 'Pupil / Screening after registration was successful',
-        sampleContext: {},
+        sampleContext: {
+            approvedFor: {
+                courses: 'true',
+                matching: 'true',
+            },
+        },
     },
     pupil_screening_after_registration_rejected: {
         description: 'Pupil / Screening after registration was rejected',
@@ -144,9 +158,17 @@ const _notificationActions = {
         description: 'Tutor / Screening was successful',
         sampleContext: {},
     },
+    cooperation_tutor_screening_success: {
+        description: 'Cooperation Tutor / Screening was successful',
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
+    },
     tutor_screening_rejection: {
         description: 'Tutor / Screening was rejected',
-        sampleContext: {},
+        sampleContext: {
+            deactivationReason: 'didntMeetRequirements',
+        },
     },
     instructor_screening_invitation: {
         description: 'Instructor was invited for screening',
@@ -156,8 +178,24 @@ const _notificationActions = {
         description: 'Instructor / Screening was successful',
         sampleContext: {},
     },
+    cooperation_instructor_screening_success: {
+        description: 'Cooperation Instructor / Screening was successful',
+        sampleContext: {
+            cooperation: 'Cooperation Name',
+        },
+    },
     instructor_screening_rejection: {
         description: 'Instructor / Screening was rejected',
+        sampleContext: {
+            deactivationReason: 'didntMeetRequirements',
+        },
+    },
+    student_cooperation_list_removed: {
+        description: 'Student / Removed from cooperation list',
+        sampleContext: {},
+    },
+    student_cooperation_list_added: {
+        description: 'Student / Added to cooperation list',
         sampleContext: {},
     },
     participant_course_joined: {
@@ -499,12 +537,20 @@ const _notificationActions = {
     student_coc_updated: {
         description: 'Student / Certificate of Conduct handed in',
         sampleContext: {
-            date: '20. Juli 1969',
+            date: 'DD.MM.YYYY',
+            expirationDate: 'DD.MM.YYYY',
         },
+    },
+    student_coc_approved: {
+        description: 'Student / Certificate of Conduct approved',
+        sampleContext: {},
     },
     coc_reminder: {
         description: 'Student / Certificate of Conduct Request',
-        sampleContext: {},
+        sampleContext: {
+            isRenewal: 'false',
+            deactivationReason: 'missingCoC',
+        },
     },
     coc_cancelled: {
         description: 'Student / Certificate of Conduct Cancelled',
@@ -547,8 +593,16 @@ const _notificationActions = {
         description: 'Pupil / Account deactivated by admin',
         sampleContext: {},
     },
+    pupil_account_deactivated_no_more_interest: {
+        description: 'Pupil / Account deactivated - no more interest',
+        sampleContext: {},
+    },
     student_account_deactivated: {
         description: 'Student / Account deactivated',
+        sampleContext: {},
+    },
+    student_account_deactivated_no_more_interest: {
+        description: 'Student / Account deactivated - no more interest',
         sampleContext: {},
     },
 
@@ -598,6 +652,7 @@ const _notificationActions = {
     student_add_appointment_match: {
         description: 'Tutee / Tutor added Match Appointment',
         sampleContext: {
+            appointment: sampleAppointment,
             student: sampleUser,
             matchId: '1',
         },
@@ -659,6 +714,18 @@ const _notificationActions = {
         sampleContext: {
             pupil: sampleUser,
             appointment: sampleAppointment,
+        },
+    },
+    student_first_chat_message_sent: {
+        description: 'Student / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
+        },
+    },
+    pupil_first_chat_message_sent: {
+        description: 'Pupil / First Chat Message sent',
+        sampleContext: {
+            matchId: '1',
         },
     },
     missed_one_on_one_chat_message: {
@@ -765,13 +832,13 @@ const _notificationActions = {
             },
         },
     },
-    student_calendly_appointment_booked: {
-        description: 'Student booked appointment via calendly ',
+    student_screening_appointment_booked: {
+        description: 'Student / Appointment for Screening booked',
         sampleContext: {},
     },
 
-    pupil_calendly_appointment_booked: {
-        description: 'Pupil booked appointment via calendly ',
+    pupil_screening_appointment_booked: {
+        description: 'Pupil / Appointment for Screening booked',
         sampleContext: {},
     },
 

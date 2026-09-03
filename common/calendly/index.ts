@@ -5,6 +5,7 @@ import { addPupilScreening } from '../pupil/screening';
 import { getPupil, getUserByEmail, User } from '../user';
 import { prisma } from '../prisma';
 import { DEFAULT_SCREENER_NUMBER_ID } from '../util/screening';
+import * as Notification from '../notification';
 
 const logger = getLogger('Calendly');
 
@@ -62,6 +63,8 @@ export interface InviteeEvent {
     cancel_url: string;
     reschedule_url: string;
 }
+
+const validEventTypes = (process.env.CALENDLY_WEBHOOK_EVENT_TYPES ?? '').split(',').map((uuid) => `https://api.calendly.com/event_types/${uuid}`);
 
 export const cancelCalendlyEvent = async (eventUrl: string, reason: string) => {
     const parts = eventUrl.split('/');
@@ -187,6 +190,8 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     }
 
     if (user.pupilId) {
+        const pupil = await getPupil(user);
+        await Notification.actionTaken(user, 'pupil_screening_appointment_booked', {});
         // Check if there is already a valid screening
         let screening = await prisma.pupil_screening.findFirst({
             where: {
@@ -201,12 +206,13 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             await prisma.pupil_screening.update({
                 where: { id: screening.id },
                 data: {
-                    comment: `${screening.comment}\n${newAppointmentComment}`,
+                    systemMessages: {
+                        push: newAppointmentComment,
+                    },
                 },
             });
         } else {
-            const pupil = await getPupil(user);
-            screening = await addPupilScreening(pupil, { comment: newAppointmentComment, status: 'pending' }, true);
+            screening = await addPupilScreening(pupil, { systemMessages: [newAppointmentComment], status: 'pending' }, true);
         }
         const appointment = await prisma.lecture.create({
             data: {
@@ -226,6 +232,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
     }
 
     if (user.studentId) {
+        await Notification.actionTaken(user, 'student_screening_appointment_booked', {});
         // If the student already completed a screening, we won't attach the screening appointment to it
         const hadTutorScreening =
             (await prisma.screening.count({
@@ -250,7 +257,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                comment: newAppointmentComment,
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
@@ -263,7 +270,7 @@ const onEventInviteeCreated = async (event: CalendlyEvent) => {
             create: {
                 screenerId: screener?.screenerId ?? DEFAULT_SCREENER_NUMBER_ID,
                 studentId: user.studentId,
-                comment: newAppointmentComment,
+                systemMessages: [newAppointmentComment],
                 status: 'pending',
             },
             // If there was already a screening we don't do anything here
@@ -319,12 +326,18 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
                 invalidated: false,
             },
         });
+        if (!screening) {
+            logger.warn(`No valid screening found for Pupil(${appointment.pupilScreening.pupilId}) to update after screening appointment was canceled`);
+            return;
+        }
         await prisma.pupil_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Pupil(${screening.pupilId}) after screening appointment was canceled`);
@@ -339,9 +352,11 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Student(${screening.studentId}) after screening appointment was canceled`);
@@ -356,17 +371,18 @@ const onEventInviteeCanceled = async (event: CalendlyEvent) => {
         await prisma.instructor_screening.update({
             where: { id: screening.id },
             data: {
-                comment: `${screening.comment}\n[System]: Ein Termin wurde am ${formatAppointmentDate(
-                    event.payload.scheduled_event.cancellation?.created_at
-                )} abgesagt. Grund: ${event.payload.scheduled_event.cancellation?.reason}`,
+                systemMessages: {
+                    push: `[System]: Ein Termin wurde am ${formatAppointmentDate(event.payload.scheduled_event.cancellation?.created_at)} abgesagt. Grund: ${
+                        event.payload.scheduled_event.cancellation?.reason
+                    }`,
+                },
             },
         });
         logger.info(`Updated Screening(${screening.id}) for Student(${screening.studentId}) after screening appointment was canceled`);
     }
 };
 
-const validEventTypes = (process.env.CALENDLY_WEBHOOK_EVENT_TYPES ?? '').split(',').map((uuid) => `https://api.calendly.com/event_types/${uuid}`);
-export const onEvent = (event: CalendlyEvent) => {
+export const onEvent = async (event: CalendlyEvent) => {
     // Discard event if it's not configured
     if (!validEventTypes.includes(event.payload.scheduled_event.event_type)) {
         logger.debug(`Discarding event type: ${event.payload.scheduled_event.event_type}`);
@@ -374,19 +390,23 @@ export const onEvent = (event: CalendlyEvent) => {
     }
 
     logger.info(`Handling Calendly Event(${event.event})`, event);
-    switch (event.event) {
-        case 'invitee.created':
-            return onEventInviteeCreated(event);
-        case 'invitee.canceled':
-            return onEventInviteeCanceled(event);
-        case 'invitee_no_show.created':
-            // We don't handle this for now
-            break;
-        case 'invitee_no_show.deleted':
-            // We don't handle this for now
-            break;
-        default:
-            logger.warn(`Unknown Calendly event type: ${event.event}`, event);
-            break;
+    try {
+        switch (event.event) {
+            case 'invitee.created':
+                return await onEventInviteeCreated(event);
+            case 'invitee.canceled':
+                return await onEventInviteeCanceled(event);
+            case 'invitee_no_show.created':
+                // We don't handle this for now
+                break;
+            case 'invitee_no_show.deleted':
+                // We don't handle this for now
+                break;
+            default:
+                logger.warn(`Unknown Calendly event type: ${event.event}`, event);
+                break;
+        }
+    } catch (error) {
+        logger.error(`Error handling Calendly Event(${event.event})`, error);
     }
 };

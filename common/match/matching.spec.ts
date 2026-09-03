@@ -1,15 +1,19 @@
+import { pupil_languages_enum, student_languages_enum } from '@prisma/client';
+import moment from 'moment';
 import { computeMatchings, Matching, MatchOffer, MatchRequest, matchScore, NO_MATCH } from './matching';
+
+const TODAY_TEST_DATE = new Date('2026-02-01T00:00:00Z');
 
 function testScore(name: string, request: MatchRequest, offer: MatchOffer, expected: number) {
     it(name, () => {
-        const actual = matchScore(request, offer);
+        const actual = matchScore(request, offer, TODAY_TEST_DATE);
         expect(actual).toEqual(expected);
     });
 }
 
 function test(name: string, requests: MatchRequest[], offers: MatchOffer[], expected: Matching, excludeMatchings: Set<string> = new Set()) {
     it(name, () => {
-        const actual = computeMatchings(requests, offers, excludeMatchings, new Date(100000000000));
+        const actual = computeMatchings(requests, offers, excludeMatchings, TODAY_TEST_DATE);
         expect(actual).toEqual(expected);
     });
 }
@@ -19,7 +23,8 @@ const requestOne = {
     pupilId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', mandatory: false }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [pupil_languages_enum.Englisch, pupil_languages_enum.Spanisch],
 };
 
 const requestTwo = {
@@ -27,7 +32,8 @@ const requestTwo = {
     pupilId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', mandatory: false }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const requestThree = {
@@ -35,7 +41,8 @@ const requestThree = {
     pupilId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', mandatory: false }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const requestFour = {
@@ -46,7 +53,8 @@ const requestFour = {
         { name: 'Mathematik', mandatory: false },
         { name: 'Deutsch', mandatory: false },
     ],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const requestFive = {
@@ -57,7 +65,7 @@ const requestFive = {
         { name: 'Mathematik', mandatory: true },
         { name: 'Deutsch', mandatory: false },
     ],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     calendarPreferences: {
         weeklyAvailability: {
             monday: [{ from: 600, to: 660 }],
@@ -69,6 +77,7 @@ const requestFive = {
             sunday: [],
         },
     },
+    languages: [],
 };
 
 const requestSix = {
@@ -76,8 +85,9 @@ const requestSix = {
     pupilId: 5,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     onlyMatchWith: 'female' as const,
+    languages: [],
 };
 
 const requestSeven = {
@@ -85,8 +95,9 @@ const requestSeven = {
     pupilId: 5,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     hasSpecialNeeds: true,
+    languages: [],
 };
 
 const requestEight = {
@@ -94,7 +105,7 @@ const requestEight = {
     pupilId: 8,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik' }, { name: 'Deutsch' }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     calendarPreferences: {
         weeklyAvailability: {
             monday: [
@@ -110,27 +121,31 @@ const requestEight = {
             sunday: [],
         },
     },
+    languages: [],
 };
 
 const offerOne = {
     studentId: 1,
     state: 'at' as const,
     subjects: [{ name: 'Deutsch', grade: { min: 1, max: 10 } }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const offerTwo = {
     studentId: 2,
     state: 'at' as const,
     subjects: [{ name: 'Mathematik', grade: { min: 1, max: 10 } }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const offerThree = {
     studentId: 3,
     state: 'at' as const,
     subjects: [{ name: 'Klingonisch', grade: { min: 1, max: 10 } }],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
+    languages: [],
 };
 
 const offerFour = {
@@ -140,9 +155,10 @@ const offerFour = {
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     gender: 'male' as const,
     hasSpecialExperience: false,
+    languages: [],
 };
 
 const offerFive = {
@@ -152,9 +168,10 @@ const offerFive = {
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     gender: 'female' as const,
     hasSpecialExperience: true,
+    languages: [student_languages_enum.Deutsch, student_languages_enum.Spanisch],
 };
 
 const offerSix = {
@@ -164,7 +181,7 @@ const offerSix = {
         { name: 'Deutsch', grade: { min: 1, max: 10 } },
         { name: 'Mathematik', mandatory: false, grade: { min: 1, max: 10 } },
     ],
-    requestAt: new Date(0),
+    requestAt: TODAY_TEST_DATE,
     calendarPreferences: {
         weeklyAvailability: {
             monday: [
@@ -180,20 +197,38 @@ const offerSix = {
             sunday: [],
         },
     },
+    languages: [student_languages_enum.Englisch],
 };
 
 describe('Matching Score Basics', () => {
     testScore('no subject', requestOne, offerTwo, NO_MATCH);
-    testScore('one subject', requestOne, offerOne, 0.6000000000000001);
-    testScore('two subjects', requestFour, offerFour, 0.9046376623823058);
-    testScore('two requested one offered', requestFour, offerOne, 0.6000000000000001);
-    testScore('one requested two offered', requestOne, offerFour, 0.6000000000000001);
+    testScore('one subject', requestOne, offerOne, 0.44999999999999996);
+    testScore('two subjects', requestFour, offerFour, 0.44999999999999996);
+    testScore('two requested one offered', requestFour, offerOne, 0.3);
+    testScore('one requested two offered', requestOne, offerFour, 0.3);
     // testScore('one requested two offered - different state', requestOne, offerFive, 0.495);
+    testScore('one requested two offered - share english', requestOne, offerSix, 0.35);
+    testScore('one requested two offered - share spanish', requestOne, offerFive, 0.4);
 });
 
 describe('Matching Score Mandatory', () => {
     testScore('mandatory not offered', requestFive, offerOne, NO_MATCH);
-    testScore('mandatory offered', requestFive, offerTwo, 0.6000000000000001);
+    testScore('mandatory offered', requestFive, offerTwo, 0.3);
+});
+
+describe('Matching Score Waiting Bonus', () => {
+    testScore(
+        'pupil waiting for less than 14 days',
+        { ...requestOne, requestAt: moment(TODAY_TEST_DATE).subtract(10, 'days').toDate() },
+        offerOne,
+        0.5999863806393892
+    );
+    testScore(
+        'pupil waiting for more than 14 days',
+        { ...requestOne, requestAt: moment(TODAY_TEST_DATE).subtract(20, 'days').toDate() },
+        offerOne,
+        0.8999999987633078
+    );
 });
 
 describe('Matching Basics', () => {

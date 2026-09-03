@@ -1,6 +1,6 @@
 import { match } from '@prisma/client';
 import { prisma } from '../prisma';
-import { User, getUser } from '../user';
+import { User, UserID, getUser } from '../user';
 import { sha1 } from 'object-hash';
 import { truncate } from 'lodash';
 import { Subcourse } from '../../graphql/generated';
@@ -8,14 +8,13 @@ import { ChatMetaData, Conversation, ConversationInfos, TJConversation } from '.
 import { type MatchContactPupil, type MatchContactStudent } from './contacts';
 
 type TalkJSUserId = `${'pupil' | 'student'}_${number}`;
-export type UserId = `${'pupil' | 'student'}/${number}`;
 
 const userIdToTalkJsId = (userId: string): TalkJSUserId => {
     return userId.replace('/', '_') as TalkJSUserId;
 };
 
-const talkJsIdToUserId = (userId: string): UserId => {
-    return userId.replace('_', '/') as UserId;
+const talkJsIdToUserId = (userId: string): UserID => {
+    return userId.replace('_', '/') as UserID;
 };
 
 function createOneOnOneId(userA: Pick<User, 'userID'>, userB: Pick<User, 'userID'>): string {

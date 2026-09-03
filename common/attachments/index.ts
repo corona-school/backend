@@ -1,6 +1,6 @@
 import { prisma } from '../prisma';
 import { v4 as uuid } from 'uuid';
-import { putFile, ATTACHMENT_BUCKET, generatePresignedURL, deleteFile } from '../file-bucket';
+import { putS3File, ATTACHMENT_BUCKET, generatePresignedURL, deleteS3File } from '../file-bucket';
 import { User } from '../user';
 import { friendlyFileSize } from '../util/basic';
 import { attachment as Attachment } from '@prisma/client';
@@ -39,7 +39,7 @@ export async function createAttachment(file: File, uploader: User, attachmentGro
         },
     });
 
-    await putFile(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false, file.mimetype);
+    await putS3File(file.buffer, `attachments/${attachmentGroupId}/${attachmentId}/${file.originalname}`, ATTACHMENT_BUCKET, false, file.mimetype);
 
     return attachmentId;
 }
@@ -108,7 +108,7 @@ export async function getAttachmentGroupByAttachmentGroupId(attachmentGroupId: s
  * @param attachment
  */
 export async function deleteAttachment(attachment: Attachment) {
-    await deleteFile(`attachments/${attachment.attachmentGroupId}/${attachment.id}/${attachment.filename}`, ATTACHMENT_BUCKET);
+    await deleteS3File(`attachments/${attachment.attachmentGroupId}/${attachment.id}/${attachment.filename}`, ATTACHMENT_BUCKET);
     await prisma.attachment.delete({
         where: {
             id: attachment.id,

@@ -5,19 +5,19 @@ import { contactInstructors, contactParticipants } from '../../common/courses/co
 import {
     fillSubcourse,
     joinSubcourse,
-    joinSubcourseAsMentor,
+    addSubcourseMentor,
     joinSubcourseWaitinglist,
     leaveSubcourse,
     leaveSubcourseWaitinglist,
-    mentorLeaveSubcourse,
+    removeSubcourseMentor,
 } from '../../common/courses/participants';
 import {
     addSubcourseInstructor,
     cancelSubcourse,
     deleteSubcourse,
-    deleteSubcourseInstructor,
     editSubcourse,
     publishSubcourse,
+    removeSubcourseInstructor,
 } from '../../common/courses/states';
 import { getLogger } from '../../common/logger/logger';
 import { prisma } from '../../common/prisma';
@@ -33,8 +33,8 @@ import { chat_type, subcourse_promotion_type_enum as SubcoursePromotionType } fr
 import { removeParticipantFromCourseChat } from '../../common/chat';
 import { sendPupilCoursePromotion } from '../../common/courses/notifications';
 import * as Notification from '../../common/notification';
-import { deleteCourseAchievementsForStudents } from '../../common/achievement/delete';
 import { getSubcourseProspects } from '../../common/courses/util';
+import { GraphQLInt } from 'graphql';
 
 const logger = getLogger('MutateCourseResolver');
 
@@ -162,8 +162,20 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
-        await deleteSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
+        await removeSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
 
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @Authorized(Role.ADMIN)
+    async subcourseRemoveAppointmentsOrganizer(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId') subcourseId: number,
+        @Arg('organizerId') organizerId: string,
+        @Arg('studentEmail') studentEmail: string
+    ) {
+        await removeGroupAppointmentsOrganizer(subcourseId, organizerId, studentEmail);
         return true;
     }
 
@@ -256,11 +268,10 @@ export class MutateSubcourseResolver {
     ): Promise<boolean> {
         const student = await getSessionStudent(context, studentId);
         const subcourse = await getSubcourse(subcourseId);
-        const course = await prisma.course.findFirst({ where: { id: subcourse.courseId } });
-        if (course.category !== 'homework_help') {
-            throw new PrerequisiteError('Only homework_help courses allow mentors to join by themselves');
+        if (!subcourse.allowMentoring) {
+            throw new PrerequisiteError('Subcourse does not allow mentoring');
         }
-        await joinSubcourseAsMentor(subcourse, student, false);
+        await addSubcourseMentor(context.user, subcourse, student, false);
         logger.info(`Student(${student.id}) joined Subcourse(${subcourseId}) as mentor`);
         return true;
     }
@@ -271,13 +282,15 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const newMentor = await getStudent(studentId);
-        await joinSubcourseAsMentor(subcourse, newMentor, true);
-        logger.info(`Student(${studentId}) was added as mentor to Subcourse(${subcourseId}) by User(${context.user.userID})`);
+        if (!subcourse.allowMentoring) {
+            throw new PrerequisiteError('Subcourse does not allow mentoring');
+        }
+        await addSubcourseMentor(context.user, subcourse, newMentor, true);
         return true;
     }
 
     @Mutation((returns) => Boolean)
-    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR, Role.OWNER)
+    @AuthorizedDeferred(Role.ADMIN, Role.SUBCOURSE_MENTOR, Role.OWNER, Role.COURSE_SCREENER)
     async subcourseMentorLeave(
         @Ctx() context: GraphQLContext,
         @Arg('subcourseId') subcourseId: number,
@@ -288,13 +301,48 @@ export class MutateSubcourseResolver {
         // Make sure that only Admins/Owners can remove other mentors from the course
         const isOwner = studentId && (await prisma.subcourse_instructors_student.count({ where: { subcourseId, studentId: context.user.studentId } })) > 0;
         const student = await (isOwner ? getStudent(studentId) : getSessionStudent(context, studentId));
-        const studentUser = userForStudent(student);
-        await mentorLeaveSubcourse(subcourse, student);
-        await removeGroupAppointmentsParticipant(subcourse.id, studentUser.userID);
-        if (subcourse.conversationId) {
-            await removeParticipantFromCourseChat(studentUser, subcourse.conversationId);
+        await removeSubcourseMentor(context.user, subcourse, student);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
+    async subcourseBulkMutateInstructorsMentors(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId', () => GraphQLInt) subcourseId: number,
+        @Arg('addInstructors', () => [GraphQLInt], { defaultValue: [] }) addInstructors: number[],
+        @Arg('addMentors', () => [GraphQLInt], { defaultValue: [] }) addMentors: number[],
+        @Arg('removeInstructors', () => [GraphQLInt], { defaultValue: [] }) removeInstructors: number[],
+        @Arg('removeMentors', () => [GraphQLInt], { defaultValue: [] }) removeMentors: number[]
+    ): Promise<boolean> {
+        const subcourse = await getSubcourse(subcourseId);
+        await hasAccess(context, 'Subcourse', subcourse);
+
+        for (const studentId of removeInstructors) {
+            const student = await prisma.subcourse_instructors_student.findUnique({
+                where: { subcourseId_studentId: { subcourseId: subcourseId, studentId } },
+                select: { student: true },
+            });
+            await removeSubcourseInstructor(context.user, subcourse, student.student);
         }
-        logger.info(`Student(${studentId}) left Subcourse(${subcourseId})`);
+        for (const studentId of removeMentors) {
+            const student = await prisma.subcourse_mentors_student.findUnique({
+                where: { subcourseId_studentId: { subcourseId: subcourseId, studentId } },
+                select: { student: true },
+            });
+            await removeSubcourseMentor(context.user, subcourse, student.student);
+        }
+        for (const studentId of addInstructors) {
+            const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+            await addSubcourseInstructor(context.user, subcourse, student);
+        }
+        for (const studentId of addMentors) {
+            const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+            if (!subcourse.allowMentoring) {
+                throw new PrerequisiteError('Subcourse does not allow mentoring');
+            }
+            await addSubcourseMentor(context.user, subcourse, student, true);
+        }
         return true;
     }
 

@@ -1,7 +1,6 @@
 import { runInterestConfirmations } from '../common/match/pool';
 import { checkReminders } from '../common/notification';
 import { cleanupSecrets } from '../common/secret';
-import anonymiseAttendanceLog from './periodic/anonymise-attendance-log';
 import dropOldNotificationContexts from './periodic/drop-old-notification-contexts';
 import flagInactiveConversationsAsReadonly from './periodic/flag-old-conversations';
 import redactInactiveAccounts from './periodic/redact-inactive-accounts';
@@ -11,13 +10,14 @@ import syncToWebflow from './periodic/sync-to-webflow';
 import deleteUnreachableAchievements from './periodic/delete-unreachable-achievements';
 import { postStatisticsToSlack } from './slack-statistics';
 import notificationsEndedYesterday from './periodic/notification-courses-ended-yesterday';
+import processExpiredCoC from './periodic/process-expired-coc';
 import { assignOriginalAchievement } from './manual/assign_original_achievement';
+import { syncOldMatchLecturesWithZoom } from './manual/sync_old_match_lectures_with_zoom';
 
 export const allJobs = {
     cleanupSecrets,
     dropOldNotificationContexts,
     runInterestConfirmations,
-    anonymiseAttendanceLog,
     syncToWebflow,
     postStatisticsToSlack,
     redactInactiveAccounts,
@@ -27,8 +27,10 @@ export const allJobs = {
     notificationsEndedYesterday,
     checkReminders,
     deleteUnreachableAchievements,
+    processExpiredCoC,
 
     assignOriginalAchievement,
+    syncOldMatchLecturesWithZoom,
 
     // For Integration Tests only:
     NOTHING_DO_NOT_USE: async () => {
@@ -44,11 +46,12 @@ export type ScheduledJob = { cronTime: string; name: JobName };
 export const regularJobs: ScheduledJob[] = [
     // every morning, quite early
     { cronTime: '00 55 07 * * *', name: 'runInterestConfirmations' },
+    // every morning at 5 am
+    { cronTime: '00 00 05 * * *', name: 'processExpiredCoC' },
     // every morning, but a little bit later
     // every 10 minutes during the day (to distribute load and send out notifications faster)
     { cronTime: '00 */10 * * * *', name: 'checkReminders' },
     // each night - database cleanups
-    { cronTime: '00 00 05 * * *', name: 'anonymiseAttendanceLog' },
     { cronTime: '00 00 04 * * *', name: 'cleanupSecrets' },
     { cronTime: '00 00 01 * * *', name: 'dropOldNotificationContexts' },
     // Account redaction

@@ -284,6 +284,73 @@ void test('Admin Manage Notifications', async () => {
     assert.strictEqual(notification2.message.headline, pupil.firstname);
     assert.strictEqual(notification2.message.body, 'TEST');
     assert.strictEqual(notification2.message.navigateTo, null);
+
+    const {
+        me: { concreteNotifications: sent2OnlyUnread },
+    } = await pupilClient.request(`query NotificationSent2 {
+        me {
+          concreteNotifications(take:100, onlyUnread: true) {
+            notificationID
+            state
+            sentAt
+            message {
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    assert.ok(sent2OnlyUnread.find((it) => it.notificationID === id) != null);
+
+    await pupilClient.request(
+        `mutation updateMeLastTime($lastTimeCheckedNotifications: DateTime) {
+        meUpdate(update: { lastTimeCheckedNotifications: $lastTimeCheckedNotifications })
+    }`,
+        { lastTimeCheckedNotifications: new Date() }
+    );
+
+    const {
+        me: { concreteNotifications: sent2OnlyUnreadAfterCheck },
+    } = await pupilClient.request(`query NotificationSent2 {
+        me {
+          concreteNotifications(take:100, onlyUnread: true) {
+            notificationID
+            state
+            sentAt
+            message {
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    assert.strictEqual(sent2OnlyUnreadAfterCheck.length, 0);
+
+    const {
+        me: { concreteNotifications: sent2AllAfterCheck },
+    } = await pupilClient.request(`query NotificationSent2 {
+        me {
+          concreteNotifications(take:100) {
+            notificationID
+            state
+            sentAt
+            message {
+              headline
+              body
+              navigateTo
+              modalText
+            }
+        }
+      }
+    }`);
+
+    assert.ok(sent2AllAfterCheck.length > 0);
 });
 
 void test('Job Synchronization', async () => {

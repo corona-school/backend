@@ -2,19 +2,19 @@ import {
     Subcourse,
     Pupil,
     Concrete_notification,
-    Log,
+    Admin_user_flag as AdminUserFlag,
     Pupil_tutoring_interest_confirmation_request as TutoringInterestConfirmation,
     Participation_certificate as ParticipationCertificate,
     Match,
     Pupil_screening as PupilScreening,
     School,
 } from '../generated';
-import { Arg, Authorized, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { userForPupil } from '../../common/user';
 import { LimitEstimated } from '../complexity';
-import { Subject } from '../types/subject';
+import { Subject, SubjectStatsForPupils } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { Decision } from '../types/reason';
@@ -25,6 +25,11 @@ import { Prisma } from '@prisma/client';
 import { joinedBy, excludePastSubcourses, onlyPastSubcourses } from '../../common/courses/filters';
 import { GraphQLBoolean } from 'graphql';
 import { subcourseSearch } from '../../common/courses/search';
+import moment from 'moment';
+import { GraphQLContext } from '../context';
+import { normalizeLastName } from '../../common/pupil';
+import { isDev } from '../../common/util/environment';
+import { testPupilSubjectsHistory } from '../../utils/test-data';
 
 @Resolver((of) => Pupil)
 export class ExtendFieldsPupilResolver {
@@ -32,6 +37,12 @@ export class ExtendFieldsPupilResolver {
     @Authorized(Role.ADMIN, Role.OWNER, Role.PUPIL_SCREENER)
     user(@Root() pupil: Required<Pupil>) {
         return userForPupil(pupil);
+    }
+
+    @FieldResolver((type) => String)
+    @Authorized(Role.ADMIN, Role.OWNER, Role.SCREENER, Role.TUTOR, Role.INSTRUCTOR)
+    lastname(@Root() pupil: Required<Pupil>, @Ctx() context: GraphQLContext) {
+        return normalizeLastName(pupil, context);
     }
 
     @FieldResolver((type) => [Subcourse])
@@ -137,7 +148,7 @@ export class ExtendFieldsPupilResolver {
         });
     }
 
-    @FieldResolver((type) => Int)
+    @FieldResolver((type) => Int, { nullable: true })
     @Authorized(Role.ADMIN, Role.SCREENER, Role.OWNER, Role.TUTOR, Role.INSTRUCTOR)
     gradeAsInt(@Root() pupil: Required<Pupil>) {
         return gradeAsInt(pupil.grade);
@@ -183,5 +194,68 @@ export class ExtendFieldsPupilResolver {
         return await prisma.school.findFirst({
             where: { id: pupil.schoolId },
         });
+    }
+
+    @FieldResolver((returns) => Boolean, { nullable: true })
+    @Authorized(Role.ADMIN, Role.PUPIL_SCREENER, Role.OWNER)
+    async needScreening(@Root() pupil: Required<Pupil>) {
+        const hasActiveMatch = (await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } })) > 0;
+        const screeningInTheLastFourMonths = await prisma.pupil_screening.findFirst({
+            where: {
+                pupilId: pupil.id,
+                status: 'success',
+                invalidated: false,
+                createdAt: {
+                    gte: moment().subtract(4, 'months').toDate(),
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+        return !screeningInTheLastFourMonths || hasActiveMatch;
+    }
+
+    @FieldResolver((returns) => [AdminUserFlag])
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.PUPIL_SCREENER)
+    async adminUserFlags(@Root() pupil: Required<Pupil>) {
+        return await prisma.admin_user_flag.findMany({ where: { userId: userForPupil(pupil).userID } });
+    }
+
+    @Query(() => [SubjectStatsForPupils])
+    @Authorized(Role.ADMIN, Role.TUTEE, Role.PUPIL_SCREENER)
+    async subjectsForPupils() {
+        let result: { subject: string; match_count: number; median_days: number; p90_days: number }[];
+        if (isDev) {
+            result = testPupilSubjectsHistory;
+        } else {
+            result = (await prisma.$queryRaw`
+            WITH match_subjects AS (
+                SELECT
+                    m.id,
+                    m."pupilId",
+                    s->>'name' AS subject,
+                    ROUND(
+                        EXTRACT(EPOCH FROM (m."createdAt" - m."pupilFirstMatchRequest")) / 86400
+                    ) AS days_to_match
+                FROM match m
+                CROSS JOIN LATERAL unnest(m."subjectsAtMatchingTime") AS s
+                WHERE m."createdAt" >= DATE '2025-06-01'
+                AND (s->>'mandatory')::BOOLEAN = TRUE
+            )
+            SELECT
+                subject,
+                COUNT(*) AS match_count,
+                ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY days_to_match)) AS median_days,
+                ROUND(PERCENTILE_CONT(0.9) WITHIN GROUP (ORDER BY days_to_match)) AS p90_days
+            FROM match_subjects
+            GROUP BY subject
+            ORDER BY match_count DESC;
+        `) as { subject: string; match_count: number; median_days: number; p90_days: number }[];
+        }
+        return result.map((s) => ({
+            subject: s.subject,
+            waitingDaysRange: s.match_count > 5 ? { from: s.median_days, to: s.p90_days } : { from: 0, to: 0 },
+        }));
     }
 }

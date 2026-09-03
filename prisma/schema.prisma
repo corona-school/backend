@@ -9,7 +9,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls"]
+  previewFeatures = []
 }
 
 // 'prisma generate' also generates GraphQL Resolvers:
@@ -114,22 +114,9 @@ model attachment {
   date              DateTime @db.Timestamp(6)
 }
 
-// DEPRECATED
-// Was used for course meetings before Zoom was introduced in Summer 2023
-model bbb_meeting {
-  id             Int      @id(map: "PK_33f2c503196edee1b2e5899083f") @default(autoincrement())
-  createdAt      DateTime @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  meetingID      String   @db.VarChar
-  meetingName    String?  @db.VarChar
-  attendeePW     String?  @db.VarChar
-  moderatorPW    String?  @db.VarChar
-  alternativeUrl String?  @db.VarChar
-}
-
 // We sometimes have cooperations with companies / other non-profits, and might want to associate accounts with it
 model cooperation {
-  id             Int       @id() @default(autoincrement())
+  id             Int                   @id() @default(autoincrement())
   name           String
   // This is a short string which can be passed in to the registration to associate users with this
   tag            String
@@ -137,6 +124,7 @@ model cooperation {
   welcomeTitle   String
   welcomeMessage String
   student        student[]
+  type           cooperation_type_enum @default(company)
 }
 
 // A Concrete Notification represents a Notification sent to one specific user
@@ -179,39 +167,10 @@ model course {
   //             Instead, use the course_instructors_student relation
   correspondentId            Int?
   student                    student?                     @relation(fields: [correspondentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_0682a6fe3bace3ed13377c1b1ca")
-  course_guest               course_guest[]
   course_instructors_student course_instructors_student[]
   course_tags_course_tag     course_tags_course_tag[]
   subcourse                  subcourse[]
   shared                     Boolean                      @default(false)
-}
-
-// DEPRECATED: This was filled from BBB Meetings, replaced with the zoomMeetingReports field of lectures
-model course_attendance_log {
-  id           Int      @id(map: "PK_c3906899bb64b97b840ea1f2656") @default(autoincrement())
-  createdAt    DateTime @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  attendedTime Int?
-  ip           String?  @db.VarChar
-  pupilId      Int?
-  lectureId    Int?
-  lecture      lecture? @relation(fields: [lectureId], references: [id], onDelete: Cascade, map: "FK_927959c3480126ecdceeae26609")
-  pupil        pupil?   @relation(fields: [pupilId], references: [id], onDelete: Cascade, map: "FK_acc59dc4321a888376f7fad5a3d")
-}
-
-// DEPRECATED: This was used historically to invite guests to BBB Course Meetings
-model course_guest {
-  id        Int      @id(map: "PK_f12462c16c543cf76ed1fa49289") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
-  token     String   @unique(map: "IDX_8fb7b15823c3ed0fea3c508ac4") @db.VarChar
-  firstname String   @db.VarChar
-  lastname  String   @db.VarChar
-  email     String   @db.VarChar
-  courseId  Int?
-  inviterId Int?
-  course    course?  @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_4392726b6462358a809db822af4")
-  student   student? @relation(fields: [inviterId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_a0843258a46daa7d91dc2cef917")
 }
 
 // A course instructor can edit a course and create subcourses from it
@@ -224,19 +183,6 @@ model course_instructors_student {
   @@id([courseId, studentId], map: "PK_aa54b28c5de0010f486dd0d72df")
   @@index([courseId], map: "IDX_54bce9a9a93ae130beaa70bb2f")
   @@index([studentId], map: "IDX_66b47860afa3098729925338c1")
-}
-
-// DEPRECATED: Course Instructors were able to send a participation certificate to some participants of a course
-model course_participation_certificate {
-  id          Int        @id(map: "PK_ee8536af11485574445cf6c0b0e") @default(autoincrement())
-  createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @updatedAt @db.Timestamp(6)
-  issuerId    Int?
-  pupilId     Int?
-  subcourseId Int?
-  pupil       pupil?     @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_585aa209315fc328d48af2765b4")
-  subcourse   subcourse? @relation(fields: [subcourseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_bc6a26ac82132b6e9f1d6de3e4c")
-  student     student?   @relation(fields: [issuerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d03c3421018dd300f5e9061ae87")
 }
 
 model course_tag {
@@ -266,7 +212,9 @@ model instructor_screening {
   id                    Int                           @id(map: "PK_e29a51f8dce0a07d2e1dba73636") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
+  decisionTakenAt       DateTime?                     @db.Timestamp(6)
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
   // so a COUNT(*) GROUP BY should work relatively well:
@@ -278,15 +226,6 @@ model instructor_screening {
   student               student?                      @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_e176665fa769d2e603d825f6fa3")
   screener              screener?                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ef1d3e862feda89b92fddcdbb34")
   lecture               lecture[]
-}
-
-// DEPRECATED: We once had a cooperation with Jugend Forscht ("jufo")
-model jufo_verification_transmission {
-  id        Int      @id(map: "PK_3e81acd237ad0b7e97003c835d8") @default(autoincrement())
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  uuid      String   @db.VarChar
-  studentId Int?     @unique(map: "REL_1ceddec34e7b90cdbb85ff9738")
-  student   student? @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_1ceddec34e7b90cdbb85ff9738f")
 }
 
 // A topic a pupil is currently learning in a certain subject
@@ -375,7 +314,10 @@ model lecture {
   createdAt             DateTime                     @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
   start                 DateTime                     @db.Timestamp(6)
+  // Scheduled duration of the appointment
   duration              Int // in minutes
+  // This is the duration in minutes in which the host + someone else were in the meeting together (Only set for match appointments)
+  actualDuration        Int                          @default(0) // in minutes
   title                 String?
   description           String?
   appointmentType       lecture_appointmenttype_enum @default(legacy)
@@ -410,7 +352,6 @@ model lecture {
   pupilScreening        pupil_screening?             @relation(fields: [pupilScreeningId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tutorScreening        screening?                   @relation(fields: [tutorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   instructorScreening   instructor_screening?        @relation(fields: [instructorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  course_attendance_log course_attendance_log[]
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
 }
@@ -468,8 +409,14 @@ model match {
   learning_topics learning_topic[]
 
   // For "automatic matches", stores the Match Run that created this match (since 01/2025)
-  matchPoolRunId Int?
-  matchPoolRun   match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  matchPoolRunId            Int?
+  matchPoolRun              match_pool_run? @relation(fields: [matchPoolRunId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studentFirstMessageSentAt DateTime?       @db.Timestamp(6)
+  studentLastMessageSentAt  DateTime?       @db.Timestamp(6)
+  pupilFirstMessageSentAt   DateTime?       @db.Timestamp(6)
+  pupilLastMessageSentAt    DateTime?       @db.Timestamp(6)
+  pupilMessageCount         Int             @default(0)
+  studentMessageCount       Int             @default(0)
 
   // Pupils never get matched to the same Student again,
   // if they want to continue their match we reactivate the existing match instead
@@ -539,18 +486,23 @@ model participation_certificate {
 }
 
 model instant_certificate {
-  id                        Int      @id @default(autoincrement())
-  createdAt                 DateTime @default(now()) @db.Timestamp(6)
+  id                             Int      @id @default(autoincrement())
+  createdAt                      DateTime @default(now()) @db.Timestamp(6)
   // Non-guessable, used for the public verification endpoint that everyone can visit to check that a certificate was issued by us
-  uuid                      String   @unique @db.VarChar
-  studentId                 Int
-  student                   student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  startDate                 DateTime
-  matchesCount              Int
-  matchAppointmentsCount    Int
-  courseParticipantsCount   Int
-  courseAppointmentsCount   Int
-  totalAppointmentsDuration Int // in minutes
+  uuid                           String   @unique @db.VarChar
+  studentId                      Int
+  student                        student  @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  startDate                      DateTime
+  matchesCount                   Int
+  matchAppointmentsCount         Int
+  courseParticipantsCount        Int
+  courseAppointmentsCount        Int
+  totalAppointmentsDuration      Int // in minutes
+  homeworkHelpDuration           Int? // in minutes
+  totalCourseAppointmentDuration Int      @default(0) // in minutes
+  totalMatchAppointmentsDuration Int      @default(0) // in minutes
+  trainingDuration               Int      @default(0) // in minutes
+  isInternship                   Boolean  @default(false)
 }
 
 model pupil {
@@ -559,6 +511,7 @@ model pupil {
   updatedAt                    DateTime              @default(now()) @updatedAt @db.Timestamp(6)
   firstname                    String?               @db.VarChar
   lastname                     String?               @db.VarChar
+  age                          Int?
   active                       Boolean               @default(true)
   email                        String                @unique(map: "IDX_24d523169870b7e80f9e68aad3") @db.VarChar
   // If set, the user email was verified:
@@ -607,8 +560,6 @@ model pupil {
   matchReason                                  String                                         @default("") @db.VarChar
   schoolId                                     Int?
   school                                       school?                                        @relation(fields: [schoolId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_ed2282d6491ddb708d5b8f60225")
-  course_attendance_log                        course_attendance_log[]
-  course_participation_certificate             course_participation_certificate[]
   match                                        match[]
   participation_certificate                    participation_certificate[]
   pupil_screening                              pupil_screening[]
@@ -634,7 +585,8 @@ model pupil {
 
   // Sometimes pupils, specially younger ones, are registered with the email of a support person (parent, teacher, etc...)
   // Here we specify who is the owner of this email
-  emailOwner pupil_email_owner_enum @default(unknown)
+  emailOwner               pupil_email_owner_enum            @default(unknown)
+  learningOfferConstraints learning_offer_constraints_enum[] @default([])
 }
 
 // To only match active users, we sent interest confirmation requests to pupils before matching them
@@ -728,6 +680,7 @@ model screening {
   id                    Int                           @id(map: "PK_5111bc526c9133721aeffb9a578") @default(autoincrement())
   status                student_screening_status_enum @default(pending)
   comment               String?                       @db.VarChar
+  systemMessages        String[]                      @default([])
   jobStatus             screening_jobstatus_enum?
   // This is a String and not an enum to be able to quickly support further values without a DB migration,
   // and to be able to cover 'Sonstiges'. In the Screening Tooling, we however always write the same strings into it,
@@ -735,6 +688,7 @@ model screening {
   knowsCoronaSchoolFrom String?                       @db.VarChar
   createdAt             DateTime                      @default(now()) @db.Timestamp(6)
   updatedAt             DateTime                      @default(now()) @updatedAt @db.Timestamp(6)
+  decisionTakenAt       DateTime?                     @db.Timestamp(6)
   screenerId            Int?
   studentId             Int?                          @unique(map: "REL_dfb78fd7887c69e3c52e002083")
   screener              screener?                     @relation(fields: [screenerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_c0b20c6342ac95d3b66c31ac30e")
@@ -793,28 +747,25 @@ model student {
   sentInstructorScreeningReminderCount      Int                      @default(0)
   lastSentInstructorScreeningInvitationDate DateTime?                @db.Timestamp(6)
 
-  lastUpdatedSettingsViaBlocker    DateTime?                          @db.Timestamp(6)
+  lastUpdatedSettingsViaBlocker DateTime?                       @db.Timestamp(6)
   // The registration form used to register the user, mainly used to find Lern-Fair Plus students
-  registrationSource               student_registrationsource_enum    @default(normal)
-  aboutMe                          String                             @default("") @db.VarChar
+  registrationSource            student_registrationsource_enum @default(normal)
+  aboutMe                       String                          @default("") @db.VarChar
   // Currently only Students can create Appointments with a Zoom Meeting, for that they need a Zoom Account:
-  zoomUserId                       String?                            @db.VarChar
-  certificate_of_conduct           certificate_of_conduct?
-  course                           course[]
-  course_guest                     course_guest[]
-  course_instructors_student       course_instructors_student[]
-  course_participation_certificate course_participation_certificate[]
-  instructor_screening             instructor_screening?
-  jufo_verification_transmission   jufo_verification_transmission?
-  lecture                          lecture[]
-  match                            match[]
-  participation_certificate        participation_certificate[]
-  instant_certificate              instant_certificate[]
-  remission_request                remission_request?
-  screening                        screening?
-  subcourse_instructors_student    subcourse_instructors_student[]
+  zoomUserId                    String?                         @db.VarChar
+  certificate_of_conduct        certificate_of_conduct?
+  course                        course[]
+  course_instructors_student    course_instructors_student[]
+  instructor_screening          instructor_screening?
+  lecture                       lecture[]
+  match                         match[]
+  participation_certificate     participation_certificate[]
+  instant_certificate           instant_certificate[]
+  remission_request             remission_request?
+  screening                     screening?
+  subcourse_instructors_student subcourse_instructors_student[]
   // Should stay null for users who where registered before the onboarding got added
-  hasDoneEthicsOnboarding          Boolean?
+  hasDoneEthicsOnboarding       Boolean?
 
   cooperationID           Int?
   cooperation             cooperation? @relation(fields: [cooperationID], references: [id])
@@ -826,47 +777,55 @@ model student {
   descriptionForMatch     String       @default("") @db.VarChar
   // Used to match pupils that may prefer be matched only with a specific gender. See pupil.onlyMatchWith
   gender                  gender_enum?
+  isAdult                 Boolean      @default(true)
 
   // The referring user's type and ID, e.g., "pupil/5", "student/3"
   referredById String? @db.VarChar
 
   // Stores a structure like { weeklyAvailability: { monday: [{ from: 600 (minutes of the day), to: 660 }, ...], friday: [{ from: 780, to: 840 }], ... } }
-  calendarPreferences       Json?                       @db.Json
-  subcourse_mentors_student subcourse_mentors_student[]
+  calendarPreferences           Json?                       @db.Json
+  subcourse_mentors_student     subcourse_mentors_student[]
+  jobStatus                     student_jobstatus_enum?
+  formalEducation               String?
+  specialTeachingExperience     String[]                    @default([])
+  // How many matches a student can have at the same time, if not set, then it's unrestricted
+  maxParallelMatches            Int?
+  // Used by screeners to document how many trainings a student has attended
+  furtherTrainingsAttendedCount Int?                        @default(0)
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
 model subcourse {
-  id                               Int                                @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
-  createdAt                        DateTime                           @default(now()) @db.Timestamp(6)
-  updatedAt                        DateTime                           @default(now()) @updatedAt @db.Timestamp(6)
-  minGrade                         Int
-  maxGrade                         Int
-  maxParticipants                  Int
-  joinAfterStart                   Boolean                            @default(false)
-  published                        Boolean
-  publishedAt                      DateTime?                          @db.Timestamp(6)
-  cancelled                        Boolean                            @default(false)
+  id                            Int                             @id(map: "PK_304edeed9f68de88999028fe80e") @default(autoincrement())
+  createdAt                     DateTime                        @default(now()) @db.Timestamp(6)
+  updatedAt                     DateTime                        @default(now()) @updatedAt @db.Timestamp(6)
+  minGrade                      Int
+  maxGrade                      Int
+  maxParticipants               Int
+  joinAfterStart                Boolean                         @default(false)
+  published                     Boolean
+  publishedAt                   DateTime?                       @db.Timestamp(6)
+  cancelled                     Boolean                         @default(false)
   // DEPRECATED: In favor of subcourse_promotions
-  alreadyPromoted                  Boolean                            @default(false)
+  alreadyPromoted               Boolean                         @default(false)
   // Usually we derive the ChatID from the ids of the users in the Chat, but as the Chat Participants
   // of a Subcourse might change, we create a random ID for it and store it:
-  conversationId                   String?                            @db.VarChar
+  conversationId                String?                         @db.VarChar
   // conversation IDs of prospect chats
   // (not an injective relation, one conversation can be a prospect chat for multiple subcourses)
-  prospectChats                    Json[]                             @default([]) @db.Json
-  allowChatContactProspects        Boolean                            @default(true)
-  allowChatContactParticipants     Boolean                            @default(true)
-  groupChatType                    chat_type                          @default(NORMAL)
-  courseId                         Int?
-  course                           course?                            @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
-  course_participation_certificate course_participation_certificate[]
-  lecture                          lecture[]
-  subcourse_instructors_student    subcourse_instructors_student[]
-  subcourse_participants_pupil     subcourse_participants_pupil[]
-  waiting_list_enrollment          waiting_list_enrollment[]
-  subcourse_promotions             subcourse_promotion[]
-  subcourse_mentors_student        subcourse_mentors_student[]
+  prospectChats                 Json[]                          @default([]) @db.Json
+  allowChatContactProspects     Boolean                         @default(true)
+  allowChatContactParticipants  Boolean                         @default(true)
+  groupChatType                 chat_type                       @default(NORMAL)
+  courseId                      Int?
+  course                        course?                         @relation(fields: [courseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_274b57f6af62ffadb80afcbae85")
+  lecture                       lecture[]
+  subcourse_instructors_student subcourse_instructors_student[]
+  subcourse_participants_pupil  subcourse_participants_pupil[]
+  waiting_list_enrollment       waiting_list_enrollment[]
+  subcourse_promotions          subcourse_promotion[]
+  subcourse_mentors_student     subcourse_mentors_student[]
+  allowMentoring                Boolean                         @default(false)
 }
 
 model subcourse_promotion {
@@ -988,19 +947,25 @@ model important_information {
   recipients  important_information_recipients_enum
   navigateTo  String?
   language    important_information_language_enum   @default(de)
+  ctaLabel    String?
+  category    important_information_category_enum   @default(important)
+  activeFrom  DateTime?                             @db.Timestamp(6)
+  activeUntil DateTime?                             @db.Timestamp(6)
 }
 
 // Before matching a pupil, in some match pools we ask them to do a screening beforehand:
 model pupil_screening {
-  id          Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
-  createdAt   DateTime                    @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
-  status      pupil_screening_status_enum @default(pending)
+  id              Int                         @id(map: "PK_3b4bba5fc1846edc712915c9dfa") @default(autoincrement())
+  createdAt       DateTime                    @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime                    @default(now()) @updatedAt @db.Timestamp(6)
+  decisionTakenAt DateTime?                   @db.Timestamp(6)
+  status          pupil_screening_status_enum @default(pending)
   // invalidated when a student dissolves a match due to Ghosting / Personal Issues, OR if the last successful screening is older than 4 months (calculated at time of requesting a new match)
-  invalidated Boolean                     @default(false)
-  comment     String?                     @db.VarChar
-  pupilId     Int?
-  pupil       pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
+  invalidated     Boolean                     @default(false)
+  comment         String?                     @db.VarChar
+  systemMessages  String[]                    @default([])
+  pupilId         Int?
+  pupil           pupil?                      @relation(fields: [pupilId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_d53a566dbe1a58b06bea8b51c1d")
 
   // During the Pupil Screening, various screeners are involved ('four eye principle')
   // This was not tracked before September 23
@@ -1031,6 +996,17 @@ model job_run {
   worker    String
 
   @@id([job_name, startedAt])
+}
+
+model admin_user_flag {
+  id        Int      @id() @default(autoincrement())
+  userId    String   @db.VarChar
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  flag      String   @db.VarChar
+  metadata  Json?    @db.Json
+
+  @@unique([userId, flag])
 }
 
 enum notification_channel_enum {
@@ -1079,12 +1055,10 @@ enum log_logtype_enum {
   cocCancel
   cancelledCourse
   cancelledSubcourse
-  createdCourseAttendanceLog
-  bbbMeeting
   participantJoinedCourse
   participantLeftCourse
   mentorJoinedCourse // when mentor joined course by themselves
-  mentorAddedToCourse  // when mentor got added to course by instructor
+  mentorAddedToCourse // when mentor got added to course by instructor
   mentorLeftCourse
   participantJoinedWaitingList
   participantLeftWaitingList
@@ -1098,6 +1072,8 @@ enum log_logtype_enum {
 
 enum pupil_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1106,18 +1082,40 @@ enum pupil_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum pupil_learninggermansince_enum {
@@ -1142,8 +1140,23 @@ enum pupil_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1175,8 +1188,23 @@ enum school_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1204,6 +1232,8 @@ enum school_state_enum {
 
 enum student_languages_enum {
   Albanisch
+  Amharisch
+  Andere
   Arabisch
   Armenisch
   Aserbaidschanisch
@@ -1212,18 +1242,40 @@ enum student_languages_enum {
   Chinesisch
   Deutsch
   Englisch
+  Estnisch
   Franz_sisch       @map("Französisch")
+  Georgisch
+  Griechisch
+  Hausa
+  Hebr_isch         @map("Hebräisch")
+  Hindi
   Italienisch
   Kasachisch
+  Kroatisch
   Kurdisch
+  Lingala
+  Litauisch
+  Malayalam
+  Mazedonisch
+  Niederl_ndisch    @map("Niederländisch")
+  Persisch
   Polnisch
   Portugiesisch
+  Rum_nisch         @map("Rumänisch")
   Russisch
-  T_rkisch          @map("Türkisch")
+  Serbisch
+  Slowakisch
+  Somali
   Spanisch
+  Tadschikisch
+  Thail_ndisch      @map("Thailändisch")
+  Tigrinya
+  Tschechisch
+  T_rkisch          @map("Türkisch")
   Ukrainisch
+  Ungarisch
+  Urdu
   Vietnamesisch
-  Andere
 }
 
 enum student_module_enum {
@@ -1302,8 +1354,23 @@ enum course_schooltype_enum {
   hauptschule
   realschule
   gymnasium
-  f_rderschule @map("förderschule")
+  f_rderschule         @map("förderschule")
   berufsschule
+  mittelschule
+  oberschule
+  sekundarschule
+  stadtteilschule
+  berufsfachschule
+  fachoberschule
+  berufsoberschule
+  oberstufenzentrum
+  fachschule
+  abendschule_vhs
+  berufskolleg
+  beruflichesgymnasium
+  uni_studienkolleg
+  auslandsschule
+  privatschule
   other
 }
 
@@ -1312,6 +1379,7 @@ enum course_subject_enum {
   Arbeitslehre
   Biologie
   Chemie
+  Chinesisch
   Deutsch
   Deutsch_als_Zweitsprache @map("Deutsch als Zweitsprache")
   Englisch
@@ -1407,6 +1475,8 @@ enum screening_jobstatus_enum {
   Employee
   Retiree
   Misc
+  Azubi
+  SeekingEmployment
 }
 
 enum dissolved_by_enum {
@@ -1429,12 +1499,18 @@ enum dissolve_reason {
   languageIssues // "Wir hatten sprachliche Schwierigkeiten"
   other // "Sonstiges"
   unknown // legacy data which we can't map anymore
+  internshipEnded // For cases where the mentoring/tutoring partnership was tied to an internship or BFP program and ended with it
+  subjectMismatch // When the learner needs help in a subject the tutor can’t/won’t provide
+  genderPreference // When the learner (or parents) specifically requests a female tutor
+  repeatedNoShows // When the learner repeatedly doesn’t attend sessions, often without cancellation
+  newPartnerFound // When the learner/tutor moves on to another partner (inside or outside Lern-Fair)
 }
 
 enum gender_enum {
   male
   female
-  other
+  diverse
+  other // "Sonstiges" / No Comment
 }
 
 enum pupil_email_owner_enum {
@@ -1449,4 +1525,34 @@ enum student_screening_status_enum {
   success   @map("1")
   rejection @map("2")
   missed    @map("3")
+}
+
+enum student_jobstatus_enum {
+  Student
+  Pupil
+  Employee
+  Retiree
+  Misc
+  Azubi
+  SeekingEmployment
+}
+
+enum cooperation_type_enum {
+  company
+  university
+}
+
+enum important_information_category_enum {
+  event
+  high_demand
+  feedback
+  feature_update
+  holiday_info
+  news
+  important
+}
+
+enum learning_offer_constraints_enum {
+  ONLY_DAZ_COURSES
+  DAZ_SUBJECT_REQUIRED_FOR_MATCHING
 }

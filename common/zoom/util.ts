@@ -1,5 +1,7 @@
 import assert from 'assert';
 import jwt from 'jsonwebtoken';
+import { getIntervalOverlapInSeconds } from '../util/basic';
+import type { ZoomMeetingParticipant } from './scheduled-meeting';
 
 export enum MeetingRole {
     PARTICIPANT = 0,
@@ -72,4 +74,30 @@ function addHost(existingHosts: string, newHost: string): string {
     }
 }
 
-export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive, addHost, removeHost };
+function getSharedMeetingTimeInSeconds(participants: ZoomMeetingParticipant[]): number {
+    // Only students have a zoom account
+    const hostFragments = participants.filter((e) => !!e.id);
+    const guestFragments = participants.filter((e) => !e.id);
+
+    if (!hostFragments.length || !guestFragments.length) {
+        return 0;
+    }
+
+    // Users can have internet issues or other reason to reconnect and so have multiple join/leave times.
+    const hostIntervals = hostFragments
+        .filter((r) => r.status === 'in_meeting')
+        .map((r) => ({
+            start: new Date(r.join_time),
+            end: new Date(r.leave_time),
+        }));
+
+    const guestIntervals = guestFragments
+        .filter((r) => r.status === 'in_meeting')
+        .map((r) => ({
+            start: new Date(r.join_time),
+            end: new Date(r.leave_time),
+        }));
+    return getIntervalOverlapInSeconds(hostIntervals, guestIntervals);
+}
+
+export { generateMeetingSDKJWT, isZoomFeatureActive, assureZoomFeatureActive, addHost, removeHost, getSharedMeetingTimeInSeconds };

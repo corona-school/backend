@@ -23,7 +23,7 @@ const batchOfMetrics = [
         return 1;
     }),
     //! relevant if calendly API is integrated
-    createMetric('student_onboarding_appointment_booked', ['student_calendly_appointment_booked'], () => {
+    createMetric('student_onboarding_appointment_booked', ['student_screening_appointment_booked'], () => {
         return 1;
     }),
     createMetric('student_onboarding_screened', ['student_screening_appointment_done', 'tutor_screening_success', 'instructor_screening_success'], () => {
@@ -37,7 +37,7 @@ const batchOfMetrics = [
         return 1;
     }),
     //! relevant if calendly API is integrated
-    createMetric('pupil_onboarding_appointment_booked', ['pupil_calendly_appointment_booked'], () => {
+    createMetric('pupil_onboarding_appointment_booked', ['pupil_screening_appointment_booked'], () => {
         return 1;
     }),
     createMetric(

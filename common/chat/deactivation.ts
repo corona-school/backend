@@ -9,18 +9,28 @@ import { getLastLecture } from '../courses/lectures';
 
 const logger = getLogger('Chat Deactivation');
 
-// one to one chats (if match) whose match was dissolved 30 days ago should be "disabled" (readonly).
-// This will allow users to continue writing for another 30 days after match disolving.
-async function isActiveMatch(id: number): Promise<boolean> {
+// one to one chats (if match) whose match was dissolved 7 days ago should be "disabled" (readonly).
+// if the match was dissolved because a deactivated student due to no CoC, we keep it open for 14 days
+// if the match was dissolved due to personal issues we disable the chat ASAP
+export async function isMatchChatActive(id: number): Promise<boolean> {
     const match = await prisma.match.findUniqueOrThrow({ where: { id } });
 
     if (!match.dissolved) {
         return true;
     }
 
+    if (match.dissolveReasons.includes('personalIssues')) {
+        return false;
+    }
+
     const today = moment().endOf('day');
-    const dissolvedAtPlus30Days = moment(match.dissolvedAt).add(30, 'days');
-    return !dissolvedAtPlus30Days.isBefore(today);
+    if (match.dissolveReasons.includes('accountDeactivatedNoCoC')) {
+        const dissolvedAtPlus14Days = moment(match.dissolvedAt).add(14, 'days');
+        return !dissolvedAtPlus14Days.isBefore(today);
+    }
+
+    const dissolvedAtPlus7Days = moment(match.dissolvedAt).add(7, 'days');
+    return !dissolvedAtPlus7Days.isBefore(today);
 }
 
 async function isActiveSubcourse(id: number): Promise<boolean> {
@@ -38,12 +48,12 @@ async function isActiveSubcourse(id: number): Promise<boolean> {
         return false;
     }
 
-    const lastLecturePlus30Days = moment(lastLecture.start).add(30, 'days');
-    const is30DaysBeforeToday = lastLecturePlus30Days.isBefore(today);
+    const lastLecturePlus10Days = moment(lastLecture.start).add(10, 'days');
+    const is10DaysBeforeToday = lastLecturePlus10Days.isBefore(today);
 
-    logger.info(`Checked if Subcourse(${subcourse.id}) is active`, { lastLecture, lastLecturePlus30Days, is30DaysBeforeToday });
+    logger.info(`Checked if Subcourse(${subcourse.id}) is active`, { lastLecture, lastLecturePlus10Days, is10DaysBeforeToday });
 
-    return !is30DaysBeforeToday;
+    return !is10DaysBeforeToday;
 }
 
 export function isConversationReadOnly(conversation: TJConversation) {
@@ -105,7 +115,7 @@ export async function shouldMarkChatAsReadonly(conversation: TJConversation) {
     if (conversation.custom.match) {
         const match = JSON.parse(conversation.custom.match);
         const matchId = match.matchId;
-        const isMatchActive = await isActiveMatch(matchId);
+        const isMatchActive = await isMatchChatActive(matchId);
         logger.info(`Conversation ${conversation.id} belongs to Match(${matchId}) which is all ${isMatchActive ? 'active' : 'inactive'}`, {
             conversationId: conversation.id,
             matchId,

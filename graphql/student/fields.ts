@@ -4,16 +4,17 @@ import {
     Match,
     Certificate_of_conduct as CertificateOfConduct,
     Screening,
+    Admin_user_flag as AdminUserFlag,
     Instructor_screening as InstructorScreening,
     Subcourse,
     Course,
     StudentWhereInput,
 } from '../generated';
-import { Arg, Authorized, Ctx, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { ImpliesRoleOnResult, Role } from '../authorizations';
 import { LimitedQuery, LimitEstimated } from '../complexity';
-import { Subject } from '../types/subject';
+import { Subject, SubjectStatsForStudents } from '../types/subject';
 import { parseSubjectString } from '../../common/util/subjectsutils';
 import { Decision } from '../types/reason';
 import { canStudentRequestMatch } from '../../common/match/request';
@@ -32,6 +33,19 @@ import * as CertificateOfConductCommon from '../../common/certificate-of-conduct
 import { addFile, getFileURL } from '../files';
 import { createInstantCertificate } from '../../common/certificate';
 import { getLogger } from '../../common/logger/logger';
+import { getPupils, pools } from '../../common/match/pool';
+import { gradeAsInt } from '../../common/util/gradestrings';
+import { testStudentSubjectsHistory } from '../../utils/test-data';
+import { isDev } from '../../common/util/environment';
+
+@ObjectType()
+export class AppointmentStats {
+    @Field()
+    plannedAppointments: number;
+
+    @Field((type) => Int)
+    successfulAppointments: number;
+}
 
 const logger = getLogger('ExtendFieldsStudentResolver');
 @Resolver((of) => Student)
@@ -47,7 +61,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @Query((returns) => [Instructor])
-    @Authorized(Role.INSTRUCTOR)
+    @Authorized(Role.INSTRUCTOR, Role.COURSE_SCREENER, Role.ADMIN)
     @LimitedQuery()
     async otherInstructors(
         @Ctx() context: GraphQLContext,
@@ -55,15 +69,16 @@ export class ExtendFieldsStudentResolver {
         @Arg('take', (type) => Int) take: number,
         @Arg('skip', (type) => Int) skip: number
     ): Promise<Instructor[]> {
-        assert.ok(isSessionStudent(context));
-
         const query: StudentWhereInput = {
             isInstructor: { equals: true },
             active: { equals: true },
             verifiedAt: { not: null },
             instructor_screening: { is: { status: { equals: 'success' } } },
-            id: { not: { equals: context.user.studentId } },
         };
+
+        if (context.user.studentId) {
+            query.id = { not: { equals: context.user.studentId } };
+        }
 
         return await prisma.student.findMany({
             where: { AND: [query, strictUserSearch(search)] },
@@ -246,5 +261,171 @@ export class ExtendFieldsStudentResolver {
             },
             take: 100,
         });
+    }
+
+    @FieldResolver((returns) => Boolean)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    isInternship(@Root() student: Student) {
+        const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
+        return student.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(student.cooperationID.toString()) : false;
+    }
+
+    @FieldResolver((returns) => AppointmentStats)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    async matchesAppointmentStats(@Root() student: Student) {
+        const lectures = await prisma.lecture.findMany({
+            where: {
+                match: { studentId: student.id },
+            },
+            select: {
+                isCanceled: true,
+                declinedBy: true,
+                joinedBy: true,
+            },
+        });
+        return {
+            plannedAppointments: lectures.filter((l) => !l.isCanceled).length,
+            successfulAppointments: lectures.filter((l) => !l.isCanceled && !l.declinedBy.length && l.joinedBy.length >= 2).length,
+        };
+    }
+
+    @FieldResolver((returns) => AppointmentStats)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
+    async groupAppointmentStats(@Root() student: Student) {
+        const lectures = await prisma.lecture.findMany({
+            where: {
+                organizerIds: { has: `student/${student.id}` },
+                appointmentType: 'group',
+            },
+            select: {
+                isCanceled: true,
+                declinedBy: true,
+                joinedBy: true,
+            },
+        });
+        return {
+            plannedAppointments: lectures.filter((l) => !l.isCanceled).length,
+            successfulAppointments: lectures.filter((l) => {
+                const studentJoined = l.joinedBy.some((j) => j.startsWith(`student/${student.id}`));
+                const atLeastOneOtherJoined = l.joinedBy.some((j) => !j.startsWith(`student/${student.id}`));
+                return !l.isCanceled && studentJoined && atLeastOneOtherJoined;
+            }).length,
+        };
+    }
+
+    @FieldResolver((returns) => [AdminUserFlag])
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
+    async adminUserFlags(@Root() student: Required<Student>) {
+        return await prisma.admin_user_flag.findMany({ where: { userId: userForStudent(student).userID } });
+    }
+
+    @Query((returns) => [Student])
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async cooperationStudentsToBeConfirmed() {
+        return await prisma.student.findMany({
+            where: {
+                active: true,
+                registrationSource: 'cooperation',
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    @Query((returns) => Int)
+    @Authorized(Role.ADMIN, Role.STUDENT_SCREENER)
+    async cooperationStudentsToBeConfirmedCount() {
+        return await prisma.student.count({
+            where: {
+                active: true,
+                AND: [{ screening: { is: null } }, { instructor_screening: { is: null } }],
+                registrationSource: 'cooperation',
+            },
+        });
+    }
+
+    @Query(() => [SubjectStatsForStudents])
+    @Authorized(Role.ADMIN, Role.TUTOR, Role.STUDENT_SCREENER)
+    async subjectsForStudents() {
+        let result: { subject_name: string; mandatory_count: number; grades: string[]; historical_matches: number }[];
+        if (isDev) {
+            result = testStudentSubjectsHistory.map((e) => ({
+                subject_name: e.subject_name,
+                mandatory_count: e.mandatory_count,
+                grades: e.grades,
+                historical_matches: e.historical_matches,
+            }));
+        } else {
+            result = (await prisma.$queryRaw`
+            WITH valid_pupils AS (
+                SELECT p.*
+                FROM pupil p
+                WHERE p."openMatchRequestCount" > 0
+                AND p.active = TRUE
+                AND p."isPupil" = TRUE
+                AND p."registrationSource" != '5'
+                AND EXISTS (
+                    SELECT 1
+                    FROM pupil_screening ps
+                    WHERE ps."pupilId" = p.id
+                        AND ps.status = '1'
+                        AND ps.invalidated = FALSE
+                )
+            ),
+
+            current_demand AS (
+                SELECT
+                    subject->>'name' AS subject_name,
+                    COUNT(*) AS mandatory_count,
+                    array_agg(vp.grade ORDER BY vp.grade) AS grades
+                FROM valid_pupils vp
+                CROSS JOIN LATERAL jsonb_array_elements(vp.subjects::jsonb) AS subject
+                WHERE (subject->>'mandatory')::boolean
+                GROUP BY subject->>'name'
+            ),
+
+            historical_demand AS (
+                SELECT
+                    subject->>'name' AS subject_name,
+                    COUNT(*) AS historical_matches
+                FROM "match" m
+                CROSS JOIN LATERAL unnest(m."subjectsAtMatchingTime") AS subject
+                WHERE (subject->>'mandatory')::boolean
+                GROUP BY subject->>'name'
+            )
+
+            SELECT
+                h.subject_name,
+                COALESCE(c.mandatory_count, 0)::INT AS mandatory_count,
+                COALESCE(c.grades, ARRAY[]::VARCHAR[]) AS grades,
+                h.historical_matches::INT AS historical_matches
+            FROM historical_demand h
+            LEFT JOIN current_demand c
+                ON c.subject_name = h.subject_name
+            ORDER BY
+                (COALESCE(c.mandatory_count, 0) = 0),
+                c.mandatory_count DESC,
+                h.historical_matches DESC;
+        `) as { subject_name: string; mandatory_count: number; grades: string[]; historical_matches: number }[];
+        }
+
+        const getDemand = (rank: number) => {
+            if (rank <= 4) {
+                return 0;
+            }
+            if (rank <= 10) {
+                return 1;
+            }
+            return 2;
+        };
+
+        const sortedByHistoricalMatches = [...result].sort((a, b) => b.historical_matches - a.historical_matches);
+        const demandBySubject = new Map(sortedByHistoricalMatches.map((e, index) => [e.subject_name, getDemand(index + 1)]));
+
+        return result.map((e) => ({
+            subject: e.subject_name,
+            pupilsWaiting: e.mandatory_count,
+            gradesAvailable: e.grades.map((g) => gradeAsInt(g)),
+            demandRank: demandBySubject.get(e.subject_name)!,
+        }));
     }
 }

@@ -136,7 +136,6 @@ export async function deleteSubcourse(subcourse: Subcourse) {
     if (!can.allowed) {
         throw new ValidationError(`Cannot delete Subcourse ${subcourse.id}, reason: ${can.reason}`);
     }
-    await prisma.course_participation_certificate.deleteMany({ where: { subcourseId: subcourse.id } });
     logger.info(`Deleted course participation certificate for subcourse ${subcourse.id}`);
     await prisma.lecture.deleteMany({ where: { subcourseId: subcourse.id } });
     logger.info(`Deleted lectures for subcourse ${subcourse.id}`);
@@ -330,18 +329,14 @@ export async function addSubcourseInstructor(user: User | null, subcourse: Subco
     logger.info(`Student (${newInstructor.id}) was added as an instructor to Subcourse(${subcourse.id}) by User(${user?.userID})`);
 }
 
-export async function deleteSubcourseInstructor(user: User | null, subcourse: Subcourse, instructorToBeRemoved: Student) {
-    const subcourseId = subcourse.id;
-    const studentId = instructorToBeRemoved.id;
-    const instructorUser = userForStudent(instructorToBeRemoved);
-    await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId, studentId } } });
-    await removeGroupAppointmentsOrganizer(subcourseId, instructorUser.userID, instructorUser.email);
+export async function removeSubcourseInstructor(blame: User | null, subcourse: Subcourse, toBeRemoved: Student) {
+    const instructorUser = userForStudent(toBeRemoved);
+    await prisma.subcourse_instructors_student.delete({ where: { subcourseId_studentId: { subcourseId: subcourse.id, studentId: toBeRemoved.id } } });
+    await removeGroupAppointmentsOrganizer(subcourse.id, instructorUser.userID, instructorUser.email);
     if (subcourse.conversationId) {
         await removeParticipantFromCourseChat(instructorUser, subcourse.conversationId);
     }
-    logger.info(`Student(${studentId}) was deleted from Subcourse(${subcourseId}) by User(${user?.userID})`);
+    await deleteCourseAchievementsForStudents(subcourse.id, [instructorUser.userID]);
 
-    await deleteCourseAchievementsForStudents(subcourseId, [instructorUser.userID]);
-
-    return true;
+    logger.info(`Student(${toBeRemoved.id}) was deleted as instructor from Subcourse(${subcourse.id}) by User(${blame?.userID})`);
 }

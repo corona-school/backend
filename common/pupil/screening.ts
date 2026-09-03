@@ -3,7 +3,6 @@ import { prisma } from '../prisma';
 import { getLogger } from '../logger/logger';
 import * as Notification from '../notification';
 import { PrerequisiteError, RedundantError } from '../util/error';
-import { NotFoundError } from '@prisma/client/runtime';
 import { userForPupil } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
@@ -11,15 +10,13 @@ const logger = getLogger('Pupil Screening');
 interface PupilScreeningInput {
     status?: PupilScreeningStatus;
     comment?: string;
+    systemMessages?: string[];
     invalidated?: boolean;
 }
 
 export async function addPupilScreening(pupil: Pupil, screening: PupilScreeningInput = {}, silent = false) {
     if (await prisma.pupil_screening.count({ where: { pupilId: pupil.id, invalidated: false } })) {
         throw new RedundantError(`There already is a valid pupil screening for pupil ${pupil.id}`);
-    }
-    if (!pupil.isPupil) {
-        throw new PrerequisiteError(`Pupil ${pupil.id} has isPupil = false`);
     }
     if (!pupil.verifiedAt) {
         throw new PrerequisiteError(`Pupil ${pupil.id} does not have a verified email`);
@@ -45,7 +42,7 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
     const screening = await prisma.pupil_screening.findFirst({ where: { id: pupilScreeningId }, include: { pupil: {} } });
     if (screening === null) {
         logger.error('cannot find PupilScreening', new Error('cannot find PupilScreening'), { pupilScreeningId });
-        throw new NotFoundError('pupil screening not found');
+        throw new Error('pupil screening not found');
     }
 
     await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { ...screeningUpdate, updatedAt: new Date() } });
@@ -62,21 +59,38 @@ export async function updatePupilScreening(screener: Screener, pupilScreeningId:
     }
 
     const validScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId } });
+    const succeededScreeningCount = await prisma.pupil_screening.count({ where: { pupilId: screening.pupilId, status: 'success' } });
     const isFirstScreening = validScreeningCount === 1;
+    const isFirstSucceededScreening = succeededScreeningCount === 1;
     const asUser = userForPupil(screening.pupil);
+    if (screeningUpdate.status === PupilScreeningStatus.rejection || screeningUpdate.status === PupilScreeningStatus.success) {
+        await prisma.pupil_screening.update({ where: { id: pupilScreeningId }, data: { decisionTakenAt: new Date() } });
+    }
+
     switch (screeningUpdate.status) {
         case PupilScreeningStatus.rejection:
             if (isFirstScreening) {
                 await Notification.actionTaken(asUser, 'pupil_screening_after_registration_rejected', {});
             } else {
-                await Notification.actionTaken(asUser, 'pupil_screening_rejected', {});
+                const hasActiveMatch = await prisma.match.count({ where: { pupilId: screening.pupilId, dissolved: false } });
+                await Notification.actionTaken(asUser, hasActiveMatch > 0 ? 'pupil_screening_with_active_match_rejected' : 'pupil_screening_rejected', {});
             }
             break;
         case PupilScreeningStatus.success:
-            if (isFirstScreening) {
-                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {});
+            if (isFirstScreening || isFirstSucceededScreening) {
+                await Notification.actionTaken(asUser, 'pupil_screening_after_registration_succeeded', {
+                    approvedFor: {
+                        courses: screening.pupil.isParticipant.toString(),
+                        matching: screening.pupil.isPupil.toString(),
+                    },
+                });
             } else {
-                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {});
+                await Notification.actionTaken(asUser, 'pupil_screening_succeeded', {
+                    approvedFor: {
+                        courses: screening.pupil.isParticipant.toString(),
+                        matching: screening.pupil.isPupil.toString(),
+                    },
+                });
             }
             await updateSessionRolesOfUser(asUser.userID);
             break;

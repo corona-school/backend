@@ -12,6 +12,7 @@ import { AchievementTemplateCreate, purgeAchievementTemplateCache } from '../com
 import { achievement_with_template, ConditionDataAggregations } from '../common/achievement/types';
 import { deleteUnreachableCourseAchievements } from '../jobs/periodic/delete-unreachable-achievements/courses';
 import { createRelation, EventRelationType } from '../common/achievement/relation';
+import { expectMatchChatCreation } from './03_matching';
 
 function findTemplateByMetric(achievements: achievement_with_template[], metric: string) {
     for (const achievement of achievements) {
@@ -171,7 +172,7 @@ void test('Reward student conducted match appointment', async () => {
             }
         }
     `);
-    const [match] = matches;
+    const match = matches.find((el) => el.id === 1);
 
     const dates = createDates();
     const appointments = await generateLectures(dates, match, student.userID);
@@ -200,6 +201,7 @@ void test('Reward pupil conducted match appointment', async () => {
             pupilCreateMatchRequest
         }
     `);
+    expectMatchChatCreation(student, pupil);
     await adminClient.request(`
         mutation CreateManualMatch {
             matchAdd(poolName: "lern-fair-now", studentId: ${student.student.id} pupilId: ${pupil.pupil.id})
@@ -252,12 +254,13 @@ void test('Reward student regular learning', async () => {
                 student {
                     matches {
                         id
+                        dissolved
                     }
                 }
             }
         }
     `);
-    const [match] = s1.matches.filter((el) => !el.dissolved);
+    const match = s1.matches.find((el) => el.id === 1);
     // request to generate the achievement with initial record value 1
     const dates = createDates();
     const appointments = await generateLectures(dates, match, student.userID);

@@ -5,11 +5,11 @@ import { getNotifications, importMessageTranslations, importNotifications } from
 import { _createFixedToken, createPassword, verifyEmail } from './common/secret';
 import { userForStudent, userForPupil, refetchPupil, refetchStudent, userForScreener } from './common/user';
 import { getLogger } from './common/logger/logger';
-import { BecomeTuteeData, registerPupil, RegisterPupilData } from './common/pupil/registration';
+import { registerPupil, RegisterPupilData } from './common/pupil/registration';
 import { isDev, isTest } from './common/util/environment';
 import { prisma } from './common/prisma';
 import { becomeInstructor, becomeTutor, BecomeTutorData, registerStudent, RegisterStudentData } from './common/student/registration';
-import { addInstructorScreening, addTutorScreening } from './common/student/screening';
+import { addInstructorScreening, addTutorScreening, scheduleCoCReminders } from './common/student/screening';
 import { addPupilScreening } from './common/pupil/screening';
 import { createMatch } from './common/match/create';
 import { TEST_POOL } from './common/match/pool';
@@ -30,15 +30,24 @@ import {
     course_subject_enum,
     learning_assignment_status,
     pupil_email_owner_enum,
+    pupil_learninggermansince_enum as LearningGermanSince,
+    pupil_languages_enum as Language,
 } from '@prisma/client';
 import { importAchievements } from './seed-achievements';
-import { CalendarPreferences, Day, DayAvailabilitySlot, WeeklyAvailability } from './graphql/types/calendarPreferences';
+import { CalendarPreferences, Day, WeeklyAvailability } from './graphql/types/calendarPreferences';
+import { PupilUpdateInput } from './graphql/pupil/mutations';
+import { Subject } from './common/util/subjectsutils';
+import * as certificateOfConduct from './common/certificate-of-conduct/certificateOfConduct';
 
 const logger = getLogger('DevSetup');
 
-interface CreatePupilArgs extends Partial<RegisterPupilData>, BecomeTuteeData {
+interface CreatePupilArgs extends Partial<RegisterPupilData> {
     includePassword?: boolean;
     calendarPreferences: CalendarPreferences;
+    subjects: Subject[];
+    languages: Language[];
+    learningGermanSince?: LearningGermanSince;
+    gradeAsInt: number;
 }
 
 const createSimpleCalendarPreferences = (weekdays: Day[], slots: { from: string; to: string }[]): CalendarPreferences => {
@@ -104,17 +113,21 @@ const createPupil = async ({ includePassword = true, calendarPreferences, ...dat
 
 interface CreateStudentArgs extends Partial<RegisterStudentData>, BecomeTutorData {
     isInstructor?: boolean;
+    isTutor?: boolean;
     calendarPreferences: CalendarPreferences;
+    cooperationID?: number;
+    createCoC?: boolean;
 }
 
-const createStudent = async ({ isInstructor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
+const createStudent = async ({ isInstructor = true, isTutor = true, calendarPreferences, ...data }: CreateStudentArgs, screener: Screener) => {
     const student = await registerStudent({
         firstname: data.firstname,
         lastname: data.lastname,
         email: data.email,
         aboutMe: data.aboutMe,
         newsletter: data.newsletter ?? true,
-        registrationSource: 'normal',
+        registrationSource: data.registrationSource ?? 'normal',
+        isAdult: true,
     });
     await verifyEmail(userForStudent(student));
     await _createFixedToken(userForStudent(student), `authtokenS${student.id}`);
@@ -124,10 +137,12 @@ const createStudent = async ({ isInstructor = true, calendarPreferences, ...data
         languages: data.languages,
         subjects: data.subjects,
     });
-    await addTutorScreening(screener, student, { status: 'success' });
+    if (isTutor) {
+        await addTutorScreening(screener, student, { status: 'success' });
+    }
     await prisma.student.update({
         where: { id: student.id },
-        data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any> },
+        data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any>, cooperationID: data.cooperationID },
     });
     if (isInstructor) {
         await becomeInstructor(student, {});
@@ -140,6 +155,9 @@ const createStudent = async ({ isInstructor = true, calendarPreferences, ...data
             },
             false
         );
+    }
+    if (data.createCoC) {
+        await certificateOfConduct.create(new Date(), new Date(), false, student.id);
     }
     return refetchStudent(student);
 };
@@ -155,13 +173,20 @@ interface CreateTutoringMatchArgs {
             task: string;
         }[];
     }[];
+    lectures: Omit<CreateLecturesArgs, 'matchId'>;
 }
 
 const createTutoringMatch = async (data: CreateTutoringMatchArgs) => {
     const { topics = [] } = data;
-    await createPupilMatchRequest(data.pupil);
-    await createStudentMatchRequest(data.student);
-    const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL);
+    await createPupilMatchRequest(data.pupil, true);
+    await createStudentMatchRequest(data.student, true);
+    const match = await createMatch(await refetchPupil(data.pupil), await refetchStudent(data.student), TEST_POOL, { skipChatCreation: true });
+    await createLectures({
+        ...data.lectures,
+        participantsIds: [`pupil/${data.pupil.id}`],
+        organizerIds: [`student/${data.student.id}`],
+        matchId: match.id,
+    });
     if (topics.length) {
         for (const topic of topics) {
             const createdTopic = await prisma.learning_topic.create({
@@ -206,6 +231,7 @@ interface CreateCourseArgs {
     instructors: Student[];
     participants: Pupil[];
     lectures: Omit<CreateLecturesArgs, 'subcourseId'>;
+    allowMentoring?: boolean;
 }
 
 interface CreateLecturesArgs {
@@ -214,10 +240,11 @@ interface CreateLecturesArgs {
     startOffsetInDays: number;
     participantsIds?: string[];
     organizerIds?: string[];
-    subcourseId: number;
+    subcourseId?: number;
+    matchId?: number;
 }
 
-const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId, organizerIds, participantsIds }: CreateLecturesArgs) => {
+const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subcourseId, matchId, organizerIds, participantsIds }: CreateLecturesArgs) => {
     let currentLecture = Date.now() + startOffsetInDays * 24 * 60 * 60 * 1000;
     const interval = intervalInDays * 24 * 60 * 60 * 1000;
 
@@ -226,11 +253,13 @@ const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subco
         await prisma.lecture.create({
             data: {
                 subcourseId: subcourseId,
+                matchId: matchId,
                 duration: 60,
                 start,
-                organizerIds: start <= new Date() ? organizerIds : [],
-                participantIds: start <= new Date() ? participantsIds : [],
-                appointmentType: 'group',
+                organizerIds: organizerIds,
+                participantIds: participantsIds,
+                joinedBy: start <= new Date() ? participantsIds.concat(organizerIds ?? []) : [],
+                appointmentType: subcourseId ? 'group' : 'match',
             },
         });
 
@@ -259,6 +288,7 @@ const createCourse = async (data: CreateCourseArgs) => {
             maxGrade: data.maxGrade ?? 14,
             maxParticipants: data.maxParticipants ?? 10,
             published: data.published ?? true,
+            allowMentoring: data.allowMentoring,
         },
     });
 
@@ -634,6 +664,7 @@ void (async function setupDevDB() {
             aboutMe: `Im Student 1`,
             languages: ['Deutsch', 'Englisch', 'Spanisch'],
             newsletter: true,
+            createCoC: true,
             subjects: [
                 { name: 'Spanisch', grade: { min: 4, max: 10 } },
                 { name: 'Deutsch als Zweitsprache', grade: { min: 4, max: 10 } },
@@ -668,6 +699,7 @@ void (async function setupDevDB() {
             aboutMe: `Im Student 2`,
             email: 'test+dev+s2@lern-fair.de',
             newsletter: false,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
             subjects: [
@@ -707,6 +739,7 @@ void (async function setupDevDB() {
             email: 'test+dev+s3@lern-fair.de',
             aboutMe: `I'm Student 3`,
             newsletter: true,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
             subjects: [
@@ -741,6 +774,7 @@ void (async function setupDevDB() {
             email: 'test+dev+s4@lern-fair.de',
             aboutMe: `I'm Student 4`,
             newsletter: false,
+            createCoC: true,
             registrationSource: 'normal',
             languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
             subjects: [
@@ -774,7 +808,9 @@ void (async function setupDevDB() {
             email: 'test+dev+s5@lern-fair.de',
             aboutMe: `I'm Student 5`,
             newsletter: true,
-            registrationSource: 'normal',
+            createCoC: true,
+            registrationSource: 'cooperation',
+            cooperationID: 1,
             languages: ['Englisch', 'Arabisch', 'Deutsch'],
             subjects: [
                 { name: 'Französisch', grade: { min: 1, max: 14 } },
@@ -825,16 +861,17 @@ void (async function setupDevDB() {
                 ],
             },
         ],
+        lectures: { amount: 20, intervalInDays: 1, startOffsetInDays: -8 },
     });
 
-    await createTutoringMatch({ pupil: pupil1, student: student3 });
-    await createTutoringMatch({ pupil: pupil2, student: student1 });
-    await createTutoringMatch({ pupil: pupil3, student: student1 });
-    await createTutoringMatch({ pupil: pupil6, student: student1 });
-    await createTutoringMatch({ pupil: pupil3, student: student3 });
-    await createTutoringMatch({ pupil: pupil4, student: student2 });
-    await createTutoringMatch({ pupil: pupil5, student: student2 });
-    await createTutoringMatch({ pupil: pupil8, student: student2 });
+    await createTutoringMatch({ pupil: pupil1, student: student3, lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil2, student: student1, lectures: { amount: 10, intervalInDays: 1, startOffsetInDays: 0 } });
+    await createTutoringMatch({ pupil: pupil3, student: student1, lectures: { amount: 8, intervalInDays: 1, startOffsetInDays: -1 } });
+    await createTutoringMatch({ pupil: pupil6, student: student1, lectures: { amount: 6, intervalInDays: 1, startOffsetInDays: -3 } });
+    await createTutoringMatch({ pupil: pupil3, student: student3, lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil4, student: student2, lectures: { amount: 9, intervalInDays: 1, startOffsetInDays: -1 } });
+    await createTutoringMatch({ pupil: pupil5, student: student2, lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 } });
+    await createTutoringMatch({ pupil: pupil8, student: student2, lectures: { amount: 12, intervalInDays: 1, startOffsetInDays: -4 } });
 
     const keepAtIt = await createCourseTag(null, 'Dranbleiben', CourseCategory.focus);
     await createCourseTag(null, 'Denk an Dich', CourseCategory.focus);
@@ -968,7 +1005,7 @@ void (async function setupDevDB() {
         course_tags_course_tag: { create: { courseTagId: digitalWorld.id } },
         instructors: [student1],
         participants: [pupil1, pupil2, pupil3, pupil4, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
-        lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -1 },
+        lectures: { amount: 5, intervalInDays: 1, startOffsetInDays: -2 },
     });
 
     const [course9, subcourse9] = await createCourse({
@@ -982,7 +1019,7 @@ void (async function setupDevDB() {
         maxParticipants: 5,
         instructors: [student1],
         participants: [pupil2, pupil3, pupil4, pupil5, pupil6],
-        lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -1 },
+        lectures: { amount: 7, intervalInDays: 1, startOffsetInDays: -4 },
     });
 
     const [course10, subcourse10] = await createCourse({
@@ -995,10 +1032,78 @@ void (async function setupDevDB() {
         maxParticipants: 1000,
         instructors: [student1, student2, student3],
         participants: [pupil1, pupil2, pupil3, pupil5, pupil6, pupil7, pupil8, pupil9, pupil10],
-        lectures: { amount: 15, intervalInDays: 7, startOffsetInDays: -14 },
+        lectures: { amount: 40, intervalInDays: 7, startOffsetInDays: -140 },
         allowContact: false,
         joinAfterStart: true,
+        allowMentoring: true,
     });
+
+    const firstNames = [
+        'Emma',
+        'Liam',
+        'Olivia',
+        'Noah',
+        'Sophia',
+        'James',
+        'Charlotte',
+        'Benjamin',
+        'Amelia',
+        'Lucas',
+        'Mia',
+        'Henry',
+        'Evelyn',
+        'Alexander',
+        'Harper',
+        'Daniel',
+        'Ella',
+        'Michael',
+        'Grace',
+        'Leo',
+    ];
+
+    const students = [];
+
+    for (let i = 0; i < firstNames.length; i++) {
+        const number = i + 22;
+
+        students.push(
+            await createStudent(
+                {
+                    firstname: firstNames[i],
+                    lastname: 'Doe',
+                    email: `test+dev+s${number}@lern-fair.de`,
+                    aboutMe: `I'm Student ${number}`,
+                    newsletter: false,
+                    registrationSource: 'cooperation',
+                    isInstructor: i > 15,
+                    isTutor: i >= 10 && i <= 15,
+                    cooperationID: i >= 10 ? 1 : undefined,
+                    languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
+                    subjects: [
+                        { name: 'Französisch', grade: { min: 1, max: 14 } },
+                        { name: 'Mathematik', grade: { min: 1, max: 10 } },
+                    ],
+                    calendarPreferences: createSimpleCalendarPreferences(
+                        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
+                        [
+                            { from: '10:00', to: '11:00' },
+                            { from: '11:00', to: '12:00' },
+                            { from: '12:00', to: '13:00' },
+                            { from: '13:00', to: '14:00' },
+                            { from: '14:00', to: '15:00' },
+                            { from: '15:00', to: '16:00' },
+                            { from: '16:00', to: '17:00' },
+                            { from: '17:00', to: '18:00' },
+                            { from: '18:00', to: '19:00' },
+                            { from: '19:00', to: '20:00' },
+                            { from: '20:00', to: '21:00' },
+                        ]
+                    ),
+                },
+                screener1
+            )
+        );
+    }
 
     await importAchievements();
 
@@ -1008,6 +1113,7 @@ void (async function setupDevDB() {
     }
 
     _setSilenceNotificationSystem(false);
+    await scheduleCoCReminders(students[0]);
 
     logger.info(`Successfully seeded the DB`);
 })();
