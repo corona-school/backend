@@ -11,6 +11,7 @@ import { DeactivationReason, userForStudent } from '../user';
 import { CertificateState } from '../certificate';
 import { removeAllPushSubcriptions } from '../notification/channels/push';
 import { cancelSubcourse, removeSubcourseInstructor, subcourseOver } from '../courses/states';
+import { removeSubcourseMentor } from '../courses/participants';
 
 export async function deactivateStudent(
     student: Student,
@@ -80,6 +81,20 @@ export async function deactivateStudent(
             // there is only one instructor and the subcourse is not over yet, so cancel the subcourse
             await cancelSubcourse(userForStudent(student), subcourse, true);
         }
+    }
+
+    // Remove the student from any courses where they were mentors
+    const mentoredSubcourses = await prisma.subcourse.findMany({
+        where: {
+            subcourse_mentors_student: {
+                some: {
+                    studentId: student.id,
+                },
+            },
+        },
+    });
+    for (const subcourse of mentoredSubcourses) {
+        await removeSubcourseMentor(userForStudent(student), subcourse, student);
     }
 
     if (isZoomFeatureActive() && student.zoomUserId) {
