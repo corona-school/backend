@@ -158,7 +158,7 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
     }
 
-    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
+    const isFinalDecision = data.status === ScreeningStatus.success || data.status === ScreeningStatus.rejection;
 
     const update = {
         where: { id: screeningId },
