@@ -293,7 +293,7 @@ const updateZoomMeeting = async (meetingId: string, update: { startTime?: Date; 
     );
 
     if (!response.ok) {
-        throw new Error(`Zoom - failed to update meeting with ${response.status} ${await response.text()}`);
+        throw new Error(`Zoom - failed to update ZoomMeeting(${meetingId}) with ${response.status} ${await response.text()}`);
     }
 
     logger.info(`Zoom - The Zoom Meeting was updated.`);

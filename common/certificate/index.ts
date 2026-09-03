@@ -7,6 +7,7 @@ import * as Notification from '../notification';
 import {
     course_category_enum,
     instant_certificate as InstantCertificate,
+    lecture_appointmenttype_enum,
     participation_certificate as ParticipationCertificate,
     Prisma,
     pupil as Pupil,
@@ -36,6 +37,8 @@ export type Language = (typeof LANGUAGES)[number];
 export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
+const JOINED_BY_INTRODUCTION_DATE = new Date('2025-03-25');
+const ACTUAL_DURATION_INTRODUCTION_DATE = new Date('2026-09-10');
 
 export enum CertificateState {
     manual = 'manual', // student did not request approval
@@ -89,6 +92,46 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     return pdf;
 }
 
+interface Appointment {
+    appointmentType: lecture_appointmenttype_enum;
+    start: Date;
+    duration?: number;
+    actualDuration?: number;
+    joinedBy: string[];
+}
+
+// We give extra time of 60 mins for every 6 lectures that actually happened (both HuH and SuS present)
+// This only applies to lectures after the introduction of actual duration
+const getBonusDuration = (appointments: Appointment[], requester: Student) => {
+    const validAppointments = appointments.filter((l) => {
+        const isAfterActualDurationIntroduction = l.start >= ACTUAL_DURATION_INTRODUCTION_DATE;
+        const bothJoined = l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
+        return isAfterActualDurationIntroduction && bothJoined;
+    });
+
+    const bonusDuration = Math.floor(validAppointments.length / 6) * 60; // 60 minutes for every 6 valid appointments
+    return bonusDuration;
+};
+
+const getAppointmentDuration = (lecture: Appointment) => {
+    if (lecture.appointmentType === 'match' && lecture.start >= ACTUAL_DURATION_INTRODUCTION_DATE) {
+        return lecture.actualDuration ?? 0;
+    }
+    return lecture.duration ?? 0;
+};
+
+const getTotalAppointmentsDuration = (appointments: Appointment[], requester: Student) => {
+    const appointmentsDuration = appointments
+        .filter((l) => {
+            if (l.start < JOINED_BY_INTRODUCTION_DATE) {
+                return true;
+            }
+            return l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
+        })
+        .reduce((sum, l) => sum + getAppointmentDuration(l), 0);
+    return appointmentsDuration + getBonusDuration(appointments, requester);
+};
+
 export async function createInstantCertificate(
     requester: Student,
     lang: Language,
@@ -96,7 +139,6 @@ export async function createInstantCertificate(
 ): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
     const TRAINING_DURATION_MINUTES = 10 * 60;
     const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
-    const joinedByIntroductionDate = new Date('2025-03-25');
 
     const matchesCountPromise = prisma.match.count({
         where: {
@@ -108,11 +150,11 @@ export async function createInstantCertificate(
                     OR: [
                         {
                             // At this point joinedBy wasn't used yet.
-                            start: { lt: joinedByIntroductionDate },
+                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
                         },
                         {
                             // After the introduction of joinedBy, we only want to count lectures the student actually joined.
-                            start: { gte: joinedByIntroductionDate },
+                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
                             joinedBy: {
                                 has: userForStudent(requester).userID,
                             },
@@ -131,10 +173,10 @@ export async function createInstantCertificate(
             },
             OR: [
                 {
-                    start: { lt: joinedByIntroductionDate },
+                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
                 },
                 {
-                    start: { gte: joinedByIntroductionDate },
+                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
                     joinedBy: {
                         has: userForStudent(requester).userID,
                     },
@@ -163,10 +205,10 @@ export async function createInstantCertificate(
             start: { lt: new Date() },
             OR: [
                 {
-                    start: { lt: joinedByIntroductionDate },
+                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
                 },
                 {
-                    start: { gte: joinedByIntroductionDate },
+                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
                     joinedBy: {
                         has: userForStudent(requester).userID,
                     },
@@ -174,6 +216,7 @@ export async function createInstantCertificate(
             ],
         },
         select: {
+            actualDuration: true,
             duration: true,
             joinedBy: true,
             start: true,
@@ -208,10 +251,10 @@ export async function createInstantCertificate(
                 {
                     OR: [
                         {
-                            start: { lt: joinedByIntroductionDate },
+                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
                         },
                         {
-                            start: { gte: joinedByIntroductionDate },
+                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
                             joinedBy: {
                                 has: userForStudent(requester).userID,
                             },
@@ -221,6 +264,8 @@ export async function createInstantCertificate(
             ],
         },
         select: {
+            appointmentType: true,
+            actualDuration: true,
             duration: true,
             joinedBy: true,
             start: true,
@@ -246,25 +291,19 @@ export async function createInstantCertificate(
     ]);
     const courseParticipantsCount = courseParticipants.length;
     const validMatchAppointments = matchAppointments.filter((lecture) => {
-        if (lecture.start < joinedByIntroductionDate) {
+        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
             return true;
         }
         return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
     });
     const validCourseAppointments = courseAppointments.filter((lecture) => {
-        if (lecture.start < joinedByIntroductionDate) {
+        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
             return true;
         }
         return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
     });
-    const totalAppointmentsDuration = appointmentsForDuration
-        .filter((l) => {
-            if (l.start < joinedByIntroductionDate) {
-                return true;
-            }
-            return l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
-        })
-        .reduce((sum, l) => sum + (l.duration ?? 0), 0);
+
+    const totalAppointmentsDuration = getTotalAppointmentsDuration(appointmentsForDuration, requester);
 
     const certificate = await prisma.instant_certificate.create({
         data: {
@@ -273,7 +312,8 @@ export async function createInstantCertificate(
             startDate: requester.createdAt,
             matchesCount,
             matchAppointmentsCount: validMatchAppointments.length,
-            totalMatchAppointmentsDuration: validMatchAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
+            totalMatchAppointmentsDuration:
+                validMatchAppointments.reduce((sum, l) => sum + getAppointmentDuration(l), 0) + getBonusDuration(validMatchAppointments, requester),
             courseParticipantsCount,
             courseAppointmentsCount: validCourseAppointments.length,
             totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
@@ -354,7 +394,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 function formatFloat(value: number | Prisma.Decimal, language: 'de' | 'en') {
-    logger.info(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
+    logger.debug(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
     return language === 'de' ? value.toFixed(2).replace('.', ',') : value.toFixed(2);
 }
 
@@ -411,6 +451,24 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
             FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
             formatFloat: (value: number) => formatFloat(value, lang),
+            formatHoursWithMinutes: (value: number) => {
+                const duration = moment.duration(value, 'hours');
+                const getHourLabel = () => {
+                    if (duration.asHours() === 1) {
+                        return lang === 'de' ? 'Stunde' : 'hour';
+                    }
+                    return lang === 'de' ? 'Stunden' : 'hours';
+                };
+                const getMinuteLabel = () => {
+                    if (duration.minutes() === 1) {
+                        return lang === 'de' ? 'Minute' : 'minute';
+                    }
+                    return lang === 'de' ? 'Minuten' : 'minutes';
+                };
+                const minutes = duration.minutes() > 0 ? `, ${duration.minutes()} ${getMinuteLabel()}` : '';
+                const formatted = `${Math.floor(duration.asHours())} ${getHourLabel()}${minutes}`;
+                return formatted;
+            },
             IS_VERIFICATION_PAGE: true,
         });
     }
@@ -625,6 +683,24 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
         FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
         formatFloat: (value: number) => formatFloat(value, lang),
+        formatHoursWithMinutes: (value: number) => {
+            const duration = moment.duration(value, 'hours');
+            const getHourLabel = () => {
+                if (duration.asHours() === 1) {
+                    return lang === 'de' ? 'Stunde' : 'hour';
+                }
+                return lang === 'de' ? 'Stunden' : 'hours';
+            };
+            const getMinuteLabel = () => {
+                if (duration.minutes() === 1) {
+                    return lang === 'de' ? 'Minute' : 'minute';
+                }
+                return lang === 'de' ? 'Minuten' : 'minutes';
+            };
+            const minutes = duration.minutes() > 0 ? `, ${duration.minutes()} ${getMinuteLabel()}` : '';
+            const formatted = `${Math.floor(duration.asHours())} ${getHourLabel()}${minutes}`;
+            return formatted;
+        },
         IS_VERIFICATION_PAGE: false,
     });
     return await generatePDFFromHTML(result, {
