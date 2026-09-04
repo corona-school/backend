@@ -225,19 +225,19 @@ export async function canCancel(subcourse: Subcourse): Promise<Decision> {
     return { allowed: true };
 }
 
-export async function cancelSubcourse(user: User, subcourse: Subcourse) {
+export async function cancelSubcourse(user: User, subcourse: Subcourse, force?: boolean) {
     const can = await canCancel(subcourse);
-    if (!can.allowed) {
+    if (!can.allowed && !force) {
         throw new Error(`Cannot cancel Subcourse(${subcourse.id}), reason: ${can.reason}`);
     }
 
     await prisma.subcourse.update({ data: { cancelled: true }, where: { id: subcourse.id } });
     const course = await getCourse(subcourse.courseId);
     const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
+    await sendSubcourseCancelNotifications(course, subcourse);
     for (const appointment of courseAppointments) {
         await cancelAppointment(user, appointment, /* silent */ true, /* force */ true);
     }
-    await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
 
     await deleteAchievementsForSubcourse(subcourse.id);
