@@ -14,29 +14,29 @@ import { cancelSubcourse, removeSubcourseInstructor, subcourseOver } from '../co
 import { removeSubcourseMentor } from '../courses/participants';
 
 export async function deactivateStudent(
-    student: Student,
+    _student: Student,
     silent = false,
     reason?: DeactivationReason,
     otherReason?: string,
     dissolveReasons: dissolve_reason[] = [dissolve_reason.accountDeactivated]
 ) {
-    if (!student.active) {
+    if (!_student.active) {
         throw new Error('Student was already deactivated');
     }
 
     if (!silent) {
         if (reason === DeactivationReason.noMoreInterest) {
-            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated_no_more_interest', {});
+            await Notification.actionTaken(userForStudent(_student), 'student_account_deactivated_no_more_interest', {});
         } else {
-            await Notification.actionTaken(userForStudent(student), 'student_account_deactivated', {});
+            await Notification.actionTaken(userForStudent(_student), 'student_account_deactivated', {});
         }
     }
 
-    await Notification.cancelRemindersFor(userForStudent(student));
+    await Notification.cancelRemindersFor(userForStudent(_student));
     // Setting 'active' to false will not send out any notifications during deactivation
-    const updatedStudent = await prisma.student.update({
+    const student = await prisma.student.update({
         data: { active: false },
-        where: { id: student.id },
+        where: { id: _student.id },
     });
 
     await removeAllPushSubcriptions(userForStudent(student));
@@ -99,6 +99,11 @@ export async function deactivateStudent(
         },
     });
     for (const subcourse of mentoredSubcourses) {
+        const isSubcourseOver = await subcourseOver(subcourse);
+        // We don't need to update subcourses that are already over
+        if (isSubcourseOver) {
+            continue;
+        }
         await removeSubcourseMentor(userForStudent(student), subcourse, student);
     }
 
@@ -108,7 +113,7 @@ export async function deactivateStudent(
 
     await logTransaction('deActivate', userForStudent(student), { newStatus: false, deactivationReason: reason, otherReason });
 
-    return updatedStudent;
+    return student;
 }
 
 export async function reactivateStudent(student: Student, reason: string) {
