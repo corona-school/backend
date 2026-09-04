@@ -74,11 +74,16 @@ export async function deactivateStudent(
     });
 
     for (const subcourse of subcourses) {
+        const isSubcourseOver = await subcourseOver(subcourse);
+        // We don't need to update subcourses that are already over
+        if (isSubcourseOver) {
+            continue;
+        }
         // There are multiple instructors, so just remove the student from the subcourse
         if (subcourse.subcourse_instructors_student.length > 1) {
             await removeSubcourseInstructor(userForStudent(student), subcourse, student);
-        } else if (!(await subcourseOver(subcourse))) {
-            // there is only one instructor and the subcourse is not over yet, so cancel the subcourse
+        } else {
+            // there is only one instructor, so cancel the subcourse
             await cancelSubcourse(userForStudent(student), subcourse, true);
         }
     }
