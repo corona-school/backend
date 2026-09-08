@@ -1,5 +1,5 @@
 import { User, getUser, userForPupil, userForStudent, userSelection, getStudent } from '.';
-import { pupil as Pupil, student as Student } from '@prisma/client';
+import { pupil as Pupil, pupil_email_owner_enum, student as Student } from '@prisma/client';
 import { validateEmail } from '../../graphql/validators';
 import { prisma } from '../prisma';
 import { changeEmail } from '../zoom/user';
@@ -28,7 +28,7 @@ export async function updateUser(userId: string, { email }: Partial<Pick<User, '
         return userForPupil(
             (await prisma.pupil.update({
                 where: { id: user.pupilId },
-                data: { email: validatedEmail },
+                data: { email: validatedEmail, emailOwner: pupil_email_owner_enum.unknown },
                 select: userSelection,
             })) as Pupil
         );
