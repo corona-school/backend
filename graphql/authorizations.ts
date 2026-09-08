@@ -362,6 +362,7 @@ export const authorizationEnhanceMap: Required<ResolversEnhanceMap> = {
     Learning_note: allAdmin,
     Learning_topic: allAdmin,
     Admin_user_flag: allAdmin,
+    Lecture_feedback: allAdmin,
 };
 
 /* Some entities are generally accessible by multiple users, however some fields of them are
@@ -644,6 +645,8 @@ export const authorizationModelEnhanceMap: ModelsEnhanceMap = {
             override_meeting_link: participantOrOwnerOrAdmin,
             eventUrl: adminOrOwner,
             actualDuration: adminOrOwner,
+            lecture_feedback: adminOrOwner,
+            _count: nobody,
         }),
     },
     Participation_certificate: {

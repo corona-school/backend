@@ -1,6 +1,6 @@
 import { AuthorizedDeferred, Role, hasAccess } from '../authorizations';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
-import { Lecture as Appointment, Match, Subcourse } from '../generated';
+import { Lecture as Appointment, Match, Subcourse, Lecture_feedback as LectureFeedback } from '../generated';
 import { GraphQLContext } from '../context';
 import { getSessionStudent, getUserForSession, isElevated, isSessionStudent } from '../authentication';
 import { Deprecated, getMatch, getSubcourse } from '../util';
@@ -263,6 +263,19 @@ export class ExtendedFieldsLectureResolver {
             cancelUrl: inviteeEvent.cancel_url ?? null,
             rescheduleUrl: inviteeEvent.reschedule_url ?? null,
         };
+    }
+
+    @FieldResolver((returns) => LectureFeedback, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async myFeedback(@Ctx() context: GraphQLContext, @Root() appointment: Appointment) {
+        const user = await getUserForSession(context.sessionToken);
+        const feedback = await prisma.lecture_feedback.findFirst({
+            where: {
+                lectureId: appointment.id,
+                userId: user.userID,
+            },
+        });
+        return feedback;
     }
 }
 

@@ -16,6 +16,7 @@ import { getAppointmentForNotification, getContextForGroupAppointmentReminder, g
 import { getNotificationContextForSubcourse } from '../../common/courses/notifications';
 import { assertAllowed, Decision } from '../util/decision';
 import { Attachment } from '../notification/channels/mailjet';
+import { createLectureFeedback } from '../lecture-feedback';
 
 const logger = getLogger();
 
@@ -78,7 +79,7 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                 logger.info(`Zoom - Created meeting ${videoChat.id} for match ${matchId}`);
                 zoomMeetingId = videoChat.id.toString();
             }
-            return await prisma.lecture.create({
+            const lecture = await prisma.lecture.create({
                 data: {
                     title: appointmentToBeCreated.title,
                     description: appointmentToBeCreated.description,
@@ -92,6 +93,12 @@ export const createMatchAppointments = async (matchId: number, appointmentsToBeC
                     override_meeting_link: appointmentToBeCreated.meetingLink,
                 },
             });
+            try {
+                await createLectureFeedback(lecture);
+            } catch (error) {
+                logger.error(`Failed to create feedback for match appointment ${lecture.id}`, error);
+            }
+            return lecture;
         })
     );
 

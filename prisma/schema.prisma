@@ -354,6 +354,7 @@ model lecture {
   instructorScreening   instructor_screening?        @relation(fields: [instructorScreeningId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   // Support can set this if organizer prefers a different meeting platform over zoom; if this is set, don't create zoom meeting
   override_meeting_link String?
+  lecture_feedback      lecture_feedback[]
 }
 
 // The Transaction Log is supposed to store a history of business transactions for a user,
@@ -1007,6 +1008,27 @@ model admin_user_flag {
   metadata  Json?    @db.Json
 
   @@unique([userId, flag])
+}
+
+model lecture_feedback {
+  id        Int                          @id() @default(autoincrement())
+  createdAt DateTime                     @default(now()) @db.Timestamp(6)
+  updatedAt DateTime                     @default(now()) @updatedAt @db.Timestamp(6)
+  lectureId Int?
+  lecture   lecture?                     @relation(fields: [lectureId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userId    String                       @db.VarChar
+  // A rating from 1 to 5
+  rating    Int?
+  tags      String[]                     @default([])
+  status    lecture_feedback_status_enum @default(pending)
+
+  @@unique([lectureId, userId])
+}
+
+enum lecture_feedback_status_enum {
+  pending
+  submitted
+  dismissed
 }
 
 enum notification_channel_enum {
