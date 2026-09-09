@@ -47,12 +47,12 @@ export class LectureFeedbackFieldsResolver {
             (
                 (
                     lf."userId" LIKE 'student/%'
-                    AND s."email" = ${userEmail}
+                    AND s."email" LIKE ${userEmail}
                 )
                 OR
                 (
                     lf."userId" LIKE 'pupil/%'
-                    AND p."email" = ${userEmail}
+                    AND p."email" LIKE ${userEmail}
                 )
             )
         `);
