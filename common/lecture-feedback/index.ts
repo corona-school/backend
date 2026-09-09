@@ -4,7 +4,13 @@ import { prisma } from '../prisma';
 
 const logger = getLogger('Lecture Feedback');
 
-export const createLectureFeedback = async (appointment: Appointment) => {
+interface CreateLectureFeedbackDefaults {
+    status?: LectureFeedback['status'];
+    tags?: LectureFeedback['tags'];
+    rating?: LectureFeedback['rating'];
+}
+
+export const createLectureFeedback = async (appointment: Appointment, defaults?: CreateLectureFeedbackDefaults) => {
     const participants = appointment.participantIds;
     const organizers = appointment.organizerIds;
     const feedbackCount = await prisma.lecture_feedback.count({
@@ -15,7 +21,9 @@ export const createLectureFeedback = async (appointment: Appointment) => {
             data: participants.concat(organizers).map((userId) => ({
                 lectureId: appointment.id,
                 userId,
-                status: 'pending',
+                status: defaults?.status ?? 'pending',
+                tags: defaults?.tags,
+                rating: defaults?.rating,
             })),
         });
     } else {
