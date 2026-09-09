@@ -1,4 +1,4 @@
-import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, InputType, Field, ObjectType } from 'type-graphql';
+import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, InputType, Field, ObjectType, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Lecture_feedback as LectureFeedback, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
@@ -12,6 +12,15 @@ export class AppointmentStartRange {
 
     @Field((type) => Date, { nullable: true })
     to?: Date;
+}
+
+@ObjectType()
+export class LectureFeedbacksResponse {
+    @Field((type) => [LectureFeedback])
+    feedbacks: LectureFeedback[];
+
+    @Field((type) => Int)
+    totalCount: number;
 }
 
 @Resolver((of) => LectureFeedback)
@@ -28,7 +37,7 @@ export class LectureFeedbackFieldsResolver {
         });
     }
 
-    @Query((returns) => [LectureFeedback])
+    @Query((returns) => LectureFeedbacksResponse)
     @Authorized(Role.ADMIN)
     async lectureFeedbacks(
         @Ctx() context: GraphQLContext,
@@ -37,7 +46,9 @@ export class LectureFeedbackFieldsResolver {
         appointmentStart?: AppointmentStartRange,
         @Arg('ratingContains', (type) => [Number], { nullable: true })
         ratingContains?: number[],
-        @Arg('onlyWithComments', { nullable: true }) onlyWithComments?: boolean
+        @Arg('onlyWithComments', { nullable: true }) onlyWithComments?: boolean,
+        @Arg('take', { nullable: true, defaultValue: 100 }) take?: number,
+        @Arg('skip', { nullable: true, defaultValue: 0 }) skip?: number
     ) {
         const conditions: Prisma.Sql[] = [];
 
@@ -47,12 +58,12 @@ export class LectureFeedbackFieldsResolver {
             (
                 (
                     lf."userId" LIKE 'student/%'
-                    AND s."email" LIKE ${userEmail}
+                    AND s."email" LIKE ${`%${userEmail}%`}
                 )
                 OR
                 (
                     lf."userId" LIKE 'pupil/%'
-                    AND p."email" LIKE ${userEmail}
+                    AND p."email" LIKE ${`%${userEmail}%`}
                 )
             )
         `);
@@ -72,7 +83,7 @@ export class LectureFeedbackFieldsResolver {
             conditions.push(Prisma.sql`lf."rating" IN (${Prisma.join(ratingContains)})`);
         }
 
-        // "Comments" are basically tags startng with "Sonstiges:"
+        // Comments are basically tags starting with "Sonstiges:"
         if (onlyWithComments) {
             conditions.push(Prisma.sql`
             EXISTS (
@@ -85,7 +96,7 @@ export class LectureFeedbackFieldsResolver {
 
         const where = conditions.length > 0 ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}` : Prisma.empty;
 
-        const rows = await prisma.$queryRaw<{ id: number }[]>(Prisma.sql`
+        const rows = await prisma.$queryRaw<LectureFeedback[]>(Prisma.sql`
             SELECT lf.*
             FROM "lecture_feedback" lf
 
@@ -101,9 +112,30 @@ export class LectureFeedbackFieldsResolver {
             ${where}
 
             ORDER BY lf."createdAt" DESC
+            LIMIT ${take}
+            OFFSET ${skip}
         `);
 
-        return rows;
+        const [{ count }] = await prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+            SELECT COUNT(*) AS count
+            FROM "lecture_feedback" lf
+
+            LEFT JOIN "lecture" l
+                ON l."id" = lf."lectureId"
+
+            LEFT JOIN "student" s
+                ON lf."userId" = 'student/' || s."id"::text
+
+            LEFT JOIN "pupil" p
+                ON lf."userId" = 'pupil/' || p."id"::text
+
+            ${where}
+        `);
+
+        return {
+            feedbacks: rows,
+            totalCount: Number(count),
+        };
     }
 
     @Query((returns) => [LectureFeedback])
