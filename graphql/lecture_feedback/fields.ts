@@ -1,26 +1,42 @@
-import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, InputType, Field, ObjectType, Int } from 'type-graphql';
+import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, Field, ObjectType, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Lecture_feedback as LectureFeedback, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
 import { GraphQLContext } from '../context';
 import { Prisma } from '@prisma/client';
+import { AppointmentStartRange, buildLectureFeedbackQueryConditions, getLectureFeedbackStats } from '../../common/lecture-feedback';
 
-@InputType()
-export class AppointmentStartRange {
-    @Field((type) => Date, { nullable: true })
-    from?: Date;
+@ObjectType()
+class LectureFeedbackStats {
+    @Field((type) => Int)
+    totalFeedback: number;
 
-    @Field((type) => Date, { nullable: true })
-    to?: Date;
+    @Field((type) => Number, { nullable: true })
+    averageRating: number | null;
+
+    @Field((type) => Int)
+    criticalCount: number;
+
+    @Field((type) => Int)
+    freeTextCount: number;
+
+    @Field((type) => Int)
+    studentFeedbackCount: number;
+
+    @Field((type) => Int)
+    pupilFeedbackCount: number;
 }
 
 @ObjectType()
 export class LectureFeedbacksResponse {
     @Field((type) => [LectureFeedback])
-    feedbacks: LectureFeedback[];
+    items: LectureFeedback[];
 
     @Field((type) => Int)
     totalCount: number;
+
+    @Field((type) => LectureFeedbackStats, { nullable: true })
+    stats: LectureFeedbackStats;
 }
 
 @Resolver((of) => LectureFeedback)
@@ -50,51 +66,7 @@ export class LectureFeedbackFieldsResolver {
         @Arg('take', { nullable: true, defaultValue: 100 }) take?: number,
         @Arg('skip', { nullable: true, defaultValue: 0 }) skip?: number
     ) {
-        const conditions: Prisma.Sql[] = [];
-
-        // Filter by student/pupil email
-        if (userEmail) {
-            conditions.push(Prisma.sql`
-            (
-                (
-                    lf."userId" LIKE 'student/%'
-                    AND s."email" LIKE ${`%${userEmail}%`}
-                )
-                OR
-                (
-                    lf."userId" LIKE 'pupil/%'
-                    AND p."email" LIKE ${`%${userEmail}%`}
-                )
-            )
-        `);
-        }
-
-        // Filter by lecture start date
-        if (appointmentStart?.from) {
-            conditions.push(Prisma.sql`l."start" >= ${appointmentStart.from}`);
-        }
-
-        if (appointmentStart?.to) {
-            conditions.push(Prisma.sql`l."start" <= ${appointmentStart.to}`);
-        }
-
-        // Filter by ratings
-        if (ratingContains?.length) {
-            conditions.push(Prisma.sql`lf."rating" IN (${Prisma.join(ratingContains)})`);
-        }
-
-        // Comments are basically tags starting with "Sonstiges:"
-        if (onlyWithComments) {
-            conditions.push(Prisma.sql`
-            EXISTS (
-                SELECT 1
-                FROM unnest(lf."tags") AS tag
-                WHERE tag LIKE 'Sonstiges:%'
-            )
-        `);
-        }
-
-        const where = conditions.length > 0 ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}` : Prisma.empty;
+        const where = buildLectureFeedbackQueryConditions(userEmail, appointmentStart, ratingContains, onlyWithComments);
 
         const rows = await prisma.$queryRaw<LectureFeedback[]>(Prisma.sql`
             SELECT lf.*
@@ -116,7 +88,7 @@ export class LectureFeedbackFieldsResolver {
             OFFSET ${skip}
         `);
 
-        const [{ count }] = await prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
+        const [{ count }] = await prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
             SELECT COUNT(*) AS count
             FROM "lecture_feedback" lf
 
@@ -132,9 +104,12 @@ export class LectureFeedbackFieldsResolver {
             ${where}
         `);
 
+        const stats = await getLectureFeedbackStats(userEmail, appointmentStart, ratingContains, onlyWithComments);
+        console.log('Lecture feedback stats:', stats);
         return {
             feedbacks: rows,
             totalCount: Number(count),
+            stats,
         };
     }
 
