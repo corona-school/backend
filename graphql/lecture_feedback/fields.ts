@@ -106,7 +106,7 @@ export class LectureFeedbackFieldsResolver {
 
         const stats = await getLectureFeedbackStats(userEmail, appointmentStart, ratingContains, onlyWithComments);
         return {
-            feedbacks: rows,
+            items: rows,
             totalCount: Number(count),
             stats,
         };
