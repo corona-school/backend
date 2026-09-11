@@ -260,6 +260,7 @@ const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subco
                 organizerIds: organizerIds,
                 participantIds: participantsIds,
                 joinedBy: start <= new Date() ? participantsIds.concat(organizerIds ?? []) : [],
+                actualDuration: start <= new Date() ? 50 : undefined,
                 appointmentType: subcourseId ? 'group' : 'match',
             },
         });
