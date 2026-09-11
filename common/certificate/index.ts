@@ -38,7 +38,7 @@ export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
 const JOINED_BY_INTRODUCTION_DATE = new Date('2025-03-25');
-const ACTUAL_DURATION_INTRODUCTION_DATE = new Date('2026-09-10');
+const ACTUAL_DURATION_INTRODUCTION_DATE = new Date('2026-10-01');
 
 export enum CertificateState {
     manual = 'manual', // student did not request approval
@@ -100,22 +100,28 @@ interface Appointment {
     joinedBy: string[];
 }
 
+// We add 5 minutes to the duration and then round it up to the nearest 15 minutes
+const roundSupportDuration = (duration: number) => {
+    return Math.ceil((duration + 5) / 15) * 15;
+};
+
 // We give extra time of 60 mins for every 6 lectures that actually happened (both HuH and SuS present)
 // This only applies to lectures after the introduction of actual duration
 const getBonusDuration = (appointments: Appointment[], requester: Student) => {
     const validAppointments = appointments.filter((l) => {
         const isAfterActualDurationIntroduction = l.start >= ACTUAL_DURATION_INTRODUCTION_DATE;
         const bothJoined = l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
-        return isAfterActualDurationIntroduction && bothJoined;
+        const isMatchAppointment = l.appointmentType === 'match';
+        return isAfterActualDurationIntroduction && bothJoined && isMatchAppointment;
     });
 
-    const bonusDuration = Math.floor(validAppointments.length / 6) * 60; // 60 minutes for every 6 valid appointments
+    const bonusDuration = Math.floor(validAppointments.length / 6) * 60; // 60 minutes for every 6 valid match appointments
     return bonusDuration;
 };
 
 const getAppointmentDuration = (lecture: Appointment) => {
     if (lecture.appointmentType === 'match' && lecture.start >= ACTUAL_DURATION_INTRODUCTION_DATE) {
-        return lecture.actualDuration ?? 0;
+        return lecture.actualDuration ? roundSupportDuration(lecture.actualDuration) : 0;
     }
     return lecture.duration ?? 0;
 };
