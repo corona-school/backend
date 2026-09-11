@@ -6,6 +6,7 @@ import { User } from '../user';
 import { ContactReason } from './types';
 import { isPupilContact, isStudentContact } from './helper';
 import moment from 'moment';
+import { shortenLastName } from '../pupil';
 
 export type UserContactType = {
     userID: string;
@@ -216,7 +217,7 @@ const getSubcourseContactsForStudent = async (student: User): Promise<SubcourseC
         subcourseContactsList[participantSubcourseId] = {
             user: {
                 firstname: subcourseContact.pupil.firstname,
-                lastname: subcourseContact.pupil.lastname,
+                lastname: shortenLastName(subcourseContact.pupil.lastname),
                 userID: participantSubcourseId,
                 email: subcourseContact.pupil.email,
             },
@@ -241,7 +242,12 @@ const getMyMatchContacts = async (user: User): Promise<MatchContactList> => {
         const contactReasons = [ContactReason.MATCH];
 
         matchContactList[matchee.userID] = {
-            user: { firstname: matchee.firstname, lastname: matchee.lastname, userID: matchee.userID, email: matchee.email },
+            user: {
+                firstname: matchee.firstname,
+                lastname: matchee.pupilId ? shortenLastName(matchee.lastname) : matchee.lastname,
+                userID: matchee.userID,
+                email: matchee.email,
+            },
             contactReasons: contactReasons,
             match: { matchId: matchContact.matchId },
         };

@@ -15,6 +15,17 @@ export type NotificationTriggered = {
     type: 'notification.triggered';
 };
 
+export type MessageSentEvent = {
+    id: string;
+    createdAt: string;
+    data: {
+        sender: Sender;
+        conversation: TJConversation;
+        message: UserMessage;
+    };
+    type: 'message.sent';
+};
+
 export interface Recipient {
     availabilityText: string | null;
     createdAt: number;

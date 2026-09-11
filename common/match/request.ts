@@ -7,19 +7,21 @@ import { invalidateAllScreeningsOfPupil } from '../pupil/screening';
 import * as Notification from '../notification';
 import { userForPupil, userForStudent } from '../user';
 import moment from 'moment';
-import { parseSubjectString } from '../util/subjectsutils';
+import { DAZ, parseSubjectString } from '../util/subjectsutils';
+import { isDev } from '../util/environment';
 
 const logger = getLogger('Match');
 
 const PUPIL_MAX_REQUESTS = 1;
 const STUDENT_MAX_REQUESTS = 3;
-const PUPIL_MAX_MATCHES = 2;
+const PUPIL_MAX_MATCHES = 1;
 
 type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'no-subjects-selected' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
 
 export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<RequestBlockReasons>> {
     // Business Rules as outlined in https://github.com/corona-school/project-user/issues/404
 
+    const isTestUserOnProd = !isDev && pupil.email.startsWith('test+prod') && pupil.email.endsWith('@lern-fair.de');
     if (!pupil.isPupil) {
         return { allowed: false, reason: 'not-tutee' };
     }
@@ -37,7 +39,15 @@ export async function canPupilRequestMatch(pupil: Pupil): Promise<Decision<Reque
     }
 
     const activeMatchCount = await prisma.match.count({ where: { pupilId: pupil.id, dissolved: false } });
-    if (pupil.openMatchRequestCount + activeMatchCount >= PUPIL_MAX_MATCHES) {
+
+    const getMaxMatchesForUser = () => {
+        // Test users on production are allowed to have 2 active matches for testing purposes
+        if (isTestUserOnProd) {
+            return PUPIL_MAX_MATCHES + 1;
+        }
+        return PUPIL_MAX_MATCHES;
+    };
+    if (pupil.openMatchRequestCount + activeMatchCount >= getMaxMatchesForUser()) {
         return { allowed: false, reason: 'max-matches', limit: PUPIL_MAX_MATCHES };
     }
 
@@ -50,8 +60,14 @@ export async function createPupilMatchRequest(pupil: Pupil, adminOverride = fals
     if (!adminOverride) {
         assertAllowed(await canPupilRequestMatch(pupil));
     }
-    if (!parseSubjectString(pupil.subjects).length) {
+    const subjects = parseSubjectString(pupil.subjects);
+    if (!subjects.length) {
         throw new PrerequisiteError('Subjects must be selected before creating a match request');
+    }
+
+    const subjectsIncludeDaz = subjects.some((subject) => subject.name === DAZ);
+    if (pupil.learningOfferConstraints.includes('DAZ_SUBJECT_REQUIRED_FOR_MATCHING') && !subjectsIncludeDaz) {
+        throw new PrerequisiteError('DAZ must be selected as a subject to request a match');
     }
 
     const result = await prisma.pupil.update({
@@ -103,7 +119,7 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
     }
 
     const result = await prisma.pupil.update({
-        where: { id: pupil.id },
+        where: { id: pupil.id, openMatchRequestCount: { gt: 0 } },
         data: {
             openMatchRequestCount: { decrement: 1 },
         },
@@ -113,7 +129,7 @@ export async function deletePupilMatchRequest(pupil: Pupil) {
         await Notification.actionTaken(userForPupil(pupil), 'tutee_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for pupil, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted match request for Pupil(${pupil.id}), now has ${result.openMatchRequestCount} requests`);
 }
 
 export async function canStudentRequestMatch(student: Student): Promise<Decision<RequestBlockReasons>> {
@@ -128,6 +144,12 @@ export async function canStudentRequestMatch(student: Student): Promise<Decision
 
     if (student.openMatchRequestCount >= STUDENT_MAX_REQUESTS) {
         return { allowed: false, reason: 'max-requests', limit: STUDENT_MAX_REQUESTS };
+    }
+
+    const activeMatchCount = await prisma.match.count({ where: { studentId: student.id, dissolved: false } });
+
+    if (!!student.maxParallelMatches && student.openMatchRequestCount + activeMatchCount >= student.maxParallelMatches) {
+        return { allowed: false, reason: 'max-matches', limit: student.maxParallelMatches };
     }
 
     return { allowed: true };
@@ -161,7 +183,7 @@ export async function deleteStudentMatchRequest(student: Student) {
     }
 
     const result = await prisma.student.update({
-        where: { id: student.id },
+        where: { id: student.id, openMatchRequestCount: { gt: 0 } },
         data: { openMatchRequestCount: { decrement: 1 } },
     });
 
@@ -169,5 +191,5 @@ export async function deleteStudentMatchRequest(student: Student) {
         await Notification.actionTaken(userForStudent(student), 'tutor_match_request_revoked', {});
     }
 
-    logger.info(`Deleted match request for student, now has ${result.openMatchRequestCount} requests`);
+    logger.info(`Deleted match request for Student(${student.id}), now has ${result.openMatchRequestCount} requests`);
 }

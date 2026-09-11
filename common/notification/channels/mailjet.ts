@@ -132,7 +132,7 @@ async function sendMessage(message: SendParamsMessage) {
 
     if (result.Status !== 'success') {
         const errorMessages = (result as any).Errors.map((error) => error.ErrorMessage).join(', ');
-
+        logger.error(`Mailjet API responded with error: ${errorMessages} - Full response: ${JSON.stringify(body)}`);
         throw new Error(`Mailjet Message Delivery failed: ${errorMessages}`);
     }
 }

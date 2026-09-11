@@ -18,7 +18,7 @@ import { Doc, getLecture, getStudent } from '../util';
 import { getLogger } from '../../common/logger/logger';
 import { deleteZoomMeeting, getZoomMeeting } from '../../common/zoom/scheduled-meeting';
 import { declineAppointment } from '../../common/appointment/decline';
-import { updateAppointment } from '../../common/appointment/update';
+import { AppointmentUpdateInput, updateAppointment } from '../../common/appointment/update';
 import { cancelAppointment } from '../../common/appointment/cancel';
 import { PrerequisiteError, RedundantError, ZoomError } from '../../common/util/error';
 import { GraphQLInt } from 'graphql';
@@ -26,24 +26,13 @@ import { trackUserJoinAppointmentMeeting } from '../../common/appointment/tracki
 import moment from 'moment';
 import { getAppointmentEnd } from '../../common/appointment/util';
 import { getZoomUrl } from '../../common/zoom/user';
-import { course_category_enum, lecture_appointmenttype_enum } from '@prisma/client';
+import { lecture_appointmenttype_enum } from '@prisma/client';
 import { isSubcourseSilent } from '../../common/courses/util';
+import { isElevated } from '../authentication';
+import { userForStudent } from '../../common/user';
 
 const logger = getLogger('MutateAppointmentsResolver');
 
-@InputType()
-class AppointmentUpdateInput {
-    @Field(() => Int)
-    id: number;
-    @Field(() => String, { nullable: true })
-    title?: string;
-    @Field(() => String, { nullable: true })
-    description?: string;
-    @Field(() => Date, { nullable: true })
-    start?: Date;
-    @Field(() => Int, { nullable: true })
-    duration?: number;
-}
 @Resolver(() => Appointment)
 export class MutateAppointmentResolver {
     @Mutation(() => Boolean)
@@ -102,12 +91,50 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
+    @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
     async appointmentUpdate(@Ctx() context: GraphQLContext, @Arg('appointmentToBeUpdated') appointmentToBeUpdated: AppointmentUpdateInput) {
         const appointment = await getLecture(appointmentToBeUpdated.id);
         await hasAccess(context, 'Lecture', appointment);
+        const isAdmin = context.user.roles.includes(Role.ADMIN);
         const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
-        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent);
+        await updateAppointment(context.user, appointment, appointmentToBeUpdated, silent || isAdmin, isAdmin);
+
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @AuthorizedDeferred(Role.OWNER, Role.COURSE_SCREENER)
+    async appointmentSubcourseBulkMutate(
+        @Ctx() context: GraphQLContext,
+        @Arg('subcourseId', () => GraphQLInt) subcourseId: number,
+        @Arg('createAppointments', () => [AppointmentCreateGroupInput]) createAppointments: AppointmentCreateGroupInput[],
+        @Arg('updateAppointments', () => [AppointmentUpdateInput]) updateAppointments: AppointmentUpdateInput[],
+        @Arg('cancelAppointments', () => [GraphQLInt]) cancelAppointments: number[]
+    ) {
+        const subcourse = await prisma.subcourse.findUnique({ where: { id: subcourseId }, include: { course: true } });
+        const courseInstructor = !isElevated(context)
+            ? await getStudent(context.user.studentId)
+            : await prisma.student.findFirst({ where: { course_instructors_student: { some: { courseId: subcourse.course.id } } } });
+
+        await hasAccess(context, 'Subcourse', subcourse);
+        const silent = await isSubcourseSilent(subcourse.id);
+
+        if (createAppointments.length > 0) {
+            createAppointments.sort((a, b) => a.start.getTime() - b.start.getTime());
+            if (!isAppointmentOneWeekLater(createAppointments[0].start) && !isElevated(context)) {
+                throw new PrerequisiteError('Appointment can not be created, because start is not one week later.');
+            }
+            await createGroupAppointments(subcourseId, createAppointments, courseInstructor, silent);
+        }
+        for (const appointment of updateAppointments) {
+            const fullAppointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointment.id } });
+            await updateAppointment(userForStudent(courseInstructor), fullAppointment, appointment, silent);
+        }
+
+        for (const appointmentId of cancelAppointments) {
+            const fullAppointment = await prisma.lecture.findUniqueOrThrow({ where: { id: appointmentId } });
+            await cancelAppointment(userForStudent(courseInstructor), fullAppointment, silent);
+        }
 
         return true;
     }

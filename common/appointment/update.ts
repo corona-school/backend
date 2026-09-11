@@ -1,39 +1,85 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getUser, getStudent, User, userForPupil, userForStudent } from '../user';
+import { getStudent, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getContextForGroupAppointmentReminder, getContextForMatchAppointmentReminder, getAppointmentForNotification } from './util';
 import moment from 'moment';
 import { updateZoomMeeting } from '../zoom/scheduled-meeting';
 import { getNotificationContextForSubcourse } from '../courses/notifications';
+import { Field, InputType, Int } from 'type-graphql';
+import { PrerequisiteError } from '../util/error';
+@InputType()
+export class AppointmentUpdateInput {
+    @Field(() => Int)
+    id: number;
+    @Field(() => String, { nullable: true })
+    title?: string;
+    @Field(() => String, { nullable: true })
+    description?: string;
+    @Field(() => Date, { nullable: true })
+    start?: Date;
+    @Field(() => Int, { nullable: true })
+    duration?: number;
+    @Field(() => Int, { nullable: true })
+    actualDuration?: number;
+    @Field(() => String, { nullable: true })
+    override_meeting_link?: string;
+    @Field(() => [String], { nullable: true })
+    joinedBy?: string[];
+}
 
 const logger = getLogger('Appointment');
 
 export async function updateAppointment(
     user: User,
     appointment: Appointment,
-    appointmentUpdate: Partial<Pick<Appointment, 'description' | 'duration' | 'start' | 'title'>>,
-    silent = false
+    appointmentUpdate: AppointmentUpdateInput,
+    silent = false,
+    isAdminOverride = false
 ) {
-    const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link } = appointment;
+    const { id, start, duration, appointmentType, zoomMeetingId, override_meeting_link: existing_override_meeting_link } = appointment;
     const { duration: newDuration, start: newStart } = appointmentUpdate;
+
+    let override_meeting_link = existing_override_meeting_link;
+    // important difference: undefined means "don't change", null means "set to null", i.e. delete
+    if (appointmentUpdate.override_meeting_link !== undefined) {
+        if (appointmentUpdate.override_meeting_link && appointmentUpdate.override_meeting_link.length > 0) {
+            override_meeting_link = appointmentUpdate.override_meeting_link;
+        } else {
+            override_meeting_link = null;
+        }
+    }
 
     const currentDate = moment();
     const isPastAppointment = moment(start).add(duration).isBefore(currentDate);
 
-    if (isPastAppointment) {
-        throw new Error(`Cannot update past appointment.`);
+    if (isPastAppointment && !isAdminOverride) {
+        throw new PrerequisiteError(`Cannot update past appointment.`);
+    }
+
+    if (appointmentUpdate.joinedBy !== undefined && !isAdminOverride) {
+        throw new PrerequisiteError(`Only admins can update joinedBy field.`);
+    }
+
+    if (appointmentUpdate.actualDuration !== undefined && !isAdminOverride) {
+        throw new PrerequisiteError(`Only admins can update actualDuration field.`);
     }
 
     const sameStart = !newStart || start.toISOString() === newStart.toISOString();
     const sameDuration = !newDuration || duration === newDuration;
     const sameDate = sameStart && sameDuration;
-    const matchAppointmentDateChanged = appointmentType === 'match' && !sameDate;
+    const futureMatchAppointmentDateChanged = appointmentType === 'match' && !sameDate && isPastAppointment;
 
     const updatedAppointment = await prisma.lecture.update({
         where: { id: id },
-        data: matchAppointmentDateChanged ? { ...appointmentUpdate, declinedBy: [] } : appointmentUpdate,
+        data: futureMatchAppointmentDateChanged
+            ? {
+                  ...appointmentUpdate,
+                  override_meeting_link,
+                  declinedBy: [], // reset declinedBy to allow participants to accept the new appointment date
+              }
+            : { ...appointmentUpdate, override_meeting_link },
     });
 
     logger.info(`User(${user.userID}) updated Appointment(${appointment.id})`, { appointment, appointmentUpdate });
@@ -44,8 +90,8 @@ export async function updateAppointment(
 
     let lastDate: Date;
 
-    const student = await getStudent(user);
-    if (!silent) {
+    if (!silent && !isAdminOverride) {
+        const student = await getStudent(user);
         // send notifications
         switch (appointmentType) {
             case AppointmentType.group: {
@@ -120,7 +166,7 @@ export async function updateAppointment(
         endDate: lastDate,
     };
 
-    if (!override_meeting_link && zoomMeetingId) {
+    if (!override_meeting_link && zoomMeetingId && !isPastAppointment) {
         await updateZoomMeeting(appointment.zoomMeetingId, zoomUpdate);
     }
 

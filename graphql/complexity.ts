@@ -85,7 +85,6 @@ export function LimitEstimated(cardinality: number) {
 }
 
 export const complexityEnhanceMap: ResolversEnhanceMap = {
-    Bbb_meeting: { bbb_meetings: [LimitedQuery()] },
     Concrete_notification: { concrete_notifications: [LimitedQuery()] },
     Course: { courses: [LimitedQuery()] },
     Log: { logs: [LimitedQuery()] },

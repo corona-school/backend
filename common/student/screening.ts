@@ -6,7 +6,7 @@ import { createRemissionRequest } from '../remission-request';
 import { screening_jobstatus_enum } from '../../graphql/generated';
 import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
 
 interface ScreeningInput {
@@ -37,11 +37,13 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         await requireStudentOnboarding(student.id);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prisma.instructor_screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -54,10 +56,19 @@ export async function addInstructorScreening(screener: Screener, student: Studen
         }
 
         const asUser = userForStudent(student);
-        await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        if (student.registrationSource === 'cooperation' && student.cooperationID) {
+            const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
+            await Notification.actionTaken(asUser, 'cooperation_instructor_screening_success', {
+                cooperation: cooperation ? cooperation.name : null,
+            });
+        } else {
+            await Notification.actionTaken(asUser, 'instructor_screening_success', {});
+        }
         await updateSessionRolesOfUser(asUser.userID);
     } else {
-        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {});
+        await Notification.actionTaken(userForStudent(student), 'instructor_screening_rejection', {
+            deactivationReason: DeactivationReason.didntMeetRequirements,
+        });
     }
 
     logger.info(`Screener(${screener.id}) instructor screened Student(${student.id})`, screening);
@@ -74,11 +85,13 @@ export async function addTutorScreening(
         await requireStudentOnboarding(student.id, prismaInstance);
     }
 
+    const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
     await prismaInstance.screening.create({
         data: {
             ...screening,
             screenerId: screener.id,
             studentId: student.id,
+            decisionTakenAt: isFinalDecision ? new Date() : null,
         },
     });
 
@@ -87,16 +100,25 @@ export async function addTutorScreening(
             const asUser = userForStudent(student);
             await updateSessionRolesOfUser(asUser.userID);
             await scheduleCoCReminders(student);
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_success', {});
+            if (student.registrationSource === 'cooperation' && student.cooperationID) {
+                const cooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID } });
+                await Notification.actionTaken(asUser, 'cooperation_tutor_screening_success', {
+                    cooperation: cooperation ? cooperation.name : null,
+                });
+            } else {
+                await Notification.actionTaken(asUser, 'tutor_screening_success', {});
+            }
         } else if (screening.status === ScreeningStatus.rejection) {
-            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {});
+            await Notification.actionTaken(userForStudent(student), 'tutor_screening_rejection', {
+                deactivationReason: DeactivationReason.didntMeetRequirements,
+            });
         }
     }
 
     logger.info(`Screener(${screener.id}) tutor screened Student(${student.id})`, screening);
 }
 
-export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false) {
+export async function scheduleCoCReminders(student: Student, ignoreAccCreationDate = false, isRenewal = false) {
     if (student.createdAt < new Date('2022-01-01') && !ignoreAccCreationDate) {
         return;
     }
@@ -108,7 +130,10 @@ export async function scheduleCoCReminders(student: Student, ignoreAccCreationDa
 
     await cancelCoCReminders(student);
     await createRemissionRequest(student);
-    await Notification.actionTaken(userForStudent(student), 'coc_reminder', {});
+    await Notification.actionTaken(userForStudent(student), 'coc_reminder', {
+        isRenewal: isRenewal.toString(),
+        deactivationReason: DeactivationReason.missingCoC,
+    });
 }
 
 export async function cancelCoCReminders(student: Student) {
@@ -119,6 +144,7 @@ export async function cancelCoCReminders(student: Student) {
 export async function updateStudentScreening(type: StudentScreeningType, screeningId: number, data: Partial<ScreeningInput>, screenerId?: number) {
     const screeningModel = type === 'instructor' ? prisma.instructor_screening : prisma.screening;
     const screeningModelLabel = type === 'instructor' ? 'InstructorScreening' : 'TutorScreening';
+    // @ts-expect-error Both models have the same shape, so this should work fine
     const screening = await screeningModel.findFirst({ where: { id: screeningId }, include: { student: true } });
 
     if (screening === null) {
@@ -132,6 +158,8 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
         throw new PrerequisiteError('The status of Approved/Rejected screenings cannot be changed');
     }
 
+    const isFinalDecision = data.status === ScreeningStatus.success || data.status === ScreeningStatus.rejection;
+
     const update = {
         where: { id: screeningId },
         data: {
@@ -139,13 +167,14 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             jobStatus: data.jobStatus,
             knowsCoronaSchoolFrom: data.knowsCoronaSchoolFrom,
             status: data.status,
+            decisionTakenAt: isFinalDecision && statusChanges ? new Date() : screening.decisionTakenAt,
         },
     };
 
     if (data.status === ScreeningStatus.success) {
         await requireStudentOnboarding(screening.studentId);
     }
-    // @ts-expect-error For some reason Typescript doesn't treat the update the same way it does with the find. This should work fine
+    // @ts-expect-error Both models have the same shape, so this should work fine
     await screeningModel.update(update);
     logger.info(`Screener(${screenerId}) updated ${screeningModelLabel} of Student(${screening.studentId})`, data);
     if (data.status === ScreeningStatus.success) {
@@ -159,16 +188,22 @@ export async function updateStudentScreening(type: StudentScreeningType, screeni
             await logTransaction('skippedCoC', userForStudent(screening.student), { screenerId: screenerId });
             logger.info(`Skipped CoC for Student(${screening.student.id}) by Screener(${screenerId}) `);
         }
-        await Notification.actionTaken(
-            userForStudent(screening.student),
-            type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success',
-            {}
-        );
+
+        if (screening.student.registrationSource === 'cooperation' && screening.student.cooperationID) {
+            const cooperation = await prisma.cooperation.findFirst({ where: { id: screening?.student?.cooperationID } });
+            const action = type === 'instructor' ? 'cooperation_instructor_screening_success' : 'cooperation_tutor_screening_success';
+            await Notification.actionTaken(userForStudent(screening.student), action, {
+                cooperation: cooperation ? cooperation.name : null,
+            });
+        } else {
+            const action = type === 'instructor' ? 'instructor_screening_success' : 'tutor_screening_success';
+            await Notification.actionTaken(userForStudent(screening.student), action, {});
+        }
     } else if (data.status === ScreeningStatus.rejection) {
         await Notification.actionTaken(
             userForStudent(screening.student),
             type === 'instructor' ? 'instructor_screening_rejection' : 'tutor_screening_rejection',
-            {}
+            { deactivationReason: DeactivationReason.didntMeetRequirements }
         );
     }
 

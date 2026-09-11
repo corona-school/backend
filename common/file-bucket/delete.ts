@@ -4,7 +4,7 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 const logger = getLogger();
 
-export async function deleteFile(key: string, bucket: string) {
+export async function deleteS3File(key: string, bucket: string) {
     const command = new DeleteObjectCommand({
         Key: key,
         Bucket: bucket,

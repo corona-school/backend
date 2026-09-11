@@ -5,7 +5,9 @@ import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import * as Notification from '../notification';
 import {
+    course_category_enum,
     instant_certificate as InstantCertificate,
+    lecture_appointmenttype_enum,
     participation_certificate as ParticipationCertificate,
     Prisma,
     pupil as Pupil,
@@ -21,8 +23,11 @@ import { Request } from 'express';
 import { logTransaction } from '../transactionlog/log';
 import { prisma } from '../prisma';
 import QRCode from 'qrcode';
+import { shortenLastName } from '../pupil';
+import { getLogger } from '../logger/logger';
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
+const logger = getLogger('Certificates');
 
 export const VALID_BASE64 = /^data:image\/(png|jpeg);base64,([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/g;
 
@@ -32,6 +37,8 @@ export type Language = (typeof LANGUAGES)[number];
 export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
+const JOINED_BY_INTRODUCTION_DATE = new Date('2025-03-25');
+const ACTUAL_DURATION_INTRODUCTION_DATE = new Date('2026-09-10');
 
 export enum CertificateState {
     manual = 'manual', // student did not request approval
@@ -85,52 +92,218 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     return pdf;
 }
 
-export async function createInstantCertificate(requester: Student, lang: Language): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
-    const matchesCountPromise = prisma.match.count({ where: { studentId: requester.id } });
-    const matchAppointmentsCountPromise = prisma.lecture.count({ where: { match: { studentId: requester.id }, start: { lt: new Date() } } });
+interface Appointment {
+    appointmentType: lecture_appointmenttype_enum;
+    start: Date;
+    duration?: number;
+    actualDuration?: number;
+    joinedBy: string[];
+}
+
+// We give extra time of 60 mins for every 6 lectures that actually happened (both HuH and SuS present)
+// This only applies to lectures after the introduction of actual duration
+const getBonusDuration = (appointments: Appointment[], requester: Student) => {
+    const validAppointments = appointments.filter((l) => {
+        const isAfterActualDurationIntroduction = l.start >= ACTUAL_DURATION_INTRODUCTION_DATE;
+        const bothJoined = l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
+        return isAfterActualDurationIntroduction && bothJoined;
+    });
+
+    const bonusDuration = Math.floor(validAppointments.length / 6) * 60; // 60 minutes for every 6 valid appointments
+    return bonusDuration;
+};
+
+const getAppointmentDuration = (lecture: Appointment) => {
+    if (lecture.appointmentType === 'match' && lecture.start >= ACTUAL_DURATION_INTRODUCTION_DATE) {
+        return lecture.actualDuration ?? 0;
+    }
+    return lecture.duration ?? 0;
+};
+
+const getTotalAppointmentsDuration = (appointments: Appointment[], requester: Student) => {
+    const appointmentsDuration = appointments
+        .filter((l) => {
+            if (l.start < JOINED_BY_INTRODUCTION_DATE) {
+                return true;
+            }
+            return l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
+        })
+        .reduce((sum, l) => sum + getAppointmentDuration(l), 0);
+    return appointmentsDuration + getBonusDuration(appointments, requester);
+};
+
+export async function createInstantCertificate(
+    requester: Student,
+    lang: Language,
+    hasCompletedTrainingDuration: boolean
+): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+    const TRAINING_DURATION_MINUTES = 10 * 60;
+    const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
+
+    const matchesCountPromise = prisma.match.count({
+        where: {
+            studentId: requester.id,
+            lecture: {
+                some: {
+                    start: { lt: new Date() }, // only past lectures
+                    isCanceled: false,
+                    OR: [
+                        {
+                            // At this point joinedBy wasn't used yet.
+                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
+                        },
+                        {
+                            // After the introduction of joinedBy, we only want to count lectures the student actually joined.
+                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
+                            joinedBy: {
+                                has: userForStudent(requester).userID,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+    });
+    const matchAppointmentsCountPromise = prisma.lecture.findMany({
+        where: {
+            start: { lt: new Date() }, // only past lectures
+            isCanceled: false,
+            match: {
+                studentId: requester.id,
+            },
+            OR: [
+                {
+                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
+                },
+                {
+                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
+                    joinedBy: {
+                        has: userForStudent(requester).userID,
+                    },
+                },
+            ],
+        },
+    });
     const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
         by: ['pupilId'],
         where: {
             subcourse: {
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
+                course: { category: { not: course_category_enum.homework_help } },
             },
         },
     });
-    const courseAppointmentsCountPromise = prisma.lecture.count({
+    const courseAppointmentsAggregatePromise = prisma.lecture.findMany({
         where: {
             isCanceled: false,
             subcourse: {
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
+                course: { category: { not: course_category_enum.homework_help } },
             },
             start: { lt: new Date() },
+            OR: [
+                {
+                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
+                },
+                {
+                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
+                    joinedBy: {
+                        has: userForStudent(requester).userID,
+                    },
+                },
+            ],
+        },
+        select: {
+            actualDuration: true,
+            duration: true,
+            joinedBy: true,
+            start: true,
         },
     });
-    const totalAppointmentsDurationPromise = prisma.lecture.aggregate({
+
+    const appointmentsForDurationPromise = prisma.lecture.findMany({
         where: {
+            isCanceled: false,
             start: { lt: new Date() },
+
             OR: [
                 {
                     subcourse: {
                         cancelled: false,
-                        subcourse_instructors_student: { some: { studentId: requester.id } },
+                        subcourse_instructors_student: {
+                            some: { studentId: requester.id },
+                        },
+                        course: {
+                            category: { not: course_category_enum.homework_help },
+                        },
                     },
                 },
-                { match: { studentId: requester.id } },
+                {
+                    match: {
+                        studentId: requester.id,
+                    },
+                },
             ],
+
+            AND: [
+                {
+                    OR: [
+                        {
+                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
+                        },
+                        {
+                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
+                            joinedBy: {
+                                has: userForStudent(requester).userID,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+        select: {
+            appointmentType: true,
+            actualDuration: true,
+            duration: true,
+            joinedBy: true,
+            start: true,
+        },
+    });
+
+    const homeworkHelpDurationPromise = prisma.lecture.aggregate({
+        where: {
+            isCanceled: false,
+            subcourse: { course: { category: course_category_enum.homework_help } },
+            joinedBy: { has: userForStudent(requester).userID },
         },
         _sum: { duration: true },
     });
 
-    const [matchesCount, matchAppointmentsCount, courseParticipants, courseAppointmentsCount, totalAppointmentsDuration] = await Promise.all([
+    const [matchesCount, matchAppointments, courseParticipants, courseAppointments, appointmentsForDuration, homeworkHelpDuration] = await Promise.all([
         matchesCountPromise,
         matchAppointmentsCountPromise,
         uniqueCourseParticipantsPromise,
-        courseAppointmentsCountPromise,
-        totalAppointmentsDurationPromise,
+        courseAppointmentsAggregatePromise,
+        appointmentsForDurationPromise,
+        homeworkHelpDurationPromise,
     ]);
     const courseParticipantsCount = courseParticipants.length;
+    const validMatchAppointments = matchAppointments.filter((lecture) => {
+        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
+            return true;
+        }
+        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
+    });
+    const validCourseAppointments = courseAppointments.filter((lecture) => {
+        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
+            return true;
+        }
+        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
+    });
+
+    const totalAppointmentsDuration = getTotalAppointmentsDuration(appointmentsForDuration, requester);
 
     const certificate = await prisma.instant_certificate.create({
         data: {
@@ -138,10 +311,16 @@ export async function createInstantCertificate(requester: Student, lang: Languag
             uuid: randomBytes(6).toString('hex').toUpperCase(),
             startDate: requester.createdAt,
             matchesCount,
-            matchAppointmentsCount,
+            matchAppointmentsCount: validMatchAppointments.length,
+            totalMatchAppointmentsDuration:
+                validMatchAppointments.reduce((sum, l) => sum + getAppointmentDuration(l), 0) + getBonusDuration(validMatchAppointments, requester),
             courseParticipantsCount,
-            courseAppointmentsCount,
-            totalAppointmentsDuration: totalAppointmentsDuration._sum.duration ?? 0,
+            courseAppointmentsCount: validCourseAppointments.length,
+            totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
+            totalAppointmentsDuration,
+            homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
+            trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,
+            isInternship: requester.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(requester.cooperationID?.toString()) : false,
         },
         include: { student: true },
     });
@@ -215,6 +394,7 @@ export async function createCertificate(requestor: Student, matchId: string, par
 }
 
 function formatFloat(value: number | Prisma.Decimal, language: 'de' | 'en') {
+    logger.debug(`Formatting value ${value} (type: ${typeof value}) for language ${language}`);
     return language === 'de' ? value.toFixed(2).replace('.', ',') : value.toFixed(2);
 }
 
@@ -234,7 +414,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
 
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
-            NAMESCHUELER: certificate.pupil?.firstname + ' ' + certificate.pupil?.lastname,
+            NAMESCHUELER: certificate.pupil?.firstname + ' ' + shortenLastName(certificate.pupil?.lastname),
             DATUMHEUTE: moment(certificate.certificateDate).format('D.M.YYYY'),
             SCHUELERSTART: moment(certificate.startDate).format('D.M.YYYY'),
             SCHUELERENDE: moment(certificate.endDate).format('D.M.YYYY'),
@@ -255,7 +435,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
         if (!certificate) {
             throw new CertificateError(`Certificate not found`);
         }
-        const verificationTemplate = loadTemplate('verifiedInstantCertificatePage', lang);
+        const verificationTemplate = loadTemplate('instantCertificateTemplate', lang);
         return verificationTemplate({
             NAMESTUDENT: certificate.student?.firstname + ' ' + certificate.student?.lastname,
             STARTDATE: moment(certificate.startDate).format('D.M.YYYY'),
@@ -263,8 +443,33 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
             COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
             COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-            TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
+            TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration / 60,
+            HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? certificate.homeworkHelpDuration / 60 : 0,
             DATUMHEUTE: moment(certificate.createdAt).format('D.M.YYYY'),
+            IS_INTERNSHIP: certificate.isInternship,
+            MATCH_APPOINTMENTS_DURATION: certificate.totalMatchAppointmentsDuration / 60,
+            COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
+            FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
+            formatFloat: (value: number) => formatFloat(value, lang),
+            formatHoursWithMinutes: (value: number) => {
+                const duration = moment.duration(value, 'hours');
+                const getHourLabel = () => {
+                    if (duration.asHours() === 1) {
+                        return lang === 'de' ? 'Stunde' : 'hour';
+                    }
+                    return lang === 'de' ? 'Stunden' : 'hours';
+                };
+                const getMinuteLabel = () => {
+                    if (duration.minutes() === 1) {
+                        return lang === 'de' ? 'Minute' : 'minute';
+                    }
+                    return lang === 'de' ? 'Minuten' : 'minutes';
+                };
+                const minutes = duration.minutes() > 0 ? `, ${duration.minutes()} ${getMinuteLabel()}` : '';
+                const formatted = `${Math.floor(duration.asHours())} ${getHourLabel()}${minutes}`;
+                return formatted;
+            },
+            IS_VERIFICATION_PAGE: true,
         });
     }
 }
@@ -399,7 +604,7 @@ function exposeCertificate(
         subjects,
         uuid,
         userIs: pupil.id === to.pupilId ? 'pupil' : 'student',
-        pupil: { firstname: pupil.firstname, lastname: pupil.lastname },
+        pupil: { firstname: pupil.firstname, lastname: shortenLastName(pupil.lastname) },
         student: { firstname: student.firstname, lastname: student.lastname },
         state: state as CertificateState,
     };
@@ -469,9 +674,34 @@ async function createInstantPDFBinary(certificate: InstantCertificate & { studen
         MATCH_APPOINTMENTS_COUNT: certificate.matchAppointmentsCount,
         COURSE_PARTICIPANTS_COUNT: certificate.courseParticipantsCount,
         COURSE_APPOINTMENTS_COUNT: certificate.courseAppointmentsCount,
-        TOTAL_APPOINTMENTS_DURATION: formatFloat(certificate.totalAppointmentsDuration / 60, lang),
+        TOTAL_APPOINTMENTS_DURATION: certificate.totalAppointmentsDuration / 60,
+        HOMEWORK_HELP_DURATION: certificate.homeworkHelpDuration ? certificate.homeworkHelpDuration / 60 : 0,
         DATUMHEUTE: moment().format('D.M.YYYY'),
         QR_CODE: await QRCode.toDataURL(link),
+        IS_INTERNSHIP: certificate.isInternship,
+        MATCH_APPOINTMENTS_DURATION: certificate.totalMatchAppointmentsDuration / 60,
+        COURSE_APPOINTMENTS_DURATION: certificate.totalCourseAppointmentDuration / 60,
+        FURTHER_TRAINING_DURATION: certificate.trainingDuration / 60,
+        formatFloat: (value: number) => formatFloat(value, lang),
+        formatHoursWithMinutes: (value: number) => {
+            const duration = moment.duration(value, 'hours');
+            const getHourLabel = () => {
+                if (duration.asHours() === 1) {
+                    return lang === 'de' ? 'Stunde' : 'hour';
+                }
+                return lang === 'de' ? 'Stunden' : 'hours';
+            };
+            const getMinuteLabel = () => {
+                if (duration.minutes() === 1) {
+                    return lang === 'de' ? 'Minute' : 'minute';
+                }
+                return lang === 'de' ? 'Minuten' : 'minutes';
+            };
+            const minutes = duration.minutes() > 0 ? `, ${duration.minutes()} ${getMinuteLabel()}` : '';
+            const formatted = `${Math.floor(duration.asHours())} ${getHourLabel()}${minutes}`;
+            return formatted;
+        },
+        IS_VERIFICATION_PAGE: false,
     });
     return await generatePDFFromHTML(result, {
         includePaths: [path.resolve(ASSETS)],

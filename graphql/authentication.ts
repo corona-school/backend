@@ -284,7 +284,7 @@ export class AuthenticationResolver {
     @Mutation((returns) => SSOAuthStatus)
     async loginWithSSO(@Ctx() context: GraphQLContext, @Arg('code') code: string, @Arg('referrer') referrer: string) {
         const { email, firstname, lastname, clientId, sub } = await authenticateWithIDP({ code, referrer });
-        if (!email || !firstname) {
+        if (!email || typeof firstname !== 'string' || typeof lastname !== 'string') {
             throw new Error('Invalid token payload: Missing required fields (email/name)');
         }
 

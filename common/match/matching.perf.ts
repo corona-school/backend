@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { computeMatchings, Matching, MatchOffer, MatchRequest } from './matching';
 import { parseSubjectString } from '../util/subjectsutils';
-import { pupil_state_enum, student_state_enum } from '@prisma/client';
+import { pupil_languages_enum, pupil_state_enum, student_languages_enum, student_state_enum } from '@prisma/client';
 import assert from 'assert';
 import { formattedSubjectToSubjectWithGradeRestriction } from './util';
 import { gradeAsInt } from '../util/gradestrings';
@@ -25,6 +25,7 @@ interface HistoryEntry {
     subjects: string;
     state: pupil_state_enum | student_state_enum;
     grade?: string;
+    languages: pupil_languages_enum | student_languages_enum[];
 }
 
 const pupils = JSON.parse(readFileSync(__dirname + '/matching.perf.pupil.json', { encoding: 'utf-8' })) as HistoryEntry[];
@@ -145,33 +146,33 @@ describe('Real World Matching Performance', () => {
             10,
             {
                 matchCountSum: 1045,
-                matchingSubjectsAvg: 1.6794258373205742,
+                matchingSubjectsAvg: 1.647846889952153,
                 matchingSubjects: {
                     '>= 1': 1045,
-                    '>= 2': 555,
-                    '>= 3': 119,
-                    '>= 4': 31,
-                    '>= 5': 4,
+                    '>= 2': 479,
+                    '>= 3': 145,
+                    '>= 4': 37,
+                    '>= 5': 13,
                 },
                 // matchingState: 0.11100478468899522,
-                pupilWaitingTimeAvg: 8.342127835891821,
+                pupilWaitingTimeAvg: 7.9641828155568914,
                 pupilWaitingTime: {
                     '>= 0': 1045,
-                    '>= 1': 959,
-                    '>= 7': 429,
-                    '>= 14': 72,
-                    '>= 21': 53,
-                    '>= 28': 41,
+                    '>= 1': 960,
+                    '>= 7': 430,
+                    '>= 14': 71,
+                    '>= 21': 45,
+                    '>= 28': 30,
                 },
-                studentWaitingTimeAvg: 53.936342931009634,
+                studentWaitingTimeAvg: 46.19043382709773,
                 studentWaitingTime: {
                     '>= 0': 1045,
-                    '>= 1': 1034,
-                    '>= 7': 901,
-                    '>= 14': 776,
-                    '>= 21': 715,
-                    '>= 28': 654,
-                    '>= 56': 465,
+                    '>= 1': 1017,
+                    '>= 7': 832,
+                    '>= 14': 683,
+                    '>= 21': 577,
+                    '>= 28': 500,
+                    '>= 56': 305,
                 },
             },
         ],
@@ -318,6 +319,7 @@ describe('Real World Matching Performance', () => {
                     state: pupil.state,
                     subjects: parseSubjectString(pupil.subjects),
                     requestAt: new Date(pupil.requestAt),
+                    languages: pupil.languages as pupil_languages_enum[],
                 });
                 pupilIdx += 1;
                 // log += `  + ${pupil.requestAt} - add pupil\n`;
@@ -329,6 +331,7 @@ describe('Real World Matching Performance', () => {
                     state: student.state,
                     subjects: parseSubjectString(student.subjects),
                     requestAt: new Date(student.requestAt),
+                    languages: student.languages as student_languages_enum[],
                 });
                 studentIdx += 1;
                 // log += `  + ${student.requestAt} - add student\n`;

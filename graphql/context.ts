@@ -9,6 +9,7 @@ import { loginPassword } from '../common/secret';
 import { Request, Response } from 'express';
 import { attachSession, Session, startTransaction, Transaction } from '../common/session';
 import { Role } from '../common/user/roles';
+import { ADMIN_USERID } from '../common/user';
 
 /* time safe comparison adapted from
     https://github.com/LionC/express-basic-auth/blob/master/index.js
@@ -33,6 +34,8 @@ export interface GraphQLContext extends Session {
     deferredRequiredRoles?: Role[];
     ip: string;
     setCookie(key: string, value: string);
+
+    valueCache: Record<symbol, any>;
 }
 
 type GraphQLUserStudent = GraphQLUser & { studentId: number };
@@ -59,6 +62,7 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         sessionToken: undefined,
         sessionID: '?',
         ip,
+        valueCache: {},
         setCookie: (key, value) => res.cookie(key, value, { secure: true }),
     };
 
@@ -69,7 +73,7 @@ export default async function injectContext({ req, res }: { req: Request; res: R
         }
 
         context.user = {
-            userID: 'admin/',
+            userID: ADMIN_USERID,
             firstname: 'Ed',
             lastname: 'Min',
             email: 'test@lern-fair.de',

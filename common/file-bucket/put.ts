@@ -6,7 +6,7 @@ const logger = getLogger();
 
 /// Stores the given buffer in the specified bucket associated with the given key
 /// NOTE: May throw in case the upload failed
-export async function putFile(f: Buffer, key: string, bucket: string, isPublic: boolean, mimetype: string) {
+export async function putS3File(f: Buffer, key: string, bucket: string, isPublic: boolean, mimetype: string) {
     const command = new PutObjectCommand({
         Key: key,
         Bucket: bucket,

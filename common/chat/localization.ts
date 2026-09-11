@@ -1,9 +1,7 @@
 const systemMessages = {
     de: {
-        oneOnOne:
-            'Standardmäßig werdet ihr über neue Chat-Nachrichten per E-Mail informiert. In den Einstellungen könnt ihr eure Benachrichtigungen anpassen. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.',
-        groupChat:
-            'In diesem Gruppen-Chat können Kursleiter:innen wichtige Ankündigungen und weitere Informationen zum ihrem Kurs mit allen Schüler:innen teilen. Dabei können Kursleiter:innen einstellen, ob auch Schüler:innen in den Gruppen-Chat schreiben dürfen. Der Chat wird 30 Tage nach Ende des Kurses inaktiv. Wir erwarten, dass alle Chat-Nachrichten respektvoll sind. Falls es Beleidigungen oder andere Probleme gibt, meldet euch bitte unter sorgen-eule@lern-fair.de bei uns.',
+        oneOnOne: `📎 Ihr könnt Bilder, Dateien und Dokumente über den Chat versenden.\n\n📱 Wenn ihr die Lern-Fair App installiert, erhaltet ihr bei jeder neuen Chat-Nachricht eine Push-Benachrichtigung auf euer Smartphone.\n\n🛡️ Nutzt nur unseren Chat und keine anderen Messenger oder Email - so bleiben alle Nachrichten geschützt und an einem Ort.\n\n😇 Bleibt respektvoll - bei problematischen oder respektlosen Nachrichten, schreib jederzeit an sorgen-eule@lern-fair.de`,
+        groupChat: `📎 Ihr könnt Bilder, Dateien und Dokumente über den Chat versenden.\n\n📱 Wenn ihr die Lern-Fair App installiert, erhaltet ihr bei jeder neuen Chat-Nachricht eine Push-Benachrichtigung auf euer Smartphone.\n\n✍️ Kursleiter:innen können einstellen, ob auch Schüler:innen in den Gruppen-Chat schreiben dürfen.\n\n⛔ Der Chat wird 30 Tage nach Ende des Kurses inaktiv. \n\n😇 Bleibt respektvoll - bei problematischen oder respektlosen Nachrichten, schreib jederzeit an sorgen-eule@lern-fair.de`,
         toAnnouncementChat: 'Nur Kursleiter:innen können in den Chat schreiben.',
         toGroupChat: 'Es können nun auch Schüler:innen in den Chat schreiben.',
         deactivated: 'Es können keine Nachrichten mehr in den Chat geschrieben werden.',

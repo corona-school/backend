@@ -222,7 +222,6 @@ type SubcourseWithLectures = Prisma.subcourseGetPayload<{ include: { lecture: tr
 function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLectures {
     return {
         lecture: lectures,
-
         id: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -240,6 +239,7 @@ function createSubcourse({ lectures }: { lectures: lecture[] }): SubcourseWithLe
         groupChatType: 'NORMAL',
         courseId: 1,
         prospectChats: [],
+        allowMentoring: false,
     };
 }
 
@@ -271,6 +271,12 @@ function createTestMatch({ lectures }: { lectures: lecture[] }): MatchWithLectur
         pupilId: null,
         matchPoolRunId: null,
         subjectsAtMatchingTime: [],
+        pupilFirstMessageSentAt: null,
+        pupilLastMessageSentAt: null,
+        studentFirstMessageSentAt: null,
+        studentLastMessageSentAt: null,
+        pupilMessageCount: 0,
+        studentMessageCount: 0,
     };
 }
 
@@ -301,6 +307,7 @@ function createLecture({ start }: { start: Date }): lecture {
         instructorScreeningId: null,
         pupilScreeningId: null,
         tutorScreeningId: null,
+        actualDuration: null,
     };
 }
 

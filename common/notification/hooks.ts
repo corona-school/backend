@@ -5,16 +5,30 @@ import { registerPupilHook, registerStudentHook } from './hook';
 import { deactivateStudent } from '../student/activation';
 import { cancelRemissionRequest } from '../remission-request';
 import { prisma } from '../prisma';
-import { userForStudent } from '../user';
+import { DeactivationReason, userForStudent } from '../user';
 import * as Notification from '../../common/notification';
 import { SpecificNotificationContext } from './actions';
 import { dissolve_reason } from '@prisma/client';
+import { deletePupilMatchRequest } from '../match/request';
+import { deactivatePupil } from '../pupil/activation';
 
 registerStudentHook(
     'deactivate-student',
     'Account gets deactivated, matches are dissolved, courses are cancelled',
-    async (student) => {
-        await deactivateStudent(student, true, 'missing coc', [dissolve_reason.accountDeactivatedNoCoC]);
+    async (student, context) => {
+        const contextWithDeactivationData = context as SpecificNotificationContext<
+            'coc_reminder' | 'tutor_screening_rejection' | 'instructor_screening_rejection'
+        >;
+        const deactivationReason = (contextWithDeactivationData.deactivationReason as DeactivationReason) ?? DeactivationReason.missingCoC;
+        const getMatchDeactivationReason = (reason: DeactivationReason) => {
+            switch (reason) {
+                case DeactivationReason.missingCoC:
+                    return dissolve_reason.accountDeactivatedNoCoC;
+                default:
+                    return dissolve_reason.accountDeactivated;
+            }
+        };
+        await deactivateStudent(student, true, deactivationReason, undefined, [getMatchDeactivationReason(deactivationReason)]);
     } // the hook does not send out a notification again, the user already knows that their account was deactivated
 );
 
@@ -44,13 +58,10 @@ registerStudentHook(
     }
 );
 
-import { deletePupilMatchRequest } from '../match/request';
-import { deactivatePupil } from '../pupil/activation';
-
 registerPupilHook('revoke-pupil-match-request', 'Match Request is taken back, pending Pupil Screenings are invalidated', async (pupil) => {
     await deletePupilMatchRequest(pupil);
 });
 
 registerPupilHook('deactivate-pupil', 'Account gets deactivated, matches are dissolved, courses are left', async (pupil) => {
-    await deactivatePupil(pupil, true, 'deactivated by admin', true);
+    await deactivatePupil(pupil, true, DeactivationReason.deactivatedByAdmin, undefined, true);
 });
