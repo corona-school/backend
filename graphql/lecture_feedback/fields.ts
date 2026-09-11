@@ -1,4 +1,4 @@
-import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, Field, ObjectType, Int } from 'type-graphql';
+import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, Field, ObjectType, Int, Float } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Lecture_feedback as LectureFeedback, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
@@ -8,23 +8,35 @@ import { AppointmentStartRange, buildLectureFeedbackQueryConditions, getLectureF
 
 @ObjectType()
 class LectureFeedbackStats {
-    @Field((type) => Int)
+    @Field(() => Int)
     totalFeedback: number;
 
-    @Field((type) => Number, { nullable: true })
+    @Field(() => Float, { nullable: true })
     averageRating: number | null;
 
-    @Field((type) => Int)
+    @Field(() => Int)
     criticalCount: number;
 
-    @Field((type) => Int)
+    @Field(() => Int)
     freeTextCount: number;
 
-    @Field((type) => Int)
-    studentFeedbackCount: number;
+    @Field(() => Int)
+    totalAppointments: number;
 
-    @Field((type) => Int)
-    pupilFeedbackCount: number;
+    @Field(() => Int)
+    appointmentsWithFeedback: number;
+
+    @Field(() => Int)
+    totalPupils: number;
+
+    @Field(() => Int)
+    pupilsWithFeedback: number;
+
+    @Field(() => Int)
+    totalStudents: number;
+
+    @Field(() => Int)
+    studentsWithFeedback: number;
 }
 
 @ObjectType()
