@@ -110,29 +110,47 @@ export const getLectureFeedbackStats = async (
 ) => {
     const [stats] = await prisma.$queryRaw<{ [key: string]: number | null }[]>(Prisma.sql`
         SELECT
-            COUNT(*)::int AS "totalFeedback",
+        COUNT(*) FILTER (
+            WHERE lf."rating" IS NOT NULL
+        )::int AS "totalFeedback",
 
-            AVG(lf."rating")::float AS "averageRating",
+        AVG(lf."rating") FILTER (
+            WHERE lf."rating" IS NOT NULL
+        )::float AS "averageRating",
 
-            COUNT(*) FILTER (
-                WHERE lf."rating" IN (1, 2)
-            )::int AS "criticalCount",
+        COUNT(*) FILTER (
+            WHERE lf."rating" IN (1, 2)
+        )::int AS "criticalCount",
 
-            COUNT(*) FILTER (
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM unnest(lf."tags") AS tag
-                    WHERE tag LIKE 'Sonstiges:%'
-                )
-            )::int AS "freeTextCount",
+        COUNT(*) FILTER (
+            WHERE lf."rating" IS NOT NULL
+            AND EXISTS (
+                SELECT 1
+                FROM unnest(lf."tags") AS tag
+                WHERE tag LIKE 'Sonstiges:%'
+            )
+        )::int AS "freeTextCount",
 
-            COUNT(*) FILTER (
-                WHERE lf."userId" LIKE 'student/%'
-            )::int AS "studentFeedbackCount",
+        COUNT(DISTINCT lf."lectureId")::int
+            AS "totalAppointments",
 
-            COUNT(*) FILTER (
-                WHERE lf."userId" LIKE 'pupil/%'
-            )::int AS "pupilFeedbackCount"
+        COUNT(DISTINCT lf."lectureId") FILTER (
+            WHERE lf."rating" IS NOT NULL
+        )::int AS "appointmentsWithFeedback",
+
+        COUNT(DISTINCT p."id")::int
+            AS "totalPupils",
+
+        COUNT(DISTINCT p."id") FILTER (
+            WHERE lf."rating" IS NOT NULL
+        )::int AS "pupilsWithFeedback",
+
+        COUNT(DISTINCT s."id")::int
+            AS "totalStudents",
+
+        COUNT(DISTINCT s."id") FILTER (
+            WHERE lf."rating" IS NOT NULL
+        )::int AS "studentsWithFeedback"
 
         FROM "lecture_feedback" lf
 
