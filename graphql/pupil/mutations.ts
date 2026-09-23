@@ -38,6 +38,7 @@ import { CalendarPreferences } from '../types/calendarPreferences';
 import redactUsers from '../../common/user/redaction';
 import { updateSessionRolesOfUser } from '../../common/user/session';
 import { cancelCalendlyEvent } from '../../common/calendly';
+import { pupil_email_owner_enum } from '../generated';
 
 const logger = getLogger(`Pupil Mutations`);
 
@@ -235,6 +236,7 @@ export async function updatePupil(
             isPupil,
             isParticipant,
             learningOfferConstraints: ensureNoNull(learningOfferConstraints),
+            emailOwner: email ? pupil_email_owner_enum.unknown : undefined,
         },
         where: { id: pupil.id },
     });
