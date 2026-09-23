@@ -83,6 +83,7 @@ import { MutateInstantCertificateResolver } from './instant_certificate/mutation
 import { AdminUserFlagMutationsResolver } from './admin_user_flags/mutations';
 import { LectureFeedbackMutationsResolver } from './lecture_feedback/mutations';
 import { LectureFeedbackFieldsResolver } from './lecture_feedback/fields';
+import { AdminUserFlagFieldsResolver } from './admin_user_flags/field';
 
 applyResolversEnhanceMap(authorizationEnhanceMap);
 applyResolversEnhanceMap(complexityEnhanceMap);
@@ -217,6 +218,7 @@ const schema = buildSchemaSync({
 
         /** Admin User Flags */
         AdminUserFlagMutationsResolver,
+        AdminUserFlagFieldsResolver,
 
         /** Microfeedback */
         LectureFeedbackMutationsResolver,
