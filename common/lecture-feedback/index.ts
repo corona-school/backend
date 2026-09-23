@@ -20,7 +20,12 @@ export class AppointmentStartRange {
     to?: Date;
 }
 
+const enabled = process.env.MICROFEEDBACK_ENABLED === 'true';
+
 export const createLectureFeedback = async (appointment: Appointment, defaults?: CreateLectureFeedbackDefaults) => {
+    if (!enabled) {
+        return false;
+    }
     const participants = appointment.participantIds;
     const organizers = appointment.organizerIds;
     const feedbackCount = await prisma.lecture_feedback.count({
@@ -42,6 +47,9 @@ export const createLectureFeedback = async (appointment: Appointment, defaults?:
 };
 
 export const deleteNonSubmittedLectureFeedback = async (appointment: Appointment) => {
+    if (!enabled) {
+        return false;
+    }
     const deletedCount = await prisma.lecture_feedback.deleteMany({
         where: { lectureId: appointment.id, status: { in: ['pending', 'dismissed'] } },
     });
