@@ -20,7 +20,6 @@ export class LectureFeedbackMutationsResolver {
     @AuthorizedDeferred(Role.OWNER)
     async lectureFeedbackSubmit(@Ctx() context: GraphQLContext, @Arg('id') id: number, @Arg('data') data: LectureFeedbackSubmitInput) {
         const feedback = await prisma.lecture_feedback.findFirst({ where: { id } });
-        console.log(feedback);
         await hasAccess(context, 'Lecture_feedback', feedback);
 
         if (feedback.status === 'submitted') {

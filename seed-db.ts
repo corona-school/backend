@@ -38,6 +38,7 @@ import { CalendarPreferences, Day, WeeklyAvailability } from './graphql/types/ca
 import { PupilUpdateInput } from './graphql/pupil/mutations';
 import { Subject } from './common/util/subjectsutils';
 import * as certificateOfConduct from './common/certificate-of-conduct/certificateOfConduct';
+import { createLectureFeedback } from './common/lecture-feedback';
 
 const logger = getLogger('DevSetup');
 
@@ -250,7 +251,7 @@ const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subco
 
     for (let i = 0; i < amount; i++) {
         const start = new Date(currentLecture);
-        await prisma.lecture.create({
+        const lecture = await prisma.lecture.create({
             data: {
                 subcourseId: subcourseId,
                 matchId: matchId,
@@ -259,9 +260,26 @@ const createLectures = async ({ amount, intervalInDays, startOffsetInDays, subco
                 organizerIds: organizerIds,
                 participantIds: participantsIds,
                 joinedBy: start <= new Date() ? participantsIds.concat(organizerIds ?? []) : [],
+                actualDuration: start <= new Date() ? 50 : undefined,
                 appointmentType: subcourseId ? 'group' : 'match',
             },
         });
+
+        if (!subcourseId && start > new Date()) {
+            await createLectureFeedback(lecture); // future feedback is always pending
+        } else if (!subcourseId && start <= new Date()) {
+            const shouldCreateFeedback = Math.random() < 0.3; // 30% chance to create feedback for past lectures
+            const rating = Math.floor(Math.random() * 5) + 1;
+            if (shouldCreateFeedback) {
+                await createLectureFeedback(lecture, {
+                    status: 'submitted',
+                    rating,
+                    tags: ['Sonstiges: Lorem ipsum dolor sit amet, consetetur sadipscing elitr'],
+                });
+            } else {
+                await createLectureFeedback(lecture);
+            }
+        }
 
         currentLecture += interval;
     }

@@ -1,11 +1,129 @@
-import { Resolver, Query, Authorized, Ctx, FieldResolver, Root } from 'type-graphql';
+import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, Field, ObjectType, Int, Float } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { Lecture_feedback as LectureFeedback } from '../generated';
+import { Lecture_feedback as LectureFeedback, Lecture } from '../generated';
 import { Role } from '../../common/user/roles';
 import { GraphQLContext } from '../context';
+import { Prisma } from '@prisma/client';
+import { AppointmentStartRange, buildLectureFeedbackQueryConditions, getLectureFeedbackStats } from '../../common/lecture-feedback';
+
+@ObjectType()
+class LectureFeedbackStats {
+    @Field(() => Int)
+    totalFeedback: number;
+
+    @Field(() => Float, { nullable: true })
+    averageRating: number | null;
+
+    @Field(() => Int)
+    criticalCount: number;
+
+    @Field(() => Int)
+    freeTextCount: number;
+
+    @Field(() => Int)
+    totalAppointments: number;
+
+    @Field(() => Int)
+    appointmentsWithFeedback: number;
+
+    @Field(() => Int)
+    totalPupils: number;
+
+    @Field(() => Int)
+    pupilsWithFeedback: number;
+
+    @Field(() => Int)
+    totalStudents: number;
+
+    @Field(() => Int)
+    studentsWithFeedback: number;
+}
+
+@ObjectType()
+export class LectureFeedbacksResponse {
+    @Field((type) => [LectureFeedback])
+    items: LectureFeedback[];
+
+    @Field((type) => Int)
+    totalCount: number;
+
+    @Field((type) => LectureFeedbackStats, { nullable: true })
+    stats: LectureFeedbackStats;
+}
 
 @Resolver((of) => LectureFeedback)
 export class LectureFeedbackFieldsResolver {
+    @FieldResolver((returns) => Lecture, { nullable: true })
+    @Authorized(Role.OWNER, Role.APPOINTMENT_PARTICIPANT, Role.ADMIN)
+    async lecture(@Root() appointment: LectureFeedback) {
+        if (!appointment.lectureId) {
+            return null;
+        }
+
+        return await prisma.lecture.findUnique({
+            where: { id: appointment.lectureId },
+        });
+    }
+
+    @Query((returns) => LectureFeedbacksResponse)
+    @Authorized(Role.ADMIN)
+    async lectureFeedbacks(
+        @Ctx() context: GraphQLContext,
+        @Arg('userEmail', { nullable: true }) userEmail?: string,
+        @Arg('appointmentStart', (type) => AppointmentStartRange, { nullable: true })
+        appointmentStart?: AppointmentStartRange,
+        @Arg('ratingContains', (type) => [Number], { nullable: true })
+        ratingContains?: number[],
+        @Arg('onlyWithComments', { nullable: true }) onlyWithComments?: boolean,
+        @Arg('take', { nullable: true, defaultValue: 100 }) take?: number,
+        @Arg('skip', { nullable: true, defaultValue: 0 }) skip?: number
+    ) {
+        const where = buildLectureFeedbackQueryConditions(userEmail, appointmentStart, ratingContains, onlyWithComments);
+
+        const rows = await prisma.$queryRaw<LectureFeedback[]>(Prisma.sql`
+            SELECT lf.*
+            FROM "lecture_feedback" lf
+
+            LEFT JOIN "lecture" l
+                ON l."id" = lf."lectureId"
+
+            LEFT JOIN "student" s
+                ON lf."userId" = 'student/' || s."id"::text
+
+            LEFT JOIN "pupil" p
+                ON lf."userId" = 'pupil/' || p."id"::text
+
+            ${where}
+
+            ORDER BY lf."createdAt" DESC
+            LIMIT ${take}
+            OFFSET ${skip}
+        `);
+
+        const [{ count }] = await prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
+            SELECT COUNT(*) AS count
+            FROM "lecture_feedback" lf
+
+            LEFT JOIN "lecture" l
+                ON l."id" = lf."lectureId"
+
+            LEFT JOIN "student" s
+                ON lf."userId" = 'student/' || s."id"::text
+
+            LEFT JOIN "pupil" p
+                ON lf."userId" = 'pupil/' || p."id"::text
+
+            ${where}
+        `);
+
+        const stats = await getLectureFeedbackStats(userEmail, appointmentStart, ratingContains, onlyWithComments);
+        return {
+            items: rows,
+            totalCount: Number(count),
+            stats,
+        };
+    }
+
     @Query((returns) => [LectureFeedback])
     @Authorized(Role.STUDENT, Role.PUPIL)
     async pendingLectureFeedbacks(@Ctx() context: GraphQLContext) {
