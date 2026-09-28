@@ -13,7 +13,7 @@ import { isDev } from '../util/environment';
 const logger = getLogger('Match');
 
 const PUPIL_MAX_REQUESTS = 1;
-const STUDENT_MAX_REQUESTS = 3;
+const STUDENT_MAX_REQUESTS = 1;
 const PUPIL_MAX_MATCHES = 1;
 
 type RequestBlockReasons = 'not-tutee' | 'not-tutor' | 'not-screened' | 'no-subjects-selected' | 'max-requests' | 'max-matches' | 'max-dissolved-matches';
