@@ -1125,7 +1125,7 @@ void (async function setupDevDB() {
                     registrationSource: 'cooperation',
                     isInstructor: i > 15,
                     isTutor: i >= 10 && i <= 15,
-                    // assign a random cooperation ID between 2 and 5
+                    // assign a random cooperation ID between 2 and 5 which are our test uni-cooperations
                     cooperationID: i >= 10 ? Math.floor(Math.random() * 4) + 2 : undefined,
                     languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
                     subjects: [
