@@ -9,6 +9,7 @@ import {
     Subcourse,
     Course,
     StudentWhereInput,
+    Internship,
 } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -317,6 +318,12 @@ export class ExtendFieldsStudentResolver {
     @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
     async adminUserFlags(@Root() student: Required<Student>) {
         return await prisma.admin_user_flag.findMany({ where: { userId: userForStudent(student).userID } });
+    }
+
+    @FieldResolver((returns) => Internship, { nullable: true })
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
+    async internship(@Root() student: Required<Student>) {
+        return await prisma.internship.findFirst({ where: { studentId: student.id } });
     }
 
     @Query((returns) => [Student])

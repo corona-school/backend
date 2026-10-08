@@ -39,7 +39,7 @@ import { getLogger } from '../../common/logger/logger';
 import { createRemissionRequestPDF } from '../../common/remission-request';
 import { addFile, getFileURL } from '../files';
 import { validateEmail, ValidateEmail } from '../validators';
-import { screening_jobstatus_enum } from '../../graphql/generated';
+import { internship_status_enum, screening_jobstatus_enum } from '../../graphql/generated';
 import { createZoomUser, deleteZoomUser } from '../../common/zoom/user';
 import { GraphQLJSON } from 'graphql-scalars';
 import { BecomeTutorInput, RegisterStudentInput } from '../types/userInputs';
@@ -88,6 +88,18 @@ class ScreeningUpdateInput {
     status?: StudentScreeningStatus;
     @Field((_type) => Boolean, { nullable: true })
     skipCoC?: boolean;
+}
+
+@InputType()
+class InternshipCreateInput {
+    @Field((_type) => Date, { nullable: false })
+    startDate: Date;
+
+    @Field((_type) => Date, { nullable: true })
+    endDate?: Date | undefined;
+
+    @Field((_type) => internship_status_enum, { nullable: true })
+    status?: internship_status_enum | undefined;
 }
 
 @ObjectType()
@@ -605,6 +617,42 @@ export class MutateStudentResolver {
     async studentRequireOnboarding(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number) {
         const student = await getStudent(studentId);
         await requireStudentOnboarding(student.id);
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER, Role.ADMIN)
+    async studentCreateInternship(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('data') data: InternshipCreateInput) {
+        const student = await getStudent(studentId);
+        await prisma.internship.create({
+            data: {
+                startDate: data.startDate,
+                endDate: data.endDate,
+                status: data.status,
+                studentId: student.id,
+            },
+        });
+        return true;
+    }
+
+    @Mutation(() => Boolean)
+    @Authorized(Role.STUDENT_SCREENER, Role.ADMIN)
+    async studentUpdateInternship(@Ctx() context: GraphQLContext, @Arg('internshipId') internshipId: number, @Arg('data') data: InternshipCreateInput) {
+        const internship = await prisma.internship.findUnique({ where: { id: internshipId } });
+        if (!internship) {
+            throw new Error('Internship not found');
+        }
+        await prisma.internship.update({
+            where: {
+                id: internshipId,
+            },
+            data: {
+                startDate: data.startDate,
+                endDate: data.endDate,
+                status: data.status,
+                studentId: internship.studentId,
+            },
+        });
         return true;
     }
 }
