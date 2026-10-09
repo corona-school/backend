@@ -1,10 +1,17 @@
 import { bold } from './format';
 
-export interface SlackBlock {
+export interface SectionBlock {
     type: 'section';
     text?: { type: 'mrkdwn'; text: string };
     fields?: { type: 'mrkdwn'; text: string }[];
 }
+
+export interface MarkdownBlock {
+    type: 'markdown';
+    text: string;
+}
+
+export type SlackBlock = SectionBlock | MarkdownBlock;
 
 // Unfortunately Slack only supports tables with two columns, and with a maximum of 10 rows
 export function table(name: string, colA: string, colB: string, entries: [string, string][]): SlackBlock[] {
