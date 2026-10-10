@@ -162,7 +162,6 @@ export class MutateSubcourseResolver {
         const subcourse = await getSubcourse(subcourseId);
         await hasAccess(context, 'Subcourse', subcourse);
         const instructorToBeRemoved = await getStudent(studentId);
-
         await removeSubcourseInstructor(context.user, subcourse, instructorToBeRemoved);
 
         return true;
