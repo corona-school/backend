@@ -138,18 +138,18 @@ const createStudent = async ({ isInstructor = true, isTutor = true, calendarPref
         languages: data.languages,
         subjects: data.subjects,
     });
-    if (isTutor) {
-        await addTutorScreening(screener, student, { status: 'success' });
-    }
-    await prisma.student.update({
+    const updatedStudent = await prisma.student.update({
         where: { id: student.id },
         data: { hasDoneEthicsOnboarding: true, calendarPreferences: calendarPreferences as Record<string, any>, cooperationID: data.cooperationID },
     });
+    if (isTutor) {
+        await addTutorScreening(screener, updatedStudent, { status: 'success' });
+    }
     if (isInstructor) {
-        await becomeInstructor(student, {});
+        await becomeInstructor(updatedStudent, {});
         await addInstructorScreening(
             screener,
-            student,
+            updatedStudent,
             {
                 status: 'success',
                 comment: 'Success',
@@ -341,14 +341,44 @@ void (async function setupDevDB() {
 
     _setSilenceNotificationSystem(true);
 
-    await prisma.cooperation.create({
-        data: {
-            name: 'Lern-Fair e.V.',
-            tag: 'self',
-
-            welcomeTitle: 'Wilkommen im Userbereich',
-            welcomeMessage: 'Als Lern-Fairer kennst du dich ja hier aus :)',
-        },
+    await prisma.cooperation.createMany({
+        data: [
+            {
+                name: 'Lern-Fair e.V.',
+                tag: 'self',
+                type: 'company',
+                welcomeTitle: 'Wilkommen im Userbereich',
+                welcomeMessage: 'Als Lern-Fairer kennst du dich ja hier aus :)',
+            },
+            {
+                name: 'Uni Freiburg',
+                tag: 'uni-freiburg',
+                type: 'university',
+                welcomeTitle: 'Wilkommen im Userbereich',
+                welcomeMessage: 'Lorem ipsum dolor sit amet',
+            },
+            {
+                name: 'Uni CSS',
+                tag: 'uni-css',
+                type: 'university',
+                welcomeTitle: 'Wilkommen im Userbereich',
+                welcomeMessage: 'Lorem ipsum dolor sit amet',
+            },
+            {
+                name: 'Uni ABC',
+                tag: 'uni-abc',
+                type: 'university',
+                welcomeTitle: 'Wilkommen im Userbereich',
+                welcomeMessage: 'Lorem ipsum dolor sit amet',
+            },
+            {
+                name: 'Uni JS',
+                tag: 'uni-js',
+                type: 'university',
+                welcomeTitle: 'Wilkommen im Userbereich',
+                welcomeMessage: 'Lorem ipsum dolor sit amet',
+            },
+        ],
     });
 
     const pupil1 = await createPupil({
@@ -1095,7 +1125,8 @@ void (async function setupDevDB() {
                     registrationSource: 'cooperation',
                     isInstructor: i > 15,
                     isTutor: i >= 10 && i <= 15,
-                    cooperationID: i >= 10 ? 1 : undefined,
+                    // assign a random cooperation ID between 2 and 5 which are our test uni-cooperations
+                    cooperationID: i >= 10 ? Math.floor(Math.random() * 4) + 2 : undefined,
                     languages: ['Englisch', 'Franz_sisch', 'Deutsch'],
                     subjects: [
                         { name: 'Französisch', grade: { min: 1, max: 14 } },

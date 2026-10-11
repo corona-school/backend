@@ -793,6 +793,18 @@ model student {
   maxParallelMatches            Int?
   // Used by screeners to document how many trainings a student has attended
   furtherTrainingsAttendedCount Int?                        @default(0)
+  internship                    internship[]
+}
+
+model internship {
+  id        Int                    @id @default(autoincrement())
+  createdAt DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt DateTime               @default(now()) @updatedAt @db.Timestamp(6)
+  startDate DateTime
+  endDate   DateTime?
+  status    internship_status_enum @default(in_progress)
+  student   student?               @relation(fields: [studentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studentId Int
 }
 
 // A concrete course with participants, each course might have multiple subcourses with different instructors
@@ -1577,4 +1589,10 @@ enum important_information_category_enum {
 enum learning_offer_constraints_enum {
   ONLY_DAZ_COURSES
   DAZ_SUBJECT_REQUIRED_FOR_MATCHING
+}
+
+enum internship_status_enum {
+  in_progress
+  completed
+  cancelled
 }

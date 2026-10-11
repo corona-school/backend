@@ -8,6 +8,7 @@ import { PrerequisiteError, RedundantError } from '../util/error';
 import { logTransaction } from '../transactionlog/log';
 import { DeactivationReason, userForStudent } from '../user';
 import { updateSessionRolesOfUser } from '../user/session';
+import { getDefaultSemesterEnd } from './internship';
 
 interface ScreeningInput {
     status: ScreeningStatus;
@@ -35,6 +36,14 @@ export const requireStudentOnboarding = async (studentId: number, prismaInstance
 export async function addInstructorScreening(screener: Screener, student: Student, screening: ScreeningInput, skipCoC: boolean) {
     if (screening.status === ScreeningStatus.success) {
         await requireStudentOnboarding(student.id);
+        if (student.registrationSource === 'cooperation' && student.cooperationID) {
+            const isUniCooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID, type: 'university' } });
+            const hasInternship = await prisma.internship.findFirst({ where: { studentId: student.id } });
+            if (!hasInternship && isUniCooperation) {
+                const currentSemesterEnd = getDefaultSemesterEnd(new Date());
+                await prisma.internship.create({ data: { studentId: student.id, startDate: new Date(), endDate: currentSemesterEnd } });
+            }
+        }
     }
 
     const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
@@ -83,6 +92,14 @@ export async function addTutorScreening(
 ) {
     if (screening.status === ScreeningStatus.success) {
         await requireStudentOnboarding(student.id, prismaInstance);
+        if (student.registrationSource === 'cooperation' && student.cooperationID) {
+            const isUniCooperation = await prisma.cooperation.findFirst({ where: { id: student.cooperationID, type: 'university' } });
+            const hasInternship = await prisma.internship.findFirst({ where: { studentId: student.id } });
+            if (!hasInternship && isUniCooperation) {
+                const currentSemesterEnd = getDefaultSemesterEnd(new Date());
+                await prisma.internship.create({ data: { studentId: student.id, startDate: new Date(), endDate: currentSemesterEnd } });
+            }
+        }
     }
 
     const isFinalDecision = screening.status === ScreeningStatus.success || screening.status === ScreeningStatus.rejection;
