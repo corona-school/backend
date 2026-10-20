@@ -7,6 +7,7 @@ import * as Notification from '../../../common/notification';
 import { ChatType, InvalidSignatureError, getChatType, getNotificationContext, verifyChatUser, getMessageFlag } from './util';
 import { createHmac } from 'crypto';
 import { prisma } from '../../../common/prisma';
+import { sendToSlack, SLACK_CHANNEL } from '../../../common/slack';
 
 const logger = getLogger('ChatNotification');
 
@@ -95,7 +96,7 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
         const userType = senderUserId.startsWith('pupil') ? 'pupil' : 'student';
         const conversationParticipants = Object.keys(data.conversation.participants);
         const chatType = getChatType(conversationParticipants);
-        const messageFlag = getMessageFlag(message.text);
+        const { flag: messageFlag, words: flaggedWords } = getMessageFlag(message.text) || {};
         if (messageFlag) {
             const isFlagged = await prisma.admin_user_flag.findFirst({
                 where: { userId: senderUserId, flag: messageFlag },
@@ -105,8 +106,24 @@ async function handleMessageSentEvent(req: WithRawBody<Request>, res: Response):
                     data: {
                         userId: senderUserId,
                         flag: messageFlag,
-                        metadata: { message: message.text, conversation: { id: conversation.id, match, subcourse } },
+                        metadata: { message: message.text, flaggedWords, conversation: { id: conversation.id, match, subcourse } },
                     },
+                });
+                const userTypeLabel = `${userType === 'student' ? 'HuH' : 'SuS'}`;
+                const flagLabel = `${messageFlag === 'CHAT_ATTEMPT_PLATFORM_CHANGE' ? 'Platform-Wechsel' : 'Obszönität'}`;
+                const chatLink = `https://talkjs.com/dashboard/app/${process.env.TALKJS_APP_ID}/activity/conversations/${conversation.id}`;
+                const user = await getUser(senderUserId);
+                await sendToSlack(SLACK_CHANNEL.AngSupport, {
+                    blocks: [
+                        {
+                            type: 'markdown',
+                            text: `# Flag: ${flagLabel}?\n\n**Sender (${userTypeLabel}):** ${
+                                user.email
+                            }.\n\n**Chat:** [zum Chat](${chatLink}) \n\n**Nachricht:**\n\n>${message.text}${
+                                messageFlag === 'CHAT_OBSCENITY' ? `\n\n**Geflaggte Wörter:**\n\n>${flaggedWords.join(', ')}` : ''
+                            }`,
+                        },
+                    ],
                 });
             }
         }

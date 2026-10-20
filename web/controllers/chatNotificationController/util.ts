@@ -5,9 +5,9 @@ import { User } from '../../../common/user';
 import { getCourse, getSubcourse } from '../../../graphql/util';
 import { GroupNotificationContext, NotificationTriggered, OneOnOneNotificationContext } from './types';
 import { Profanity } from '@2toad/profanity';
-
 const profanity = new Profanity({
     languages: ['de', 'en'],
+    grawlix: '****',
 });
 
 profanity.removeWords(process.env.PROFANITY_WHITE_LIST?.split(',') || []);
@@ -39,14 +39,15 @@ export async function verifyChatUser(user: User) {
     return false;
 }
 
-export function getMessageFlag(message: string) {
+export function getMessageFlag(message: string): { flag: 'CHAT_ATTEMPT_PLATFORM_CHANGE' | 'CHAT_OBSCENITY'; words: string[] } | undefined {
     const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+\s*@\s*(?!lern-fair\s*\.\s*de\b)[A-Za-z0-9.-]+\s*\.\s*[A-Za-z]{2,}\b/i;
     const EXTERNAL_PLATFORM_REGEX = /\b(whats\s?-?app|discord|telegram|skype|snapchat|instagram|tiktok|facebook|messenger|threema|imessage|facetime)\b/i;
     if (EXTERNAL_PLATFORM_REGEX.test(message) || EMAIL_REGEX.test(message)) {
-        return 'CHAT_ATTEMPT_PLATFORM_CHANGE' as const;
+        return { flag: 'CHAT_ATTEMPT_PLATFORM_CHANGE' as const, words: message.match(EXTERNAL_PLATFORM_REGEX)?.map((w) => w) || [] };
     }
     if (profanity.exists(message)) {
-        return 'CHAT_OBSCENITY' as const;
+        const censoredWords = message.split(' ').filter((word) => profanity.exists(word));
+        return { flag: 'CHAT_OBSCENITY' as const, words: censoredWords };
     }
 }
 

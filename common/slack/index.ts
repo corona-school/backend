@@ -17,6 +17,10 @@ export const SLACK_CHANNEL = {
         name: 'publ-statistics',
         webhookURL: process.env.SLACK_PUBL_STATISTICS,
     },
+    AngSupport: <SlackChannel>{
+        name: 'ang-support',
+        webhookURL: process.env.SLACK_ANG_SUPPORT,
+    },
 };
 
 const logger = getLogger('Slack');
