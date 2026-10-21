@@ -1,4 +1,4 @@
-import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg } from 'type-graphql';
+import { Resolver, Query, Authorized, Ctx, FieldResolver, Root, Arg, ObjectType, Field, Int } from 'type-graphql';
 import { prisma } from '../../common/prisma';
 import { Admin_user_flag as AdminUserFlag } from '../generated';
 import { Role } from '../../common/user/roles';
@@ -8,6 +8,15 @@ import { getUser } from '../../common/user';
 import { GraphQLJSONObject } from 'graphql-scalars';
 import { Prisma } from '@prisma/client';
 
+@ObjectType()
+export class LectureFeedbacksResponse {
+    @Field((type) => [AdminUserFlag])
+    items: AdminUserFlag[];
+
+    @Field((type) => Int)
+    totalCount: number;
+}
+
 @Resolver((of) => AdminUserFlag)
 export class AdminUserFlagFieldsResolver {
     @FieldResolver((returns) => UserType, { nullable: true })
@@ -16,7 +25,7 @@ export class AdminUserFlagFieldsResolver {
         return getUser(adminUserFlag.userId);
     }
 
-    @Query((returns) => [AdminUserFlag])
+    @Query((returns) => [LectureFeedbacksResponse])
     @Authorized(Role.ADMIN)
     async adminUserFlags(
         @Ctx() context: GraphQLContext,
@@ -31,7 +40,7 @@ export class AdminUserFlagFieldsResolver {
                 equals: value as Prisma.InputJsonValue,
             },
         }));
-        return await prisma.admin_user_flag.findMany({
+        const items = await prisma.admin_user_flag.findMany({
             take,
             skip,
             where: {
@@ -39,5 +48,16 @@ export class AdminUserFlagFieldsResolver {
                 flag: { in: flags ?? [] },
             },
         });
+        const totalCount = await prisma.admin_user_flag.count({
+            where: {
+                AND: metadataConditions,
+                flag: { in: flags ?? [] },
+            },
+        });
+
+        return {
+            items,
+            totalCount,
+        };
     }
 }
