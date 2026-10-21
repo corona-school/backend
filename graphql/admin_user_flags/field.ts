@@ -9,7 +9,7 @@ import { GraphQLJSONObject } from 'graphql-scalars';
 import { Prisma } from '@prisma/client';
 
 @ObjectType()
-export class LectureFeedbacksResponse {
+export class AdminUserFlagsResponse {
     @Field((type) => [AdminUserFlag])
     items: AdminUserFlag[];
 
@@ -25,7 +25,7 @@ export class AdminUserFlagFieldsResolver {
         return getUser(adminUserFlag.userId);
     }
 
-    @Query((returns) => [LectureFeedbacksResponse])
+    @Query((returns) => [AdminUserFlagsResponse])
     @Authorized(Role.ADMIN)
     async adminUserFlags(
         @Ctx() context: GraphQLContext,
