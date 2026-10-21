@@ -22,7 +22,8 @@ export class AdminUserFlagFieldsResolver {
         @Ctx() context: GraphQLContext,
         @Arg('take', { nullable: true, defaultValue: 100 }) take?: number,
         @Arg('skip', { nullable: true, defaultValue: 0 }) skip?: number,
-        @Arg('metadataFilters', () => GraphQLJSONObject, { nullable: true }) metadataFilters?: Record<string, any>
+        @Arg('metadataFilters', () => GraphQLJSONObject, { nullable: true }) metadataFilters?: Record<string, any>,
+        @Arg('flags', () => [String], { nullable: true }) flags?: string[]
     ) {
         const metadataConditions: Prisma.admin_user_flagWhereInput[] = Object.entries(metadataFilters ?? {}).map(([key, value]) => ({
             metadata: {
@@ -35,6 +36,7 @@ export class AdminUserFlagFieldsResolver {
             skip,
             where: {
                 AND: metadataConditions,
+                flag: { in: flags ?? [] },
             },
         });
     }
