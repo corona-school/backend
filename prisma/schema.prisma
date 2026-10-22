@@ -1018,8 +1018,6 @@ model admin_user_flag {
   updatedAt DateTime @default(now()) @updatedAt @db.Timestamp(6)
   flag      String   @db.VarChar
   metadata  Json?    @db.Json
-
-  @@unique([userId, flag])
 }
 
 model lecture_feedback {
