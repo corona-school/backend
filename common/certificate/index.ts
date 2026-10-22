@@ -13,6 +13,7 @@ import {
     pupil as Pupil,
     student as Student,
     student,
+    student_screening_status_enum,
 } from '@prisma/client';
 import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
@@ -137,6 +138,21 @@ const getTotalAppointmentsDuration = (appointments: Appointment[], requester: St
         .reduce((sum, l) => sum + getAppointmentDuration(l), 0);
     return appointmentsDuration + getBonusDuration(appointments, requester);
 };
+
+// Most recent successful screening (tutor or instructor); falls back to registration date if none exists
+async function getStudentScreeningDate(requester: Pick<Student, 'id' | 'createdAt'>) {
+    const { screening, instructor_screening } = await prisma.student.findUniqueOrThrow({
+        where: { id: requester.id },
+        select: {
+            screening: { select: { status: true, decisionTakenAt: true, createdAt: true } },
+            instructor_screening: { select: { status: true, decisionTakenAt: true, createdAt: true } },
+        },
+    });
+    const dates = [screening, instructor_screening]
+        .filter((s) => s?.status === student_screening_status_enum.success)
+        .map((s) => (s.decisionTakenAt ?? s.createdAt).getTime());
+    return dates.length ? new Date(Math.min(...dates)) : requester.createdAt;
+}
 
 export async function createInstantCertificate(
     requester: Student,
@@ -311,11 +327,13 @@ export async function createInstantCertificate(
 
     const totalAppointmentsDuration = getTotalAppointmentsDuration(appointmentsForDuration, requester);
 
+    const screeningDate = await getStudentScreeningDate(requester);
+
     const certificate = await prisma.instant_certificate.create({
         data: {
             studentId: requester.id,
             uuid: randomBytes(6).toString('hex').toUpperCase(),
-            startDate: requester.createdAt,
+            startDate: screeningDate,
             matchesCount,
             matchAppointmentsCount: validMatchAppointments.length,
             totalMatchAppointmentsDuration:
@@ -429,7 +447,7 @@ export async function getConfirmationPage(certificateId: string, lang: Language,
             SCHUELERPROWOCHE: formatFloat(certificate.hoursPerWeek, lang),
             SCHUELERGESAMT: formatFloat(certificate.hoursTotal, lang),
             MEDIUM: certificate.medium,
-            SCREENINGDATUM: moment(certificate.student.createdAt).format('D.M.YYYY'),
+            SCREENINGDATUM: moment(await getStudentScreeningDate(certificate.student)).format('D.M.YYYY'),
             ONGOING: certificate.ongoingLessons,
         });
     } else {
