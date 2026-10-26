@@ -321,7 +321,7 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((returns) => Internship, { nullable: true })
-    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER, Role.OWNER)
     async internship(@Root() student: Required<Student>) {
         return await prisma.internship.findFirst({ where: { studentId: student.id } });
     }
