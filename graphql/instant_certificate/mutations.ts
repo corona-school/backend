@@ -1,4 +1,4 @@
-import { Arg, Authorized, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Authorized, Ctx, Int, Mutation, Resolver } from 'type-graphql';
 import * as GraphQLModel from '../generated/models';
 import { Role } from '../authorizations';
 import { createInstantCertificate } from '../../common/certificate';
@@ -16,14 +16,15 @@ export class MutateInstantCertificateResolver {
     async instantCertificateCreate(
         @Ctx() context: GraphQLContext,
         @Arg('lang') lang: string,
-        @Arg('hasCompletedTraining') hasCompletedTraining: boolean
+        @Arg('hasCompletedTraining') hasCompletedTraining: boolean,
+        @Arg('internshipId', () => Int, { nullable: true }) internshipId?: number
     ): Promise<string> {
         const student = await getSessionStudent(context);
 
         if (lang !== 'de' && lang !== 'en') {
             throw new Error('Unsupported language');
         }
-        const { pdf, certificate } = await createInstantCertificate(student, lang, hasCompletedTraining);
+        const { pdf, certificate } = await createInstantCertificate(student, lang, hasCompletedTraining, internshipId);
         logger.info(`InstantCertificate(${certificate.id}) created for Student(${student.id})`);
         const file = addFile({
             buffer: pdf,

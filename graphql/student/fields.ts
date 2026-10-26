@@ -266,9 +266,9 @@ export class ExtendFieldsStudentResolver {
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
-    isInternship(@Root() student: Student) {
-        const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
-        return student.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(student.cooperationID.toString()) : false;
+    async isInternship(@Root() student: Student) {
+        const activeInternship = await prisma.internship.findFirst({ where: { studentId: student.id, status: 'in_progress' }, select: { id: true } });
+        return !!activeInternship;
     }
 
     @FieldResolver((returns) => AppointmentStats)
