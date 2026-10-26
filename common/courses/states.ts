@@ -35,6 +35,8 @@ import { deleteAchievementsForSubcourse, deleteCourseAchievementsForStudents } f
 import { ValidationError } from 'apollo-server-express';
 import { getContextForGroupAppointmentReminder } from '../appointment/util';
 import { isSubcourseSilent } from './util';
+import { deleteZoomMeeting } from '../zoom/scheduled-meeting';
+import { DEFAULT_BUCKET, deleteS3File } from '../file-bucket';
 
 const logger = getLogger('Course States');
 
@@ -119,6 +121,67 @@ export async function deleteCourse(course: Course) {
 
     await prisma.course.delete({ where: { id: course.id } });
     logger.info(`Course (${course.id}) deleted successfully`);
+}
+
+/* ------------------ Course Draft Delete ------------- */
+
+export async function canDeleteCourseDraft(course: Course): Promise<Decision> {
+    if (course.courseState !== CourseState.created) {
+        return { allowed: false, reason: 'not-a-draft' };
+    }
+
+    const publishedSubcourses = await prisma.subcourse.count({ where: { courseId: course.id, published: true } });
+    if (publishedSubcourses > 0) {
+        return { allowed: false, reason: 'has-published-subcourses' };
+    }
+
+    return { allowed: true };
+}
+
+// Deletes a draft course together with everything attached to it (subcourses, lectures, zoom meetings, image, ectc)
+export async function deleteCourseDraft(course: Course) {
+    const can = await canDeleteCourseDraft(course);
+    if (!can.allowed) {
+        throw new ValidationError(`Cannot delete draft Course ${course.id}, reason: ${can.reason}`);
+    }
+
+    const subcourses = await prisma.subcourse.findMany({ where: { courseId: course.id }, include: { lecture: true } });
+    const subcourseIds = subcourses.map((it) => it.id);
+
+    for (const subcourse of subcourses) {
+        await deleteAchievementsForSubcourse(subcourse.id);
+
+        for (const lecture of subcourse.lecture) {
+            if (lecture.zoomMeetingId) {
+                // A failing Zoom API should not prevent the user from deleting the draft...
+                try {
+                    await deleteZoomMeeting(lecture);
+                } catch (error) {
+                    logger.error(
+                        `Failed to delete Zoom Meeting ${lecture.zoomMeetingId} of Appointment(${lecture.id}) while deleting draft Course(${course.id})`,
+                        error
+                    );
+                }
+            }
+        }
+    }
+
+    // A draft only contains lectures attached
+    await prisma.$transaction(async (tx) => {
+        await tx.lecture.deleteMany({ where: { subcourseId: { in: subcourseIds } } });
+        await tx.subcourse.deleteMany({ where: { id: { in: subcourseIds } } });
+        await tx.course.delete({ where: { id: course.id } });
+    });
+
+    if (course.imageKey) {
+        try {
+            await deleteS3File(course.imageKey, DEFAULT_BUCKET);
+        } catch (error) {
+            logger.error(`Failed to delete image ${course.imageKey} of deleted draft Course(${course.id})`, error);
+        }
+    }
+
+    logger.info(`Draft Course (${course.id}) and its Subcourse deleted successfully`);
 }
 
 /* ------------------ Subcourse Delete ------------- */
