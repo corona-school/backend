@@ -190,11 +190,8 @@ async function getLectureScope(requester: Student, internshipId?: number) {
 export async function createInstantCertificate(
     requester: Student,
     lang: Language,
-    hasCompletedTrainingDuration: boolean,
     internshipId?: number
 ): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
-    const TRAINING_DURATION_MINUTES = 10 * 60;
-
     const { internship, lectureScope } = await getLectureScope(requester, internshipId);
     const lectureScopeFilter: Prisma.lectureWhereInput[] = lectureScope ? [lectureScope] : [];
 
@@ -386,7 +383,7 @@ export async function createInstantCertificate(
             totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
             totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
-            trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,
+            trainingDuration: (requester.furtherTrainingsAttendedCount ?? 0) * 60,
             isInternship: !!internship,
         },
         include: { student: true },

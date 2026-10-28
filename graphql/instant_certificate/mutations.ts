@@ -17,7 +17,6 @@ export class MutateInstantCertificateResolver {
     async instantCertificateCreate(
         @Ctx() context: GraphQLContext,
         @Arg('lang') lang: string,
-        @Arg('hasCompletedTraining') hasCompletedTraining: boolean,
         @Arg('internshipId', () => Int, { nullable: true }) internshipId?: number
     ): Promise<string> {
         const student = await getSessionStudent(context);
@@ -25,7 +24,7 @@ export class MutateInstantCertificateResolver {
         if (lang !== 'de' && lang !== 'en') {
             throw new Error('Unsupported language');
         }
-        const { pdf, certificate } = await createInstantCertificate(student, lang, hasCompletedTraining, internshipId);
+        const { pdf, certificate } = await createInstantCertificate(student, lang, internshipId);
         logger.info(`InstantCertificate(${certificate.id}) created for Student(${student.id})`);
         const file = addFile({
             buffer: pdf,
