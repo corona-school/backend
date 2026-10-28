@@ -125,6 +125,7 @@ async function sendMessage(message: SendParamsMessage) {
     }).then((res) => res.json());
 
     if (!body.Messages || body.Messages.length !== 1) {
+        logger.warn(`Mailjet API responded with invalid body: ${JSON.stringify(body)}`, { body });
         throw new Error(`Mailjet API responded with invalid body`);
     }
 
