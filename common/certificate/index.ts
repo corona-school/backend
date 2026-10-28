@@ -677,7 +677,7 @@ function exposeCertificate(
     };
 }
 
-function getCertificateLink(certificate: ParticipationCertificate | InstantCertificate, lang: Language, ctype?: CertificateType) {
+export function getCertificateLink(certificate: ParticipationCertificate | InstantCertificate, lang: Language, ctype?: CertificateType) {
     return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang + (ctype ? '&ctype=' + ctype : '');
 }
 
@@ -728,7 +728,7 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         includePaths: [path.resolve(ASSETS)],
     });
 }
-async function createInstantPDFBinary(certificate: InstantCertificate & { student: student }, link: string, lang: Language): Promise<Buffer> {
+export async function createInstantPDFBinary(certificate: InstantCertificate & { student: student }, link: string, lang: Language): Promise<Buffer> {
     const template = loadTemplate('instantCertificateTemplate', lang);
     let name = certificate.student.firstname + ' ' + certificate.student.lastname;
     if (process.env.ENV == 'dev') {
