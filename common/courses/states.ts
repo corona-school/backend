@@ -298,7 +298,11 @@ export async function cancelSubcourse(user: User, subcourse: Subcourse) {
     const course = await getCourse(subcourse.courseId);
     const courseAppointments = await prisma.lecture.findMany({ where: { subcourseId: subcourse.id } });
     for (const appointment of courseAppointments) {
-        await cancelAppointment(user, appointment, /* silent */ true, /* force */ true);
+        try {
+            await cancelAppointment(user, appointment, /* silent */ true, /* force */ true);
+        } catch (error) {
+            logger.info(`Appointment(${appointment.id}) of Subcourse(${subcourse.id}) was already cancelled`);
+        }
     }
     await sendSubcourseCancelNotifications(course, subcourse);
     logger.info(`Subcourse (${subcourse.id}) was cancelled`);
