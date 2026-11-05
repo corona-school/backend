@@ -151,12 +151,21 @@ export class MutateAppointmentResolver {
     }
 
     @Mutation(() => Boolean)
-    @AuthorizedDeferred(Role.OWNER)
-    async appointmentCancel(@Ctx() context: GraphQLContext, @Arg('appointmentId') appointmentId: number) {
+    @AuthorizedDeferred(Role.OWNER, Role.ADMIN)
+    async appointmentCancel(
+        @Ctx() context: GraphQLContext,
+        @Arg('appointmentId') appointmentId: number,
+        @Arg('silent', { nullable: true }) silentOverride?: boolean
+    ) {
         const appointment = await getLecture(appointmentId);
         await hasAccess(context, 'Lecture', appointment);
-        const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
-        await cancelAppointment(context.user, appointment, silent);
+
+        if (context.user.roles.includes(Role.ADMIN)) {
+            await cancelAppointment(context.user, appointment, silentOverride ?? true, /* force */ true);
+        } else {
+            const silent = appointment.appointmentType === lecture_appointmenttype_enum.group ? await isSubcourseSilent(appointment.subcourseId) : false;
+            await cancelAppointment(context.user, appointment, silent);
+        }
 
         return true;
     }
