@@ -7,6 +7,8 @@ import * as Notification from '../notification';
 import {
     course_category_enum,
     instant_certificate as InstantCertificate,
+    internship as Internship,
+    internship_status_enum,
     lecture_appointmenttype_enum,
     participation_certificate as ParticipationCertificate,
     Prisma,
@@ -154,13 +156,44 @@ async function getStudentScreeningDate(requester: Pick<Student, 'id' | 'createdA
     return dates.length ? new Date(Math.min(...dates)) : requester.createdAt;
 }
 
+const internshipPeriodFilter = ({ startDate, endDate }: Pick<Internship, 'startDate' | 'endDate'>): Prisma.lectureWhereInput => ({
+    start: { gte: startDate, ...(endDate && { lte: moment(endDate).endOf('day').toDate() }) },
+});
+
+/**
+ * When there is an internship present, we only consider lectures within its period.
+ * In case of no internship givenn, we exclude lectures that fall within any of the student's other internships.
+ */
+async function getLectureScope(requester: Student, internshipId?: number) {
+    const internship = internshipId
+        ? await prisma.internship.findFirstOrThrow({
+              where: { id: internshipId, studentId: requester.id, status: { not: internship_status_enum.cancelled } },
+          })
+        : await prisma.internship.findFirst({
+              where: { studentId: requester.id, status: internship_status_enum.in_progress },
+              orderBy: { startDate: 'asc' },
+          });
+
+    if (internship) {
+        return { internship, lectureScope: internshipPeriodFilter(internship) };
+    }
+
+    const otherInternships = await prisma.internship.findMany({
+        where: { studentId: requester.id, status: { not: internship_status_enum.cancelled } },
+    });
+    const lectureScope: Prisma.lectureWhereInput | undefined = otherInternships.length
+        ? { NOT: { OR: otherInternships.map(internshipPeriodFilter) } }
+        : undefined;
+    return { internship: null, lectureScope };
+}
+
 export async function createInstantCertificate(
     requester: Student,
     lang: Language,
-    hasCompletedTrainingDuration: boolean
+    internshipId?: number
 ): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
-    const TRAINING_DURATION_MINUTES = 10 * 60;
-    const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
+    const { internship, lectureScope } = await getLectureScope(requester, internshipId);
+    const lectureScopeFilter: Prisma.lectureWhereInput[] = lectureScope ? [lectureScope] : [];
 
     const matchesCountPromise = prisma.match.count({
         where: {
@@ -169,6 +202,7 @@ export async function createInstantCertificate(
                 some: {
                     start: { lt: new Date() }, // only past lectures
                     isCanceled: false,
+                    AND: lectureScopeFilter,
                     OR: [
                         {
                             // At this point joinedBy wasn't used yet.
@@ -193,6 +227,7 @@ export async function createInstantCertificate(
             match: {
                 studentId: requester.id,
             },
+            AND: lectureScopeFilter,
             OR: [
                 {
                     start: { lt: JOINED_BY_INTRODUCTION_DATE },
@@ -213,6 +248,8 @@ export async function createInstantCertificate(
                 cancelled: false,
                 subcourse_instructors_student: { some: { studentId: requester.id } },
                 course: { category: { not: course_category_enum.homework_help } },
+                // Without a lecture in scope the participants didn't take part in this certificate's period
+                ...(lectureScope && { lecture: { some: { isCanceled: false, start: { lt: new Date() }, AND: [lectureScope] } } }),
             },
         },
     });
@@ -225,6 +262,7 @@ export async function createInstantCertificate(
                 course: { category: { not: course_category_enum.homework_help } },
             },
             start: { lt: new Date() },
+            AND: lectureScopeFilter,
             OR: [
                 {
                     start: { lt: JOINED_BY_INTRODUCTION_DATE },
@@ -270,6 +308,7 @@ export async function createInstantCertificate(
             ],
 
             AND: [
+                ...lectureScopeFilter,
                 {
                     OR: [
                         {
@@ -299,6 +338,7 @@ export async function createInstantCertificate(
             isCanceled: false,
             subcourse: { course: { category: course_category_enum.homework_help } },
             joinedBy: { has: userForStudent(requester).userID },
+            AND: lectureScopeFilter,
         },
         _sum: { duration: true },
     });
@@ -333,7 +373,7 @@ export async function createInstantCertificate(
         data: {
             studentId: requester.id,
             uuid: randomBytes(6).toString('hex').toUpperCase(),
-            startDate: screeningDate,
+            startDate: internship ? internship.startDate : screeningDate,
             matchesCount,
             matchAppointmentsCount: validMatchAppointments.length,
             totalMatchAppointmentsDuration:
@@ -343,8 +383,8 @@ export async function createInstantCertificate(
             totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
             totalAppointmentsDuration,
             homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
-            trainingDuration: hasCompletedTrainingDuration ? TRAINING_DURATION_MINUTES : 0,
-            isInternship: requester.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(requester.cooperationID?.toString()) : false,
+            trainingDuration: (requester.furtherTrainingsAttendedCount ?? 0) * 60,
+            isInternship: !!internship,
         },
         include: { student: true },
     });
@@ -634,7 +674,7 @@ function exposeCertificate(
     };
 }
 
-function getCertificateLink(certificate: ParticipationCertificate | InstantCertificate, lang: Language, ctype?: CertificateType) {
+export function getCertificateLink(certificate: ParticipationCertificate | InstantCertificate, lang: Language, ctype?: CertificateType) {
     return 'http://verify.lern-fair.de/' + certificate.uuid + '?lang=' + lang + (ctype ? '&ctype=' + ctype : '');
 }
 
@@ -685,7 +725,7 @@ async function createPDFBinary(certificate: CertWithUsers, link: string, lang: L
         includePaths: [path.resolve(ASSETS)],
     });
 }
-async function createInstantPDFBinary(certificate: InstantCertificate & { student: student }, link: string, lang: Language): Promise<Buffer> {
+export async function createInstantPDFBinary(certificate: InstantCertificate & { student: student }, link: string, lang: Language): Promise<Buffer> {
     const template = loadTemplate('instantCertificateTemplate', lang);
     let name = certificate.student.firstname + ' ' + certificate.student.lastname;
     if (process.env.ENV == 'dev') {
