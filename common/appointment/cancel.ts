@@ -1,6 +1,6 @@
 import { lecture as Appointment, lecture_appointmenttype_enum as AppointmentType } from '@prisma/client';
 import { prisma } from '../prisma';
-import { getStudent, User, userForPupil, userForStudent } from '../user';
+import { getStudent, getUser, User, userForPupil, userForStudent } from '../user';
 import * as Notification from '../notification';
 import { getLogger } from '../logger/logger';
 import { getAppointmentForNotification } from './util';
@@ -43,7 +43,15 @@ export async function cancelAppointment(user: User, appointment: Appointment, si
         logger.error(`Failed to delete non-submitted lecture feedback for Appointment(${appointment.id})`, error);
     }
 
-    const student = await getStudent(user);
+    let student;
+
+    if (!user.studentId) {
+        const [organizerId] = appointment.organizerIds;
+        const organizer = await getUser(organizerId);
+        student = await getStudent(organizer);
+    } else {
+        student = await getStudent(user);
+    }
 
     switch (appointment.appointmentType) {
         case AppointmentType.group: {

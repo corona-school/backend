@@ -15,7 +15,7 @@ import * as Notification from '../../common/notification';
 
 import { course_schooltype_enum, course_subject_enum as CourseSubject } from '../generated';
 import { ForbiddenError } from '../error';
-import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteSubcourse } from '../../common/courses/states';
+import { addCourseInstructor, allowCourse, denyCourse, subcourseOver, deleteCourse, deleteCourseDraft, deleteSubcourse } from '../../common/courses/states';
 import { getCourseImageKey } from '../../common/courses/util';
 import { createCourseTag } from '../../common/courses/tags';
 import { userForStudent } from '../../common/user';
@@ -97,6 +97,16 @@ export class MutateCourseResolver {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
         const result = await deleteCourse(course);
+        return true;
+    }
+
+    @Mutation((returns) => Boolean)
+    @AuthorizedDeferred(Role.ADMIN, Role.OWNER, Role.COURSE_SCREENER)
+    async courseDeleteDraft(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number): Promise<boolean> {
+        const course = await getCourse(courseId);
+        await hasAccess(context, 'Course', course);
+        await deleteCourseDraft(course);
+        logger.info(`User(${context.user.userID}) deleted draft Course(${courseId})`);
         return true;
     }
 
