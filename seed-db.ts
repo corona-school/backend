@@ -679,7 +679,7 @@ const createInternshipCertificateFixture = async (screener: Screener) => {
     const student = await createStudent(
         {
             firstname: 'Ina',
-            lastname: 'Internship',
+            lastname: 'HuH',
             email: 'test+dev+s21@lern-fair.de',
             aboutMe: `I'm Student 21, my lectures are known so certificates can be tested`,
             cooperationTag: 'uni-freiburg',
@@ -706,8 +706,8 @@ const createInternshipCertificateFixture = async (screener: Screener) => {
             gradeAsInt: 6,
             registeredDaysAgo: 130,
         });
-    const lukas = await newPupil('Lukas', 'Schneider IN', 'test+dev+p11@lern-fair.de');
-    const mia = await newPupil('Mia', 'Fischer IN', 'test+dev+p12@lern-fair.de');
+    const lukas = await newPupil('Lukas', 'SuS IN', 'test+dev+p15@lern-fair.de');
+    const mia = await newPupil('Mia', 'SuS IN', 'test+dev+p16@lern-fair.de');
     const at = (offsets: number[]) => offsets.map((offset) => dayAt(offset));
 
     // Twice a week: 2 lectures before the internship, 9 during it (the last one on its final day), 3 after it and 1 upcoming
@@ -802,7 +802,7 @@ void (async function setupDevDB() {
     // Tutoring + courses + Hausaufgabenhilfe, two active matches in different subjects
     const max = await createPupil({
         firstname: 'Max',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p1@lern-fair.de',
         aboutMe: 'Hallo 👋! Ich heiße Max und ich interessiere mich für Englisch und Mathe',
         languages: ['Deutsch', 'Italienisch'],
@@ -815,7 +815,7 @@ void (async function setupDevDB() {
     // Tutoring + courses + Hausaufgabenhilfe, two active matches in different subjects
     const tom = await createPupil({
         firstname: 'Tom',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p2@lern-fair.de',
         aboutMe: 'Hallo, ich bin Tom und ich lerne Deutsch!',
         languages: ['Englisch'],
@@ -828,7 +828,7 @@ void (async function setupDevDB() {
     // Can only participate in courses (no tutoring)
     const aisha = await createPupil({
         firstname: 'Aisha',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p3@lern-fair.de',
         aboutMe: 'Hi, ich bin Aisha und ich liebe Mathe und Biologie!',
         languages: ['Deutsch', 'Franz_sisch'],
@@ -842,7 +842,7 @@ void (async function setupDevDB() {
     // DAZ_SUBJECT_REQUIRED_FOR_MATCHING, has a match, one other course and the Hausaufgabenhilfe
     const lena = await createPupil({
         firstname: 'Lena',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p4@lern-fair.de',
         aboutMe: "I'm Lena, and I want to improve my German",
         languages: ['Englisch', 'Spanisch'],
@@ -856,7 +856,7 @@ void (async function setupDevDB() {
     // ONLY_DAZ_COURSES: can only join (and only participates in) German language courses, no tutoring
     const sofia = await createPupil({
         firstname: 'Sofia',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p5@lern-fair.de',
         aboutMe: 'Ich bin Sofia und ich interessiere mich sehr für Deutsch und Englisch.',
         languages: ['Italienisch'],
@@ -873,7 +873,7 @@ void (async function setupDevDB() {
     // New pupil: successfully screened, nothing else yet
     await createPupil({
         firstname: 'Yusuf',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p6@lern-fair.de',
         aboutMe: 'Moin, ich heiße Yusuf und ich liebe Mathe und Chemie',
         languages: ['T_rkisch', 'Englisch', 'Deutsch'],
@@ -885,7 +885,7 @@ void (async function setupDevDB() {
     // Match dissolved (by her), new match request open, valid screening, participates in courses
     const emilia = await createPupil({
         firstname: 'Emilia',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p7@lern-fair.de',
         aboutMe: 'Ich bin Emilia und ich lese gerne Bücher und liebe Englisch.',
         languages: ['Deutsch'],
@@ -898,7 +898,7 @@ void (async function setupDevDB() {
     // new screening appointment booked, participates in courses
     const diego = await createPupil({
         firstname: 'Diego',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p8@lern-fair.de',
         aboutMe: "I'm Diego, and I enjoy learning about math and science.",
         languages: ['Spanisch', 'Englisch'],
@@ -910,7 +910,7 @@ void (async function setupDevDB() {
     // New pupil: not screened yet, but booked the screening appointment
     await createPupil({
         firstname: 'Sarah',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p9@lern-fair.de',
         aboutMe: 'Hallo, ich bin Sarah und Mathe ist mein Lieblingsfach!',
         languages: ['Deutsch', 'Englisch'],
@@ -924,7 +924,7 @@ void (async function setupDevDB() {
     // Without password (login only via token / password reset), match dissolved by an admin
     const mateo = await createPupil({
         firstname: 'Mateo',
-        lastname: 'Musterschüler',
+        lastname: 'SuS',
         email: 'test+dev+p10@lern-fair.de',
         aboutMe: "I'm Mateo, and I'm working on improving my German skills",
         languages: ['Spanisch', 'Englisch'],
@@ -937,15 +937,63 @@ void (async function setupDevDB() {
         registeredDaysAgo: 110,
     });
 
+    // Tutoring, one of Leon's four matches (Mathe)
+    const noah = await createPupil({
+        firstname: 'Noah',
+        lastname: 'SuS',
+        email: 'test+dev+p11@lern-fair.de',
+        aboutMe: 'Hi, ich bin Noah und brauche Hilfe in Mathe.',
+        languages: ['Deutsch'],
+        subjects: [{ name: 'Mathematik', mandatory: true }],
+        gradeAsInt: 8,
+        registeredDaysAgo: 70,
+    });
+
+    // Tutoring, one of Leon's four matches (DaZ)
+    const olivia = await createPupil({
+        firstname: 'Olivia',
+        lastname: 'SuS',
+        email: 'test+dev+p12@lern-fair.de',
+        aboutMe: 'Ich bin Olivia und lerne Deutsch.',
+        languages: ['Englisch'],
+        subjects: [{ name: 'Deutsch als Zweitsprache', mandatory: true }],
+        gradeAsInt: 5,
+        registeredDaysAgo: 70,
+    });
+
+    // Tutoring, one of Leon's four matches (Spanisch)
+    const finn = await createPupil({
+        firstname: 'Finn',
+        lastname: 'SuS',
+        email: 'test+dev+p13@lern-fair.de',
+        aboutMe: 'Hola, ich bin Finn und möchte mein Spanisch verbessern.',
+        languages: ['Deutsch'],
+        subjects: [{ name: 'Spanisch', mandatory: true }],
+        gradeAsInt: 9,
+        registeredDaysAgo: 70,
+    });
+
+    // Tutoring, Melanie's second match (Französisch)
+    const zoe = await createPupil({
+        firstname: 'Zoe',
+        lastname: 'SuS',
+        email: 'test+dev+p14@lern-fair.de',
+        aboutMe: 'Salut, ich bin Zoe und Französisch ist mein Problemfach.',
+        languages: ['Deutsch'],
+        subjects: [{ name: 'Französisch', mandatory: true }],
+        gradeAsInt: 7,
+        registeredDaysAgo: 70,
+    });
+
     /* ---------------------------------------------------- Students ---------------------------------------------------- */
 
     const newStudent = (args: CreateStudentArgs) => createStudent(args, studentScreener);
 
-    // Tutor + instructor, instructs most courses and the Hausaufgabenhilfe, matched with Max and waiting for another pupil
+    // Tutor + instructor, instructs most courses and the Hausaufgabenhilfe, four active matches and still waiting for another pupil
     const leon = await createStudent(
         {
             firstname: 'Leon',
-            lastname: 'Jackson',
+            lastname: 'HuH',
             email: 'test+dev+s1@lern-fair.de',
             aboutMe: `Im Student 1`,
             languages: ['Deutsch', 'Englisch', 'Spanisch'],
@@ -965,11 +1013,11 @@ void (async function setupDevDB() {
         screener1
     );
 
-    // Tutor + instructor with a Zoom account, one active match
+    // Tutor + instructor with a Zoom account, two active matches
     const melanie = await createStudent(
         {
             firstname: 'Melanie',
-            lastname: 'Meiers',
+            lastname: 'HuH',
             aboutMe: `Im Student 2`,
             email: 'test+dev+s2@lern-fair.de',
             newsletter: false,
@@ -988,7 +1036,7 @@ void (async function setupDevDB() {
     const jon = await createStudent(
         {
             firstname: 'Jon',
-            lastname: 'Doe',
+            lastname: 'HuH',
             email: 'test+dev+s3@lern-fair.de',
             aboutMe: `I'm Student 3`,
             languages: ['Deutsch', 'Englisch', 'Franz_sisch'],
@@ -1005,7 +1053,7 @@ void (async function setupDevDB() {
     const jack = await createStudent(
         {
             firstname: 'Jack',
-            lastname: 'Doe',
+            lastname: 'HuH',
             email: 'test+dev+s4@lern-fair.de',
             aboutMe: `I'm Student 4`,
             newsletter: false,
@@ -1020,7 +1068,7 @@ void (async function setupDevDB() {
     const jane = await createStudent(
         {
             firstname: 'Jane',
-            lastname: 'Doe',
+            lastname: 'HuH',
             email: 'test+dev+s5@lern-fair.de',
             aboutMe: `I'm Student 5`,
             cooperationTag: 'self',
@@ -1036,7 +1084,7 @@ void (async function setupDevDB() {
     // Cooperation student (Uni Freiburg) with a running internship, only tutors DaZ
     const hannah = await newStudent({
         firstname: 'Hannah',
-        lastname: 'Becker',
+        lastname: 'HuH',
         email: 'test+dev+s6@lern-fair.de',
         aboutMe: `I'm Student 6, I only support in DaZ`,
         cooperationTag: 'uni-freiburg',
@@ -1052,7 +1100,7 @@ void (async function setupDevDB() {
     // Cooperation student (Uni CSS) with a running internship, only tutors Mathe
     const ben = await newStudent({
         firstname: 'Ben',
-        lastname: 'Keller',
+        lastname: 'HuH',
         email: 'test+dev+s7@lern-fair.de',
         aboutMe: `I'm Student 7, I only support in Mathe`,
         cooperationTag: 'uni-css',
@@ -1068,7 +1116,7 @@ void (async function setupDevDB() {
     // Cooperation student (Uni ABC) whose internship is over, so their match was dissolved by an admin
     const clara = await newStudent({
         firstname: 'Clara',
-        lastname: 'Neumann',
+        lastname: 'HuH',
         email: 'test+dev+s8@lern-fair.de',
         aboutMe: `I'm Student 8, my internship is over`,
         cooperationTag: 'uni-abc',
@@ -1084,7 +1132,7 @@ void (async function setupDevDB() {
     // Tutor whose match was dissolved by the pupil, now waiting for a new match
     const felix = await newStudent({
         firstname: 'Felix',
-        lastname: 'Wagner',
+        lastname: 'HuH',
         email: 'test+dev+s9@lern-fair.de',
         aboutMe: `I'm Student 9, my last match was dissolved`,
         languages: ['Deutsch', 'Englisch'],
@@ -1097,7 +1145,7 @@ void (async function setupDevDB() {
     // Tutor whose match was dissolved because the pupil ghosted
     const greta = await newStudent({
         firstname: 'Greta',
-        lastname: 'Schulz',
+        lastname: 'HuH',
         email: 'test+dev+s10@lern-fair.de',
         aboutMe: `I'm Student 10, my pupil ghosted me`,
         languages: ['Deutsch', 'Spanisch'],
@@ -1111,7 +1159,7 @@ void (async function setupDevDB() {
     // Tutor that mentors in the Hausaufgabenhilfe
     const nina = await newStudent({
         firstname: 'Nina',
-        lastname: 'Hoffmann',
+        lastname: 'HuH',
         email: 'test+dev+s11@lern-fair.de',
         aboutMe: `I'm Student 11, I mentor in the Hausaufgabenhilfe`,
         languages: ['Deutsch', 'Englisch'],
@@ -1124,7 +1172,7 @@ void (async function setupDevDB() {
     // Cooperation student (Uni JS) with a cancelled internship, mentors in the Hausaufgabenhilfe
     const omar = await newStudent({
         firstname: 'Omar',
-        lastname: 'Haddad',
+        lastname: 'HuH',
         email: 'test+dev+s12@lern-fair.de',
         aboutMe: `I'm Student 12, I mentor in the Hausaufgabenhilfe`,
         cooperationTag: 'uni-js',
@@ -1139,7 +1187,7 @@ void (async function setupDevDB() {
     // Instructor only, instructs a course that is still upcoming and a denied one
     const paula = await newStudent({
         firstname: 'Paula',
-        lastname: 'Richter',
+        lastname: 'HuH',
         email: 'test+dev+s13@lern-fair.de',
         aboutMe: `I'm Student 13, I only give courses`,
         instructor: 'success',
@@ -1150,7 +1198,7 @@ void (async function setupDevDB() {
     // Instructor only, has a cancelled course and a draft
     const quentin = await newStudent({
         firstname: 'Quentin',
-        lastname: 'Fuchs',
+        lastname: 'HuH',
         email: 'test+dev+s14@lern-fair.de',
         aboutMe: `I'm Student 14, I only give courses`,
         cooperationTag: 'uni-freiburg',
@@ -1162,7 +1210,7 @@ void (async function setupDevDB() {
     // Tutor + instructor screenings pending, appointment booked next week
     await newStudent({
         firstname: 'Rita',
-        lastname: 'Vogel',
+        lastname: 'HuH',
         email: 'test+dev+s15@lern-fair.de',
         aboutMe: `I'm Student 15, my screening is booked`,
         languages: ['Deutsch', 'Englisch'],
@@ -1176,7 +1224,7 @@ void (async function setupDevDB() {
     // Tutor + instructor screenings pending, appointments booked in the next days / weeks
     await newStudent({
         firstname: 'Sam',
-        lastname: 'Lehmann',
+        lastname: 'HuH',
         email: 'test+dev+s16@lern-fair.de',
         aboutMe: `I'm Student 16, my screening is booked`,
         languages: ['Deutsch', 'Englisch'],
@@ -1189,7 +1237,7 @@ void (async function setupDevDB() {
 
     await newStudent({
         firstname: 'Tessa',
-        lastname: 'Brandt',
+        lastname: 'HuH',
         email: 'test+dev+s17@lern-fair.de',
         aboutMe: `I'm Student 17, my screening is booked`,
         languages: ['Deutsch', 'Englisch'],
@@ -1202,7 +1250,7 @@ void (async function setupDevDB() {
 
     await newStudent({
         firstname: 'Uwe',
-        lastname: 'Krause',
+        lastname: 'HuH',
         email: 'test+dev+s18@lern-fair.de',
         aboutMe: `I'm Student 18, my screening is booked`,
         languages: ['Deutsch'],
@@ -1215,7 +1263,7 @@ void (async function setupDevDB() {
 
     await newStudent({
         firstname: 'Vera',
-        lastname: 'Lang',
+        lastname: 'HuH',
         email: 'test+dev+s19@lern-fair.de',
         aboutMe: `I'm Student 19, my screening is booked`,
         languages: ['Deutsch'],
@@ -1228,7 +1276,7 @@ void (async function setupDevDB() {
     // Just got screened as tutor: no Certificate of Conduct yet (gets reminders) and did not do the onboarding yet
     const walter = await newStudent({
         firstname: 'Walter',
-        lastname: 'Peters',
+        lastname: 'HuH',
         email: 'test+dev+s20@lern-fair.de',
         aboutMe: `I'm Student 20, I just got screened`,
         languages: ['Deutsch', 'Englisch'],
@@ -1256,6 +1304,8 @@ void (async function setupDevDB() {
             },
         ],
     });
+
+    // Leon has four matches in total (Max, Noah, Olivia, Finn)
     await createTutoringMatch({
         pupil: max,
         student: leon,
@@ -1268,11 +1318,16 @@ void (async function setupDevDB() {
             },
         ],
     });
+    await createTutoringMatch({ pupil: noah, student: leon, schedule: { weekdays: [6], time: '10:00', firstWeek: -4, weeks: 8 } });
+    await createTutoringMatch({ pupil: olivia, student: leon, schedule: { weekdays: [2], time: '14:00', firstWeek: -5, weeks: 9 } });
+    await createTutoringMatch({ pupil: finn, student: leon, schedule: { weekdays: [1], time: '15:30', firstWeek: -3, weeks: 7 } });
 
     // Tom has two matches in different subjects
     await createTutoringMatch({ pupil: tom, student: hannah, schedule: { weekdays: [1, 4], time: '15:00', firstWeek: -4, weeks: 8 } });
     await createTutoringMatch({ pupil: tom, student: ben, schedule: { weekdays: [2], time: '19:00', firstWeek: -2, weeks: 6 } });
 
+    // Melanie has two (Lena, Zoe)
+    await createTutoringMatch({ pupil: zoe, student: melanie, schedule: { weekdays: [5], time: '14:00', firstWeek: -3, weeks: 7 } });
     await createTutoringMatch({ pupil: lena, student: melanie, schedule: { weekdays: [1], time: '14:00', firstWeek: -5, weeks: 9 } });
 
     // Emilia dissolved her match three weeks ago and asked for a new one
