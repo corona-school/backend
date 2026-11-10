@@ -10,6 +10,7 @@ import {
     Course,
     StudentWhereInput,
     Internship,
+    Instant_certificate as InstantCertificate,
 } from '../generated';
 import { Arg, Authorized, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql';
 import { prisma } from '../../common/prisma';
@@ -266,9 +267,9 @@ export class ExtendFieldsStudentResolver {
 
     @FieldResolver((returns) => Boolean)
     @Authorized(Role.ADMIN, Role.STUDENT_SCREENER, Role.OWNER)
-    isInternship(@Root() student: Student) {
-        const COOPERATIONS_WITH_INTERNSHIPS = process.env.COOPERATIONS_WITH_INTERNSHIPS ? process.env.COOPERATIONS_WITH_INTERNSHIPS.split(',') : [];
-        return student.cooperationID ? COOPERATIONS_WITH_INTERNSHIPS.includes(student.cooperationID.toString()) : false;
+    async isInternship(@Root() student: Student) {
+        const activeInternship = await prisma.internship.findFirst({ where: { studentId: student.id, status: 'in_progress' }, select: { id: true } });
+        return !!activeInternship;
     }
 
     @FieldResolver((returns) => AppointmentStats)
@@ -321,9 +322,15 @@ export class ExtendFieldsStudentResolver {
     }
 
     @FieldResolver((returns) => Internship, { nullable: true })
-    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER)
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER, Role.OWNER)
     async internship(@Root() student: Required<Student>) {
         return await prisma.internship.findFirst({ where: { studentId: student.id } });
+    }
+
+    @FieldResolver((returns) => InstantCertificate, { nullable: true })
+    @Authorized(Role.ADMIN, Role.TRUSTED_SCREENER, Role.STUDENT_SCREENER, Role.OWNER)
+    async latestInternshipCertificate(@Root() student: Required<Student>) {
+        return await prisma.instant_certificate.findFirst({ where: { studentId: student.id, isInternship: true }, orderBy: { createdAt: 'desc' } });
     }
 
     @Query((returns) => [Student])

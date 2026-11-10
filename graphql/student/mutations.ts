@@ -4,6 +4,7 @@ import { ensureNoNull, getStudent } from '../util';
 import { deactivateStudent, reactivateStudent } from '../../common/student/activation';
 import * as Notification from '../../common/notification';
 import { canStudentRequestMatch, createStudentMatchRequest, deleteStudentMatchRequest } from '../../common/match/request';
+import { createInstantCertificateRecord } from '../../common/certificate';
 import { getSessionScreener, getSessionStudent, getSessionUser, isElevated, updateSessionUser } from '../authentication';
 import { GraphQLContext } from '../context';
 import { Arg, Authorized, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from 'type-graphql';
@@ -624,7 +625,7 @@ export class MutateStudentResolver {
     @Authorized(Role.STUDENT_SCREENER, Role.ADMIN)
     async studentCreateInternship(@Ctx() context: GraphQLContext, @Arg('studentId') studentId: number, @Arg('data') data: InternshipCreateInput) {
         const student = await getStudent(studentId);
-        await prisma.internship.create({
+        const internship = await prisma.internship.create({
             data: {
                 startDate: data.startDate,
                 endDate: data.endDate,
@@ -632,6 +633,9 @@ export class MutateStudentResolver {
                 studentId: student.id,
             },
         });
+        if (internship.status === internship_status_enum.completed) {
+            await onInternshipCompleted(student.id, internship.id);
+        }
         return true;
     }
 
@@ -642,7 +646,7 @@ export class MutateStudentResolver {
         if (!internship) {
             throw new Error('Internship not found');
         }
-        await prisma.internship.update({
+        const updated = await prisma.internship.update({
             where: {
                 id: internshipId,
             },
@@ -653,6 +657,16 @@ export class MutateStudentResolver {
                 studentId: internship.studentId,
             },
         });
+        if (updated.status === internship_status_enum.completed && internship.status !== internship_status_enum.completed) {
+            await onInternshipCompleted(internship.studentId, internshipId);
+        }
         return true;
     }
+}
+
+async function onInternshipCompleted(studentId: number, internshipId: number) {
+    const student = await prisma.student.findUniqueOrThrow({ where: { id: studentId } });
+    await createInstantCertificateRecord(student, internshipId);
+    await prisma.student.update({ where: { id: studentId }, data: { maxParallelMatches: null } });
+    logger.info(`Student(${studentId}) completed Internship(${internshipId}), certificate created and max parallel matches removed`);
 }
