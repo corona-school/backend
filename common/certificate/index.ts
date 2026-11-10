@@ -187,11 +187,7 @@ async function getLectureScope(requester: Student, internshipId?: number) {
     return { internship: null, lectureScope };
 }
 
-export async function createInstantCertificate(
-    requester: Student,
-    lang: Language,
-    internshipId?: number
-): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+export async function createInstantCertificateRecord(requester: Student, internshipId?: number) {
     const { internship, lectureScope } = await getLectureScope(requester, internshipId);
     const lectureScopeFilter: Prisma.lectureWhereInput[] = lectureScope ? [lectureScope] : [];
 
@@ -389,6 +385,15 @@ export async function createInstantCertificate(
         include: { student: true },
     });
 
+    return certificate;
+}
+
+export async function createInstantCertificate(
+    requester: Student,
+    lang: Language,
+    internshipId?: number
+): Promise<{ pdf: Buffer; certificate: InstantCertificate }> {
+    const certificate = await createInstantCertificateRecord(requester, internshipId);
     return {
         pdf: await createInstantPDFBinary(certificate, getCertificateLink(certificate, lang, 'instant'), lang),
         certificate,
