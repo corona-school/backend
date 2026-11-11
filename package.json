@@ -40,7 +40,7 @@
     },
     "dependencies": {
         "@2toad/profanity": "^3.3.0",
-        "@aws-sdk/client-s3": "^3.645.0",
+        "@aws-sdk/client-s3": "^3.1166.0",
         "@aws-sdk/s3-request-presigner": "^3.137.0",
         "@langchain/community": "^0.3.6",
         "@langchain/core": "^0.3.13",
