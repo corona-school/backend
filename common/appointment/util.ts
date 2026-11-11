@@ -64,7 +64,7 @@ export async function getDisplayName(appointment: Appointment, isOrganizer: bool
                 return `${tutee.firstname} ${shortenLastName(tutee.lastname)}`;
             } else {
                 const [tutor] = await getUsers(appointment.organizerIds as UserID[]);
-                return `${tutor.firstname} ${tutor.lastname}`;
+                return `${tutor.firstname} ${shortenLastName(tutor.lastname)}`;
             }
         }
         case lecture_appointmenttype_enum.group: {

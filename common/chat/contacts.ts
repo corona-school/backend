@@ -196,7 +196,7 @@ const getSubcourseContactsForPupil = async (pupil: User): Promise<SubcourseConta
         subcourseContactsList[instructorSubcourseId] = {
             user: {
                 firstname: subcourseContact.student.firstname,
-                lastname: subcourseContact.student.lastname,
+                lastname: shortenLastName(subcourseContact.student.lastname),
                 userID: instructorSubcourseId,
                 email: subcourseContact.student.email,
             },
@@ -244,7 +244,7 @@ const getMyMatchContacts = async (user: User): Promise<MatchContactList> => {
         matchContactList[matchee.userID] = {
             user: {
                 firstname: matchee.firstname,
-                lastname: matchee.pupilId ? shortenLastName(matchee.lastname) : matchee.lastname,
+                lastname: shortenLastName(matchee.lastname),
                 userID: matchee.userID,
                 email: matchee.email,
             },

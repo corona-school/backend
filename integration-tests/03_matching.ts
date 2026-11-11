@@ -185,7 +185,7 @@ export const match1 = test('Manual Match creation', async () => {
     assert.strictEqual(p1.matches.length, 1);
     assert.strictEqual(p1.matches[0].dissolved, false);
     assert.strictEqual(p1.matches[0].student.firstname, student.firstname);
-    assert.strictEqual(p1.matches[0].student.lastname, student.lastname);
+    assert.strictEqual(p1.matches[0].student.lastname, `${student.lastname[0]}.`);
 
     const {
         me: { student: s1 },

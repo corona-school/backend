@@ -38,6 +38,7 @@ import { getPupils, pools } from '../../common/match/pool';
 import { gradeAsInt } from '../../common/util/gradestrings';
 import { testStudentSubjectsHistory } from '../../utils/test-data';
 import { isDev } from '../../common/util/environment';
+import { normalizeStudentLastName } from '../../common/student';
 
 @ObjectType()
 export class AppointmentStats {
@@ -81,12 +82,19 @@ export class ExtendFieldsStudentResolver {
             query.id = { not: { equals: context.user.studentId } };
         }
 
-        return await prisma.student.findMany({
+        const instructors = await prisma.student.findMany({
             where: { AND: [query, strictUserSearch(search)] },
             take,
             skip,
             select: { firstname: true, lastname: true, aboutMe: true, id: true },
         });
+        return instructors.map((it) => ({ ...it, lastname: normalizeStudentLastName(it, context) }));
+    }
+
+    @FieldResolver((type) => String)
+    @Authorized(Role.UNAUTHENTICATED)
+    lastname(@Root() student: Required<Student>, @Ctx() context: GraphQLContext) {
+        return normalizeStudentLastName(student, context);
     }
 
     @FieldResolver((type) => UserType)
