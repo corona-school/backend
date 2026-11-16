@@ -1112,16 +1112,20 @@ enum pupil_languages_enum {
   Bosnisch
   Bulgarisch
   Chinesisch
+  Dari
   Deutsch
+  Deutsche_Geb_rdensprache @map("Deutsche Gebärdensprache")
   Englisch
   Estnisch
-  Franz_sisch       @map("Französisch")
+  Franz_sisch              @map("Französisch")
   Georgisch
   Griechisch
   Hausa
-  Hebr_isch         @map("Hebräisch")
+  Hebr_isch                @map("Hebräisch")
   Hindi
+  Igbo
   Italienisch
+  Japanisch
   Kasachisch
   Kroatisch
   Kurdisch
@@ -1129,25 +1133,28 @@ enum pupil_languages_enum {
   Litauisch
   Malayalam
   Mazedonisch
-  Niederl_ndisch    @map("Niederländisch")
+  Niederl_ndisch           @map("Niederländisch")
+  Paschtu
   Persisch
   Polnisch
   Portugiesisch
-  Rum_nisch         @map("Rumänisch")
+  Rum_nisch                @map("Rumänisch")
   Russisch
   Serbisch
   Slowakisch
   Somali
   Spanisch
+  S_dkoreanisch            @map("Südkoreanisch")
   Tadschikisch
-  Thail_ndisch      @map("Thailändisch")
+  Thail_ndisch             @map("Thailändisch")
   Tigrinya
   Tschechisch
-  T_rkisch          @map("Türkisch")
+  T_rkisch                 @map("Türkisch")
   Ukrainisch
   Ungarisch
   Urdu
   Vietnamesisch
+  Yoruba
 }
 
 enum pupil_learninggermansince_enum {
@@ -1272,16 +1279,20 @@ enum student_languages_enum {
   Bosnisch
   Bulgarisch
   Chinesisch
+  Dari
   Deutsch
+  Deutsche_Geb_rdensprache @map("Deutsche Gebärdensprache")
   Englisch
   Estnisch
-  Franz_sisch       @map("Französisch")
+  Franz_sisch              @map("Französisch")
   Georgisch
   Griechisch
   Hausa
-  Hebr_isch         @map("Hebräisch")
+  Hebr_isch                @map("Hebräisch")
   Hindi
+  Igbo
   Italienisch
+  Japanisch
   Kasachisch
   Kroatisch
   Kurdisch
@@ -1289,25 +1300,28 @@ enum student_languages_enum {
   Litauisch
   Malayalam
   Mazedonisch
-  Niederl_ndisch    @map("Niederländisch")
+  Niederl_ndisch           @map("Niederländisch")
+  Paschtu
   Persisch
   Polnisch
   Portugiesisch
-  Rum_nisch         @map("Rumänisch")
+  Rum_nisch                @map("Rumänisch")
   Russisch
   Serbisch
   Slowakisch
   Somali
   Spanisch
+  S_dkoreanisch            @map("Südkoreanisch")
   Tadschikisch
-  Thail_ndisch      @map("Thailändisch")
+  Thail_ndisch             @map("Thailändisch")
   Tigrinya
   Tschechisch
-  T_rkisch          @map("Türkisch")
+  T_rkisch                 @map("Türkisch")
   Ukrainisch
   Ungarisch
   Urdu
   Vietnamesisch
+  Yoruba
 }
 
 enum student_module_enum {
