@@ -22,6 +22,7 @@ import { canPromoteSubcourse } from '../../common/courses/notifications';
 import { getParticipants, normalizeLastName } from '../../common/pupil';
 import { AppointmentRole } from '../../common/appointment/util';
 import moment from 'moment';
+import { normalizeStudentLastName } from '../../common/student';
 
 @ObjectType()
 class Participant {
@@ -222,20 +223,22 @@ export class ExtendedFieldsSubcourseResolver {
 
     @FieldResolver((returns) => [Instructor])
     @Authorized(Role.UNAUTHENTICATED)
-    async instructors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
-        return await prisma.student.findMany({
+    async instructors(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext): Promise<Instructor[]> {
+        const instructors = await prisma.student.findMany({
             select: { firstname: true, lastname: true, id: true, aboutMe: true },
             where: { subcourse_instructors_student: { some: { subcourseId: subcourse.id } } },
         });
+        return instructors.map((it) => ({ ...it, lastname: normalizeStudentLastName(it, context) }));
     }
 
     @FieldResolver((returns) => [Instructor])
     @Authorized(Role.UNAUTHENTICATED)
-    async mentors(@Root() subcourse: Subcourse): Promise<Instructor[]> {
-        return await prisma.student.findMany({
+    async mentors(@Root() subcourse: Subcourse, @Ctx() context: GraphQLContext): Promise<Instructor[]> {
+        const mentors = await prisma.student.findMany({
             select: { firstname: true, lastname: true, id: true, aboutMe: true },
             where: { subcourse_mentors_student: { some: { subcourseId: subcourse.id } } },
         });
+        return mentors.map((it) => ({ ...it, lastname: normalizeStudentLastName(it, context) }));
     }
 
     @FieldResolver((returns) => Course)

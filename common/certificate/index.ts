@@ -629,7 +629,7 @@ function exposeCertificate(
         uuid,
         userIs: pupil.id === to.pupilId ? 'pupil' : 'student',
         pupil: { firstname: pupil.firstname, lastname: shortenLastName(pupil.lastname) },
-        student: { firstname: student.firstname, lastname: student.lastname },
+        student: { firstname: student.firstname, lastname: student.id === to.studentId ? student.lastname : shortenLastName(student.lastname) },
         state: state as CertificateState,
     };
 }

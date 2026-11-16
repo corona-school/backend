@@ -22,11 +22,9 @@ const shortenLastName = (lastname: string) => {
     return '';
 };
 
+// Chat names are visible to the other chat participants, so last names are always shortened
 const getChatName = (user: User) => {
-    if (user.pupilId) {
-        return `${user.firstname} ${shortenLastName(user.lastname)}`;
-    }
-    return `${user.firstname} ${user.lastname}`;
+    return `${user.firstname} ${shortenLastName(user.lastname)}`;
 };
 
 const createChatUser = async (user: User): Promise<void> => {

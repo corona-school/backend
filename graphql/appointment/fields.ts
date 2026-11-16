@@ -16,6 +16,7 @@ import { getDisplayName } from '../../common/appointment/util';
 import { getCalendlyInviteeEvent } from '../../common/calendly';
 import { ZoomError } from '../../common/util/error';
 import { normalizeLastName } from '../../common/pupil';
+import { normalizeStudentLastName } from '../../common/student';
 
 const logger = getLogger('Appointment Fields');
 
@@ -131,8 +132,16 @@ export class ExtendedFieldsLectureResolver {
     @FieldResolver((returns) => [Organizer])
     @Authorized(Role.USER, Role.ADMIN)
     @LimitEstimated(5)
-    async organizers(@Root() appointment: Appointment, @Arg('take', (type) => Int) take: number, @Arg('skip', (type) => Int) skip: number) {
-        return (await getUsers(appointment.organizerIds.slice(skip, skip + take) as UserID[])).map(({ email, ...rest }) => ({ ...rest }));
+    async organizers(
+        @Ctx() context: GraphQLContext,
+        @Root() appointment: Appointment,
+        @Arg('take', (type) => Int) take: number,
+        @Arg('skip', (type) => Int) skip: number
+    ) {
+        return (await getUsers(appointment.organizerIds.slice(skip, skip + take) as UserID[])).map(({ email, lastname, ...rest }) => ({
+            ...rest,
+            lastname: rest.studentId ? normalizeStudentLastName({ id: rest.studentId, lastname }, context) : lastname,
+        }));
     }
 
     @FieldResolver((returns) => Int)
