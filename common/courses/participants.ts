@@ -22,7 +22,7 @@ const pupilLock = new Set<Pupil['id']>();
 
 const BUSY_WAIT_TIME = 100;
 const BUSY_SPIN = 10;
-const PUPIL_MAX_SUBCOURSES = 10;
+const PUPIL_MAX_SUBCOURSES = 3;
 
 const logger = getLogger('Course');
 
@@ -128,7 +128,34 @@ type CourseDecision =
     | 'already-started'
     | 'already-ended'
     | 'already-participant'
+    | 'too-many-courses'
     | 'already-on-waitinglist';
+
+// Homework help is for now or only exception because it's an optional course
+const isExemptFromLimit = (course: Pick<Course, 'category'>) => course.category === course_category_enum.homework_help;
+
+// The number of subcourses the pupil participates in that count towards the limit.
+// A subcourse is ongoing as long as it was not cancelled and still has a lecture ahead, this includes subcourses that did not start yet
+async function countOngoingSubcourses(pupil: Pick<Pupil, 'id'>) {
+    return await prisma.subcourse_participants_pupil.count({
+        where: {
+            pupilId: pupil.id,
+            subcourse: {
+                cancelled: false,
+                course: { category: { not: course_category_enum.homework_help } },
+                lecture: { some: { isCanceled: false, start: { gte: new Date() } } },
+            },
+        },
+    });
+}
+
+async function hasReachedSubcourseLimit(pupil: Pick<Pupil, 'id'>, course: Pick<Course, 'category'>): Promise<boolean> {
+    if (isExemptFromLimit(course)) {
+        return false;
+    }
+
+    return (await countOngoingSubcourses(pupil)) >= PUPIL_MAX_SUBCOURSES;
+}
 
 export function canJoinSubcourses(pupil: Pupil): Decision<CourseDecision> {
     if (!pupil.isParticipant) {
@@ -202,6 +229,10 @@ export async function couldJoinSubcourse(subcourse: Subcourse, pupil: Pupil): Pr
         return { allowed: false, reason: 'offer-restriction' };
     }
 
+    if (await hasReachedSubcourseLimit(pupil, course)) {
+        return { allowed: false, reason: 'too-many-courses', limit: PUPIL_MAX_SUBCOURSES };
+    }
+
     return { allowed: true };
 }
 
@@ -236,26 +267,15 @@ export async function joinSubcourse(subcourse: Subcourse, pupil: Pupil, strict: 
         const participantCount = await prisma.subcourse_participants_pupil.count({ where: { subcourseId: subcourse.id } });
         logger.debug(`Found ${participantCount} participants for Subcourse(${subcourse.id}) with ${subcourse.maxParticipants} max participants`);
 
-        if (strict && participantCount > subcourse.maxParticipants) {
-            throw new CapacityReachedError(`Subcourse is full`);
-        }
+        if (strict) {
+            if (participantCount > subcourse.maxParticipants) {
+                throw new CapacityReachedError(`Subcourse is full`);
+            }
 
-        const pupilSubCourseCount = await prisma.subcourse_participants_pupil.count({
-            where: {
-                pupilId: pupil.id,
-                subcourse: {
-                    lecture: {
-                        every: {
-                            start: { gte: new Date() },
-                        },
-                    },
-                },
-            },
-        });
-        logger.debug(`Found ${pupilSubCourseCount} active subcourses where the Pupil(${pupil.id}) participates`);
-
-        if (strict && pupilSubCourseCount > PUPIL_MAX_SUBCOURSES) {
-            throw new CapacityReachedError(`Pupil already has joined ${pupilSubCourseCount} courses`);
+            const course = await getCourseOfSubcourse(subcourse);
+            if (await hasReachedSubcourseLimit(pupil, course)) {
+                throw new CapacityReachedError(`Pupil already has joined ${PUPIL_MAX_SUBCOURSES} courses`);
+            }
         }
 
         const pupilUser = userForPupil(pupil);
