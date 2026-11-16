@@ -5,17 +5,12 @@ import { randomBytes } from 'crypto';
 import EJS from 'ejs';
 import * as Notification from '../notification';
 import {
-    course_category_enum,
     instant_certificate as InstantCertificate,
-    internship as Internship,
-    internship_status_enum,
-    lecture_appointmenttype_enum,
     participation_certificate as ParticipationCertificate,
     Prisma,
     pupil as Pupil,
     student as Student,
     student,
-    student_screening_status_enum,
 } from '@prisma/client';
 import assert from 'assert';
 import { createSecretEmailToken } from '../secret';
@@ -28,6 +23,9 @@ import { prisma } from '../prisma';
 import QRCode from 'qrcode';
 import { shortenLastName } from '../pupil';
 import { getLogger } from '../logger/logger';
+import { createInstantCertificateRecord, getStudentScreeningDate } from './instant';
+
+export { createInstantCertificateRecord };
 
 const ASSETS = path.join(__dirname, `../../../assets/`);
 const logger = getLogger('Certificates');
@@ -40,8 +38,6 @@ export type Language = (typeof LANGUAGES)[number];
 export const DefaultLanguage = 'de';
 
 export const CERTIFICATE_MEDIUMS = ['Video-Chat', 'E-Mail', 'Telefon', 'Chat-Nachrichten'] as const;
-const JOINED_BY_INTRODUCTION_DATE = new Date('2025-03-25');
-const ACTUAL_DURATION_INTRODUCTION_DATE = new Date('2026-10-01');
 
 export enum CertificateState {
     manual = 'manual', // student did not request approval
@@ -93,299 +89,6 @@ export async function getCertificatePDF(certificateId: string, requestor: Studen
     const pdf = await createPDFBinary(certificate, getCertificateLink(certificate, lang), lang as Language);
 
     return pdf;
-}
-
-interface Appointment {
-    appointmentType: lecture_appointmenttype_enum;
-    start: Date;
-    duration?: number;
-    actualDuration?: number;
-    joinedBy: string[];
-}
-
-// We add 5 minutes to the duration and then round it up to the nearest 15 minutes
-const roundSupportDuration = (duration: number) => {
-    return Math.ceil((duration + 5) / 15) * 15;
-};
-
-// We give extra time of 60 mins for every 6 lectures that actually happened (both HuH and SuS present)
-// This only applies to lectures after the introduction of actual duration
-const getBonusDuration = (appointments: Appointment[], requester: Student) => {
-    const validAppointments = appointments.filter((l) => {
-        const isAfterActualDurationIntroduction = l.start >= ACTUAL_DURATION_INTRODUCTION_DATE;
-        const bothJoined = l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
-        const isMatchAppointment = l.appointmentType === 'match';
-        return isAfterActualDurationIntroduction && bothJoined && isMatchAppointment;
-    });
-
-    const bonusDuration = Math.floor(validAppointments.length / 6) * 60; // 60 minutes for every 6 valid match appointments
-    return bonusDuration;
-};
-
-const getAppointmentDuration = (lecture: Appointment) => {
-    if (lecture.appointmentType === 'match' && lecture.start >= ACTUAL_DURATION_INTRODUCTION_DATE) {
-        return lecture.actualDuration ? roundSupportDuration(lecture.actualDuration) : 0;
-    }
-    return lecture.duration ?? 0;
-};
-
-const getTotalAppointmentsDuration = (appointments: Appointment[], requester: Student) => {
-    const appointmentsDuration = appointments
-        .filter((l) => {
-            if (l.start < JOINED_BY_INTRODUCTION_DATE) {
-                return true;
-            }
-            return l.joinedBy.length >= 2 && l.joinedBy.includes(userForStudent(requester).userID);
-        })
-        .reduce((sum, l) => sum + getAppointmentDuration(l), 0);
-    return appointmentsDuration + getBonusDuration(appointments, requester);
-};
-
-// Most recent successful screening (tutor or instructor); falls back to registration date if none exists
-async function getStudentScreeningDate(requester: Pick<Student, 'id' | 'createdAt'>) {
-    const { screening, instructor_screening } = await prisma.student.findUniqueOrThrow({
-        where: { id: requester.id },
-        select: {
-            screening: { select: { status: true, decisionTakenAt: true, createdAt: true } },
-            instructor_screening: { select: { status: true, decisionTakenAt: true, createdAt: true } },
-        },
-    });
-    const dates = [screening, instructor_screening]
-        .filter((s) => s?.status === student_screening_status_enum.success)
-        .map((s) => (s.decisionTakenAt ?? s.createdAt).getTime());
-    return dates.length ? new Date(Math.min(...dates)) : requester.createdAt;
-}
-
-const internshipPeriodFilter = ({ startDate, endDate }: Pick<Internship, 'startDate' | 'endDate'>): Prisma.lectureWhereInput => ({
-    start: { gte: startDate, ...(endDate && { lte: moment(endDate).endOf('day').toDate() }) },
-});
-
-/**
- * When there is an internship present, we only consider lectures within its period.
- * In case of no internship givenn, we exclude lectures that fall within any of the student's other internships.
- */
-async function getLectureScope(requester: Student, internshipId?: number) {
-    const internship = internshipId
-        ? await prisma.internship.findFirstOrThrow({
-              where: { id: internshipId, studentId: requester.id, status: { not: internship_status_enum.cancelled } },
-          })
-        : await prisma.internship.findFirst({
-              where: { studentId: requester.id, status: internship_status_enum.in_progress },
-              orderBy: { startDate: 'asc' },
-          });
-
-    if (internship) {
-        return { internship, lectureScope: internshipPeriodFilter(internship) };
-    }
-
-    const otherInternships = await prisma.internship.findMany({
-        where: { studentId: requester.id, status: { not: internship_status_enum.cancelled } },
-    });
-    const lectureScope: Prisma.lectureWhereInput | undefined = otherInternships.length
-        ? { NOT: { OR: otherInternships.map(internshipPeriodFilter) } }
-        : undefined;
-    return { internship: null, lectureScope };
-}
-
-export async function createInstantCertificateRecord(requester: Student, internshipId?: number) {
-    const { internship, lectureScope } = await getLectureScope(requester, internshipId);
-    const lectureScopeFilter: Prisma.lectureWhereInput[] = lectureScope ? [lectureScope] : [];
-
-    const matchesCountPromise = prisma.match.count({
-        where: {
-            studentId: requester.id,
-            lecture: {
-                some: {
-                    start: { lt: new Date() }, // only past lectures
-                    isCanceled: false,
-                    AND: lectureScopeFilter,
-                    OR: [
-                        {
-                            // At this point joinedBy wasn't used yet.
-                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
-                        },
-                        {
-                            // After the introduction of joinedBy, we only want to count lectures the student actually joined.
-                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
-                            joinedBy: {
-                                has: userForStudent(requester).userID,
-                            },
-                        },
-                    ],
-                },
-            },
-        },
-    });
-    const matchAppointmentsCountPromise = prisma.lecture.findMany({
-        where: {
-            start: { lt: new Date() }, // only past lectures
-            isCanceled: false,
-            match: {
-                studentId: requester.id,
-            },
-            AND: lectureScopeFilter,
-            OR: [
-                {
-                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
-                },
-                {
-                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
-                    joinedBy: {
-                        has: userForStudent(requester).userID,
-                    },
-                },
-            ],
-        },
-    });
-    const uniqueCourseParticipantsPromise = prisma.subcourse_participants_pupil.groupBy({
-        by: ['pupilId'],
-        where: {
-            subcourse: {
-                cancelled: false,
-                subcourse_instructors_student: { some: { studentId: requester.id } },
-                course: { category: { not: course_category_enum.homework_help } },
-                // Without a lecture in scope the participants didn't take part in this certificate's period
-                ...(lectureScope && { lecture: { some: { isCanceled: false, start: { lt: new Date() }, AND: [lectureScope] } } }),
-            },
-        },
-    });
-    const courseAppointmentsAggregatePromise = prisma.lecture.findMany({
-        where: {
-            isCanceled: false,
-            subcourse: {
-                cancelled: false,
-                subcourse_instructors_student: { some: { studentId: requester.id } },
-                course: { category: { not: course_category_enum.homework_help } },
-            },
-            start: { lt: new Date() },
-            AND: lectureScopeFilter,
-            OR: [
-                {
-                    start: { lt: JOINED_BY_INTRODUCTION_DATE },
-                },
-                {
-                    start: { gte: JOINED_BY_INTRODUCTION_DATE },
-                    joinedBy: {
-                        has: userForStudent(requester).userID,
-                    },
-                },
-            ],
-        },
-        select: {
-            actualDuration: true,
-            duration: true,
-            joinedBy: true,
-            start: true,
-        },
-    });
-
-    const appointmentsForDurationPromise = prisma.lecture.findMany({
-        where: {
-            isCanceled: false,
-            start: { lt: new Date() },
-
-            OR: [
-                {
-                    subcourse: {
-                        cancelled: false,
-                        subcourse_instructors_student: {
-                            some: { studentId: requester.id },
-                        },
-                        course: {
-                            category: { not: course_category_enum.homework_help },
-                        },
-                    },
-                },
-                {
-                    match: {
-                        studentId: requester.id,
-                    },
-                },
-            ],
-
-            AND: [
-                ...lectureScopeFilter,
-                {
-                    OR: [
-                        {
-                            start: { lt: JOINED_BY_INTRODUCTION_DATE },
-                        },
-                        {
-                            start: { gte: JOINED_BY_INTRODUCTION_DATE },
-                            joinedBy: {
-                                has: userForStudent(requester).userID,
-                            },
-                        },
-                    ],
-                },
-            ],
-        },
-        select: {
-            appointmentType: true,
-            actualDuration: true,
-            duration: true,
-            joinedBy: true,
-            start: true,
-        },
-    });
-
-    const homeworkHelpDurationPromise = prisma.lecture.aggregate({
-        where: {
-            isCanceled: false,
-            subcourse: { course: { category: course_category_enum.homework_help } },
-            joinedBy: { has: userForStudent(requester).userID },
-            AND: lectureScopeFilter,
-        },
-        _sum: { duration: true },
-    });
-
-    const [matchesCount, matchAppointments, courseParticipants, courseAppointments, appointmentsForDuration, homeworkHelpDuration] = await Promise.all([
-        matchesCountPromise,
-        matchAppointmentsCountPromise,
-        uniqueCourseParticipantsPromise,
-        courseAppointmentsAggregatePromise,
-        appointmentsForDurationPromise,
-        homeworkHelpDurationPromise,
-    ]);
-    const courseParticipantsCount = courseParticipants.length;
-    const validMatchAppointments = matchAppointments.filter((lecture) => {
-        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
-            return true;
-        }
-        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
-    });
-    const validCourseAppointments = courseAppointments.filter((lecture) => {
-        if (lecture.start < JOINED_BY_INTRODUCTION_DATE) {
-            return true;
-        }
-        return lecture.joinedBy.length >= 2 && lecture.joinedBy.includes(userForStudent(requester).userID);
-    });
-
-    const totalAppointmentsDuration = getTotalAppointmentsDuration(appointmentsForDuration, requester);
-
-    const screeningDate = await getStudentScreeningDate(requester);
-
-    const certificate = await prisma.instant_certificate.create({
-        data: {
-            studentId: requester.id,
-            uuid: randomBytes(6).toString('hex').toUpperCase(),
-            startDate: internship ? internship.startDate : screeningDate,
-            matchesCount,
-            matchAppointmentsCount: validMatchAppointments.length,
-            totalMatchAppointmentsDuration:
-                validMatchAppointments.reduce((sum, l) => sum + getAppointmentDuration(l), 0) + getBonusDuration(validMatchAppointments, requester),
-            courseParticipantsCount,
-            courseAppointmentsCount: validCourseAppointments.length,
-            totalCourseAppointmentDuration: validCourseAppointments.reduce((sum, l) => sum + (l.duration ?? 0), 0),
-            totalAppointmentsDuration,
-            homeworkHelpDuration: homeworkHelpDuration._sum.duration === 0 ? undefined : homeworkHelpDuration._sum.duration,
-            trainingDuration: (requester.furtherTrainingsAttendedCount ?? 0) * 60,
-            isInternship: !!internship,
-        },
-        include: { student: true },
-    });
-
-    return certificate;
 }
 
 export async function createInstantCertificate(
