@@ -5,7 +5,7 @@ import { getLogger } from '../../common/logger/logger';
 import * as TypeGraphQL from 'type-graphql';
 import { Arg, Authorized, Ctx, InputType, Mutation, Resolver } from 'type-graphql';
 import { prisma } from '../../common/prisma';
-import { getSessionStudent } from '../authentication';
+import { getSessionStudent, isElevated } from '../authentication';
 import { AuthorizedDeferred, hasAccess, Role } from '../authorizations';
 import { GraphQLContext } from '../context';
 import * as GraphQLModel from '../generated/models';
@@ -68,6 +68,19 @@ class CourseTagCreateInput {
 }
 
 const logger = getLogger('MutateCourseResolver');
+
+// Once a course was approved, instructors may no longer change the fields that were screened
+const LOCKED_FIELDS_AFTER_APPROVAL = ['name', 'description', 'category', 'subject'] as const;
+
+function assertMayEditApprovedCourse(context: GraphQLContext, course: { courseState: string; category: course_category_enum }, what: string) {
+    // Ang team can still update the Hausaufgabenhilfe when needed
+    if (course.category === course_category_enum.homework_help) {
+        return;
+    }
+    if (course.courseState === 'allowed' && !isElevated(context)) {
+        throw new ForbiddenError(`Cannot change the ${what} of a course that was already approved`);
+    }
+}
 
 @Resolver((of) => GraphQLModel.Course)
 export class MutateCourseResolver {
@@ -150,6 +163,11 @@ export class MutateCourseResolver {
             if (!editableSubcourse) {
                 throw new ForbiddenError('Cannot edit course that has no unpublished or ongoing subcourse');
             }
+
+            const changedLockedFields = LOCKED_FIELDS_AFTER_APPROVAL.filter((field) => data[field] !== undefined && data[field] !== course[field]);
+            if (changedLockedFields.length > 0) {
+                assertMayEditApprovedCourse(context, course, changedLockedFields.join(', '));
+            }
         }
         const result = await prisma.course.update({ data: { ...data, schooltype: data.schooltype ? [data.schooltype] : undefined }, where: { id: courseId } });
         logger.info(`Course (${result.id}) updated by Student (${context.user.studentId})`);
@@ -176,6 +194,13 @@ export class MutateCourseResolver {
             throw new UserInputError(`Category of tags mismatches the category of the course`);
         }
 
+        const currentTags = await prisma.course_tags_course_tag.findMany({ where: { courseId: course.id }, select: { courseTagId: true } });
+        const currentTagIds = new Set(currentTags.map((it) => it.courseTagId));
+        const tagsChanged = currentTagIds.size !== new Set(courseTagIds).size || courseTagIds.some((id) => !currentTagIds.has(id));
+        if (tagsChanged) {
+            assertMayEditApprovedCourse(context, course, 'tags');
+        }
+
         await prisma.course_tags_course_tag.deleteMany({
             where: { courseId: course.id },
         });
@@ -193,6 +218,7 @@ export class MutateCourseResolver {
     async courseSetImage(@Ctx() context: GraphQLContext, @Arg('courseId') courseId: number, @Arg('fileId') fileId: string) {
         const course = await getCourse(courseId);
         await hasAccess(context, 'Course', course);
+        assertMayEditApprovedCourse(context, course, 'image');
 
         if (fileId === '') {
             const { imageKey: oldImage } = await prisma.course.findUnique({ where: { id: course.id }, select: { imageKey: true } });
