@@ -65,11 +65,20 @@ async function createConcreteNotification(
     return concreteNotification;
 }
 
-export const getUserNotificationPreferences = async (user: User, includeAlwaysEnabledPreferences: boolean) => {
+export const mergeNotificationPreferences = (storedPreferences: Prisma.JsonValue | null, includeAlwaysEnabledPreferences: boolean) => {
     const basePreferences = includeAlwaysEnabledPreferences ? ALL_PREFERENCES : DEFAULT_PREFERENCES;
+    return storedPreferences ? _.merge({}, basePreferences, storedPreferences) : basePreferences;
+};
 
-    const storedPreferences = (await queryUser(user, { notificationPreferences: true })).notificationPreferences as Record<string, unknown> | null;
-    return storedPreferences ? _.merge({ ...basePreferences }, { ...storedPreferences }) : basePreferences;
+export const getUserNotificationPreferences = async (user: User, includeAlwaysEnabledPreferences: boolean) => {
+    const { notificationPreferences } = await queryUser(user, { notificationPreferences: true });
+    return mergeNotificationPreferences(notificationPreferences, includeAlwaysEnabledPreferences);
+};
+
+// Whether a notification of the given type will reach the user via email or push
+export const receivesNotificationType = (storedPreferences: Prisma.JsonValue | null, type: string) => {
+    const channels = mergeNotificationPreferences(storedPreferences, true)[type];
+    return !!channels && (channels.email || channels.push);
 };
 
 const getNotificationChannelPreferences = async (user: User, concreteNotification: ConcreteNotification): Promise<Channels> => {

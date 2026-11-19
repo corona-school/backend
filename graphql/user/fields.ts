@@ -26,16 +26,17 @@ import { getAppointmentsForUser, getEdgeAppointmentId, hasAppointmentsForUser } 
 import { getMyContacts, UserContactType } from '../../common/chat/contacts';
 import { generateMeetingSDKJWT, isZoomFeatureActive } from '../../common/zoom/util';
 import { getUserZAK, getZoomUsers } from '../../common/zoom/user';
-import { ConcreteNotificationState } from '../../common/notification/types';
+import { ConcreteNotificationState, NotificationType } from '../../common/notification/types';
 import { getAchievementById, getFurtherAchievements, getNextStepAchievements, getUserAchievements } from '../../common/achievement/get';
 import { Achievement } from '../types/achievement';
 import { Deprecated, Doc } from '../util';
 import { createChatSignature } from '../../common/chat/create';
 import assert from 'assert';
 import { getPushSubscriptions, publicKey } from '../../common/notification/channels/push';
-import { getUserNotificationPreferences } from '../../common/notification';
+import { getUserNotificationPreferences, receivesNotificationType } from '../../common/notification';
 import { evaluateUserRoles } from '../../common/user/evaluate_roles';
 import { Prisma } from '@prisma/client';
+import { UserInputError } from 'apollo-server-express';
 import { normalizeLastName } from '../../common/pupil';
 
 @ObjectType()
@@ -272,15 +273,24 @@ export class UserFieldsResolver {
     @Authorized(Role.ADMIN)
     @LimitEstimated(ACCUMULATED_LIMIT) // no subqueries allowed
     async usersForCampaign(
+        @Arg('notificationType') notificationType?: string, // If set, only users that can receive this type of notification via email or push are returned
         @Arg('pupilQuery', { nullable: true }) pupilQuery?: PupilWhereInput,
         @Arg('studentQuery', { nullable: true }) studentQuery?: StudentWhereInput
     ) {
+        const notificationTypes = Object.values<string>(NotificationType);
+        if (notificationType && !notificationTypes.includes(notificationType)) {
+            throw new UserInputError(`Unknown notification type '${notificationType}'`);
+        }
+
         const result: User[] = [];
+        const receivesNotification = (user: { notificationPreferences: Prisma.JsonValue }) => {
+            return !notificationType || receivesNotificationType(user.notificationPreferences, notificationType);
+        };
 
         if (pupilQuery) {
             // Make sure only active users with verified email are returned
             const pupils = await prisma.pupil.findMany({
-                select: { firstname: true, lastname: true, email: true, id: true },
+                select: { firstname: true, lastname: true, email: true, id: true, notificationPreferences: true },
                 where: {
                     ...pupilQuery,
                     active: true,
@@ -306,12 +316,12 @@ export class UserFieldsResolver {
                     ],
                 },
             });
-            result.push(...pupils.map(userForPupil));
+            result.push(...pupils.filter(receivesNotification).map(userForPupil));
         }
 
         if (studentQuery) {
             const students = await prisma.student.findMany({
-                select: { firstname: true, lastname: true, email: true, id: true },
+                select: { firstname: true, lastname: true, email: true, id: true, notificationPreferences: true },
                 where: {
                     AND: [
                         studentQuery,
@@ -327,7 +337,7 @@ export class UserFieldsResolver {
                     ],
                 },
             });
-            result.push(...students.map(userForStudent));
+            result.push(...students.filter(receivesNotification).map(userForStudent));
         }
 
         return result;
