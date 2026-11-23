@@ -409,17 +409,17 @@ export class ExtendFieldsStudentResolver {
             )
 
             SELECT
-                h.subject_name,
+                COALESCE(c.subject_name, h.subject_name) AS subject_name,
                 COALESCE(c.mandatory_count, 0)::INT AS mandatory_count,
                 COALESCE(c.grades, ARRAY[]::VARCHAR[]) AS grades,
-                h.historical_matches::INT AS historical_matches
-            FROM historical_demand h
-            LEFT JOIN current_demand c
+                COALESCE(h.historical_matches, 0)::INT AS historical_matches
+            FROM current_demand c
+            FULL OUTER JOIN historical_demand h
                 ON c.subject_name = h.subject_name
             ORDER BY
                 (COALESCE(c.mandatory_count, 0) = 0),
-                c.mandatory_count DESC,
-                h.historical_matches DESC;
+                COALESCE(c.mandatory_count, 0) DESC,
+                COALESCE(h.historical_matches, 0) DESC;
         `) as { subject_name: string; mandatory_count: number; grades: string[]; historical_matches: number }[];
         }
 
