@@ -41,7 +41,8 @@ export async function verifyChatUser(user: User) {
 
 export function getMessageFlag(message: string): { flag: 'CHAT_ATTEMPT_PLATFORM_CHANGE' | 'CHAT_OBSCENITY'; words: string[] } | undefined {
     const EMAIL_REGEX = /\b[A-Za-z0-9._%+-]+\s*@\s*(?!lern-fair\s*\.\s*de\b)[A-Za-z0-9.-]+\s*\.\s*[A-Za-z]{2,}\b/i;
-    const EXTERNAL_PLATFORM_REGEX = /\b(whats\s?-?app|discord|telegram|skype|snapchat|instagram|tiktok|facebook|messenger|threema|imessage|facetime)\b/i;
+    const EXTERNAL_PLATFORM_REGEX =
+        /\b(whats\s?-?app|discord|telegram|skype|snapchat|instagram|tiktok|facebook|messenger|threema|imessage|facetime|handynummer)\b/i;
     if (EXTERNAL_PLATFORM_REGEX.test(message) || EMAIL_REGEX.test(message)) {
         return { flag: 'CHAT_ATTEMPT_PLATFORM_CHANGE' as const, words: message.match(EXTERNAL_PLATFORM_REGEX)?.map((w) => w) || [] };
     }
